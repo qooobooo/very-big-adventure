@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Очень Большая Бродилка — веб-прототип</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar" aria-label="Панель партии">
+        <div>
+          <p class="eyebrow">Простой режим</p>
+          <h1>Очень Большая Бродилка</h1>
+        </div>
+        <div class="season-controls">
+          <label>
+            Игроков
+            <select id="playerCount">
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4" selected>4</option>
+            </select>
+          </label>
+          <label>
+            Кубиков
+            <select id="diceCount">
+              <option value="1" selected>1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+            </select>
+          </label>
+          <button id="newGameBtn" class="secondary">Новая игра</button>
+        </div>
+      </section>
+
+      <section class="score-strip" id="scoreStrip" aria-label="Игроки"></section>
+
+      <section class="play-area">
+        <article class="board-panel" aria-label="Игровое поле">
+          <div class="board-header">
+            <div>
+              <p class="eyebrow">Кольцевое поле</p>
+              <h2 id="roundTitle">Ход 1 из 20</h2>
+            </div>
+            <div class="dice-panel">
+              <span id="diceValue">-</span>
+              <div id="fieldEffect" class="field-effect"></div>
+              <button id="rollBtn">Бросить кубик</button>
+            </div>
+          </div>
+          <div class="map-wrap">
+            <div id="eventToast" class="event-toast" aria-live="polite" hidden></div>
+            <div id="choicePanel" class="choice-panel" role="dialog" aria-live="polite" hidden></div>
+            <div id="board" class="board"></div>
+          </div>
+        </article>
+
+        <aside class="side-panel" aria-label="Информация хода">
+          <section class="turn-card">
+            <p class="eyebrow">Сейчас ходит</p>
+            <h2 id="activePlayerName">—</h2>
+            <p id="activePlayerRole" class="muted-text">—</p>
+          </section>
+          <section class="tadam-card">
+            <div class="section-title">
+              <h2>ТАДАМ!</h2>
+              <span class="pill">до 3 карт</span>
+            </div>
+            <div id="tadamTable" class="tadam-table"></div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="lower-grid">
+        <article class="log-panel">
+          <div class="section-title">
+            <h2>Хроника</h2>
+          </div>
+          <ol id="gameLog" class="game-log"></ol>
+        </article>
+      </section>
+    </main>
+
+    <script type="module" src="./src/game.js"></script>
+  </body>
+</html>
