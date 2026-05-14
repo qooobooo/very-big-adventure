@@ -20,6 +20,46 @@ Open questions:
 - ...
 ```
 
+## 2026-05-14 01:26 - Dev
+
+Changed:
+- Made the turn-info HUD popup dismissible by click.
+- Click, Enter, or Space now hides the popup with a very quick fade instead of waiting for the 5-second timer.
+- Verified the behavior in the in-app browser with a 2-player game; no browser errors were reported.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Existing project-memory changes from Important were left intact.
+
+Open questions:
+- None.
+
+## 2026-05-14 01:20 - Important
+
+Changed:
+- Added `GD` as the active game-design chat for "Очень Большая Бродилка".
+- Created `project-memory/inbox/for-gd.md`.
+- Updated shared memory and onboarding prompt with the GD role.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `GD` owns game-design direction and writes implementation-ready tasks for Dev in `project-memory/inbox/for-dev.md`.
+- Active chats are now `Important`, `Dev`, and `GD`.
+
+Open questions:
+- None.
+
 ## 2026-05-14 00:41 - Dev
 
 Changed:

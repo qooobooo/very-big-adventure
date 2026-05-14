@@ -1,6 +1,6 @@
 # Project Handoff
 
-Last updated: 2026-05-14 by Dev.
+Last updated: 2026-05-14 by Important.
 
 ## Очень Большая Бродилка
 
@@ -10,6 +10,7 @@ Active chats:
 
 - `Important`: project memory, summaries, status, and coordination.
 - `Dev`: main implementation chat.
+- `GD`: game design, contracts, rules, balance, and implementation-ready specs for Dev.
 
 Current shape: a local web prototype of a board-game race with players, dice, seals, route cells, good/bad cards, green/red fields, TADAM cards, and Joe's Shop.
 
@@ -35,6 +36,7 @@ Current important state:
 Only these chats are active in this project memory right now:
 
 - `Dev`
+- `GD`
 - `Important`
 
 If more context is needed, local Codex records may be inspected read-only:

@@ -15,6 +15,7 @@ Then read the inbox that matches your role:
 
 - Important: `project-memory/inbox/for-important.md`
 - Dev: `project-memory/inbox/for-dev.md`
+- GD: `project-memory/inbox/for-gd.md`
 
 If you need older context, inspect local Codex records read-only:
 
@@ -26,6 +27,7 @@ Known roles:
 
 - Important = project memory, status, summaries, coordination.
 - Dev = "Очень Большая Бродилка" in `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure`.
+- GD = game design, contracts, rules, balance, core loop, and implementation-ready specs for Dev.
 
 Current project folder:
 
@@ -35,7 +37,7 @@ After meaningful work, append a short entry to:
 
 `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/updates.md`
 
-If Dev or Important needs to do something, write it in the matching inbox under:
+If Dev, Important, or GD needs to do something, write it in the matching inbox under:
 
 `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/inbox/`
 
