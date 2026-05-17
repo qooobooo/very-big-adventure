@@ -20,6 +20,265 @@ Open questions:
 - ...
 ```
 
+## 2026-05-18 01:52 - Dev
+
+Changed:
+- Replaced the "Плохо" icon with the tighter cropped version.
+- Swapped the board gap background to the softer forest/rock artwork.
+
+Files:
+- `assets/icons/bad_tight.png`
+- `assets/backgrounds/soft_forest_gap_1254.png`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `eventIcons.bad` now points to `bad_tight.png`.
+- `.tile-icon-bad` returned to `88%` because the new source has much less transparent padding.
+- Verified in the in-app browser: the new bad icon and background both load correctly.
+
+Open questions:
+- None.
+
+## 2026-05-18 01:45 - Dev
+
+Changed:
+- Increased the "Плохо" icon by another 10%.
+- Removed the manual offset so the icon centers inside the tile.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `.tile-icon-bad` is now `135%` with no transform; tile overflow still clips the large transparent image box.
+- Verified in the in-app browser: the icon renders larger and centered in its tile.
+
+Open questions:
+- None.
+
+## 2026-05-18 01:42 - Dev
+
+Changed:
+- Added a fantasy brown contour around playable board tiles.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Playable tiles now have a 2px brown border plus darker/light inset shadows.
+- Empty background cells stay borderless, and Joe's Shop dashed outline remains visible.
+- Verified in the in-app browser: playable tiles have `2px solid rgb(111, 69, 36)`, empty tiles have no border, and tile dimensions remain equal.
+
+Open questions:
+- None.
+
+## 2026-05-18 01:37 - Dev
+
+Changed:
+- Swapped the board gap artwork to the second adventure background.
+- Increased the "Плохо" icon by another 10%.
+
+Files:
+- `assets/backgrounds/adventure_gap_2_1254.png`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `--board-gap-art` now points to `adventure_gap_2_1254.png`.
+- `.tile-icon-bad` is now `123%` because the source image has large transparent padding.
+- Verified in the in-app browser: the new background and larger bad icon render correctly.
+
+Open questions:
+- None.
+
+## 2026-05-18 01:32 - Dev
+
+Changed:
+- Replaced the board gap sky background with the new adventure map artwork.
+
+Files:
+- `assets/backgrounds/adventure_gap_1254.png`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `.tile-grid` still uses `--board-gap-art` with `cover`; the variable now points to `adventure_gap_1254.png`.
+- Verified in the in-app browser: new artwork appears through transparent empty cells.
+
+Open questions:
+- None.
+
+## 2026-05-18 01:25 - Dev
+
+Changed:
+- Added sky artwork behind the board grid to replace the flat blue gaps.
+
+Files:
+- `assets/backgrounds/sky_gap_1254.png`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Empty board cells stay transparent; `.tile-grid` now renders the sky background with `cover`.
+- Verified in the in-app browser: sky art appears through the gaps and tile art remains on top.
+
+Open questions:
+- None.
+
+## 2026-05-18 01:15 - Dev
+
+Changed:
+- Centered the "Плохо" icon visually inside its tile.
+- Removed CSS grid divider lines between board cells.
+- Filled empty board space with one continuous light-blue background.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `.tile-grid` owns the light-blue background; empty tiles are transparent to avoid seams.
+- `.tile-icon-bad` has a slight transform because the source PNG has uneven transparent padding.
+- Verified in the in-app browser: tile borders are 0px, empty cells are transparent, and the grid background is `rgb(217, 245, 255)`.
+
+Open questions:
+- None.
+
+## 2026-05-18 01:10 - Dev
+
+Changed:
+- Moved door rendering anchors onto the enemy tiles.
+- Door bars now sit on the enemy cell edge for all four doors.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Door mechanics still use `enemyCell` and `toCell`; only the render anchor `cell`/`edge` was adjusted in `doorConfigs`.
+- Verified in the in-app browser: all closed doors are on `.tile-enemy` cells (`1-7`, `8-3`, `3-2`, `8-0`).
+
+Open questions:
+- None.
+
+## 2026-05-18 01:05 - Dev
+
+Changed:
+- Locked the board grid to equal-size cells even when large PNG icons are inside.
+- Expanded tile art backgrounds so gray, green, and red field art fills the whole cell.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `.tile-grid` now uses `minmax(0, 1fr)` tracks; `.tile` clips overflow and `.tile-icon` has fixed 100% bounds.
+- Field backgrounds use `background-size: 112% 112%` to cover transparent PNG margins.
+- Verified in the in-app browser: all 100 tiles report equal dimensions up to sub-pixel rounding, and tile art fills the cells.
+
+Open questions:
+- None.
+
+## 2026-05-18 01:00 - Dev
+
+Changed:
+- Increased the "Плохо" icon so its visible size matches the "Хорошо" chest better.
+- Changed start and finish cells to use the gray field art background.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `bad_512.png` has more transparent padding than the chest icon, so its CSS box is larger than `good` to match visual weight.
+- Verified in the in-app browser: start/finish use `empty_field_512.png`, and bad/good icons look closer in size.
+
+Open questions:
+- None.
+
+## 2026-05-18 00:55 - Dev
+
+Changed:
+- Added illustrated PNG icons for start, finish, bad, and TADAM board cells.
+- Start and finish now render their own icons on the board.
+
+Files:
+- `assets/icons/start_512.png`
+- `assets/icons/finish_512.png`
+- `assets/icons/bad_512.png`
+- `assets/icons/tadam_512.png`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `tileIcons` handles non-event start/finish cells; `eventIcons` handles bad/tadam/good/shop/enemy cells.
+- Verified in the in-app browser: all four new images load and fit inside board cells.
+
+Open questions:
+- None.
+
+## 2026-05-18 00:50 - Dev
+
+Changed:
+- Replaced the "Хорошо" board emoji with a chest PNG icon.
+- Increased illustrated board icon sizes by about 20%.
+
+Files:
+- `assets/icons/good_512.png`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `good`, `enemy`, and `shop` cells now render PNG icons through `eventIcons`.
+- Verified in the in-app browser: all three images load and fit inside board cells.
+
+Open questions:
+- None.
+
+## 2026-05-18 00:45 - Dev
+
+Changed:
+- Replaced enemy and Joe's Shop board emoji with illustrated PNG icons.
+
+Files:
+- `assets/icons/enemy_512.png`
+- `assets/icons/joes_shop_512.png`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Enemy and shop icons are now rendered as image HTML from `eventIcons`.
+- Verified in the in-app browser: both images load at 512px source size and fit inside board cells.
+
+Open questions:
+- None.
+
+## 2026-05-17 23:40 - Dev
+
+Changed:
+- Added illustrated tile art for gray route/event cells, green cells, and red cells.
+- Kept start, finish, and blank board gaps on the existing styling.
+
+Files:
+- `assets/tiles/empty_field_512.png`
+- `assets/tiles/green_512.png`
+- `assets/tiles/red_512.png`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Tile art is applied through CSS variables in `styles.css`; old generic tile grain is disabled for textured cells.
+- Verified in the in-app browser: gray, green, red, and event tiles load the new PNG backgrounds and icons remain visible.
+
+Open questions:
+- None.
+
 ## 2026-05-17 19:20 - Dev
 
 Changed:

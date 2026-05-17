@@ -105,22 +105,27 @@ const routeIndex = buildRouteIndex(routeCells);
 const routeNext = buildRouteNext(routePath);
 
 const doorConfigs = [
-  { id: "left", cell: "0-7", edge: "right", enemyCell: "1-7", toCell: "0-7", damage: 8, label: "дверь 2" },
-  { id: "middle", cell: "7-3", edge: "right", enemyCell: "8-3", toCell: "7-3", damage: 6, label: "дверь 1" },
-  { id: "center", cell: "4-2", edge: "left", enemyCell: "3-2", toCell: "4-2", damage: 10, label: "центральная дверь" },
+  { id: "left", cell: "1-7", edge: "left", enemyCell: "1-7", toCell: "0-7", damage: 8, label: "дверь 2" },
+  { id: "middle", cell: "8-3", edge: "left", enemyCell: "8-3", toCell: "7-3", damage: 6, label: "дверь 1" },
+  { id: "center", cell: "3-2", edge: "right", enemyCell: "3-2", toCell: "4-2", damage: 10, label: "центральная дверь" },
   { id: "finish", cell: "8-0", edge: "right", enemyCell: "8-0", toCell: "9-0", damage: 13, label: "дверь к финишу" },
 ];
 
 const cellEvents = buildCellEvents();
 
 const eventIcons = {
-  bad: "⚠️",
-  enemy: "😈",
-  good: "🎁",
+  bad: '<img class="tile-icon-image tile-icon-bad" src="./assets/icons/bad_tight.png" alt="Плохо">',
+  enemy: '<img class="tile-icon-image tile-icon-enemy" src="./assets/icons/enemy_512.png" alt="Враг">',
+  good: '<img class="tile-icon-image tile-icon-good" src="./assets/icons/good_512.png" alt="Хорошо">',
   green: "",
   red: "",
-  shop: "🧔",
-  tadam: "🎉",
+  shop: '<img class="tile-icon-image tile-icon-shop" src="./assets/icons/joes_shop_512.png" alt="Лавка Джо">',
+  tadam: '<img class="tile-icon-image tile-icon-tadam" src="./assets/icons/tadam_512.png" alt="ТАДАМ!">',
+};
+
+const tileIcons = {
+  finish: '<img class="tile-icon-image tile-icon-finish" src="./assets/icons/finish_512.png" alt="Финиш">',
+  start: '<img class="tile-icon-image tile-icon-start" src="./assets/icons/start_512.png" alt="Старт">',
 };
 
 const goodCards = cardConfig.good;
@@ -309,15 +314,17 @@ function buildBoardShell() {
     for (let col = 0; col < boardCols; col += 1) {
       const cell = cellKey(col, row);
       const tile = document.createElement("span");
-      tile.className = `tile tile-${tileType(cell)}`;
+      const type = tileType(cell);
+      tile.className = `tile tile-${type}`;
       tile.dataset.cell = cell;
       tile.title = tileTitle(cell);
       const door = doorByCell(cell);
       if (door) {
         tile.classList.add(`door-edge-${door.edge}`);
       }
-      if (eventIcons[cellEvents[cell]]) {
-        tile.innerHTML = `<span class="tile-icon">${eventIcons[cellEvents[cell]]}</span>`;
+      const icon = eventIcons[cellEvents[cell]] || tileIcons[type];
+      if (icon) {
+        tile.innerHTML = `<span class="tile-icon">${icon}</span>`;
       }
       tileGrid.append(tile);
     }

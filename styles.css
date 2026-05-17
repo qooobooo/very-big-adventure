@@ -17,6 +17,13 @@
   --violet: #ad8be8;
   --shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
   --soft-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
+  --tile-gray-art: url("./assets/tiles/empty_field_512.png");
+  --tile-green-art: url("./assets/tiles/green_512.png");
+  --tile-red-art: url("./assets/tiles/red_512.png");
+  --tile-fantasy-border: #6f4524;
+  --tile-fantasy-border-dark: #2b180c;
+  --tile-fantasy-border-light: #c18a4b;
+  --board-gap-art: url("./assets/backgrounds/soft_forest_gap_1254.png");
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -719,16 +726,20 @@ h2 {
 
 .tile-grid {
   display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  grid-template-rows: repeat(10, 1fr);
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  grid-template-rows: repeat(10, minmax(0, 1fr));
+  background:
+    var(--board-gap-art) center / cover no-repeat,
+    #d9f5ff;
 }
 
 .tile {
   position: relative;
   display: grid;
   place-items: center;
-  border-right: 1px solid rgba(31, 34, 31, 0.18);
-  border-bottom: 1px solid rgba(31, 34, 31, 0.18);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   color: rgba(20, 25, 22, 0.42);
   font-size: clamp(0.8rem, 1.35vw, 1.28rem);
   text-shadow: none;
@@ -739,6 +750,54 @@ h2 {
   z-index: 2;
   display: inline-grid;
   place-items: center;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.tile-icon-image {
+  display: block;
+  width: 84%;
+  height: 84%;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.28));
+}
+
+.tile-icon-shop {
+  width: 89%;
+  height: 89%;
+}
+
+.tile-icon-enemy {
+  width: 91%;
+  height: 91%;
+}
+
+.tile-icon-good {
+  width: 88%;
+  height: 88%;
+}
+
+.tile-icon-bad {
+  width: 88%;
+  height: 88%;
+  transform: none;
+}
+
+.tile-icon-tadam {
+  width: 96%;
+  height: 96%;
+}
+
+.tile-icon-start {
+  width: 94%;
+  height: 94%;
+}
+
+.tile-icon-finish {
+  width: 96%;
+  height: 96%;
 }
 
 .door-closed::after {
@@ -847,7 +906,7 @@ h2 {
 }
 
 .tile-empty {
-  background: rgba(255, 255, 255, 0.96);
+  background: transparent;
 }
 
 .tile-empty::before {
@@ -864,32 +923,62 @@ h2 {
 .tile-enemy,
 .tile-shop,
 .tile-tadam {
-  background: #b8b8b8;
+  background-color: #b8b8b8;
+  background-image: var(--tile-gray-art);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 112% 112%;
+  border: 2px solid var(--tile-fantasy-border);
   box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    inset 0 0 0 1px rgba(43, 24, 12, 0.58),
+    inset 0 1px 0 rgba(193, 138, 75, 0.34),
+    inset 0 -1px 0 rgba(43, 24, 12, 0.5),
+    0 0 0 1px var(--tile-fantasy-border-dark);
+}
+
+.tile-path::before,
+.tile-start::before,
+.tile-finish::before,
+.tile-green::before,
+.tile-red::before,
+.tile-good::before,
+.tile-bad::before,
+.tile-enemy::before,
+.tile-shop::before,
+.tile-tadam::before {
+  opacity: 0;
 }
 
 .tile-start {
-  background: #ffe79b;
+  background-color: #b8b8b8;
+  background-image: var(--tile-gray-art);
+  border: 2px solid var(--tile-fantasy-border);
   box-shadow:
-    inset 0 0 0 1px rgba(152, 109, 22, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+    inset 0 0 0 1px rgba(43, 24, 12, 0.58),
+    inset 0 1px 0 rgba(193, 138, 75, 0.34),
+    inset 0 -1px 0 rgba(43, 24, 12, 0.5),
+    0 0 0 1px var(--tile-fantasy-border-dark);
 }
 
 .tile-finish {
-  background: #b4a6d8;
+  background-color: #b8b8b8;
+  background-image: var(--tile-gray-art);
+  border: 2px solid var(--tile-fantasy-border);
   box-shadow:
-    inset 0 0 0 1px rgba(78, 62, 122, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    inset 0 0 0 1px rgba(43, 24, 12, 0.58),
+    inset 0 1px 0 rgba(193, 138, 75, 0.34),
+    inset 0 -1px 0 rgba(43, 24, 12, 0.5),
+    0 0 0 1px var(--tile-fantasy-border-dark);
 }
 
 .tile-green {
-  background: #b8d9a8;
+  background-color: #b8d9a8;
+  background-image: var(--tile-green-art);
 }
 
 .tile-red {
-  background: #e99499;
+  background-color: #e99499;
+  background-image: var(--tile-red-art);
 }
 
 .tile-good,
@@ -906,7 +995,7 @@ h2 {
 .tile-enemy,
 .tile-shop,
 .tile-tadam {
-  background: #b8b8b8;
+  background-image: var(--tile-gray-art);
 }
 
 .tile-shop {
@@ -915,7 +1004,7 @@ h2 {
 }
 
 .tile-bad {
-  background: #b8b8b8;
+  background-image: var(--tile-gray-art);
 }
 
 .node-layer,
