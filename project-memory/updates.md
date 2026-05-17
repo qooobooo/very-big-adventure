@@ -20,6 +20,364 @@ Open questions:
 - ...
 ```
 
+## 2026-05-17 19:20 - Dev
+
+Changed:
+- Removed the inline "Далее" button from action-prompt toasts.
+- Action prompts now temporarily turn the main roll button into "Далее".
+- Clicking the main "Далее" button resolves the prompt, hides the toast, and restores the normal roll button state.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `showActionPrompt()` now stores an `actionPromptResolver`; `renderTurn()` uses it to switch `#rollBtn` text and enabled state.
+- Verified in the in-app browser: no `.event-toast-next` remains after reload, the script cache key is updated, and no JS errors appeared.
+- Verified syntax with `node --check src/game.js`.
+
+Open questions:
+- None.
+
+## 2026-05-17 19:01 - Dev
+
+Changed:
+- Enlarged the wide-browser board again: `calc(100dvh - 205px)` with `880px` max.
+- Reduced wide-mode board header height to 58px.
+- Reworked wide-mode choice/shop popups so the overlay is no longer square and the dialog scrolls inside the available map area.
+- Tightened wide-mode shop choice cards so popups fit better vertically.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Codex compact mode remains unchanged; verified current in-app browser width `562px` still has a 72px header and 528px board.
+- Verified syntax with `node --check src/game.js` and reloaded the in-app browser with no JS errors.
+- External Chrome cannot be directly inspected from this Codex browser session; this was tuned from the user's Chrome screenshot plus in-app regression checks.
+
+Open questions:
+- None.
+
+## 2026-05-17 18:56 - Dev
+
+Changed:
+- Enlarged the wide-browser board sizing after the first wide layout proved too conservative.
+- Wide board now uses `min(100%, calc(100dvh - 255px), 820px)` instead of `calc(100dvh - 330px)` / `720px`.
+- Tightened wide-mode top cards, board header, map padding, and chronicle height to give the field more room.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Codex compact mode remains unchanged; verified current in-app browser width `562px` still has a 72px header and 528px board.
+- Verified syntax with `node --check src/game.js` and reloaded the in-app browser with no JS errors.
+
+Open questions:
+- None.
+
+## 2026-05-17 18:50 - Dev
+
+Changed:
+- Added a wide-browser responsive layout for viewports `1200px+`.
+- Wide layout reduces player-card height, board header height, map padding, and sizes the board from available viewport height.
+- Wide layout expands the app shell and right info column so regular Chrome uses more available space.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- The Codex compact view remains under the existing `max-width: 820px` rules; verified current in-app browser width `562px` keeps the same 72px header and 528px board.
+- Verified syntax with `node --check src/game.js` and reloaded the in-app browser with no JS errors.
+
+Open questions:
+- Wide Chrome should now fit substantially better, but exact browser-toolbar height can vary; tune `calc(100dvh - 330px)` if the board is still too tall/short on a specific setup.
+
+## 2026-05-17 18:39 - Dev
+
+Changed:
+- Added the rule that landing cell effects only resolve after forward movement.
+- Backward forced movement now only moves and highlights the final cell; it does not trigger that cell's effect.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Normal dice movement and positive forced movement still resolve landing effects.
+- Negative `movePlayerSteps()` no longer calls `resolveLanding()`.
+- Verified syntax with `node --check src/game.js` and reloaded the in-app browser with no JS errors.
+
+Open questions:
+- None.
+
+## 2026-05-17 18:31 - Dev
+
+Changed:
+- Fixed optional extra-die handling so multiple bought Joe's Shop extra-die cards each prompt separately.
+- Added `1/2`, `2/2`, etc. numbering to the inline pre-roll prompt when multiple extra-die cards are available.
+- The chosen extra dice now sum across all accepted cards before the roll or enemy battle.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Replaced the old single `optionalExtraDieEffect()` lookup with `optionalExtraDieCards()` and a sequential `chooseSingleExtraDie()` flow.
+- Verified syntax with `node --check src/game.js` and reloaded the in-app browser with no JS errors.
+
+Open questions:
+- None.
+
+## 2026-05-17 18:25 - Dev
+
+Changed:
+- Added dashed outlines to Joe's Shop tiles.
+- Joe's Shop now triggers when a player steps onto it during movement, even if it is not the final landing cell.
+- After resolving the shop choice, movement continues with the remaining steps.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Pass-through shop triggers are handled by `resolvePassThroughShop()` in both normal movement and effect-based movement.
+- Final landing on a shop still uses the existing `resolveLanding()` flow, so the shop is not double-triggered on the last step.
+- Verified in the in-app browser: all three shop tiles have dashed outlines and no JS errors after reload.
+- Verified syntax with `node --check src/game.js`.
+
+Open questions:
+- None.
+
+## 2026-05-17 17:09 - Dev
+
+Changed:
+- Aligned enemy door damage thresholds with the user's numbered map: door 1 = 6 damage, door 2 = 8, door 3 = 10, door 4 = 13.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Door positions verified in the in-app browser: door 1 `7-3/right`, door 2 `0-7/right`, door 3 `4-2/left`, door 4 `8-0/right`.
+- All four doors render with two player-color dots by default.
+- Verified syntax with `node --check src/game.js`.
+
+Open questions:
+- None.
+
+## 2026-05-17 17:04 - Dev
+
+Changed:
+- Added personal enemy-gated doors: each door tracks which players have defeated its guarding enemy.
+- Added enemy battle on landing: roll dice, apply extra dice from Joe's Shop and passive +1 roll bonuses, then compare against enemy damage.
+- Set enemy damage thresholds: 1st enemy 6, 2nd 8, 3rd 10, 4th 13.
+- On success, the linked door opens for that player; on failure, the player returns to start.
+- Added colored player dots on locked doors and hide a door once every player has opened it.
+- Blocked movement through locked doors.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Door mapping: `1-7 -> 0-7` damage 6, `8-3 -> 7-3` damage 8, `3-2 -> 4-2` damage 10, `8-0 -> 9-0` damage 13.
+- Verified in the in-app browser: four doors render with two player-color dots by default, no seal text appears, and no JS errors after reload.
+- Verified syntax with `node --check src/game.js`.
+
+Open questions:
+- None.
+
+## 2026-05-17 16:53 - Dev
+
+Changed:
+- Moved the new central door from `4-4` to `4-2`, directly after the enemy cell.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified in the in-app browser: `4-2 door-edge-left` exists and the old `4-4` door is gone.
+- Verified syntax with `node --check src/game.js`.
+
+Open questions:
+- None.
+
+## 2026-05-17 16:46 - Dev
+
+Changed:
+- Removed the old seal mechanic from doors and player score cards.
+- Removed seal counters, seal-removal logs, and seal-related styling.
+- Added a new visual door at cell `4-4` on the left edge.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Doors are now static visual gates, not seal counters.
+- Verified in the in-app browser: four doors render, including `4-4 door-edge-left`, and player cards no longer show seal text.
+- Verified syntax with `node --check src/game.js`.
+
+Open questions:
+- None.
+
+## 2026-05-17 16:06 - Dev
+
+Changed:
+- Removed the stray trailing dot from green/red field movement action prompts.
+- Changed action-prompt copy layout from grid to normal text flow so punctuation cannot become a separate grid row.
+- Ensured player names keep their player color inside action prompts.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The dot came from the action prompt message ending after a `<strong>` element while `.event-toast-copy` was a grid.
+- Verified syntax with `node --check src/game.js`.
+
+Open questions:
+- None.
+
+## 2026-05-17 16:02 - Dev
+
+Changed:
+- Fixed the board action header height so it no longer grows/shrinks between normal roll state and Joe's Shop pre-roll choice.
+- Fixed the roll button column width so action/info blocks do not resize when button text changes.
+- Constrained the inline pre-roll action content to fit inside the fixed action block.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified in the in-app browser at the current narrow width: header is 72px high, action block is 230px wide / 55px high, roll button column is fixed at 111px.
+- Verified syntax with `node --check src/game.js`.
+
+Open questions:
+- None.
+
+## 2026-05-17 15:57 - Dev
+
+Changed:
+- Rebalanced the board header columns so the field/card info block is narrower and the actions block is wider.
+- Made the bought Joe's Shop extra-die action copy more compact.
+- Tightened the inline pre-roll action controls so they fit beside the roll button without expanding the header.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- On the current in-app browser width, the field info block measured 127px and the actions block measured 230px, with a 6px gap before the roll button.
+- Verified syntax with `node --check src/game.js`.
+
+Open questions:
+- None.
+
+## 2026-05-17 15:43 - Dev
+
+Changed:
+- Moved the optional bought "Лавка Джо" pre-roll choice out of the modal overlay and into the actions panel left of the roll button.
+- Added compact inline "Заплатить / Не платить" controls for the extra-die card.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- During `pendingPreRoll`, `choicePanel` is now hidden and `#turnActions` renders the paid extra-die choice.
+- Verified syntax with `node --check src/game.js` and reloaded the in-app browser with no JS errors in normal state.
+
+Open questions:
+- None.
+
+## 2026-05-17 15:38 - Dev
+
+Changed:
+- Added a small end-game popup over the field: "Победил - X!".
+- Added a short CSS confetti animation that plays around the winner popup.
+- Added the winner popup layer to the board area and bumped the game script cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The popup is rendered only when `state.finished` is true and uses `findWinner()` after final coin scoring.
+- Verified in the in-app browser: the hidden winner layer exists, does not block normal clicks, and no JS errors appeared after reload.
+
+Open questions:
+- None.
+
+## 2026-05-17 15:22 - Dev
+
+Changed:
+- Removed the "Сейчас ходит" side card.
+- Moved the party settings controls into that side-panel slot and stretched them across the available UI width.
+- Bumped the game script cache key so the optional removed-card references load reliably.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified in the in-app browser at `127.0.0.1:5173`: the old turn card is gone, settings show 2 players / 1 die by default, and no JS errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-17 15:15 - Dev
+
+Changed:
+- Removed the visible "Кольцевое поле / Ход" block from the board header.
+- Expanded the dice, field info, action, and roll controls into the freed header space.
+- Made the old round title DOM reference optional so removing the visible title does not break rendering.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified in the in-app browser at `127.0.0.1:5173`: the header controls fill the row, no JS errors appeared, and clicking "Бросить кубик" still advances into the next action flow.
+
+Open questions:
+- None.
+
 ## 2026-05-17 03:28 - Dev
 
 Changed:

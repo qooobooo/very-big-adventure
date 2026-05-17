@@ -18,6 +18,7 @@ const ui = {
   rollBtn: document.querySelector("#rollBtn"),
   roundTitle: document.querySelector("#roundTitle"),
   turnActions: document.querySelector("#turnActions"),
+  winnerPopup: document.querySelector("#winnerPopup"),
 };
 
 const boardCols = 10;
@@ -104,9 +105,10 @@ const routeIndex = buildRouteIndex(routeCells);
 const routeNext = buildRouteNext(routePath);
 
 const doorConfigs = [
-  { id: "left", cell: "0-7", edge: "right", label: "левая дверь", multiplier: 1 },
-  { id: "middle", cell: "7-3", edge: "right", label: "средняя дверь", multiplier: 1 },
-  { id: "finish", cell: "8-0", edge: "right", label: "дверь к финишу", multiplier: 2 },
+  { id: "left", cell: "0-7", edge: "right", enemyCell: "1-7", toCell: "0-7", damage: 8, label: "дверь 2" },
+  { id: "middle", cell: "7-3", edge: "right", enemyCell: "8-3", toCell: "7-3", damage: 6, label: "дверь 1" },
+  { id: "center", cell: "4-2", edge: "left", enemyCell: "3-2", toCell: "4-2", damage: 10, label: "центральная дверь" },
+  { id: "finish", cell: "8-0", edge: "right", enemyCell: "8-0", toCell: "9-0", damage: 13, label: "дверь к финишу" },
 ];
 
 const cellEvents = buildCellEvents();
@@ -117,7 +119,6 @@ const eventIcons = {
   good: "🎁",
   green: "",
   red: "",
-  seal: "🧿",
   shop: "🧔",
   tadam: "🎉",
 };
@@ -135,17 +136,16 @@ const names = [
 ];
 
 let state;
+let actionPromptResolver = null;
 let eventToastFadeTimer = null;
 let eventToastHideTimer = null;
 
 function newGame() {
+  actionPromptResolver = null;
   const playerCount = Number(ui.playerCount.value);
   const doors = {};
   for (const door of doorConfigs) {
-    doors[door.id] = {
-      ...door,
-      seals: playerCount * door.multiplier,
-    };
+    doors[door.id] = { ...door, openedBy: [] };
   }
 
   state = {
@@ -167,7 +167,6 @@ function newGame() {
       id: index,
       items: [],
       position: startCell,
-      sealsRemoved: 0,
     })),
     round: 1,
     tadams: [],
@@ -175,7 +174,7 @@ function newGame() {
   };
 
   boardEl.dataset.ready = "false";
-  log("<strong>Игра началась.</strong> Снимайте печати, проходя через запечатанные клетки.");
+  log("<strong>Игра началась.</strong> Побеждайте врагов, чтобы открывать двери.");
   render();
 }
 
@@ -200,12 +199,24 @@ async function rollAndMove({ animate = true } = {}) {
     const nextPosition = await chooseNextPosition(currentPosition, totalSteps - step, animate);
     if (!nextPosition) break;
 
-    removeSealIfNeeded(player, currentPosition);
+    const blockingDoor = lockedDoorForTransition(player, currentPosition, nextPosition);
+    if (blockingDoor) {
+      if (animate) {
+        await showActionPrompt(
+          `${playerName(player)} не может пройти ${blockingDoor.label}: победи врага с уроном <strong>${blockingDoor.damage}</strong>`,
+        );
+      }
+      break;
+    }
+
     player.position = nextPosition;
     if (step < totalSteps - 1) resolveJumpSteal(player);
     if (animate) {
       render();
       await sleep(180);
+    }
+    if (step < totalSteps - 1) {
+      await resolvePassThroughShop(player);
     }
   }
 
@@ -262,18 +273,6 @@ function defaultNextCell(cell) {
   return routeNext.get(cell) || null;
 }
 
-function removeSealIfNeeded(player, cell) {
-  const door = doorByCell(cell);
-  if (!door || door.seals <= 0) return;
-
-  door.seals -= 1;
-  player.sealsRemoved += 1;
-  log(`${playerName(player)} снимает печать с клетки ${cellLabel(cell)}. Осталось: <strong>${door.seals}</strong>.`);
-  if (door.seals === 0) {
-    log(`<strong>${door.label} открыта.</strong>`);
-  }
-}
-
 function advanceTurn() {
   state.dice = null;
   state.turns += 1;
@@ -289,6 +288,7 @@ function render() {
   renderScores();
   renderTurn();
   renderChoicePanel();
+  renderWinnerPopup();
   renderTadams();
 }
 
@@ -330,14 +330,26 @@ function buildBoardShell() {
 }
 
 function renderDoors() {
+  boardEl.querySelectorAll(".door-locks").forEach((item) => item.remove());
+  boardEl.querySelectorAll(".door-closed").forEach((tile) => tile.classList.remove("door-closed"));
+
   for (const door of Object.values(state.doors)) {
     const tile = boardEl.querySelector(`[data-cell="${door.cell}"]`);
     if (!tile) continue;
 
-    tile.classList.toggle("door-open", door.seals === 0);
-    tile.classList.toggle("door-closed", door.seals > 0);
-    const sealCount = tile.querySelector(".seal-count");
-    if (sealCount) sealCount.textContent = door.seals > 0 ? String(door.seals) : "";
+    const lockedPlayers = state.players.filter((player) => !isDoorOpenForPlayer(door, player));
+    if (lockedPlayers.length === 0) continue;
+
+    tile.classList.add("door-closed");
+    const locks = document.createElement("span");
+    locks.className = "door-locks";
+    for (const player of lockedPlayers) {
+      const dot = document.createElement("i");
+      dot.style.setProperty("--player-color", player.color);
+      dot.title = `${door.label}: закрыта для ${player.name}`;
+      locks.append(dot);
+    }
+    tile.append(locks);
   }
 }
 
@@ -406,7 +418,6 @@ function renderScores() {
       <div class="score-stats">
         <span><b>${cellLabel(player.position)}</b> позиция</span>
         <span><b>${player.coins}</b> монет</span>
-        <span><b>${player.sealsRemoved}</b> печатей</span>
       </div>
       <div class="score-shop">
         <span>Лавка Джо</span>
@@ -428,41 +439,29 @@ function shortShopTitle(item) {
 
 function renderTurn() {
   const player = currentPlayer();
-  ui.activePlayerName.textContent = player.name;
+  if (ui.activePlayerName) {
+    ui.activePlayerName.textContent = player.name;
+  }
   const itemText = player.items.length ? ` Лавка: ${player.items.map((item) => item.title).join(", ")}.` : "";
-  ui.activePlayerRole.textContent = `Клетка ${cellLabel(player.position)}. Монеты: ${player.coins}.${itemText}`;
+  if (ui.activePlayerRole) {
+    ui.activePlayerRole.textContent = `Клетка ${cellLabel(player.position)}. Монеты: ${player.coins}.${itemText}`;
+  }
   ui.fieldEffect.innerHTML = fieldEffectText(player.position);
+  ui.turnActions.className = `turn-actions ${state.pendingPreRoll ? "pending-action" : ""}`.trim();
   ui.turnActions.innerHTML = turnActionsText(player);
   ui.diceValue.textContent = state.dice ?? "-";
-  ui.rollBtn.textContent = state.isAnimating ? "Кубик крутится" : "Бросить кубик";
-  ui.roundTitle.textContent = state.finished ? "Игра завершена" : `Раунд ${state.round}`;
+  ui.rollBtn.textContent = actionPromptResolver ? "Далее" : state.isAnimating ? "Кубик крутится" : "Бросить кубик";
+  if (ui.roundTitle) {
+    ui.roundTitle.textContent = state.finished ? "Игра завершена" : `Раунд ${state.round}`;
+  }
   ui.rollBtn.disabled =
-    state.finished || state.isAnimating || Boolean(state.pendingChoice) || Boolean(state.pendingPreRoll) || Boolean(state.pendingShop);
+    !actionPromptResolver &&
+    (state.finished || state.isAnimating || Boolean(state.pendingChoice) || Boolean(state.pendingPreRoll) || Boolean(state.pendingShop));
 }
 
 function renderChoicePanel() {
   if (state.pendingPreRoll) {
-    const player = state.players.find((item) => item.id === state.pendingPreRoll.playerId) || currentPlayer();
-    const card = player.items.find((item) => item.effect?.type === "optional-extra-die");
-    const cost = card?.effect?.cost ?? 2;
-    const dice = card?.effect?.dice ?? 1;
-    const buttons = renderChoiceDialog({
-      kind: "use-card",
-      kicker: "Карта Лавки Джо",
-      title: card?.shortTitle || card?.title || "Дополнительный кубик",
-      summary: `${player.name} может заплатить ${cost} монеты и бросить на ${dice} кубик больше.`,
-    });
-
-    for (const choice of [
-      { id: "yes", label: `Заплатить ${cost} монеты`, note: `+${dice} кубик` },
-      { id: "no", label: "Не платить", note: "обычный бросок" },
-    ]) {
-      appendChoiceButton(buttons, {
-        label: choice.label,
-        note: choice.note,
-        onClick: () => resolvePreRollChoice(choice.id === "yes"),
-      });
-    }
+    hideChoicePanel();
     return;
   }
 
@@ -516,6 +515,30 @@ function renderChoicePanel() {
       onClick: () => resolveChoice(choice.cell),
     });
   }
+}
+
+function renderWinnerPopup() {
+  if (!ui.winnerPopup) return;
+
+  if (!state.finished) {
+    ui.winnerPopup.hidden = true;
+    ui.winnerPopup.innerHTML = "";
+    return;
+  }
+
+  const winner = findWinner();
+  const confetti = Array.from(
+    { length: 18 },
+    (_, index) =>
+      `<i style="--i: ${index}; --left: ${8 + index * 5}%; --hue: ${(index * 47) % 360}; --x: ${-34 + index * 4}px"></i>`,
+  ).join("");
+  ui.winnerPopup.hidden = false;
+  ui.winnerPopup.innerHTML = `
+    <div class="winner-confetti" aria-hidden="true">${confetti}</div>
+    <div class="winner-card">
+      <p>Победил - <span class="player-name" style="--player-color: ${winner.color}">${winner.name}</span>!</p>
+    </div>
+  `;
 }
 
 function renderChoiceDialog({ kind, kicker, title, summary, buttonsClass = "" }) {
@@ -606,6 +629,7 @@ async function resolveLanding(player) {
   const event = cellEvents[player.position];
   if (!event) return;
 
+  const landedPosition = player.position;
   state.eventDepth += 1;
   try {
     if (event === "green") {
@@ -620,12 +644,54 @@ async function resolveLanding(player) {
       drawTadamCard(player);
     } else if (event === "shop") {
       await resolveShop(player);
+    } else if (event === "enemy") {
+      await resolveEnemyBattle(player);
     }
 
-    resolveLandSteal(player);
+    if (player.position === landedPosition) {
+      resolveLandSteal(player);
+    }
   } finally {
     state.eventDepth -= 1;
   }
+}
+
+async function resolveEnemyBattle(player) {
+  const door = doorByEnemyCell(player.position);
+  if (!door || isDoorOpenForPlayer(door, player)) return;
+
+  await showActionPrompt(
+    `${playerName(player)} вступает в бой. Нужно нанести <strong>${door.damage} урона</strong>, чтобы открыть ${door.label}.`,
+  );
+
+  const extraDice = await chooseExtraDie(player, true);
+  const diceCount = Number(ui.diceCount.value) + extraDice;
+  const rolls = rollDice(diceCount);
+  const rolled = rolls.reduce((sum, value) => sum + value, 0);
+  state.isAnimating = true;
+  state.dice = null;
+  render();
+  await animateDice(rolled);
+
+  const bonus = playerStepBonus(player);
+  const damage = rolled + bonus;
+  state.dice = damage;
+  state.isAnimating = false;
+
+  const bonusText = bonus ? ` + ${bonus} бонус = <strong>${damage}</strong>` : "";
+  if (damage >= door.damage) {
+    door.openedBy.push(player.id);
+    log(`${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта для игрока.`);
+    render();
+    await showActionPrompt(`${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта.`);
+    return;
+  }
+
+  log(`${playerName(player)} не побеждает врага: ${formatRoll(rolls)}${bonusText}. Игрок возвращается на старт.`);
+  player.position = startCell;
+  render();
+  pulseTile(player.position);
+  await showActionPrompt(`${playerName(player)} не побеждает врага: ${formatRoll(rolls)}${bonusText}. Возврат на <strong>старт</strong>.`);
 }
 
 async function resolveGreenField(player) {
@@ -676,7 +742,7 @@ async function applyFieldEffect(player, effect, fieldName) {
     await drawAndApplyCard(player, deckById(effect.deck), deckLabel(effect.deck));
   } else if (effect.mode === "move") {
     const direction = effect.steps > 0 ? "вперед" : "назад";
-    const message = `${playerName(player)} попадает на ${fieldName} и идет на <strong>${Math.abs(effect.steps)} клеток ${direction}</strong>.`;
+    const message = `${playerName(player)} попадает на ${fieldName} и идет на <strong>${Math.abs(effect.steps)} клеток ${direction}</strong>`;
     log(message);
     await showActionPrompt(message);
     await movePlayerSteps(player, effect.steps);
@@ -720,6 +786,13 @@ async function resolveShop(player) {
   log(`${playerName(player)} покупает в Лавке Джо: <strong>${bought.title}</strong>.`, { toast: true });
 }
 
+async function resolvePassThroughShop(player) {
+  if (cellEvents[player.position] !== "shop") return;
+
+  log(`${playerName(player)} проходит через <strong>Лавку Джо</strong>.`, { toast: true });
+  await resolveShop(player);
+}
+
 function chooseShopCard(player, offer) {
   state.pendingShop = { offer, playerId: player.id };
   render();
@@ -735,15 +808,27 @@ function chooseShopCard(player, offer) {
 }
 
 async function movePlayerSteps(player, steps) {
+  let shouldResolveLanding = steps > 0;
+
   if (steps > 0) {
     for (let step = 0; step < steps && player.position !== finishCell; step += 1) {
+      const currentPosition = player.position;
       const nextPosition = getNextOptions(player.position)[0]?.cell;
       if (!nextPosition) break;
-      removeSealIfNeeded(player, player.position);
+      const blockingDoor = lockedDoorForTransition(player, currentPosition, nextPosition);
+      if (blockingDoor) {
+        await showActionPrompt(
+          `${playerName(player)} не может пройти ${blockingDoor.label}: победи врага с уроном <strong>${blockingDoor.damage}</strong>`,
+        );
+        break;
+      }
       player.position = nextPosition;
       if (step < steps - 1) resolveJumpSteal(player);
       render();
       await sleep(120);
+      if (step < steps - 1) {
+        await resolvePassThroughShop(player);
+      }
     }
   } else if (steps < 0) {
     const currentIndex = routeCells.findIndex((cell) => cellKey(cell.col, cell.row) === player.position);
@@ -756,7 +841,9 @@ async function movePlayerSteps(player, steps) {
   }
 
   pulseTile(player.position);
-  await resolveLanding(player);
+  if (shouldResolveLanding) {
+    await resolveLanding(player);
+  }
 }
 
 function addCoins(player, amount) {
@@ -839,7 +926,6 @@ function tileTitle(cell) {
     good: "Хорошо",
     green: "Зеленое поле",
     red: "Красное поле",
-    seal: "Печать",
     shop: "Лавка Джо",
     tadam: "ТАДАМ!",
   };
@@ -856,7 +942,6 @@ function fieldEffectText(cell) {
     good: ["Хорошо", "тяни карту Хорошо"],
     green: ["Зеленое поле", greenEffectLabel()],
     red: ["Красное поле", redEffectLabel()],
-    seal: ["Печать", "снимается при выходе"],
     shop: ["Лавка Джо", "2 карты на выбор за 5 монет"],
     tadam: ["ТАДАМ!", "новое общее правило"],
   };
@@ -865,14 +950,34 @@ function fieldEffectText(cell) {
 }
 
 function turnActionsText(player) {
+  if (state.pendingPreRoll?.playerId === player.id) {
+    const card = state.pendingPreRoll.card || player.items.find((item) => item.effect?.type === "optional-extra-die");
+    const cost = card?.effect?.cost ?? 2;
+    const dice = card?.effect?.dice ?? 1;
+    const current = state.pendingPreRoll.index + 1;
+    const total = state.pendingPreRoll.total;
+    return `
+      <div class="pre-roll-action">
+        <span>
+          <b>${card?.shortTitle || card?.title || "Карта Лавки Джо"}${total > 1 ? ` ${current}/${total}` : ""}</b>
+          Заплати ${cost} монеты: +${dice} кубик.
+        </span>
+        <div>
+          <button type="button" data-preroll-choice="yes">Заплатить</button>
+          <button type="button" data-preroll-choice="no">Не платить</button>
+        </div>
+      </div>
+    `;
+  }
+
   const actions = [];
-  const extraDie = optionalExtraDieEffect(player);
-  if (extraDie) {
-    const canPay = player.coins >= extraDie.cost;
+  const extraDiceCards = optionalExtraDieCards(player);
+  for (const card of extraDiceCards) {
+    const canPay = player.coins >= card.effect.cost;
     actions.push(`
       <span class="action-chip ${canPay ? "" : "disabled"}">
-        <b>${extraDie.cost} монеты</b>
-        <span>+${extraDie.dice} кубик</span>
+        <b>${card.effect.cost} монеты</b>
+        <span>+${card.effect.dice} кубик</span>
       </span>
     `);
   }
@@ -895,12 +1000,30 @@ function redEffectLabel() {
   return "-3 монеты";
 }
 
-function isDoorOpen(id) {
-  return state.doors[id].seals === 0;
-}
-
 function doorByCell(cell) {
   return state?.doors ? Object.values(state.doors).find((door) => door.cell === cell) : doorConfigs.find((door) => door.cell === cell);
+}
+
+function doorByEnemyCell(cell) {
+  return state?.doors
+    ? Object.values(state.doors).find((door) => door.enemyCell === cell)
+    : doorConfigs.find((door) => door.enemyCell === cell);
+}
+
+function doorForTransition(fromCell, toCell) {
+  const doors = state?.doors ? Object.values(state.doors) : doorConfigs;
+  return doors.find(
+    (door) => (door.enemyCell === fromCell && door.toCell === toCell) || (door.enemyCell === toCell && door.toCell === fromCell),
+  );
+}
+
+function lockedDoorForTransition(player, fromCell, toCell) {
+  const door = doorForTransition(fromCell, toCell);
+  return door && !isDoorOpenForPlayer(door, player) ? door : null;
+}
+
+function isDoorOpenForPlayer(door, player) {
+  return door.openedBy?.includes(player.id);
 }
 
 function buildFieldCells() {
@@ -991,8 +1114,8 @@ function playerCoinBonus(player) {
     .reduce((sum, item) => sum + item.effect.amount, 0);
 }
 
-function optionalExtraDieEffect(player) {
-  return player.items.find((item) => item.effect?.type === "optional-extra-die")?.effect || null;
+function optionalExtraDieCards(player) {
+  return player.items.filter((item) => item.effect?.type === "optional-extra-die");
 }
 
 function deckById(id) {
@@ -1009,22 +1132,35 @@ function deckLabel(id) {
   return labels[id] || id;
 }
 
-function chooseExtraDie(player, animate) {
-  const effect = optionalExtraDieEffect(player);
-  if (!animate || !effect || player.coins < effect.cost) return false;
+async function chooseExtraDie(player, animate) {
+  if (!animate) return 0;
 
-  state.pendingPreRoll = { playerId: player.id };
+  let totalDice = 0;
+  const cards = optionalExtraDieCards(player);
+  for (const [index, card] of cards.entries()) {
+    const effect = card.effect;
+    if (player.coins < effect.cost) continue;
+
+    const useExtraDie = await chooseSingleExtraDie(player, card, index, cards.length);
+    if (!useExtraDie) continue;
+
+    addCoins(player, -effect.cost);
+    totalDice += effect.dice;
+    log(`${playerName(player)} платит <strong>${effect.cost} монеты</strong> за дополнительный кубик.`);
+  }
+
+  return totalDice;
+}
+
+function chooseSingleExtraDie(player, card, index, total) {
+  state.pendingPreRoll = { card, index, playerId: player.id, total };
   render();
 
   return new Promise((resolve) => {
     state.preRollResolver = (useExtraDie) => {
       state.pendingPreRoll = null;
       state.preRollResolver = null;
-      if (useExtraDie) {
-        addCoins(player, -effect.cost);
-        log(`${playerName(player)} платит <strong>${effect.cost} монеты</strong> за дополнительный кубик.`);
-      }
-      resolve(useExtraDie ? effect.dice : 0);
+      resolve(useExtraDie);
     };
   });
 }
@@ -1095,26 +1231,20 @@ function showActionPrompt(message) {
   window.clearTimeout(eventToastHideTimer);
 
   ui.eventToast.hidden = false;
-  ui.eventToast.innerHTML = `
-    <div class="event-toast-copy">${message}</div>
-    <button class="event-toast-next" type="button">Далее</button>
-  `;
+  ui.eventToast.innerHTML = `<div class="event-toast-copy">${message}</div>`;
   ui.eventToast.classList.remove("fading", "quick-fading", "visible");
   ui.eventToast.classList.add("action-prompt");
   void ui.eventToast.offsetWidth;
   ui.eventToast.classList.add("visible");
 
   return new Promise((resolve) => {
-    const button = ui.eventToast.querySelector(".event-toast-next");
-    button?.focus({ preventScroll: true });
-    button?.addEventListener(
-      "click",
-      () => {
-        hideEventToast({ quick: true });
-        resolve();
-      },
-      { once: true },
-    );
+    actionPromptResolver = () => {
+      actionPromptResolver = null;
+      hideEventToast({ quick: true });
+      render();
+      resolve();
+    };
+    render();
   });
 }
 
@@ -1164,7 +1294,18 @@ function formatRoll(rolls) {
 }
 
 ui.newGameBtn.addEventListener("click", newGame);
-ui.rollBtn.addEventListener("click", () => rollAndMove());
+ui.rollBtn.addEventListener("click", () => {
+  if (actionPromptResolver) {
+    actionPromptResolver();
+    return;
+  }
+  rollAndMove();
+});
+ui.turnActions.addEventListener("click", (event) => {
+  const button = event.target instanceof Element ? event.target.closest("[data-preroll-choice]") : null;
+  if (!button) return;
+  resolvePreRollChoice(button.dataset.prerollChoice === "yes");
+});
 ui.eventToast?.addEventListener("click", (event) => {
   if (ui.eventToast.classList.contains("action-prompt")) return;
   hideEventToast({ quick: true });

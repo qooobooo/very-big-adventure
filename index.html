@@ -13,10 +13,6 @@
       <section class="play-area">
         <article class="board-panel" aria-label="Игровое поле">
           <div class="board-header">
-            <div>
-              <p class="eyebrow">Кольцевое поле</p>
-              <h2 id="roundTitle">Ход 1 из 20</h2>
-            </div>
             <div class="dice-panel">
               <span id="diceValue">-</span>
               <div id="fieldEffect" class="field-effect"></div>
@@ -26,16 +22,34 @@
           </div>
           <div class="map-wrap">
             <div id="eventToast" class="event-toast" role="button" tabindex="0" aria-live="polite" hidden></div>
+            <div id="winnerPopup" class="winner-popup" aria-live="polite" hidden></div>
             <div id="choicePanel" class="choice-panel" role="dialog" aria-live="polite" hidden></div>
             <div id="board" class="board"></div>
           </div>
         </article>
 
-        <aside class="side-panel" aria-label="Информация хода">
-          <section class="turn-card">
-            <p class="eyebrow">Сейчас ходит</p>
-            <h2 id="activePlayerName">—</h2>
-            <p id="activePlayerRole" class="muted-text">—</p>
+        <aside class="side-panel" aria-label="Информация партии">
+          <section class="game-settings" aria-label="Панель партии">
+            <div class="season-controls">
+              <label>
+                Игроков
+                <select id="playerCount">
+                  <option value="2" selected>2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                </select>
+              </label>
+              <label>
+                Кубиков
+                <select id="diceCount">
+                  <option value="1" selected>1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                </select>
+              </label>
+              <button id="newGameBtn" class="secondary">Новая игра</button>
+            </div>
           </section>
           <section class="tadam-card">
             <div class="section-title">
@@ -56,30 +70,8 @@
         </article>
       </section>
 
-      <section class="topbar game-settings" aria-label="Панель партии">
-        <div class="season-controls">
-          <label>
-            Игроков
-            <select id="playerCount">
-              <option value="2" selected>2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-            </select>
-          </label>
-          <label>
-            Кубиков
-            <select id="diceCount">
-              <option value="1" selected>1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-            </select>
-          </label>
-          <button id="newGameBtn" class="secondary">Новая игра</button>
-        </div>
-      </section>
     </main>
 
-    <script type="module" src="./src/game.js?v=20260517-0248"></script>
+    <script type="module" src="./src/game.js?v=20260517-1908"></script>
   </body>
 </html>
