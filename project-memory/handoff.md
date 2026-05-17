@@ -1,6 +1,6 @@
 # Project Handoff
 
-Last updated: 2026-05-14 by Important.
+Last updated: 2026-05-17 by Important.
 
 ## Очень Большая Бродилка
 
@@ -25,7 +25,6 @@ Key files:
 
 Current important state:
 
-- `good / coins10` is back to 10 coins.
 - `src/cards.config.js` and `cards-google-sheet.csv` should stay aligned when card text or effects change.
 - The active source folder is now the git repository at `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure`.
 - Remote: `https://github.com/qooobooo/very-big-adventure.git`.

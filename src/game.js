@@ -17,93 +17,108 @@ const ui = {
   playerCount: document.querySelector("#playerCount"),
   rollBtn: document.querySelector("#rollBtn"),
   roundTitle: document.querySelector("#roundTitle"),
+  turnActions: document.querySelector("#turnActions"),
 };
 
 const boardCols = 10;
 const boardRows = 10;
 const eventToastVisibleMs = 5000;
 const eventToastFadeMs = 800;
-const startCell = "9-9";
-const finishCell = "4-3";
+const eventToastQuickFadeMs = 140;
+const startCell = "0-9";
+const finishCell = "9-0";
+const boardLayout = [
+  ["red", "shop", "bad", null, "red", "good", "bad", null, "enemy", "finish"],
+  ["green", null, "red", null, "red", null, "bad", "bad", "bad", null],
+  ["red", null, "tadam", "enemy", "red", null, null, null, null, null],
+  ["bad", null, null, null, null, null, null, "good", "enemy", "bad"],
+  ["good", null, "shop", "green", "red", "good", "green", "red", null, "tadam"],
+  ["green", null, "green", null, null, null, null, null, null, "green"],
+  ["red", null, "bad", null, "good", "shop", "tadam", null, null, "green"],
+  ["good", "enemy", "tadam", null, "tadam", null, "good", null, "good", "tadam"],
+  [null, null, null, null, "green", null, "green", null, "green", null],
+  ["start", "good", "green", "green", "good", null, "good", "tadam", "green", null],
+];
+const routePath = [
+  "0-9",
+  "1-9",
+  "2-9",
+  "3-9",
+  "4-9",
+  "4-8",
+  "4-7",
+  "4-6",
+  "5-6",
+  "6-6",
+  "6-7",
+  "6-8",
+  "6-9",
+  "7-9",
+  "8-9",
+  "8-8",
+  "8-7",
+  "9-7",
+  "9-6",
+  "9-5",
+  "9-4",
+  "9-3",
+  "8-3",
+  "7-3",
+  "7-4",
+  "6-4",
+  "5-4",
+  "4-4",
+  "3-4",
+  "2-4",
+  "2-5",
+  "2-6",
+  "2-7",
+  "1-7",
+  "0-7",
+  "0-6",
+  "0-5",
+  "0-4",
+  "0-3",
+  "0-2",
+  "0-1",
+  "0-0",
+  "1-0",
+  "2-0",
+  "2-1",
+  "2-2",
+  "3-2",
+  "4-2",
+  "4-1",
+  "4-0",
+  "5-0",
+  "6-0",
+  "6-1",
+  "7-1",
+  "8-1",
+  "8-0",
+  "9-0",
+];
 const fieldCells = buildFieldCells();
 const routeCells = buildRouteCells();
 const routeIndex = buildRouteIndex(routeCells);
+const routeNext = buildRouteNext(routePath);
 
 const doorConfigs = [
-  { id: "top", cell: "2-0", edge: "bottom", label: "верхняя дверь", multiplier: 1 },
-  { id: "middle", cell: "2-5", edge: "bottom", label: "средняя дверь", multiplier: 1 },
-  { id: "finish", cell: "7-5", edge: "top", label: "дверь к финишу", multiplier: 2 },
+  { id: "left", cell: "0-7", edge: "right", label: "левая дверь", multiplier: 1 },
+  { id: "middle", cell: "7-3", edge: "right", label: "средняя дверь", multiplier: 1 },
+  { id: "finish", cell: "8-0", edge: "right", label: "дверь к финишу", multiplier: 2 },
 ];
 
-const cellEvents = {
-  "0-0": "good",
-  "1-0": "good",
-  "2-0": "seal",
-  "3-0": "bad",
-  "4-0": "shop",
-  "5-0": "good",
-  "6-0": "tadam",
-  "7-0": "bad",
-  "8-0": "red",
-  "9-0": "shop",
-  "0-1": "green",
-  "2-1": "green",
-  "9-1": "good",
-  "0-2": "tadam",
-  "2-2": "green",
-  "4-2": "bad",
-  "5-2": "bad",
-  "6-2": "bad",
-  "7-2": "bad",
-  "9-2": "bad",
-  "0-3": "shop",
-  "2-3": "shop",
-  "7-3": "bad",
-  "9-3": "tadam",
-  "0-4": "green",
-  "2-4": "green",
-  "7-4": "bad",
-  "9-4": "red",
-  "0-5": "tadam",
-  "2-5": "seal",
-  "3-5": "red",
-  "4-5": "red",
-  "5-5": "red",
-  "6-5": "red",
-  "7-5": "red",
-  "9-5": "red",
-  "0-6": "bad",
-  "2-6": "good",
-  "4-6": "good",
-  "7-6": "good",
-  "9-6": "shop",
-  "0-7": "good",
-  "2-7": "good",
-  "3-7": "good",
-  "4-7": "good",
-  "7-7": "good",
-  "8-7": "tadam",
-  "9-7": "bad",
-  "0-8": "shop",
-  "7-8": "good",
-  "0-9": "good",
-  "1-9": "tadam",
-  "2-9": "good",
-  "3-9": "green",
-  "4-9": "good",
-  "5-9": "shop",
-  "6-9": "green",
-  "7-9": "green",
-  "8-9": "good",
-};
+const cellEvents = buildCellEvents();
 
 const eventIcons = {
-  bad: "👎",
+  bad: "⚠️",
+  enemy: "😈",
   good: "🎁",
   green: "",
   red: "",
-  seal: "🗝️",
-  shop: "🛒",
+  seal: "🧿",
+  shop: "🧔",
   tadam: "🎉",
 };
 
@@ -113,10 +128,10 @@ const tadamCards = cardConfig.tadam;
 const shopCards = cardConfig.shop;
 
 const names = [
-  { name: "Борис Двуручный", color: "#f07e59" },
-  { name: "Мира Ловкачка", color: "#61c3d9" },
-  { name: "Клим Алхимик", color: "#95d96d" },
-  { name: "Веста Чёрный Плащ", color: "#c795ff" },
+  { name: "Пес", color: "#f07e59" },
+  { name: "Кот", color: "#61c3d9" },
+  { name: "Выдра", color: "#95d96d" },
+  { name: "Белка", color: "#c795ff" },
 ];
 
 let state;
@@ -197,15 +212,15 @@ async function rollAndMove({ animate = true } = {}) {
   state.isAnimating = false;
   state.movingPlayerId = null;
   pulseTile(player.position);
-  log(`${player.name} бросает <strong>${formatRoll(rolls)}</strong>${totalSteps !== rolled ? ` и идет на ${totalSteps}` : ""}.`);
+  log(`${playerName(player)} бросает <strong>${formatRoll(rolls)}</strong>${totalSteps !== rolled ? ` и идет на ${totalSteps}` : ""}.`);
   await resolveLanding(player);
 
   if (player.position === finishCell) {
     addCoins(player, 20);
     state.finished = true;
     const winner = findWinner();
-    log(`${player.name} достигает финиша и получает <strong>20 монет</strong>.`);
-    log(`<strong>Игра завершена.</strong> Побеждает ${winner.name}: ${winner.coins} монет.`);
+    log(`${playerName(player)} достигает финиша и получает <strong>20 монет</strong>.`);
+    log(`<strong>Игра завершена.</strong> Побеждает ${playerName(winner)}: ${winner.coins} монет.`);
   } else {
     advanceTurn();
   }
@@ -239,50 +254,12 @@ async function chooseNextPosition(currentCell, remaining, animate) {
 function getNextOptions(cell) {
   if (cell === finishCell) return [];
 
-  if (cell === "2-0") {
-    const choices = [{ cell: "3-0", label: "вправо" }];
-    if (isDoorOpen("top")) choices.unshift({ cell: "2-1", label: "вниз" });
-    return choices;
-  }
-
-  if (cell === "2-5") {
-    const choices = [{ cell: "3-5", label: "вправо" }];
-    if (isDoorOpen("middle")) choices.unshift({ cell: "2-6", label: "вниз" });
-    return choices;
-  }
-
-  if (cell === "7-5") {
-    const choices = [{ cell: "7-6", label: "вниз" }];
-    if (isDoorOpen("finish")) choices.unshift({ cell: "7-4", label: "к финишу" });
-    return choices;
-  }
-
   const nextCell = defaultNextCell(cell);
   return nextCell ? [{ cell: nextCell, label: "вперёд" }] : [];
 }
 
 function defaultNextCell(cell) {
-  const [col, row] = parseCell(cell);
-
-  if (row === 9 && col > 0) return cellKey(col - 1, row);
-  if (col === 0 && row > 0) return cellKey(col, row - 1);
-  if (row === 0 && col < 9) return cellKey(col + 1, row);
-  if (col === 9 && row < 7) return cellKey(col, row + 1);
-  if (row === 7 && col > 7) return cellKey(col - 1, row);
-  if (col === 7 && row >= 6 && row < 9) return cellKey(col, row + 1);
-
-  if (col === 2 && row > 0 && row < 5) return cellKey(col, row + 1);
-  if (row === 5 && col >= 3 && col < 7) return cellKey(col + 1, row);
-  if (col === 2 && row >= 5 && row < 7) return cellKey(col, row + 1);
-  if (row === 7 && col >= 2 && col < 4) return cellKey(col + 1, row);
-  if (col === 4 && row > 5 && row <= 7) return cellKey(col, row - 1);
-  if (row === 5 && col >= 4 && col < 7) return cellKey(col + 1, row);
-
-  if (col === 7 && row > 2 && row < 5) return cellKey(col, row - 1);
-  if (row === 2 && col > 4 && col <= 7) return cellKey(col - 1, row);
-  if (cell === "4-2") return finishCell;
-
-  return null;
+  return routeNext.get(cell) || null;
 }
 
 function removeSealIfNeeded(player, cell) {
@@ -291,7 +268,7 @@ function removeSealIfNeeded(player, cell) {
 
   door.seals -= 1;
   player.sealsRemoved += 1;
-  log(`${player.name} снимает печать с клетки ${cellLabel(cell)}. Осталось: <strong>${door.seals}</strong>.`);
+  log(`${playerName(player)} снимает печать с клетки ${cellLabel(cell)}. Осталось: <strong>${door.seals}</strong>.`);
   if (door.seals === 0) {
     log(`<strong>${door.label} открыта.</strong>`);
   }
@@ -338,8 +315,8 @@ function buildBoardShell() {
       const door = doorByCell(cell);
       if (door) {
         tile.classList.add(`door-edge-${door.edge}`);
-        tile.innerHTML = '<span class="seal-mark" aria-label="Печати">🗝️</span><span class="seal-count"></span>';
-      } else if (eventIcons[cellEvents[cell]]) {
+      }
+      if (eventIcons[cellEvents[cell]]) {
         tile.innerHTML = `<span class="tile-icon">${eventIcons[cellEvents[cell]]}</span>`;
       }
       tileGrid.append(tile);
@@ -359,7 +336,8 @@ function renderDoors() {
 
     tile.classList.toggle("door-open", door.seals === 0);
     tile.classList.toggle("door-closed", door.seals > 0);
-    tile.querySelector(".seal-count").textContent = door.seals > 0 ? String(door.seals) : "";
+    const sealCount = tile.querySelector(".seal-count");
+    if (sealCount) sealCount.textContent = door.seals > 0 ? String(door.seals) : "";
   }
 }
 
@@ -424,7 +402,7 @@ function renderScores() {
     card.className = `score-card ${player.id === state.activePlayer ? "active" : ""}`;
     card.style.setProperty("--player-color", player.color);
     card.innerHTML = `
-      <div class="score-name"><strong>${player.name}</strong><span class="pill">Клетка ${cellLabel(player.position)}</span></div>
+      <div class="score-name"><strong>${player.name}</strong><span class="pill">${tileTitle(player.position)}</span></div>
       <div class="score-stats">
         <span><b>${cellLabel(player.position)}</b> позиция</span>
         <span><b>${player.coins}</b> монет</span>
@@ -454,6 +432,7 @@ function renderTurn() {
   const itemText = player.items.length ? ` Лавка: ${player.items.map((item) => item.title).join(", ")}.` : "";
   ui.activePlayerRole.textContent = `Клетка ${cellLabel(player.position)}. Монеты: ${player.coins}.${itemText}`;
   ui.fieldEffect.innerHTML = fieldEffectText(player.position);
+  ui.turnActions.innerHTML = turnActionsText(player);
   ui.diceValue.textContent = state.dice ?? "-";
   ui.rollBtn.textContent = state.isAnimating ? "Кубик крутится" : "Бросить кубик";
   ui.roundTitle.textContent = state.finished ? "Игра завершена" : `Раунд ${state.round}`;
@@ -657,7 +636,7 @@ async function resolveGreenField(player) {
   }
 
   addCoins(player, 3);
-  log(`${player.name} получает <strong>3 монеты</strong> на зеленом поле.`, { toast: true });
+  log(`${playerName(player)} получает <strong>3 монеты</strong> на зеленом поле.`, { toast: true });
 }
 
 async function resolveRedField(player) {
@@ -668,21 +647,22 @@ async function resolveRedField(player) {
   }
 
   addCoins(player, -3);
-  log(`${player.name} теряет <strong>3 монеты</strong> на красном поле.`, { toast: true });
+  log(`${playerName(player)} теряет <strong>3 монеты</strong> на красном поле.`, { toast: true });
 }
 
 async function drawAndApplyCard(player, deck, deckName) {
   const card = randomItem(deck);
-  log(`${player.name} тянет карту <strong>${deckName}</strong>: ${card.title}.`, { toast: true });
-  await applyCardEffect(player, card.effect);
+  log(`${playerName(player)} тянет карту <strong>${deckName}</strong>: ${card.title}.`, { toast: true });
+  await applyCardEffect(player, card.effect, { title: card.title });
 }
 
-async function applyCardEffect(player, effect) {
+async function applyCardEffect(player, effect, source = {}) {
   if (!effect) return;
 
   if (effect.type === "coins") {
     addCoins(player, effect.amount);
   } else if (effect.type === "move") {
+    await confirmMoveEffect(player, effect.steps, source.title);
     await movePlayerSteps(player, effect.steps);
   } else if (effect.type === "steal-random") {
     stealFromRandomPlayer(player, effect.amount);
@@ -696,24 +676,34 @@ async function applyFieldEffect(player, effect, fieldName) {
     await drawAndApplyCard(player, deckById(effect.deck), deckLabel(effect.deck));
   } else if (effect.mode === "move") {
     const direction = effect.steps > 0 ? "вперед" : "назад";
-    log(`${player.name} попадает на ${fieldName} и идет на <strong>${Math.abs(effect.steps)} клеток ${direction}</strong>.`, {
-      toast: true,
-    });
+    const message = `${playerName(player)} попадает на ${fieldName} и идет на <strong>${Math.abs(effect.steps)} клеток ${direction}</strong>.`;
+    log(message);
+    await showActionPrompt(message);
     await movePlayerSteps(player, effect.steps);
   }
+}
+
+async function confirmMoveEffect(player, steps, sourceTitle = "") {
+  const source = sourceTitle ? `<span>${sourceTitle}</span>` : "";
+  await showActionPrompt(`${source}<strong>${playerName(player)}: ${moveActionText(steps)}</strong>`);
+}
+
+function moveActionText(steps) {
+  const direction = steps > 0 ? "вперед" : "назад";
+  return `Перейди на ${Math.abs(steps)} клеток ${direction}.`;
 }
 
 function drawTadamCard(player) {
   const card = randomItem(tadamCards);
   state.tadams.push(card);
   if (state.tadams.length > 3) state.tadams.shift();
-  log(`${player.name} открывает <strong>ТАДАМ!</strong>: ${card.title}.`, { toast: true });
+  log(`${playerName(player)} открывает <strong>ТАДАМ!</strong>: ${card.title}.`, { toast: true });
 }
 
 async function resolveShop(player) {
   const offer = drawUnique(shopCards, 2);
   if (player.coins < 5) {
-    log(`Лавка Джо предлагает: ${offer.map((card) => card.title).join(" / ")}. У ${player.name} не хватает монет.`, {
+    log(`Лавка Джо предлагает: ${offer.map((card) => card.title).join(" / ")}. У ${playerName(player)} не хватает монет.`, {
       toast: true,
     });
     return;
@@ -721,13 +711,13 @@ async function resolveShop(player) {
 
   const bought = await chooseShopCard(player, offer);
   if (!bought) {
-    log(`${player.name} отказывается от карт Лавки Джо.`, { toast: true });
+    log(`${playerName(player)} отказывается от карт Лавки Джо.`, { toast: true });
     return;
   }
 
   addCoins(player, -5);
   player.items.push(bought);
-  log(`${player.name} покупает в Лавке Джо: <strong>${bought.title}</strong>.`, { toast: true });
+  log(`${playerName(player)} покупает в Лавке Джо: <strong>${bought.title}</strong>.`, { toast: true });
 }
 
 function chooseShopCard(player, offer) {
@@ -787,14 +777,14 @@ function stealFromRandomPlayer(player, amount) {
   const target = randomOpponent(player);
   if (!target) return;
   const taken = stealCoins(target, player, amount);
-  log(`${player.name} забирает у ${target.name} <strong>${taken} монет</strong>.`);
+  log(`${playerName(player)} забирает у ${playerName(target)} <strong>${taken} монет</strong>.`);
 }
 
 function giveToRandomPlayer(player, amount) {
   const target = randomOpponent(player);
   if (!target) return;
   const given = stealCoins(player, target, amount);
-  log(`${player.name} отдает ${target.name} <strong>${given} монет</strong>.`);
+  log(`${playerName(player)} отдает ${playerName(target)} <strong>${given} монет</strong>.`);
 }
 
 function resolveJumpSteal(player) {
@@ -803,7 +793,7 @@ function resolveJumpSteal(player) {
   for (const target of state.players) {
     if (target.id === player.id || target.position !== player.position) continue;
     const taken = stealCoins(target, player, effect.amount);
-    if (taken > 0) log(`${player.name} перепрыгивает ${target.name} и забирает <strong>${taken} монет</strong>.`);
+    if (taken > 0) log(`${playerName(player)} перепрыгивает ${playerName(target)} и забирает <strong>${taken} монет</strong>.`);
   }
 }
 
@@ -813,7 +803,7 @@ function resolveLandSteal(player) {
   for (const target of state.players) {
     if (target.id === player.id || target.position !== player.position) continue;
     const taken = stealCoins(target, player, effect.amount);
-    if (taken > 0) log(`${player.name} останавливается рядом с ${target.name} и забирает <strong>${taken} монет</strong>.`);
+    if (taken > 0) log(`${playerName(player)} останавливается рядом с ${playerName(target)} и забирает <strong>${taken} монет</strong>.`);
   }
 }
 
@@ -845,6 +835,7 @@ function tileTitle(cell) {
   if (cell === finishCell) return "Финиш";
   const namesByEvent = {
     bad: "Плохо",
+    enemy: "Враг",
     good: "Хорошо",
     green: "Зеленое поле",
     red: "Красное поле",
@@ -861,6 +852,7 @@ function fieldEffectText(cell) {
 
   const texts = {
     bad: ["Плохо", "тяни карту Плохо"],
+    enemy: ["Враг", "эффект появится позже"],
     good: ["Хорошо", "тяни карту Хорошо"],
     green: ["Зеленое поле", greenEffectLabel()],
     red: ["Красное поле", redEffectLabel()],
@@ -870,6 +862,23 @@ function fieldEffectText(cell) {
   };
   const text = texts[cellEvents[cell]] || ["Обычная клетка", "без эффекта"];
   return `<span>${text[0]}</span><strong>${text[1]}</strong>`;
+}
+
+function turnActionsText(player) {
+  const actions = [];
+  const extraDie = optionalExtraDieEffect(player);
+  if (extraDie) {
+    const canPay = player.coins >= extraDie.cost;
+    actions.push(`
+      <span class="action-chip ${canPay ? "" : "disabled"}">
+        <b>${extraDie.cost} монеты</b>
+        <span>+${extraDie.dice} кубик</span>
+      </span>
+    `);
+  }
+
+  if (actions.length === 0) return '<span class="action-empty">нет действий</span>';
+  return `<span class="action-label">Действия</span>${actions.join("")}`;
 }
 
 function greenEffectLabel() {
@@ -896,56 +905,43 @@ function doorByCell(cell) {
 
 function buildFieldCells() {
   const cells = new Set();
-  addLineToSet(cells, 0, 0, 9, 0);
-  addLineToSet(cells, 0, 1, 0, 9);
-  addLineToSet(cells, 0, 9, 9, 9);
-  addLineToSet(cells, 9, 1, 9, 7);
-  addLineToSet(cells, 2, 1, 2, 7);
-  addLineToSet(cells, 4, 2, 7, 2);
-  addLineToSet(cells, 7, 3, 7, 8);
-  addLineToSet(cells, 2, 5, 7, 5);
-  addLineToSet(cells, 2, 7, 4, 7);
-  addLineToSet(cells, 4, 6, 4, 7);
-  addLineToSet(cells, 7, 7, 9, 7);
-  cells.add(finishCell);
+  for (let row = 0; row < boardRows; row += 1) {
+    for (let col = 0; col < boardCols; col += 1) {
+      if (boardLayout[row]?.[col]) cells.add(cellKey(col, row));
+    }
+  }
   return cells;
 }
 
 function buildRouteCells() {
-  const cells = [];
-  addLine(cells, 9, 9, 0, 9);
-  addLine(cells, 0, 8, 0, 0);
-  addLine(cells, 1, 0, 9, 0);
-  addLine(cells, 9, 1, 9, 7);
-  addLine(cells, 8, 7, 7, 7);
-  addLine(cells, 7, 6, 7, 5);
-  addLine(cells, 7, 4, 7, 2);
-  addLine(cells, 6, 2, 4, 2);
-  addLine(cells, 4, 3, 4, 3);
-  return cells;
+  return routePath.map((cell) => {
+    const [col, row] = parseCell(cell);
+    return { col, row };
+  });
 }
 
 function buildRouteIndex(cells) {
   return new Map(cells.map((cell, index) => [cellKey(cell.col, cell.row), index + 1]));
 }
 
-function addLineToSet(cells, startCol, startRow, endCol, endRow) {
-  const line = [];
-  addLine(line, startCol, startRow, endCol, endRow);
-  line.forEach((cell) => cells.add(cellKey(cell.col, cell.row)));
+function buildRouteNext(cells) {
+  const next = new Map();
+  for (let index = 0; index < cells.length - 1; index += 1) {
+    next.set(cells[index], cells[index + 1]);
+  }
+  return next;
 }
 
-function addLine(cells, startCol, startRow, endCol, endRow) {
-  const colStep = Math.sign(endCol - startCol);
-  const rowStep = Math.sign(endRow - startRow);
-  let col = startCol;
-  let row = startRow;
-  cells.push({ col, row });
-  while (col !== endCol || row !== endRow) {
-    col += colStep;
-    row += rowStep;
-    cells.push({ col, row });
+function buildCellEvents() {
+  const events = {};
+  for (let row = 0; row < boardRows; row += 1) {
+    for (let col = 0; col < boardCols; col += 1) {
+      const type = boardLayout[row]?.[col];
+      if (!type || type === "path" || type === "start" || type === "finish") continue;
+      events[cellKey(col, row)] = type;
+    }
   }
+  return events;
 }
 
 function cellKey(col, row) {
@@ -1026,7 +1022,7 @@ function chooseExtraDie(player, animate) {
       state.preRollResolver = null;
       if (useExtraDie) {
         addCoins(player, -effect.cost);
-        log(`${player.name} платит <strong>${effect.cost} монеты</strong> за дополнительный кубик.`);
+        log(`${playerName(player)} платит <strong>${effect.cost} монеты</strong> за дополнительный кубик.`);
       }
       resolve(useExtraDie ? effect.dice : 0);
     };
@@ -1062,6 +1058,10 @@ function randomOpponent(player) {
   return opponents.length ? randomItem(opponents) : null;
 }
 
+function playerName(player) {
+  return `<span class="player-name" style="--player-color: ${player.color}">${player.name}</span>`;
+}
+
 function log(message, { toast = false } = {}) {
   const item = document.createElement("li");
   item.innerHTML = message;
@@ -1079,19 +1079,60 @@ function showEventToast(message) {
 
   ui.eventToast.hidden = false;
   ui.eventToast.innerHTML = message;
-  ui.eventToast.classList.remove("fading", "visible");
+  ui.eventToast.classList.remove("action-prompt", "fading", "quick-fading", "visible");
   void ui.eventToast.offsetWidth;
   ui.eventToast.classList.add("visible");
 
   eventToastFadeTimer = window.setTimeout(() => {
-    ui.eventToast.classList.add("fading");
+    hideEventToast();
   }, eventToastVisibleMs);
+}
+
+function showActionPrompt(message) {
+  if (!ui.eventToast) return Promise.resolve();
+
+  window.clearTimeout(eventToastFadeTimer);
+  window.clearTimeout(eventToastHideTimer);
+
+  ui.eventToast.hidden = false;
+  ui.eventToast.innerHTML = `
+    <div class="event-toast-copy">${message}</div>
+    <button class="event-toast-next" type="button">Далее</button>
+  `;
+  ui.eventToast.classList.remove("fading", "quick-fading", "visible");
+  ui.eventToast.classList.add("action-prompt");
+  void ui.eventToast.offsetWidth;
+  ui.eventToast.classList.add("visible");
+
+  return new Promise((resolve) => {
+    const button = ui.eventToast.querySelector(".event-toast-next");
+    button?.focus({ preventScroll: true });
+    button?.addEventListener(
+      "click",
+      () => {
+        hideEventToast({ quick: true });
+        resolve();
+      },
+      { once: true },
+    );
+  });
+}
+
+function hideEventToast({ quick = false } = {}) {
+  if (!ui.eventToast || ui.eventToast.hidden) return;
+
+  window.clearTimeout(eventToastFadeTimer);
+  window.clearTimeout(eventToastHideTimer);
+
+  ui.eventToast.classList.toggle("quick-fading", quick);
+  ui.eventToast.classList.add("fading");
+  ui.eventToast.classList.remove("visible");
 
   eventToastHideTimer = window.setTimeout(() => {
     ui.eventToast.hidden = true;
-    ui.eventToast.classList.remove("visible", "fading");
+    ui.eventToast.classList.remove("action-prompt", "visible", "fading", "quick-fading");
     ui.eventToast.innerHTML = "";
-  }, eventToastVisibleMs + eventToastFadeMs);
+  }, quick ? eventToastQuickFadeMs : eventToastFadeMs);
 }
 
 async function animateDice(result) {
@@ -1124,5 +1165,16 @@ function formatRoll(rolls) {
 
 ui.newGameBtn.addEventListener("click", newGame);
 ui.rollBtn.addEventListener("click", () => rollAndMove());
+ui.eventToast?.addEventListener("click", (event) => {
+  if (ui.eventToast.classList.contains("action-prompt")) return;
+  hideEventToast({ quick: true });
+});
+ui.eventToast?.addEventListener("keydown", (event) => {
+  if (ui.eventToast.classList.contains("action-prompt")) return;
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    hideEventToast({ quick: true });
+  }
+});
 
 newGame();

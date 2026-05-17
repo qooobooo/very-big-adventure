@@ -8,33 +8,6 @@
   </head>
   <body>
     <main class="app-shell">
-      <section class="topbar" aria-label="Панель партии">
-        <div>
-          <p class="eyebrow">Простой режим</p>
-          <h1>Очень Большая Бродилка</h1>
-        </div>
-        <div class="season-controls">
-          <label>
-            Игроков
-            <select id="playerCount">
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4" selected>4</option>
-            </select>
-          </label>
-          <label>
-            Кубиков
-            <select id="diceCount">
-              <option value="1" selected>1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-            </select>
-          </label>
-          <button id="newGameBtn" class="secondary">Новая игра</button>
-        </div>
-      </section>
-
       <section class="score-strip" id="scoreStrip" aria-label="Игроки"></section>
 
       <section class="play-area">
@@ -47,11 +20,12 @@
             <div class="dice-panel">
               <span id="diceValue">-</span>
               <div id="fieldEffect" class="field-effect"></div>
+              <div id="turnActions" class="turn-actions" aria-label="Доступные действия"></div>
               <button id="rollBtn">Бросить кубик</button>
             </div>
           </div>
           <div class="map-wrap">
-            <div id="eventToast" class="event-toast" aria-live="polite" hidden></div>
+            <div id="eventToast" class="event-toast" role="button" tabindex="0" aria-live="polite" hidden></div>
             <div id="choicePanel" class="choice-panel" role="dialog" aria-live="polite" hidden></div>
             <div id="board" class="board"></div>
           </div>
@@ -81,8 +55,31 @@
           <ol id="gameLog" class="game-log"></ol>
         </article>
       </section>
+
+      <section class="topbar game-settings" aria-label="Панель партии">
+        <div class="season-controls">
+          <label>
+            Игроков
+            <select id="playerCount">
+              <option value="2" selected>2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+            </select>
+          </label>
+          <label>
+            Кубиков
+            <select id="diceCount">
+              <option value="1" selected>1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+            </select>
+          </label>
+          <button id="newGameBtn" class="secondary">Новая игра</button>
+        </div>
+      </section>
     </main>
 
-    <script type="module" src="./src/game.js"></script>
+    <script type="module" src="./src/game.js?v=20260517-0248"></script>
   </body>
 </html>

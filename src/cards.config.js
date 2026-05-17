@@ -80,9 +80,9 @@ export const cardConfig = {
   shop: [
     {
       id: "step-plus",
-      title: "Ходи на 1 больше",
-      shortTitle: "+1 шаг",
-      description: "Каждый бросок владельца этой карты дает на 1 шаг больше.",
+      title: "+1 к броску кубика",
+      shortTitle: "+1 к броску",
+      description: "Каждый бросок владельца этой карты получает +1 к результату.",
       effect: { type: "passive-step-bonus", steps: 1 },
     },
     {
@@ -94,7 +94,7 @@ export const cardConfig = {
     },
     {
       id: "extra-die",
-      title: "Перед ходом можешь заплатить 2 монеты и кинуть на 1 кубик больше",
+      title: "Перед броском кубика можешь заплатить 2 монеты и кинуть на 1 кубик больше",
       shortTitle: "+1 кубик за 2",
       description: "Перед броском владелец может заплатить 2 монеты, чтобы бросить на 1 кубик больше.",
       effect: { type: "optional-extra-die", cost: 2, dice: 1 },
