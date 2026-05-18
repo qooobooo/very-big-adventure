@@ -107,8 +107,8 @@ const routeNext = buildRouteNext(routePath);
 const doorConfigs = [
   { id: "left", cell: "1-7", edge: "left", enemyCell: "1-7", toCell: "0-7", damage: 8, label: "дверь 2" },
   { id: "middle", cell: "8-3", edge: "left", enemyCell: "8-3", toCell: "7-3", damage: 6, label: "дверь 1" },
-  { id: "center", cell: "3-2", edge: "right", enemyCell: "3-2", toCell: "4-2", damage: 10, label: "центральная дверь" },
-  { id: "finish", cell: "8-0", edge: "right", enemyCell: "8-0", toCell: "9-0", damage: 13, label: "дверь к финишу" },
+  { id: "center", cell: "3-2", edge: "right", enemyCell: "3-2", toCell: "4-2", damage: 12, label: "центральная дверь" },
+  { id: "finish", cell: "8-0", edge: "right", enemyCell: "8-0", toCell: "9-0", damage: 18, label: "дверь к финишу" },
 ];
 
 const cellEvents = buildCellEvents();
@@ -169,6 +169,7 @@ function newGame() {
     players: names.slice(0, playerCount).map((hero, index) => ({
       ...hero,
       coins: 10,
+      diceBonus: 0,
       id: index,
       items: [],
       position: startCell,
@@ -193,10 +194,11 @@ async function rollAndMove({ animate = true } = {}) {
   state.dice = null;
   render();
 
-  const rolls = rollDice(Number(ui.diceCount.value) + extraDice);
+  const rolls = rollDice(totalDiceForPlayer(player, extraDice));
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
-  if (animate) await animateDice(rolled);
-  const totalSteps = rolled + playerStepBonus(player);
+  const bonus = playerStepBonus(player);
+  if (animate) await animateDice(rolls, { bonus });
+  const totalSteps = rolled + bonus;
   state.dice = totalSteps;
 
   for (let step = 0; step < totalSteps && player.position !== finishCell; step += 1) {
@@ -326,6 +328,10 @@ function buildBoardShell() {
       if (icon) {
         tile.innerHTML = `<span class="tile-icon">${icon}</span>`;
       }
+      const enemyDoor = type === "enemy" ? doorByEnemyCell(cell) : null;
+      if (enemyDoor) {
+        tile.insertAdjacentHTML("beforeend", `<span class="monster-power">${enemyDoor.damage}</span>`);
+      }
       tileGrid.append(tile);
     }
   }
@@ -425,6 +431,7 @@ function renderScores() {
       <div class="score-stats">
         <span><b>${cellLabel(player.position)}</b> позиция</span>
         <span><b>${player.coins}</b> монет</span>
+        <span><b>+${playerDiceBonus(player)}</b> куб.</span>
       </div>
       <div class="score-shop">
         <span>Лавка Джо</span>
@@ -672,15 +679,15 @@ async function resolveEnemyBattle(player) {
   );
 
   const extraDice = await chooseExtraDie(player, true);
-  const diceCount = Number(ui.diceCount.value) + extraDice;
+  const diceCount = totalDiceForPlayer(player, extraDice);
   const rolls = rollDice(diceCount);
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
+  const bonus = playerStepBonus(player);
   state.isAnimating = true;
   state.dice = null;
   render();
-  await animateDice(rolled);
+  await animateDice(rolls, { bonus });
 
-  const bonus = playerStepBonus(player);
   const damage = rolled + bonus;
   state.dice = damage;
   state.isAnimating = false;
@@ -688,9 +695,14 @@ async function resolveEnemyBattle(player) {
   const bonusText = bonus ? ` + ${bonus} бонус = <strong>${damage}</strong>` : "";
   if (damage >= door.damage) {
     door.openedBy.push(player.id);
-    log(`${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта для игрока.`);
+    player.diceBonus = playerDiceBonus(player) + 1;
+    log(
+      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта для игрока. Награда: <strong>+1 кубик</strong>.`,
+    );
     render();
-    await showActionPrompt(`${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта.`);
+    await showActionPrompt(
+      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта. Награда: <strong>+1 кубик</strong>.`,
+    );
     return;
   }
 
@@ -1115,6 +1127,14 @@ function playerStepBonus(player) {
     .reduce((sum, item) => sum + item.effect.steps, 0);
 }
 
+function playerDiceBonus(player) {
+  return player.diceBonus || 0;
+}
+
+function totalDiceForPlayer(player, extraDice = 0) {
+  return Number(ui.diceCount.value) + playerDiceBonus(player) + extraDice;
+}
+
 function playerCoinBonus(player) {
   return player.items
     .filter((item) => item.effect?.type === "passive-coin-bonus")
@@ -1272,15 +1292,102 @@ function hideEventToast({ quick = false } = {}) {
   }, quick ? eventToastQuickFadeMs : eventToastFadeMs);
 }
 
-async function animateDice(result) {
+async function animateDice(rollsOrResult, { bonus = 0 } = {}) {
+  const rolls = Array.isArray(rollsOrResult) ? rollsOrResult : [rollsOrResult];
+  const result = rolls.reduce((sum, value) => sum + value, 0);
+  const caption = diceResultCaption(rolls, bonus);
+  const throwPromise = animateDiceOnBoard(rolls, { caption });
   ui.diceValue.classList.add("rolling");
+  ui.diceValue.textContent = "-";
   const startedAt = performance.now();
-  while (performance.now() - startedAt < 520) {
+  while (performance.now() - startedAt < 1000) {
     ui.diceValue.textContent = d6();
-    await sleep(70);
+    await sleep(55);
   }
   ui.diceValue.textContent = result;
   ui.diceValue.classList.remove("rolling");
+  await throwPromise;
+}
+
+async function animateDiceOnBoard(rolls, { caption = "" } = {}) {
+  if (!boardEl || !rolls.length) return;
+
+  boardEl.querySelectorAll(".dice-throw-layer").forEach((layer) => layer.remove());
+
+  const layer = document.createElement("div");
+  layer.className = "dice-throw-layer";
+
+  const boardRect = boardEl.getBoundingClientRect();
+  const dieSize = Math.min(54, Math.max(34, boardRect.width * 0.078));
+  const dieDepth = dieSize / 2;
+  const centerStep = rolls.length > 2 ? 11 : 13;
+  const centerStart = -((rolls.length - 1) * centerStep) / 2;
+  for (const [index, value] of rolls.entries()) {
+    const die = document.createElement("span");
+    die.className = "field-die";
+    die.setAttribute("aria-label", `Кубик ${value}`);
+    die.style.setProperty("--die-size", `${dieSize}px`);
+    die.style.setProperty("--die-depth", `${dieDepth}px`);
+    const centerOffset = centerStart + index * centerStep;
+    die.style.setProperty("--center-x", `${50 + centerOffset}%`);
+    die.style.setProperty("--center-y", `${49 + (index % 2 === 0 ? -2 : 2)}%`);
+    const finalRotation = diceCubeRotations[value] ?? diceCubeRotations[1];
+    const spinX = rotationDegrees(finalRotation.x) + 360 * (6 + Math.floor(Math.random() * 2));
+    const spinY = rotationDegrees(finalRotation.y) + 360 * (6 + Math.floor(Math.random() * 2));
+    const spinZ = rotationDegrees(finalRotation.z) + 360 * (4 + Math.floor(Math.random() * 2));
+    die.style.setProperty("--spin-x", `${spinX}deg`);
+    die.style.setProperty("--spin-y", `${spinY}deg`);
+    die.style.setProperty("--spin-z", `${spinZ}deg`);
+    die.innerHTML = diceCube(value);
+    layer.append(die);
+  }
+  if (caption) {
+    const captionEl = document.createElement("span");
+    captionEl.className = "dice-result-caption";
+    captionEl.innerHTML = caption;
+    layer.append(captionEl);
+  }
+
+  boardEl.append(layer);
+  await sleep(1000);
+  await sleep(813);
+  layer.classList.add("leaving");
+  await sleep(280);
+  layer.remove();
+}
+
+function diceResultCaption(rolls, bonus = 0) {
+  if (!bonus) return "";
+  const rolled = rolls.reduce((sum, value) => sum + value, 0);
+  return `${rolls.join(" + ")} + ${bonus} бонус = <strong>${rolled + bonus}</strong>`;
+}
+
+function rotationDegrees(value) {
+  return Number.parseFloat(value) || 0;
+}
+
+function diceCube(value) {
+  const faces = [
+    ["front", 1],
+    ["right", 2],
+    ["top", 3],
+    ["bottom", 4],
+    ["left", 5],
+    ["back", 6],
+  ];
+  return `
+    <span class="die-shadow" aria-hidden="true"></span>
+    <span class="die-cube" data-value="${value}">
+      ${faces.map(([side, faceValue]) => `<span class="die-face die-face-${side}">${diceFace(faceValue)}</span>`).join("")}
+    </span>
+  `;
+}
+
+function diceFace(value) {
+  return Array.from({ length: 9 }, (_, index) => {
+    const dot = diceDotMap[value]?.includes(index + 1) ? '<i aria-hidden="true"></i>' : "<b></b>";
+    return dot;
+  }).join("");
 }
 
 function sleep(ms) {
@@ -1294,6 +1401,24 @@ function d6() {
 function rollDice(count) {
   return Array.from({ length: count }, d6);
 }
+
+const diceDotMap = {
+  1: [5],
+  2: [1, 9],
+  3: [1, 5, 9],
+  4: [1, 3, 7, 9],
+  5: [1, 3, 5, 7, 9],
+  6: [1, 3, 4, 6, 7, 9],
+};
+
+const diceCubeRotations = {
+  1: { x: "0deg", y: "0deg", z: "0deg" },
+  2: { x: "0deg", y: "-90deg", z: "0deg" },
+  3: { x: "-90deg", y: "0deg", z: "0deg" },
+  4: { x: "90deg", y: "0deg", z: "0deg" },
+  5: { x: "0deg", y: "90deg", z: "0deg" },
+  6: { x: "0deg", y: "180deg", z: "0deg" },
+};
 
 function formatRoll(rolls) {
   const total = rolls.reduce((sum, value) => sum + value, 0);

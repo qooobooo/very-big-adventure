@@ -20,6 +20,340 @@ Open questions:
 - ...
 ```
 
+## 2026-05-19 02:09 - Dev 2
+
+Changed:
+- Fixed dice visual/result mismatch for values 3 and 4.
+- Swapped the final CSS cube rotations for the top and bottom faces.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Root cause: the CSS cube's top and bottom face rotations were mirrored on the X axis, so a logical 4 could visually settle as 3.
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: dice layer renders, 3D face transforms remain active, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-19 02:06 - Dev 2
+
+Changed:
+- Extended the post-spin visible hold for rolled dice by another 25%, from 650ms to 813ms.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: dice remain visible after the 1-second spin and clean up afterward with no console errors.
+
+Open questions:
+- None.
+
+## 2026-05-19 02:04 - Dev 2
+
+Changed:
+- Extended the post-spin visible hold for rolled dice by 25%, from 520ms to 650ms.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: dice remain visible after the 1-second spin and the layer cleans up afterward with no console errors.
+
+Open questions:
+- None.
+
+## 2026-05-19 01:59 - Dev 2
+
+Changed:
+- Added a bonus formula caption under the animated dice when a roll has a step/damage bonus.
+- The caption appears on the board after the dice spin, e.g. `2 + 2 бонус = 4`.
+- Multi-die bonus captions now format as `2 + 3 + 2 бонус = 7`.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser that normal no-bonus rolls do not show an extra caption and no console errors appeared.
+- Browser module scope is sealed, so a direct artificial bonus-roll test was not possible from the in-app browser; the bonus caption path was checked by code inspection.
+
+Open questions:
+- None.
+
+## 2026-05-19 01:52 - Dev 2
+
+Changed:
+- Added a permanent `+1` dice reward when a player defeats an enemy.
+- Player dice bonuses now apply to both normal movement rolls and enemy battle rolls.
+- Player score cards now show the current dice bonus.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser that the board loads, score cards show `+0 куб.`, and no console errors appeared.
+- Deterministic browser battle test was blocked because the page does not allow overriding `Math.random`; the battle reward path was checked by code inspection.
+
+Open questions:
+- None.
+
+## 2026-05-19 01:48 - Dev 2
+
+Changed:
+- Reverted the heavy blur on the whole 3D dice cube because it flattened the cube visually.
+- Added a much smaller blur to individual die faces during spin instead.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: cube filter is `none`, face blur is `0.35px` mid-spin and `0px` on result, 3D face transforms remain active, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-19 01:45 - Dev 2
+
+Changed:
+- Added motion blur to dice while they spin.
+- Dice return to sharp focus on the final rolled face.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: `.die-cube` runs `die-cube-spin, die-cube-motion-blur`; mid-spin filter is `blur(1.8px)`, final result is `blur(0px)`, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-19 01:41 - Dev 2
+
+Changed:
+- Doubled the centered dice spin speed while keeping the 1-second duration.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser with 3 dice: duration remains `1s`, timing remains `linear`, spin angles are roughly doubled, result appears after the spin, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-19 01:39 - Dev 2
+
+Changed:
+- Shortened the centered dice spin from 2 seconds to 1 second.
+- Increased the dice number ticker pace during the shorter spin.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser with 3 dice: `die-cube-spin` duration is `1s`, timing is `linear`, result appears after the spin, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-19 01:37 - Dev 2
+
+Changed:
+- Simplified the centered dice spin to one continuous linear rotation phase.
+- Removed the intermediate spin keyframes and staged slowdowns.
+- Final spin angles now include full turns plus the rolled face orientation, so the cube lands directly on the result after 2 seconds.
+- Kept a short result hold before fading the dice layer.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser with 3 dice: `die-cube-spin` duration is `2s`, timing is `linear`, dice remain centered, result appears after the spin, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-19 01:33 - Dev 2
+
+Changed:
+- Removed dice throw physics from the board animation.
+- Dice now appear around the center of the board, rotate in place for 2 seconds, then settle on the rolled result.
+- Kept multi-die spacing so dice do not overlap.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser with 3 dice: animation duration is `2s`, dice stay centered, face transforms remain 3D, result appears after the spin, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-19 01:24 - Dev 2
+
+Changed:
+- Continued the interrupted dice-animation work from the previous Dev chat.
+- Fixed the board dice throw so each die is a real CSS 3D cube with six offset faces instead of a flat rotating tile.
+- Made die size/depth calculated in pixels from the board width so `translateZ` works reliably.
+- Added stronger face shading, edge definition, larger pips, and kept multi-die center landing without overlap.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser with 3 dice: three `.field-die` elements, three `.die-cube` elements, 18 `.die-face` elements, pixel `--die-depth`, non-`none` face `matrix3d(...)` transforms, no console errors, and the throw layer removes after animation.
+- Local server on `127.0.0.1:5173` was already running.
+
+Open questions:
+- None.
+
+## 2026-05-18 23:05 - Dev
+
+Changed:
+- Reworked board dice throw animation to land near the center of the board.
+- Spread multiple dice so they do not overlap.
+- Added 3D rotation on X/Y/Z axes and a light bounce/impact feel.
+- Increased dice pip size.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Dice animation now uses board-relative `left/top` percentages instead of transform percentages, so the throw path covers the board.
+- Tested with 3 dice in the in-app browser: three `.field-die` elements appeared, used `matrix3d(...)` transforms, then the layer was removed.
+- No browser console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-18 22:55 - Dev
+
+Changed:
+- Added a board-level dice throw animation before movement and enemy battle rolls.
+- Multiple dice now render as separate animated dice with final pip values.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `animateDice()` now accepts the actual roll array, animates dice on the board, and still updates `#diceValue` with the total.
+- The temporary `.dice-throw-layer` is appended inside `#board`, fades out, then removes itself.
+- Verified in the in-app browser: a roll creates `.dice-throw-layer` with `.field-die`, removes it after animation, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-18 22:45 - Dev
+
+Changed:
+- Reduced monster strength badges by about 30%.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Badge height is now 13px and font size is 8px in the current board viewport.
+- Verified in the in-app browser: all four monster badges remain readable and smaller.
+
+Open questions:
+- None.
+
+## 2026-05-18 22:42 - Dev
+
+Changed:
+- Updated monster strengths to 6, 8, 12, and 18 damage.
+- Added a top-right strength badge to monster tiles.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Door 1 is 6, door 2 is 8, the central door is 12, and the finish door is 18.
+- Monster badges are rendered from `doorConfigs.damage`, so UI and battle logic share the same values.
+- Verified in the in-app browser: enemy cells show badges 6, 8, 12, and 18.
+
+Open questions:
+- None.
+
+## 2026-05-18 22:36 - Dev
+
+Changed:
+- Swapped the board gap background to the forest-and-rocks artwork.
+
+Files:
+- `assets/backgrounds/forest_rocks_gap_1254.png`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `--board-gap-art` now points to `forest_rocks_gap_1254.png`.
+- Verified in the in-app browser: the new background loads under transparent board gaps.
+
+Open questions:
+- None.
+
 ## 2026-05-18 01:52 - Dev
 
 Changed:
