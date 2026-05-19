@@ -20,6 +20,304 @@ Open questions:
 - ...
 ```
 
+## 2026-05-20 01:19 - Important
+
+Changed:
+- Clarified `project-memory/prompts/next-chat.md` so the short request "прочитай next-chat" is enough.
+- Made the file explicitly instruct the current role chat to prepare a successor prompt for the same role.
+
+Files:
+- `project-memory/prompts/next-chat.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Users can now simply write: "Прочитай next-chat".
+
+Open questions:
+- None.
+
+## 2026-05-20 01:16 - Important
+
+Changed:
+- Replaced the Dev-specific successor prompt with a universal next-chat prompt for any role.
+- Replaced the old Dev-specific prompt file with `project-memory/prompts/next-chat.md`.
+- Updated the new-chat onboarding prompt to reference `next-chat.md`.
+
+Files:
+- `project-memory/prompts/next-chat.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Users can now tell any role chat: "прочитай next-chat"; it should prepare a successor prompt for the same role.
+- The successor prompt must include fresh project-memory, inbox, and git status when relevant.
+
+Open questions:
+- None.
+
+## 2026-05-20 01:07 - Important
+
+Changed:
+- Added a reusable prompt for preparing the next Dev handoff when Dev chats are replaced.
+- Updated the new-chat onboarding prompt to point old Dev chats to the reusable handoff prompt.
+
+Files:
+- `project-memory/prompts/next-dev-handoff.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Future Dev chats should pass this handoff prompt forward when they are replaced by Dev N+1.
+- The generated successor prompt should include fresh project-memory, git status, uncommitted files, and post-push context.
+
+Open questions:
+- None.
+
+## 2026-05-20 00:43 - Dev 2
+
+Changed:
+- Added a colored player-name label above animated dice throws.
+- Final battle now pauses before each challenger and boss roll so the user can press `Бросить кубик` for every participant.
+- Boss dice throws are labeled as `Босс - Имя` above the dice.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified normal roll in the in-app browser: player label appears above dice in the player's color, and no console errors appeared.
+
+Open questions:
+- Full final-battle browser path was not manually played through; final battle prompt flow was checked in code.
+
+## 2026-05-20 00:26 - Dev 2
+
+Changed:
+- Replaced instant finish victory with a final boss battle.
+- The player who reaches finish becomes the boss.
+- All other players roll their dice and passive modifiers; their totals combine into player force.
+- Boss rolls once per opponent, uses their own dice, passive modifiers multiplied by opponent count, and gets +5 force per opponent.
+- If boss force is greater or equal, boss wins; otherwise players win and the highest final score among challengers wins.
+- Final score = coins + 5 per Joe's Shop card + 2 per damage dealt to boss.
+- Updated finish field text to `финальная битва`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Paid optional extra-die shop prompts are not used during final battle; permanent dice bonuses and passive step modifiers are used.
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: board loads with no console errors.
+
+Open questions:
+- Tie rule currently favors the boss (`bossForce >= playersForce`).
+
+## 2026-05-19 13:42 - Dev 2
+
+Changed:
+- Made all animated dice faces use the same white/gray face color.
+- Removed per-face color overrides so values like 3 and 6 no longer differ by brightness.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: all six faces on the sample die share the same computed background and border, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-19 13:37 - Dev 2
+
+Changed:
+- Changed animated dice faces from warm brown/gold to white/gray.
+- Kept dark pips for readability.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: dice faces use white/gray gradients, pips remain dark, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-19 13:36 - Dev 2
+
+Changed:
+- Documented the Google Sheet `Cards Config` workflow in project memory.
+- Added the workflow to `project-memory/handoff.md` and `project-memory/inbox/for-dev.md`.
+
+Files:
+- `project-memory/handoff.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Google Sheet `Cards Config` is canonical for card edits.
+- Dev should read non-empty `new description` cells, apply them to `description`, update local card config / CSV mirror, update mechanics when numbers change, and clear `new description`.
+
+Open questions:
+- None.
+
+## 2026-05-19 13:35 - Dev 2
+
+Changed:
+- Updated `extra-die` card logic to cost 5 coins, not only its description.
+- Updated `extra-die` title and short title to say 5 coins.
+- Synced Google Sheet `Cards Config`, `src/cards.config.js`, and `cards-google-sheet.csv`.
+
+Files:
+- `cards-google-sheet.csv`
+- `src/cards.config.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Spreadsheet: `Cards Config`, sheet `shop`, row 4 (`extra-die`).
+- Google Sheet row now has title `Перед ходом можешь заплатить 5 монет...`, short title `+1 кубик за 5`, cost `5`, dice `1`, and empty `new description`.
+- Verified `node --check src/cards.config.js`.
+- Verified local CSV with a quote-aware Node parser: 16 rows and 14 columns on every row.
+
+Open questions:
+- None.
+
+## 2026-05-19 13:17 - Dev 2
+
+Changed:
+- Treated the Google Sheet `Cards Config` as the canonical card-edit source.
+- Applied `shop!N4` (`new description`) into `shop!M4` (`description`) in Google Sheet.
+- Applied the same description to `src/cards.config.js` and `cards-google-sheet.csv`.
+- Cleared `shop!N4` after applying it.
+- Reordered local `cards-google-sheet.csv` columns to match Google Sheet: `description` and `new description` are now columns M and N.
+
+Files:
+- `cards-google-sheet.csv`
+- `src/cards.config.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Spreadsheet: `Cards Config`, sheet `shop`, row 4 (`extra-die`).
+- New description: `Перед броском владелец может заплатить 5 монет, чтобы бросить на 1 кубик больше.`
+- The card effect still has `cost: 2`, because the Google Sheet `cost` column remains `2`; only description was changed.
+- Verified `node --check src/cards.config.js`.
+- Verified local CSV with a quote-aware Node parser: 16 rows and 14 columns on every row.
+
+Open questions:
+- Should `cost` also become 5, or is this text-only for now?
+
+## 2026-05-19 13:12 - Dev 2
+
+Changed:
+- Added a `new description` column to `cards-google-sheet.csv` immediately after `description`.
+- Left all `new description` cells empty so it can be used as an edit queue.
+
+Files:
+- `cards-google-sheet.csv`
+- `project-memory/updates.md`
+
+Notes for others:
+- Workflow: user can write proposed card text in `new description`; Dev applies it into `description` / `src/cards.config.js`, then clears `new description`.
+- Verified the CSV has 14 columns on every row after adding the new column.
+
+Open questions:
+- None.
+
+## 2026-05-19 13:09 - Dev 2
+
+Changed:
+- Added `src/game.config.js` for game-level configuration.
+- Moved door/enemy strength config out of `src/game.js` into `src/game.config.js`.
+- `src/game.js` now imports `doorConfigs` from the config file.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `src/game.config.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Current configured monster strengths are 6, 10, 16, and 24.
+- Verified `node --check src/game.js` and `node --check src/game.config.js`.
+- Verified in the in-app browser: enemy badges still show 24, 16, 6, and 10 with no console errors.
+
+Open questions:
+- None.
+
+## 2026-05-19 13:03 - Dev 2
+
+Changed:
+- Updated monster strengths to 6, 10, 16, and 24.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Door 1 remains 6, door 2 is now 10, the central door is 16, and the finish door is 24.
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: enemy badges show 24, 16, 6, and 10 at their board positions with no console errors.
+
+Open questions:
+- None.
+
+## 2026-05-19 12:59 - Dev 2
+
+Changed:
+- Removed the numeric route position from player score cards.
+- Adjusted score stats back to two columns for coins and dice bonus.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: score cards show player name, current tile pill, coins, dice bonus, and shop cards; no `позиция` stat remains and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-19 12:18 - Dev 2
+
+Changed:
+- Shortened dice spin duration by 20%, from 1000ms to 800ms.
+- Kept the post-spin result hold unchanged at 813ms.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: `.die-cube` duration is `0.8s`, timing remains `linear`, result appears after the shorter spin, and no console errors appeared.
+
+Open questions:
+- None.
+
 ## 2026-05-19 02:09 - Dev 2
 
 Changed:

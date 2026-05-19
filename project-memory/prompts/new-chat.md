@@ -41,5 +41,9 @@ If Dev, Important, or GD needs to do something, write it in the matching inbox u
 
 `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/inbox/`
 
+When replacing an old role chat with a new one, use:
+
+`/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/prompts/next-chat.md`
+
 Do not edit local Codex `.jsonl` session files. They are read-only context.
 ```
