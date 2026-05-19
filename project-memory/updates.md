@@ -20,6 +20,21 @@ Open questions:
 - ...
 ```
 
+## 2026-05-20 01:47 - Important
+
+Changed:
+- Updated `project-memory/prompts/next-chat.md` so successor prompts tell new chats to inspect Git/GitHub state and get familiar with the game before continuing work.
+
+Files:
+- `project-memory/prompts/next-chat.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- New role chats should not rely only on handoff text; they should also understand repository state and the current game surface.
+
+Open questions:
+- None.
+
 ## 2026-05-20 01:40 - Important
 
 Changed:
