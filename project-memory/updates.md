@@ -20,6 +20,41 @@ Open questions:
 - ...
 ```
 
+## 2026-05-20 02:41 - Important
+
+Changed:
+- Updated `project-memory/prompts/next-chat.md` so handoff output includes an archive-name line with chat role/name, current date, and chat age in days.
+
+Files:
+- `project-memory/prompts/next-chat.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- When preparing a successor prompt, include `Archive name: <role/name> - <YYYY-MM-DD> - <N days since creation>` after the prompt so the user can rename the old chat before archiving.
+
+Open questions:
+- None.
+
+## 2026-05-20 02:14 - Dev 2
+
+Changed:
+- Made the 3D dice spin 20% slower, from 800ms to 960ms.
+- Kept the JS dice timing and CSS cube animations synchronized.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser that the loaded script cache key is `20260520-0045`, `.die-cube` uses `960ms`, and no console errors appeared.
+
+Open questions:
+- None.
+
 ## 2026-05-20 01:47 - Important
 
 Changed:
