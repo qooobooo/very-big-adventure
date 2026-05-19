@@ -20,6 +20,39 @@ Open questions:
 - ...
 ```
 
+## 2026-05-20 01:40 - Important
+
+Changed:
+- Updated `project-memory/prompts/next-chat.md` so replacement chats keep the same role name without numbering.
+
+Files:
+- `project-memory/prompts/next-chat.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Dev` should prepare a prompt for `Dev`, `UI` for `UI`, `GD` for `GD`, etc.; do not name successors `Dev 2`, `Dev 3`, and so on.
+
+Open questions:
+- None.
+
+## 2026-05-20 01:31 - Important
+
+Changed:
+- Added `next-chat.md` to the startup reading list for new chats.
+- Added the GitHub link for `next-chat.md` so browser ChatGPT chats can open it without local file access.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Every new role chat should see `project-memory/prompts/next-chat.md` at least once.
+- Browser ChatGPT chats should use the GitHub URL if local paths are unavailable.
+
+Open questions:
+- None.
+
 ## 2026-05-20 01:19 - Important
 
 Changed:

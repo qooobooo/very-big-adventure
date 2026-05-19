@@ -10,6 +10,11 @@ First read the shared memory files:
 `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/handoff.md`
 `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/updates.md`
 `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/README.md`
+`/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/prompts/next-chat.md`
+
+If you are not in Codex and cannot read local files, open `next-chat.md` from GitHub:
+
+`https://github.com/qooobooo/very-big-adventure/blob/main/project-memory/prompts/next-chat.md`
 
 Then read the inbox that matches your role:
 
@@ -44,6 +49,10 @@ If Dev, Important, or GD needs to do something, write it in the matching inbox u
 When replacing an old role chat with a new one, use:
 
 `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/prompts/next-chat.md`
+
+GitHub link:
+
+`https://github.com/qooobooo/very-big-adventure/blob/main/project-memory/prompts/next-chat.md`
 
 Do not edit local Codex `.jsonl` session files. They are read-only context.
 ```
