@@ -20,6 +20,253 @@ Open questions:
 - ...
 ```
 
+## 2026-05-20 18:36 - Dev 2
+
+Changed:
+- Raised the dice player label only during the final battle.
+- Added a final-battle-specific dice label class so the player name sits above the force counter HUD.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Normal dice throw labels still use the original centered position.
+
+Open questions:
+- None.
+
+## 2026-05-20 18:22 - Dev 2
+
+Changed:
+- Applied Google Sheet `good` card config update for `steal5`.
+- Changed `steal5` from stealing from a random opponent to stealing from the opponent with the most coins.
+- Updated matching local card config and `cards-google-sheet.csv`.
+- Updated Google Sheet row: title, `effect_type`, `description`, and cleared `new description`.
+- Bumped the game script cache key.
+
+Files:
+- `cards-google-sheet.csv`
+- `index.html`
+- `src/cards.config.js`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- If multiple opponents tie for most coins, the earliest player by id/order is selected.
+- Verified Google Sheet row `good!A4:N4`: `new description` is empty and `effect_type` is `steal-richest`.
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser that the game loads cache key `20260520-0235` with no console errors.
+
+Open questions:
+- None.
+
+## 2026-05-20 16:34 - Dev 2
+
+Changed:
+- Aligned map player token images by removing the extra CSS-drawn circular token backing.
+- Map tokens now use the circular PNG art itself as the token image at 100% size.
+- Updated player colors to match token art backgrounds: dog blue, cat teal, otter purple, alpaca yellow.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser with 4 players: token image and token container sizes match, object position is centered, colors are updated, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-20 16:30 - Dev 2
+
+Changed:
+- Replaced all active player token icons with the new 1024px circle RGBA animal tokens.
+- Changed the fourth player from `Белка` to `Альпака`, keeping the same purple player color.
+- Updated player token mapping to dog/cat/otter/alpaca in order.
+- Bumped the game script cache key.
+
+Files:
+- `assets/player-tokens/alpaca.png`
+- `assets/player-tokens/cat.png`
+- `assets/player-tokens/dog.png`
+- `assets/player-tokens/otter.png`
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `assets/player-tokens/squirrel.png` remains in the folder but is no longer referenced.
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser with 4 players: score cards and map tokens show `Пес`, `Кот`, `Выдра`, `Альпака` with 1024px icons, roll label uses the active player's new icon, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-20 15:35 - Dev 2
+
+Changed:
+- Adjusted map player token image alignment inside the round token.
+- Reduced token image size from 140% to 118% and set explicit centered object positioning.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: cache key is `20260520-0220`, token image object position is centered, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-20 15:31 - Dev 2
+
+Changed:
+- Changed final battle boss opponent bonus from +5 force per opponent to +1 force per opponent.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Existing older memory entries mention the previous +5 boss bonus; this latest entry supersedes that rule.
+- Verified `node --check src/game.js`.
+
+Open questions:
+- None.
+
+## 2026-05-20 14:40 - Dev 2
+
+Changed:
+- Moved the final battle force HUD lower on the board to avoid overlapping the final battle action prompt.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- HUD top position now uses `clamp(118px, 19vh, 156px)`.
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: cache key is `20260520-0210`, computed HUD top is about `135px` in the current viewport, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-20 12:59 - Dev 2
+
+Changed:
+- Added a final battle force HUD on the board.
+- During final battle it shows total player force on the left and boss force on the right.
+- The HUD updates after each challenger roll and each boss roll, then hides when the battle resolves.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Boss force HUD includes the boss fixed bonuses (+modifiers per opponent and +5 per opponent) once the boss phase begins, then adds boss dice rolls as they happen.
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: the new HUD node exists, is hidden outside final battle, the cache key is `20260520-0205`, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-20 12:31 - Dev 2
+
+Changed:
+- Reversed enemy player-dot logic: enemy tiles now show dots only for players who have already defeated that enemy.
+- Renamed the marker class from lock wording to `enemy-victory-marks`.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: fresh game starts with 4 enemy tiles and 0 victory marks; old `enemy-locks` markers are gone; no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-20 03:28 - Dev 2
+
+Changed:
+- Passive event/card toast messages now hide immediately when the player starts a dice roll.
+- The behavior is wired through the shared roll button action, so it applies to both button clicks and Enter.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Action prompts are not affected; they still require `Далее`/Enter.
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser that Enter still starts a dice throw on the new cache key and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-20 03:24 - Dev 2
+
+Changed:
+- Added player token icons next to player names in the top score cards.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: score cards render player icons next to names, icons load at 512px natural width, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-20 03:23 - Dev 2
+
+Changed:
+- Added an Enter keyboard shortcut for the primary turn button.
+- Enter now rolls the dice when rolling is available and advances action prompts when the button says `Далее`.
+- The shortcut ignores form fields such as player/dice count selects.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: pressing Enter from the page starts a dice throw, and no console errors appeared.
+
+Open questions:
+- None.
+
 ## 2026-05-20 03:13 - Dev 2
 
 Changed:

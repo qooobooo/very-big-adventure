@@ -14,9 +14,9 @@ export const cardConfig = {
     },
     {
       id: "steal5",
-      title: "Забрать у случайного игрока 5 монет",
-      description: "Выбирается случайный соперник. Игрок забирает у него до 5 монет.",
-      effect: { type: "steal-random", amount: 5 },
+      title: "Забери 5 монет у игрока с наибольшим количеством монет",
+      description: "Забери 5 монет у игрока с наибольшим количеством монет.",
+      effect: { type: "steal-richest", amount: 5 },
     },
   ],
   bad: [

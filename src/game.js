@@ -13,6 +13,7 @@ const ui = {
   diceCount: document.querySelector("#diceCount"),
   diceValue: document.querySelector("#diceValue"),
   eventToast: document.querySelector("#eventToast"),
+  finalBattleHud: document.querySelector("#finalBattleHud"),
   fieldEffect: document.querySelector("#fieldEffect"),
   newGameBtn: document.querySelector("#newGameBtn"),
   playerCount: document.querySelector("#playerCount"),
@@ -128,10 +129,10 @@ const tadamCards = cardConfig.tadam;
 const shopCards = cardConfig.shop;
 
 const names = [
-  { name: "Пес", color: "#f07e59", token: "./assets/player-tokens/dog.png" },
-  { name: "Кот", color: "#61c3d9", token: "./assets/player-tokens/otter.png" },
-  { name: "Выдра", color: "#95d96d", token: "./assets/player-tokens/cat.png" },
-  { name: "Белка", color: "#c795ff", token: "./assets/player-tokens/squirrel.png" },
+  { name: "Пес", color: "#2599db", token: "./assets/player-tokens/dog.png" },
+  { name: "Кот", color: "#4bc6a8", token: "./assets/player-tokens/cat.png" },
+  { name: "Выдра", color: "#765bc2", token: "./assets/player-tokens/otter.png" },
+  { name: "Альпака", color: "#f1b72b", token: "./assets/player-tokens/alpaca.png" },
 ];
 
 let state;
@@ -156,6 +157,7 @@ function newGame() {
     doors,
     eventDepth: 0,
     finalBattle: null,
+    finalBattleProgress: null,
     finished: false,
     isAnimating: false,
     landingCell: null,
@@ -288,6 +290,7 @@ function render() {
   renderScores();
   renderTurn();
   renderChoicePanel();
+  renderFinalBattleHud();
   renderWinnerPopup();
   renderTadams();
 }
@@ -332,24 +335,24 @@ function buildBoardShell() {
 }
 
 function renderEnemyLocks() {
-  boardEl.querySelectorAll(".enemy-locks").forEach((item) => item.remove());
+  boardEl.querySelectorAll(".enemy-victory-marks").forEach((item) => item.remove());
 
   for (const door of Object.values(state.doors)) {
     const tile = boardEl.querySelector(`[data-cell="${door.enemyCell}"]`);
     if (!tile) continue;
 
-    const lockedPlayers = state.players.filter((player) => !isDoorOpenForPlayer(door, player));
-    if (lockedPlayers.length === 0) continue;
+    const victoriousPlayers = state.players.filter((player) => isDoorOpenForPlayer(door, player));
+    if (victoriousPlayers.length === 0) continue;
 
-    const locks = document.createElement("span");
-    locks.className = "enemy-locks";
-    for (const player of lockedPlayers) {
+    const marks = document.createElement("span");
+    marks.className = "enemy-victory-marks";
+    for (const player of victoriousPlayers) {
       const dot = document.createElement("i");
       dot.style.setProperty("--player-color", player.color);
-      dot.title = `${player.name} еще не побеждал этого врага`;
-      locks.append(dot);
+      dot.title = `${player.name} победил этого врага`;
+      marks.append(dot);
     }
-    tile.append(locks);
+    tile.append(marks);
   }
 }
 
@@ -432,7 +435,13 @@ function renderScores() {
     card.className = `score-card ${player.id === state.activePlayer ? "active" : ""}`;
     card.style.setProperty("--player-color", player.color);
     card.innerHTML = `
-      <div class="score-name"><strong>${player.name}</strong><span class="pill">${tileTitle(player.position)}</span></div>
+      <div class="score-name">
+        <span class="score-player-name">
+          <img src="${player.token}" alt="" aria-hidden="true">
+          <strong>${player.name}</strong>
+        </span>
+        <span class="pill">${tileTitle(player.position)}</span>
+      </div>
       <div class="score-stats">
         <span><b>${player.coins}</b> монет</span>
         <span><b>+${playerDiceBonus(player)}</b> куб.</span>
@@ -560,6 +569,31 @@ function renderWinnerPopup() {
     <div class="winner-card">
       <p>Победил - <span class="player-name" style="--player-color: ${winner.color}">${winner.name}</span>!</p>
       ${battleSummary}
+    </div>
+  `;
+}
+
+function renderFinalBattleHud() {
+  if (!ui.finalBattleHud) return;
+
+  const progress = state.finalBattleProgress;
+  if (!progress || state.finished) {
+    ui.finalBattleHud.hidden = true;
+    ui.finalBattleHud.innerHTML = "";
+    return;
+  }
+
+  const boss = state.players.find((player) => player.id === progress.bossId);
+  ui.finalBattleHud.hidden = false;
+  ui.finalBattleHud.innerHTML = `
+    <div class="final-battle-side players">
+      <span>Игроки</span>
+      <strong>${progress.playersForce}</strong>
+    </div>
+    <div class="final-battle-vs">VS</div>
+    <div class="final-battle-side boss" style="--player-color: ${boss?.color || "#ff7d5d"}">
+      <span>Босс${boss ? ` - ${boss.name}` : ""}</span>
+      <strong>${progress.bossForce}</strong>
     </div>
   `;
 }
@@ -727,6 +761,11 @@ async function resolveFinalBattle(boss, animate = true) {
   state.isAnimating = animate;
   state.movingPlayerId = null;
   state.dice = null;
+  state.finalBattleProgress = {
+    bossForce: 0,
+    bossId: boss.id,
+    playersForce: 0,
+  };
   render();
 
   log(`${playerName(boss)} достигает финиша и становится <strong>боссом</strong>. Начинается финальная битва.`);
@@ -743,15 +782,22 @@ async function resolveFinalBattle(boss, animate = true) {
     }
     const result = await rollFinalBattlePower(challenger, animate);
     challengerResults.push(result);
+    state.finalBattleProgress.playersForce += result.total;
+    render();
     log(
       `${playerName(challenger)} атакует босса: ${formatRoll(result.rolls)}${finalBonusText(result.bonus, result.total)}. Сила: <strong>${result.total}</strong>.`,
     );
   }
 
   const playersForce = challengerResults.reduce((sum, result) => sum + result.total, 0);
+  state.finalBattleProgress.playersForce = playersForce;
   log(`Итоговая сила игроков: <strong>${playersForce}</strong>.`);
 
   const bossRollResults = [];
+  const bossBonus = playerStepBonus(boss) * challengers.length;
+  const bossOpponentBonus = challengers.length;
+  state.finalBattleProgress.bossForce = bossBonus + bossOpponentBonus;
+  render();
   for (let index = 0; index < challengers.length; index += 1) {
     if (animate) {
       await showActionPrompt(`Босс - ${playerName(boss)} готовится бросить кубики ${index + 1}/${challengers.length}.`, {
@@ -760,15 +806,16 @@ async function resolveFinalBattle(boss, animate = true) {
     }
     const result = await rollFinalBattlePower(boss, animate, { label: `Босс - ${boss.name}` });
     bossRollResults.push(result);
+    state.finalBattleProgress.bossForce += result.rolled;
+    render();
     log(
       `${playerName(boss)} бросает как босс ${index + 1}/${challengers.length}: ${formatRoll(result.rolls)}. Кубики: <strong>${result.rolled}</strong>.`,
     );
   }
 
   const bossRolled = bossRollResults.reduce((sum, result) => sum + result.rolled, 0);
-  const bossBonus = playerStepBonus(boss) * challengers.length;
-  const bossOpponentBonus = challengers.length * 5;
   const bossForce = bossRolled + bossBonus + bossOpponentBonus;
+  state.finalBattleProgress.bossForce = bossForce;
   const bossBonusText = [
     bossBonus ? `${bossBonus} модификаторы` : "",
     bossOpponentBonus ? `${bossOpponentBonus} за противников` : "",
@@ -795,6 +842,7 @@ async function resolveFinalBattle(boss, animate = true) {
   };
   state.finished = true;
   state.isAnimating = false;
+  state.finalBattleProgress = null;
   state.dice = null;
 
   if (bossWon) {
@@ -825,7 +873,7 @@ async function rollFinalBattlePower(player, animate, { label = "" } = {}) {
   if (animate) {
     state.dice = null;
     render();
-    await animateDice(rolls, { bonus, label, player });
+    await animateDice(rolls, { bonus, label, player, isFinalBattle: true });
   }
   const total = rolled + bonus;
   state.dice = total;
@@ -897,6 +945,8 @@ async function applyCardEffect(player, effect, source = {}) {
     await movePlayerSteps(player, effect.steps);
   } else if (effect.type === "steal-random") {
     stealFromRandomPlayer(player, effect.amount);
+  } else if (effect.type === "steal-richest") {
+    stealFromRichestPlayer(player, effect.amount);
   } else if (effect.type === "give-random") {
     giveToRandomPlayer(player, effect.amount);
   }
@@ -1030,6 +1080,13 @@ function stealFromRandomPlayer(player, amount) {
   if (!target) return;
   const taken = stealCoins(target, player, amount);
   log(`${playerName(player)} забирает у ${playerName(target)} <strong>${taken} монет</strong>.`);
+}
+
+function stealFromRichestPlayer(player, amount) {
+  const target = richestOpponent(player);
+  if (!target) return;
+  const taken = stealCoins(target, player, amount);
+  log(`${playerName(player)} забирает у самого богатого игрока ${playerName(target)} <strong>${taken} монет</strong>.`);
 }
 
 function giveToRandomPlayer(player, amount) {
@@ -1370,6 +1427,11 @@ function randomOpponent(player) {
   return opponents.length ? randomItem(opponents) : null;
 }
 
+function richestOpponent(player) {
+  const opponents = state.players.filter((target) => target.id !== player.id);
+  return opponents.sort((a, b) => b.coins - a.coins || a.id - b.id)[0] || null;
+}
+
 function playerName(player) {
   return `<span class="player-name" style="--player-color: ${player.color}">${player.name}</span>`;
 }
@@ -1443,12 +1505,12 @@ function hideEventToast({ quick = false } = {}) {
   }, quick ? eventToastQuickFadeMs : eventToastFadeMs);
 }
 
-async function animateDice(rollsOrResult, { bonus = 0, label = "", player = null } = {}) {
+async function animateDice(rollsOrResult, { bonus = 0, label = "", player = null, isFinalBattle = false } = {}) {
   const rolls = Array.isArray(rollsOrResult) ? rollsOrResult : [rollsOrResult];
   const result = rolls.reduce((sum, value) => sum + value, 0);
   const caption = diceResultCaption(rolls, bonus);
   const playerLabel = dicePlayerLabel(player, label);
-  const throwPromise = animateDiceOnBoard(rolls, { caption, playerLabel });
+  const throwPromise = animateDiceOnBoard(rolls, { caption, playerLabel, isFinalBattle });
   ui.diceValue.classList.add("rolling");
   ui.diceValue.textContent = "-";
   const startedAt = performance.now();
@@ -1461,7 +1523,7 @@ async function animateDice(rollsOrResult, { bonus = 0, label = "", player = null
   await throwPromise;
 }
 
-async function animateDiceOnBoard(rolls, { caption = "", playerLabel = null } = {}) {
+async function animateDiceOnBoard(rolls, { caption = "", playerLabel = null, isFinalBattle = false } = {}) {
   if (!boardEl || !rolls.length) return;
 
   boardEl.querySelectorAll(".dice-throw-layer").forEach((layer) => layer.remove());
@@ -1472,6 +1534,7 @@ async function animateDiceOnBoard(rolls, { caption = "", playerLabel = null } = 
   if (playerLabel) {
     const playerEl = document.createElement("span");
     playerEl.className = "dice-player-label";
+    if (isFinalBattle) playerEl.classList.add("final-battle-label");
     playerEl.style.setProperty("--player-color", playerLabel.color);
     if (playerLabel.icon) {
       const iconEl = document.createElement("img");
@@ -1606,13 +1669,29 @@ function formatRoll(rolls) {
   return rolls.length === 1 ? String(total) : `${rolls.join(" + ")} = ${total}`;
 }
 
-ui.newGameBtn.addEventListener("click", newGame);
-ui.rollBtn.addEventListener("click", () => {
+function triggerRollButtonAction() {
   if (actionPromptResolver) {
     actionPromptResolver();
     return;
   }
+  if (ui.rollBtn.disabled) return;
+  hidePassiveEventToast();
   rollAndMove();
+}
+
+function hidePassiveEventToast() {
+  if (!ui.eventToast || ui.eventToast.hidden || ui.eventToast.classList.contains("action-prompt")) return;
+  hideEventToast({ quick: true });
+}
+
+function shouldIgnoreEnterShortcut(event) {
+  const target = event.target;
+  return target instanceof Element && Boolean(target.closest("input, select, textarea"));
+}
+
+ui.newGameBtn.addEventListener("click", newGame);
+ui.rollBtn.addEventListener("click", () => {
+  triggerRollButtonAction();
 });
 ui.turnActions.addEventListener("click", (event) => {
   const button = event.target instanceof Element ? event.target.closest("[data-preroll-choice]") : null;
@@ -1629,6 +1708,13 @@ ui.eventToast?.addEventListener("keydown", (event) => {
     event.preventDefault();
     hideEventToast({ quick: true });
   }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" || shouldIgnoreEnterShortcut(event)) return;
+  if (!actionPromptResolver && ui.rollBtn.disabled) return;
+
+  event.preventDefault();
+  triggerRollButtonAction();
 });
 
 newGame();
