@@ -20,6 +20,151 @@ Open questions:
 - ...
 ```
 
+## 2026-05-20 03:13 - Dev 2
+
+Changed:
+- Unified the active-player preparation animation with the actual roll/move animation.
+- `ready-to-roll` now uses the same `token-hop` animation as `moving`.
+- Removed the separate ready pulse/icon rocking animations.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: before roll and during roll both report `token-hop`, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-20 03:10 - Dev 2
+
+Changed:
+- Added a `ready-to-roll` token state for the active player when it is their turn and the roll button is available.
+- The ready player token now pulses and the character icon lightly rocks before the dice roll starts.
+- Kept movement animation separate: during actual roll/move the token uses the existing `moving` hop.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: active token starts with `ready-to-roll` and `token-ready-*` animations; after pressing roll it switches to `moving`/`token-hop`; no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-20 03:06 - Dev 2
+
+Changed:
+- Swapped the cat and otter token assignments so `Кот` and `Выдра` use the intended icons.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: loaded script cache key is `20260520-0130`, `Кот` now uses `otter.png`, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-20 03:04 - Dev 2
+
+Changed:
+- Added the player's token icon next to their name in the dice-roll label.
+- Boss dice labels keep the `Босс - Имя` text and use the boss player's icon.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: the roll label uses flex layout, shows `Пес`, loads `dog.png` at 512px natural width, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-20 03:03 - Dev 2
+
+Changed:
+- Changed automatic event/card toast display time from 5 seconds to 3 seconds.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- This affects `showEventToast`; action prompts that require pressing the button still wait for user input.
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser that the loaded script cache key is `20260520-0120`, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-20 03:00 - Dev 2
+
+Changed:
+- Added PNG player token assets for dog, cat, otter, and squirrel.
+- Replaced plain colored map-token circles with the new character icons.
+- Kept player color as the token ring/glow for readability and active-player emphasis.
+- Bumped the game script cache key.
+
+Files:
+- `assets/player-tokens/cat.png`
+- `assets/player-tokens/dog.png`
+- `assets/player-tokens/otter.png`
+- `assets/player-tokens/squirrel.png`
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: visible player tokens load 512px PNG icons from `assets/player-tokens`, and no console errors appeared.
+
+Open questions:
+- None.
+
+## 2026-05-20 02:56 - Dev 2
+
+Changed:
+- Made Joe's Shop tile outlines more expressive.
+- Added a similarly expressive red outline to enemy tiles.
+- Removed visual door bars/locks from the board while keeping the underlying enemy/door progression logic.
+- Enemy tiles now show colored player dots for players who have not yet defeated that enemy.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `node --check src/game.js`.
+- Verified in the in-app browser: 4 enemy tiles render with player dots, no door visuals remain, the cache key is `20260520-0105`, and no console errors appeared.
+
+Open questions:
+- None.
+
 ## 2026-05-20 02:41 - Important
 
 Changed:
