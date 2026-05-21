@@ -18,6 +18,24 @@ export const cardConfig = {
       description: "Забери 5 монет у игрока с наибольшим количеством монет.",
       effect: { type: "steal-richest", amount: 5 },
     },
+    {
+      id: "paid-extra-turn",
+      title: "Можешь заплатить 5 монет и сделать еще один ход",
+      description: "Игрок может заплатить 5 монет, чтобы после этого хода сразу сделать еще один ход.",
+      effect: { type: "optional-extra-turn", cost: 5 },
+    },
+    {
+      id: "free-shop-card",
+      title: "Тяни карту Лавка Джо бесплатно",
+      description: "Игрок тянет случайную карту Лавка Джо и оставляет ее себе бесплатно.",
+      effect: { type: "draw-free-shop" },
+    },
+    {
+      id: "buy-shop-card",
+      title: "Можешь заплатить 5 монет игроку и забрать его карту Лавка Джо",
+      description: "Игрок может заплатить 5 монет любому игроку и забрать у него любую карту Лавка Джо.",
+      effect: { type: "buy-shop-card-from-player", cost: 5 },
+    },
   ],
   bad: [
     {

@@ -20,6 +20,222 @@ Open questions:
 - ...
 ```
 
+## 2026-05-21 00:40 - Dev 2
+
+Changed:
+- Made player name colors brighter while keeping them readable on dark UI.
+- Reduced the light mix in player-name CSS and added subtle color glow to score names, dice labels, event toasts, and log names.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Base player colors in `src/game.js` are still matched to character art backgrounds.
+
+Open questions:
+- None.
+
+## 2026-05-21 00:35 - Dev 2
+
+Changed:
+- Replaced the `dice-fortune` field icon with the new white die x6 art.
+- Added an asset cache key for the updated icon and bumped the game script cache key.
+
+Files:
+- `assets/tiles/dice_fortune_1254.png`
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The field remains on the standard gray tile backing and frame per the custom-field convention.
+
+Open questions:
+- None.
+
+## 2026-05-21 00:30 - Dev 2
+
+Changed:
+- Replaced the `pay-double` field icon with the new coin bag x2 art.
+- Added an asset cache key for the updated icon and bumped the game script cache key.
+
+Files:
+- `assets/tiles/pay_double_1024.png`
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The field remains on the standard gray tile backing and frame per the custom-field convention.
+
+Open questions:
+- None.
+
+## 2026-05-21 00:25 - Dev 2
+
+Changed:
+- Added three new `good` cards: paid extra turn, free Joe's Shop card, and paid shop-card transfer from another player.
+- Implemented new card effect types: `optional-extra-turn`, `draw-free-shop`, and `buy-shop-card-from-player`.
+- Added a generic card-action choice dialog for optional card effects.
+- Synced `src/cards.config.js` and `cards-google-sheet.csv`.
+- Bumped the game script cache key.
+
+Files:
+- `cards-google-sheet.csv`
+- `index.html`
+- `src/cards.config.js`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Paid extra turn keeps the active player after the current turn resolves.
+- Buying another player's Joe's Shop card pays 5 coins to that card's owner and transfers the selected card.
+
+Open questions:
+- None.
+
+## 2026-05-21 00:15 - Dev 2
+
+Changed:
+- Moved the `pay-double` field from bottom cell `4-9` to the mid-route cell `3-4` shown in the reference.
+- Restored the `good` field at bottom cell `4-9`.
+- Put all custom new fields on the standard gray tile backing with the same fantasy frame as regular fields.
+- Reduced custom field art to sit as an icon inside the framed tile.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Default convention for future custom fields: use a gray tile backing and standard field frame unless the user explicitly asks otherwise.
+- Current custom framed fields are `dice-fortune` and `pay-double`.
+
+Open questions:
+- None.
+
+## 2026-05-21 00:05 - Dev 2
+
+Changed:
+- Added a new `pay-double` board field on bottom route cell `4-9`.
+- Added the new field art asset `assets/tiles/pay_double_1024.png`.
+- Landing on the field pays up to 5 coins, then doubles the remaining coins.
+- Added title/effect text for the new field and bumped the game script cache key.
+
+Files:
+- `assets/tiles/pay_double_1024.png`
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- If the player has fewer than 5 coins, they pay what they have and then double the remaining amount, which will be 0.
+- This replaces the `good` field at board cell `4-9`.
+
+Open questions:
+- None.
+
+## 2026-05-20 23:59 - Dev 2
+
+Changed:
+- Moved the new `dice-fortune` field from the bottom route to the left vertical route cell shown in the reference.
+- Restored the previous `good` field at board cell `4-9`.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `dice-fortune` now sits at board cell `0-2`, replacing the previous red field there.
+
+Open questions:
+- None.
+
+## 2026-05-20 23:56 - Dev 2
+
+Changed:
+- Added a new `dice-fortune` board field on the bottom route cell shown in the design reference.
+- Added the new field art asset `assets/tiles/dice_fortune_1254.png`.
+- Landing on the field rolls 6 dice: each 6 grants 20 coins, each 1 moves the player 5 steps backward.
+- Added title/effect text for the new field and bumped the game script cache key.
+
+Files:
+- `assets/tiles/dice_fortune_1254.png`
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- The new field replaces the previous `good` field at board cell `4-9`, which is the fifth route cell from start.
+- Backward movement from this field does not resolve the landing effect of the destination cell, matching existing backward movement behavior.
+
+Open questions:
+- None.
+
+## 2026-05-20 23:45 - Dev 2
+
+Changed:
+- Lightened player name text while keeping base player colors unchanged for tokens and markers.
+- Applied the lighter color treatment to score cards, dice roll labels, event toasts, and log player names.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Player colors in `src/game.js` remain matched to the character backgrounds; CSS mixes them with `#fff7d4` for readable names.
+
+Open questions:
+- None.
+
+## 2026-05-20 23:39 - Dev 2
+
+Changed:
+- Replaced all active player character token PNGs with the simplified icon set.
+- Updated player colors to match the simplified icon backgrounds: dog red, cat purple, otter teal-blue, alpaca orange.
+- Bumped token asset cache keys and the game script cache key.
+
+Files:
+- `assets/player-tokens/alpaca.png`
+- `assets/player-tokens/cat.png`
+- `assets/player-tokens/dog.png`
+- `assets/player-tokens/otter.png`
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- This supersedes the earlier 2026-05-20 21:36 character token update.
+
+Open questions:
+- None.
+
+## 2026-05-20 21:36 - Dev 2
+
+Changed:
+- Replaced all active player character token PNGs with the new class-themed character art.
+- Updated player colors to match the new character backgrounds: dog red, cat purple, otter teal, alpaca orange.
+- Added token asset cache keys and bumped the game script cache key.
+
+Files:
+- `assets/player-tokens/alpaca.png`
+- `assets/player-tokens/cat.png`
+- `assets/player-tokens/dog.png`
+- `assets/player-tokens/otter.png`
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The fourth player remains named `Альпака`; the source file is `04_llama_barbarian.png`.
+
+Open questions:
+- None.
+
 ## 2026-05-20 18:36 - Dev 2
 
 Changed:

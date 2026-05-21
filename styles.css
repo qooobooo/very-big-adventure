@@ -282,8 +282,12 @@ h2 {
 
 .score-name strong {
   overflow: hidden;
+  color: color-mix(in srgb, var(--player-color) 72%, #fff7d4 28%);
   font-size: 0.95rem;
   text-overflow: ellipsis;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.58),
+    0 0 10px color-mix(in srgb, var(--player-color) 42%, transparent);
   white-space: nowrap;
 }
 
@@ -891,6 +895,16 @@ h2 {
   height: 96%;
 }
 
+.tile-icon-dice-fortune {
+  width: 88%;
+  height: 88%;
+}
+
+.tile-icon-pay-double {
+  width: 88%;
+  height: 88%;
+}
+
 .tile-icon-start {
   width: 94%;
   height: 94%;
@@ -1050,7 +1064,7 @@ h2 {
   padding: 3px 11px 4px 5px;
   border: 1px solid color-mix(in srgb, var(--player-color) 70%, white 30%);
   border-radius: 999px;
-  color: var(--player-color);
+  color: color-mix(in srgb, var(--player-color) 72%, #fff7d4 28%);
   background: rgba(19, 22, 18, 0.74);
   box-shadow:
     0 5px 14px rgba(0, 0, 0, 0.28),
@@ -1063,7 +1077,7 @@ h2 {
   text-overflow: ellipsis;
   text-shadow:
     0 1px 2px rgba(0, 0, 0, 0.72),
-    0 0 8px color-mix(in srgb, var(--player-color) 42%, transparent);
+    0 0 10px color-mix(in srgb, var(--player-color) 58%, transparent);
   transform: translate(-50%, -100%);
   white-space: nowrap;
 }
@@ -1172,9 +1186,11 @@ h2 {
 .tile-finish,
 .tile-green,
 .tile-red,
+.tile-dice-fortune,
 .tile-good,
 .tile-bad,
 .tile-enemy,
+.tile-pay-double,
 .tile-shop,
 .tile-tadam {
   background-color: #b8b8b8;
@@ -1195,9 +1211,11 @@ h2 {
 .tile-finish::before,
 .tile-green::before,
 .tile-red::before,
+.tile-dice-fortune::before,
 .tile-good::before,
 .tile-bad::before,
 .tile-enemy::before,
+.tile-pay-double::before,
 .tile-shop::before,
 .tile-tadam::before {
   opacity: 0;
@@ -1237,7 +1255,9 @@ h2 {
 
 .tile-good,
 .tile-bad,
+.tile-dice-fortune,
 .tile-enemy,
+.tile-pay-double,
 .tile-shop,
 .tile-tadam {
   color: rgba(20, 20, 18, 0.88);
@@ -1246,7 +1266,9 @@ h2 {
 }
 
 .tile-good,
+.tile-dice-fortune,
 .tile-enemy,
+.tile-pay-double,
 .tile-shop,
 .tile-tadam {
   background-image: var(--tile-gray-art);
@@ -1689,8 +1711,11 @@ h2 {
 }
 
 .player-name {
-  color: var(--player-color);
+  color: color-mix(in srgb, var(--player-color) 72%, #fff7d4 28%);
   font-weight: 900;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.58),
+    0 0 9px color-mix(in srgb, var(--player-color) 46%, transparent);
 }
 
 .event-toast.action-prompt {
@@ -1711,7 +1736,7 @@ h2 {
 }
 
 .event-toast-copy .player-name {
-  color: var(--player-color);
+  color: color-mix(in srgb, var(--player-color) 72%, #fff7d4 28%);
 }
 
 .choice-panel {

@@ -33,9 +33,9 @@ const finishCell = "9-0";
 const boardLayout = [
   ["red", "shop", "bad", null, "red", "good", "bad", null, "enemy", "finish"],
   ["green", null, "red", null, "red", null, "bad", "bad", "bad", null],
-  ["red", null, "tadam", "enemy", "red", null, null, null, null, null],
+  ["dice-fortune", null, "tadam", "enemy", "red", null, null, null, null, null],
   ["bad", null, null, null, null, null, null, "good", "enemy", "bad"],
-  ["good", null, "shop", "green", "red", "good", "green", "red", null, "tadam"],
+  ["good", null, "shop", "pay-double", "red", "good", "green", "red", null, "tadam"],
   ["green", null, "green", null, null, null, null, null, null, "green"],
   ["red", null, "bad", null, "good", "shop", "tadam", null, null, "green"],
   ["good", "enemy", "tadam", null, "tadam", null, "good", null, "good", "tadam"],
@@ -114,6 +114,8 @@ const eventIcons = {
   good: '<img class="tile-icon-image tile-icon-good" src="./assets/icons/good_512.png" alt="Хорошо">',
   green: "",
   red: "",
+  "dice-fortune": '<img class="tile-icon-image tile-icon-dice-fortune" src="./assets/tiles/dice_fortune_1254.png?v=20260521-0035" alt="Кубик удачи">',
+  "pay-double": '<img class="tile-icon-image tile-icon-pay-double" src="./assets/tiles/pay_double_1024.png?v=20260521-0030" alt="Удвоение монет">',
   shop: '<img class="tile-icon-image tile-icon-shop" src="./assets/icons/joes_shop_512.png" alt="Лавка Джо">',
   tadam: '<img class="tile-icon-image tile-icon-tadam" src="./assets/icons/tadam_512.png" alt="ТАДАМ!">',
 };
@@ -129,10 +131,10 @@ const tadamCards = cardConfig.tadam;
 const shopCards = cardConfig.shop;
 
 const names = [
-  { name: "Пес", color: "#2599db", token: "./assets/player-tokens/dog.png" },
-  { name: "Кот", color: "#4bc6a8", token: "./assets/player-tokens/cat.png" },
-  { name: "Выдра", color: "#765bc2", token: "./assets/player-tokens/otter.png" },
-  { name: "Альпака", color: "#f1b72b", token: "./assets/player-tokens/alpaca.png" },
+  { name: "Пес", color: "#8b1713", token: "./assets/player-tokens/dog.png?v=20260520-0310" },
+  { name: "Кот", color: "#4b1a78", token: "./assets/player-tokens/cat.png?v=20260520-0310" },
+  { name: "Выдра", color: "#0b748b", token: "./assets/player-tokens/otter.png?v=20260520-0310" },
+  { name: "Альпака", color: "#d56b00", token: "./assets/player-tokens/alpaca.png?v=20260520-0310" },
 ];
 
 let state;
@@ -162,6 +164,9 @@ function newGame() {
     isAnimating: false,
     landingCell: null,
     movingPlayerId: null,
+    extraTurnPlayerId: null,
+    cardChoiceResolver: null,
+    pendingCardChoice: null,
     pendingChoice: null,
     pendingPreRoll: null,
     pendingShop: null,
@@ -184,7 +189,7 @@ function newGame() {
 }
 
 async function rollAndMove({ animate = true } = {}) {
-  if (state.finished || state.isAnimating || state.pendingChoice || state.pendingPreRoll || state.pendingShop) return;
+  if (state.finished || state.isAnimating || state.pendingCardChoice || state.pendingChoice || state.pendingPreRoll || state.pendingShop) return;
 
   const player = currentPlayer();
   const extraDice = await chooseExtraDie(player, animate);
@@ -234,6 +239,11 @@ async function rollAndMove({ animate = true } = {}) {
 
   if (player.position === finishCell) {
     await resolveFinalBattle(player, animate);
+  } else if (state.extraTurnPlayerId === player.id) {
+    state.extraTurnPlayerId = null;
+    state.dice = null;
+    state.turns += 1;
+    log(`${playerName(player)} получает <strong>еще один ход</strong>.`, { toast: true });
   } else {
     advanceTurn();
   }
@@ -422,6 +432,7 @@ function isPlayerReadyToRoll(player) {
     !actionPromptResolver &&
     !state.finished &&
     !state.isAnimating &&
+    !state.pendingCardChoice &&
     !state.pendingChoice &&
     !state.pendingPreRoll &&
     !state.pendingShop
@@ -483,7 +494,12 @@ function renderTurn() {
   }
   ui.rollBtn.disabled =
     !actionPromptResolver &&
-    (state.finished || state.isAnimating || Boolean(state.pendingChoice) || Boolean(state.pendingPreRoll) || Boolean(state.pendingShop));
+    (state.finished ||
+      state.isAnimating ||
+      Boolean(state.pendingCardChoice) ||
+      Boolean(state.pendingChoice) ||
+      Boolean(state.pendingPreRoll) ||
+      Boolean(state.pendingShop));
 }
 
 function renderChoicePanel() {
@@ -519,6 +535,28 @@ function renderChoicePanel() {
       description: "Сохранить монеты и закончить посещение Лавки Джо.",
       onClick: () => resolveShopChoice(null),
     });
+    return;
+  }
+
+  if (state.pendingCardChoice) {
+    const pending = state.pendingCardChoice;
+    const buttons = renderChoiceDialog({
+      kind: "card-action",
+      kicker: pending.kicker,
+      title: pending.title,
+      summary: pending.summary,
+      buttonsClass: pending.buttonsClass || "",
+    });
+
+    for (const choice of pending.choices) {
+      appendChoiceButton(buttons, {
+        className: choice.className || "",
+        label: choice.label,
+        note: choice.note,
+        description: choice.description,
+        onClick: () => resolveCardChoice(choice.id),
+      });
+    }
     return;
   }
 
@@ -680,6 +718,12 @@ function resolvePreRollChoice(useExtraDie) {
   render();
 }
 
+function resolveCardChoice(choiceId) {
+  if (!state.cardChoiceResolver) return;
+  state.cardChoiceResolver(choiceId);
+  render();
+}
+
 async function resolveLanding(player) {
   if (state.eventDepth > 5 || player.position === finishCell) return;
 
@@ -703,6 +747,10 @@ async function resolveLanding(player) {
       await resolveShop(player);
     } else if (event === "enemy") {
       await resolveEnemyBattle(player);
+    } else if (event === "dice-fortune") {
+      await resolveDiceFortuneField(player);
+    } else if (event === "pay-double") {
+      await resolvePayDoubleField(player);
     }
 
     if (player.position === landedPosition) {
@@ -754,6 +802,54 @@ async function resolveEnemyBattle(player) {
   render();
   pulseTile(player.position);
   await showActionPrompt(`${playerName(player)} не побеждает врага: ${formatRoll(rolls)}${bonusText}. Возврат на <strong>старт</strong>.`);
+}
+
+async function resolveDiceFortuneField(player) {
+  await showActionPrompt(
+    `${playerName(player)} попадает на кубик удачи: брось 6 кубиков. Каждая 6 дает <strong>20 монет</strong>, каждая 1 отправляет на <strong>5 шагов назад</strong>.`,
+  );
+
+  const rolls = rollDice(6);
+  const sixes = rolls.filter((value) => value === 6).length;
+  const ones = rolls.filter((value) => value === 1).length;
+  const coins = sixes * 20;
+  const backwardSteps = ones * 5;
+
+  state.dice = null;
+  render();
+  await animateDice(rolls, { player });
+
+  if (coins > 0) addCoins(player, coins);
+
+  const resultParts = [
+    sixes ? `<strong>${coins} монет</strong>` : "",
+    backwardSteps ? `<strong>${backwardSteps} шагов назад</strong>` : "",
+  ].filter(Boolean);
+  const resultText = resultParts.length ? resultParts.join(" и ") : "ничего не происходит";
+  const message = `${playerName(player)} бросает кубик удачи: ${formatRoll(rolls)}. Результат: ${resultText}.`;
+  log(message, { toast: !backwardSteps });
+  await showActionPrompt(message);
+
+  if (backwardSteps > 0) {
+    await movePlayerSteps(player, -backwardSteps);
+  } else {
+    render();
+  }
+}
+
+async function resolvePayDoubleField(player) {
+  const before = player.coins;
+  const paid = Math.min(5, player.coins);
+  player.coins = Math.max(0, player.coins - 5);
+  const afterPayment = player.coins;
+  player.coins *= 2;
+  const gained = player.coins - afterPayment;
+  const payText = paid === 5 ? "платит 5 монет" : `платит ${paid} монет`;
+  const message = `${playerName(player)} попадает на удвоение: ${payText}, затем удваивает оставшиеся монеты. Было <strong>${before}</strong>, стало <strong>${player.coins}</strong> (+${gained}).`;
+
+  log(message, { toast: true });
+  await showActionPrompt(message);
+  render();
 }
 
 async function resolveFinalBattle(boss, animate = true) {
@@ -949,7 +1045,111 @@ async function applyCardEffect(player, effect, source = {}) {
     stealFromRichestPlayer(player, effect.amount);
   } else if (effect.type === "give-random") {
     giveToRandomPlayer(player, effect.amount);
+  } else if (effect.type === "optional-extra-turn") {
+    await resolveOptionalExtraTurn(player, effect.cost);
+  } else if (effect.type === "draw-free-shop") {
+    drawFreeShopCard(player);
+  } else if (effect.type === "buy-shop-card-from-player") {
+    await resolveBuyShopCardFromPlayer(player, effect.cost);
   }
+}
+
+async function resolveOptionalExtraTurn(player, cost) {
+  if (player.coins < cost) {
+    log(`${playerName(player)} не может купить еще один ход: нужно <strong>${cost} монет</strong>.`, { toast: true });
+    return;
+  }
+
+  const choice = await chooseCardAction({
+    kicker: "Хорошо",
+    title: "Сделать еще один ход?",
+    summary: `${player.name}: ${player.coins} монет. Можно заплатить ${cost} монет и оставить ход за собой.`,
+    choices: [
+      {
+        id: "pay",
+        label: "Заплатить",
+        note: `${cost} монет`,
+        description: "После текущего хода этот же игрок ходит еще раз.",
+      },
+      {
+        id: "decline",
+        label: "Отказаться",
+        note: "0 монет",
+        description: "Сохранить монеты и передать ход дальше.",
+      },
+    ],
+  });
+
+  if (choice !== "pay") {
+    log(`${playerName(player)} отказывается покупать дополнительный ход.`, { toast: true });
+    return;
+  }
+
+  addCoins(player, -cost);
+  state.extraTurnPlayerId = player.id;
+  log(`${playerName(player)} платит <strong>${cost} монет</strong> и готовит еще один ход.`, { toast: true });
+}
+
+function drawFreeShopCard(player) {
+  const card = randomItem(shopCards);
+  player.items.push(card);
+  log(`${playerName(player)} бесплатно получает карту Лавка Джо: <strong>${card.title}</strong>.`, { toast: true });
+}
+
+async function resolveBuyShopCardFromPlayer(player, cost) {
+  if (player.coins < cost) {
+    log(`${playerName(player)} не может купить карту Лавка Джо у игрока: нужно <strong>${cost} монет</strong>.`, { toast: true });
+    return;
+  }
+
+  const choices = state.players
+    .filter((target) => target.id !== player.id && target.items.length > 0)
+    .flatMap((target) =>
+      target.items.map((card) => ({
+        id: `${target.id}:${card.id}`,
+        label: card.title,
+        note: `${target.name}: ${cost} монет`,
+        description: card.description,
+      })),
+    );
+
+  if (choices.length === 0) {
+    log(`У других игроков нет карт Лавка Джо для покупки.`, { toast: true });
+    return;
+  }
+
+  choices.push({
+    id: "decline",
+    label: "Отказаться",
+    note: "0 монет",
+    description: "Ничего не покупать.",
+  });
+
+  const choice = await chooseCardAction({
+    kicker: "Хорошо",
+    title: "Купить карту Лавка Джо у игрока",
+    summary: `${player.name}: ${player.coins} монет. Выбери карту и заплати ее владельцу ${cost} монет.`,
+    buttonsClass: "shop-buttons",
+    choices,
+  });
+
+  if (!choice || choice === "decline") {
+    log(`${playerName(player)} не покупает карту Лавка Джо у другого игрока.`, { toast: true });
+    return;
+  }
+
+  const [targetIdText, cardId] = choice.split(":");
+  const target = state.players.find((item) => item.id === Number(targetIdText));
+  const cardIndex = target?.items.findIndex((item) => item.id === cardId) ?? -1;
+  if (!target || cardIndex < 0) return;
+
+  const [card] = target.items.splice(cardIndex, 1);
+  addCoins(player, -cost);
+  addCoins(target, cost);
+  player.items.push(card);
+  log(`${playerName(player)} платит ${playerName(target)} <strong>${cost} монет</strong> и забирает карту Лавка Джо: <strong>${card.title}</strong>.`, {
+    toast: true,
+  });
 }
 
 async function applyFieldEffect(player, effect, fieldName) {
@@ -1018,6 +1218,19 @@ function chooseShopCard(player, offer) {
       state.pendingShop = null;
       state.shopResolver = null;
       resolve(card);
+    };
+  });
+}
+
+function chooseCardAction(config) {
+  state.pendingCardChoice = config;
+  render();
+
+  return new Promise((resolve) => {
+    state.cardChoiceResolver = (choiceId) => {
+      state.pendingCardChoice = null;
+      state.cardChoiceResolver = null;
+      resolve(choiceId);
     };
   });
 }
@@ -1144,9 +1357,11 @@ function tileTitle(cell) {
   if (cell === finishCell) return "Финиш";
   const namesByEvent = {
     bad: "Плохо",
+    "dice-fortune": "Кубик удачи",
     enemy: "Враг",
     good: "Хорошо",
     green: "Зеленое поле",
+    "pay-double": "Удвоение монет",
     red: "Красное поле",
     shop: "Лавка Джо",
     tadam: "ТАДАМ!",
@@ -1160,9 +1375,11 @@ function fieldEffectText(cell) {
 
   const texts = {
     bad: ["Плохо", "тяни карту Плохо"],
+    "dice-fortune": ["Кубик удачи", "6 бросков: 6 = +20 монет, 1 = -5 шагов"],
     enemy: ["Враг", "эффект появится позже"],
     good: ["Хорошо", "тяни карту Хорошо"],
     green: ["Зеленое поле", greenEffectLabel()],
+    "pay-double": ["Удвоение монет", "заплати 5 монет, потом удвой оставшиеся"],
     red: ["Красное поле", redEffectLabel()],
     shop: ["Лавка Джо", "2 карты на выбор за 5 монет"],
     tadam: ["ТАДАМ!", "новое общее правило"],
