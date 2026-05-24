@@ -20,6 +20,256 @@ Open questions:
 - ...
 ```
 
+## 2026-05-24 15:11 - Dev 2
+
+Changed:
+- Strengthened the Good-card preview hover selector so the global button hover cannot replace the card art with a gold fill.
+- Reduced Good-card hover to a thin contour highlight only.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `button.good-card-preview:hover:not(:disabled)` intentionally mirrors the normal card background to beat the generic `button:hover:not(:disabled)` rule.
+
+Open questions:
+- None.
+
+## 2026-05-24 14:59 - Dev 2
+
+Changed:
+- Kept Good-card hover to contour-only by overriding the global button hover background on card previews.
+- Good-card face text uses `description` only and remains in the lower safe text area.
+- Fixed event/TADAM plaque icon layout so coin/dice icons do not force awkward centered line breaks.
+- Removed trailing periods after card-title toasts to avoid orphan punctuation lines.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Generic `title` is still used for logs/lists; Good-card face rendering uses `description`.
+
+Open questions:
+- None.
+
+## 2026-05-24 03:01 - Dev 2
+
+Changed:
+- Fixed score-card coin layout so the coin icon stays to the right of the number.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- The issue was caused by `.score-stats span` overriding inline icon layout; it now targets only direct stat cells.
+
+Open questions:
+- None.
+
+## 2026-05-24 02:56 - Dev 2
+
+Changed:
+- Added the provided dice icon as a shared UI asset.
+- Replaced visible `кубик`/`кубики`/`куб.` wording in rendered game UI with the dice icon, following the existing coin icon pattern.
+- Added a dice bonus float over the player's token when they receive a permanent +1 die from defeating an enemy.
+- Bumped the game script cache key.
+
+Files:
+- `assets/icons/dice.png`
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `iconizeHtml()` now applies both coin and dice icon replacement for rendered game text.
+- Source card/config strings still keep human-readable dice words; the visible UI transforms them at render time.
+
+Open questions:
+- None.
+
+## 2026-05-24 02:43 - Dev 2
+
+Changed:
+- Removed `description` fields from all local card config entries.
+- Removed card description rendering from Good-card faces and choice buttons; card UI now uses only `title`.
+- Updated local `cards-google-sheet.csv` to remove `description` and `new description`; current columns end with `notes,count`.
+- Updated Google Sheet `Cards Config` tabs `good`, `bad`, `tadam`, and `shop` to the same title-only schema.
+- Synced Google Sheet `good` tab with all 6 current Good cards.
+- Updated project memory handoff/inbox to reflect the new card config workflow.
+
+Files:
+- `cards-google-sheet.csv`
+- `project-memory/handoff.md`
+- `project-memory/inbox/for-dev.md`
+- `src/cards.config.js`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Current card config columns are `deck,id,title,shortTitle,effect_type,amount,steps,cost,dice,mode,target_deck,notes,count`.
+- Google Sheet tabs now have 13 columns; `description` and `new description` are intentionally gone.
+
+Open questions:
+- None.
+
+## 2026-05-24 02:21 - Dev 2
+
+Changed:
+- Added `count` to Good cards in `src/cards.config.js` and made the game expand decks by `count`.
+- Added `count` to the local `cards-google-sheet.csv` mirror as a trailing column, keeping `description` as column M and `new description` as column N.
+- Changed Good card `Можешь заплатить 5 монет и сделать еще один ход` to `Сделай еще один ход`.
+- Added a new free `extra-turn` effect that grants the next turn without payment or a choice dialog.
+- Bumped the game script cache key.
+
+Files:
+- `cards-google-sheet.csv`
+- `index.html`
+- `src/cards.config.js`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Current Good card counts are all `1`.
+- The old `optional-extra-turn` effect remains for compatibility but is no longer used by the Good card.
+
+Open questions:
+- None.
+
+## 2026-05-24 02:08 - Dev 2
+
+Changed:
+- Added a shared coin icon asset and replaced visible coin wording in game UI with inline coin icons.
+- Added a floating `+N` coin gain popover near the player's token when coins are received.
+- Bumped the game script cache key for the new coin UI.
+
+Files:
+- `assets/icons/coin.png`
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Coin wording in source/config strings remains as data, but rendered UI runs through `coinizeHtml()`.
+- Coin-gain popovers are triggered from `addCoins()` and the direct pay-double field doubling.
+
+Open questions:
+- None.
+
+## 2026-05-24 01:44 - Dev 2
+
+Changed:
+- Reworked the Good-card reveal prompt to show only the card itself instead of a separate text panel.
+- Moved Good-card title and description onto the revealed card face.
+- Changed Good-card hover/focus from brightness shift to a subtle contour glow.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Hidden Good cards are now textless backs; the `Далее` button still opens/applies cards as before.
+
+Open questions:
+- None.
+
+## 2026-05-24 01:34 - Dev 2
+
+Changed:
+- Changed the `pay-double` field rule: it now doubles the player's current coins without charging 5 coins first.
+- Updated the field help text to match the new rule.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The pay-double icon/placement is unchanged.
+
+Open questions:
+- None.
+
+## 2026-05-24 01:28 - Dev 2
+
+Changed:
+- Brightened player name colors in score cards, dice labels, final battle boss force, and event messages.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Token/player accent colors are unchanged; only text rendering was lightened.
+
+Open questions:
+- None.
+
+## 2026-05-24 01:05 - Dev 2
+
+Changed:
+- Added visual reveal flow for `good` cards: card back first, then card face, then effect application.
+- Added `assets/cards/good_back.png` and `assets/cards/good_front.png` for the Good card back/front art.
+- Added the `Сразу открывать карты` cheat checkbox beside game setup controls.
+- When the cheat is enabled, Good cards still appear face-down first, then auto-flip after 0.2 seconds.
+- Good card front still waits for player click or `Далее` before applying the effect.
+- Bumped the game script cache key.
+
+Files:
+- `assets/cards/good_back.png`
+- `assets/cards/good_front.png`
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- The reveal flow is currently applied only when `deckName === "Хорошо"`.
+- The card preview itself resolves the prompt on click; the normal `Далее` button still works.
+
+Open questions:
+- None.
+
+## 2026-05-21 12:05 - Dev 2
+
+Changed:
+- Replaced the `pay-double` field icon with the new coin bag x2 art.
+- Added a fresh asset cache key for the updated icon and bumped the game script cache key.
+
+Files:
+- `assets/tiles/pay_double_1024.png`
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The field still uses the standard gray tile backing and frame.
+
+Open questions:
+- None.
+
+## 2026-05-21 00:48 - Dev 2
+
+Changed:
+- Removed trailing periods after Joe's Shop card names in toast/log messages.
+- Prevents a lone period from wrapping onto its own line when a shop card title is long.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- This affects free shop-card draw, normal shop purchase, and paid transfer of another player's shop card.
+
+Open questions:
+- None.
+
 ## 2026-05-21 00:40 - Dev 2
 
 Changed:

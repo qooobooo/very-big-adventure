@@ -169,7 +169,7 @@ h2 {
 .season-controls {
   align-items: end;
   display: grid;
-  grid-template-columns: minmax(84px, 0.75fr) minmax(84px, 0.75fr) minmax(130px, 1fr);
+  grid-template-columns: minmax(84px, 0.75fr) minmax(84px, 0.75fr) minmax(150px, 1fr) minmax(130px, 1fr);
   justify-content: stretch;
 }
 
@@ -183,6 +183,36 @@ h2 {
 .season-controls select,
 .season-controls button {
   width: 100%;
+}
+
+.setup-dice-icon {
+  width: 1.34em;
+  height: 1.34em;
+  justify-self: start;
+}
+
+.cheat-toggle {
+  align-self: stretch;
+  min-height: 44px;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 247, 232, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.cheat-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--gold);
+}
+
+.cheat-toggle span {
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.12;
 }
 
 .secondary {
@@ -282,12 +312,12 @@ h2 {
 
 .score-name strong {
   overflow: hidden;
-  color: color-mix(in srgb, var(--player-color) 72%, #fff7d4 28%);
+  color: color-mix(in srgb, var(--player-color) 52%, #fffbe8 48%);
   font-size: 0.95rem;
   text-overflow: ellipsis;
   text-shadow:
     0 1px 2px rgba(0, 0, 0, 0.58),
-    0 0 10px color-mix(in srgb, var(--player-color) 42%, transparent);
+    0 0 12px color-mix(in srgb, var(--player-color) 72%, transparent);
   white-space: nowrap;
 }
 
@@ -324,7 +354,7 @@ h2 {
   line-height: 1.1;
 }
 
-.score-stats span {
+.score-stats > span {
   display: grid;
   gap: 1px;
 }
@@ -332,6 +362,35 @@ h2 {
 .score-stats b {
   color: var(--ink);
   font-size: 0.92rem;
+}
+
+.coin-amount,
+.dice-amount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18em;
+  white-space: nowrap;
+}
+
+.coin-amount b,
+.dice-amount b {
+  line-height: 1;
+}
+
+.coin-icon,
+.dice-icon {
+  width: 1.08em;
+  height: 1.08em;
+  object-fit: contain;
+  vertical-align: -0.16em;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.42));
+}
+
+.dice-icon {
+  width: 1.16em;
+  height: 1.16em;
+  vertical-align: -0.2em;
 }
 
 .score-shop {
@@ -679,7 +738,7 @@ h2 {
 }
 
 .final-battle-side.boss strong {
-  color: color-mix(in srgb, var(--player-color) 35%, #ffe39a 65%);
+  color: color-mix(in srgb, var(--player-color) 28%, #fff1ad 72%);
 }
 
 .final-battle-vs {
@@ -1064,7 +1123,7 @@ h2 {
   padding: 3px 11px 4px 5px;
   border: 1px solid color-mix(in srgb, var(--player-color) 70%, white 30%);
   border-radius: 999px;
-  color: color-mix(in srgb, var(--player-color) 72%, #fff7d4 28%);
+  color: color-mix(in srgb, var(--player-color) 52%, #fffbe8 48%);
   background: rgba(19, 22, 18, 0.74);
   box-shadow:
     0 5px 14px rgba(0, 0, 0, 0.28),
@@ -1077,7 +1136,7 @@ h2 {
   text-overflow: ellipsis;
   text-shadow:
     0 1px 2px rgba(0, 0, 0, 0.72),
-    0 0 10px color-mix(in srgb, var(--player-color) 58%, transparent);
+    0 0 12px color-mix(in srgb, var(--player-color) 76%, transparent);
   transform: translate(-50%, -100%);
   white-space: nowrap;
 }
@@ -1466,6 +1525,46 @@ h2 {
   animation: token-hop 260ms ease-in-out infinite alternate;
 }
 
+.coin-float,
+.dice-float {
+  position: absolute;
+  left: 50%;
+  top: -12px;
+  z-index: 18;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 6px;
+  border: 1px solid rgba(255, 228, 118, 0.7);
+  border-radius: 999px;
+  color: #fff2a6;
+  background: rgba(34, 23, 8, 0.82);
+  box-shadow:
+    0 8px 15px rgba(0, 0, 0, 0.32),
+    0 0 12px rgba(255, 202, 63, 0.42);
+  font-size: 0.8rem;
+  font-weight: 950;
+  line-height: 1;
+  pointer-events: none;
+  transform: translate(-50%, -70%);
+  animation: coin-float-pop 1000ms ease-out forwards;
+}
+
+.dice-float {
+  border-color: rgba(255, 255, 245, 0.74);
+  color: #fff9dd;
+  background: rgba(27, 24, 18, 0.84);
+  box-shadow:
+    0 8px 15px rgba(0, 0, 0, 0.32),
+    0 0 12px rgba(255, 255, 235, 0.38);
+}
+
+.coin-float .coin-icon,
+.dice-float .dice-icon {
+  width: 1.15em;
+  height: 1.15em;
+}
+
 @keyframes dice-tumble {
   0% {
     rotate: -5deg;
@@ -1565,6 +1664,28 @@ h2 {
 
   to {
     translate: 0 -7px;
+  }
+}
+
+@keyframes coin-float-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -45%) scale(0.86);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -82%) scale(1.04);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -112%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -138%) scale(0.96);
   }
 }
 
@@ -1672,6 +1793,7 @@ h2 {
   opacity: 0;
   cursor: pointer;
   pointer-events: auto;
+  text-align: left;
   transform: translate(-50%, -8px);
   transition:
     opacity var(--event-toast-duration) ease,
@@ -1711,11 +1833,11 @@ h2 {
 }
 
 .player-name {
-  color: color-mix(in srgb, var(--player-color) 72%, #fff7d4 28%);
+  color: color-mix(in srgb, var(--player-color) 52%, #fffbe8 48%);
   font-weight: 900;
   text-shadow:
     0 1px 2px rgba(0, 0, 0, 0.58),
-    0 0 9px color-mix(in srgb, var(--player-color) 46%, transparent);
+    0 0 11px color-mix(in srgb, var(--player-color) 74%, transparent);
 }
 
 .event-toast.action-prompt {
@@ -1723,9 +1845,45 @@ h2 {
   cursor: default;
 }
 
+.event-toast.action-prompt:has(.good-card-reveal) {
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .event-toast-copy {
   display: block;
   line-height: 1.32;
+  overflow-wrap: normal;
+  text-align: left;
+  text-wrap: pretty;
+}
+
+.event-toast .coin-amount,
+.event-toast .dice-amount,
+.tadam-item .coin-amount,
+.tadam-item .dice-amount {
+  display: inline;
+  white-space: normal;
+}
+
+.event-toast .coin-amount b,
+.event-toast .dice-amount b,
+.tadam-item .coin-amount b,
+.tadam-item .dice-amount b {
+  display: inline;
+}
+
+.event-toast .coin-icon,
+.event-toast .dice-icon,
+.tadam-item .coin-icon,
+.tadam-item .dice-icon {
+  width: 0.92em;
+  height: 0.92em;
+  margin-left: 0.08em;
 }
 
 .event-toast-copy > span:not(.player-name) {
@@ -1736,7 +1894,76 @@ h2 {
 }
 
 .event-toast-copy .player-name {
-  color: color-mix(in srgb, var(--player-color) 72%, #fff7d4 28%);
+  color: color-mix(in srgb, var(--player-color) 52%, #fffbe8 48%);
+}
+
+.good-card-reveal {
+  width: clamp(158px, 24vw, 218px);
+}
+
+button.good-card-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 0.713;
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid rgba(255, 236, 166, 0.54);
+  border-radius: 12px;
+  background: var(--good-card-art) center / cover no-repeat;
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(0, 0, 0, 0.44);
+  cursor: pointer;
+  transform-origin: center;
+  transition:
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+button.good-card-preview:hover:not(:disabled),
+button.good-card-preview:focus-visible {
+  outline: none;
+  border-color: rgba(255, 236, 166, 0.54);
+  background: var(--good-card-art) center / cover no-repeat;
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.42),
+    0 0 0 2px rgba(255, 244, 198, 0.96);
+  transform: none;
+}
+
+.good-card-reveal.is-hidden .good-card-preview {
+  --good-card-art: url("./assets/cards/good_back.png");
+}
+
+.good-card-reveal.is-revealed .good-card-preview {
+  --good-card-art: url("./assets/cards/good_front.png");
+}
+
+.good-card-text {
+  position: absolute;
+  left: 11%;
+  right: 11%;
+  top: 58%;
+  bottom: 12%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3a210f;
+  font-weight: 900;
+  line-height: 1.08;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 239, 174, 0.72);
+}
+
+.good-card-text span {
+  display: block;
+  color: #2c1709;
+  max-height: 100%;
+  overflow: hidden;
+  font-size: clamp(0.64rem, 1.42vw, 0.84rem);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
 }
 
 .choice-panel {
@@ -1867,13 +2094,6 @@ h2 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.choice-button small {
-  grid-column: 1 / -1;
-  color: var(--muted);
-  font-size: 0.76rem;
-  line-height: 1.35;
 }
 
 .choice-button.decline {
@@ -2206,11 +2426,6 @@ h2 {
 
   .choice-button b {
     font-size: 0.96rem;
-  }
-
-  .choice-button small {
-    font-size: 0.7rem;
-    line-height: 1.25;
   }
 
   .lower-grid {

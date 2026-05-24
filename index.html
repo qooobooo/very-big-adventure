@@ -17,7 +17,7 @@
               <span id="diceValue">-</span>
               <div id="fieldEffect" class="field-effect"></div>
               <div id="turnActions" class="turn-actions" aria-label="Доступные действия"></div>
-              <button id="rollBtn">Бросить кубик</button>
+              <button id="rollBtn">Бросить <img class="dice-icon" src="./assets/icons/dice.png?v=20260524-0305" alt="" aria-hidden="true"></button>
             </div>
           </div>
           <div class="map-wrap">
@@ -40,14 +40,18 @@
                   <option value="4">4</option>
                 </select>
               </label>
-              <label>
-                Кубиков
+              <label aria-label="Кубиков">
+                <img class="dice-icon setup-dice-icon" src="./assets/icons/dice.png?v=20260524-0305" alt="" aria-hidden="true">
                 <select id="diceCount">
                   <option value="1" selected>1</option>
                   <option value="2">2</option>
                   <option value="3">3</option>
                   <option value="4">4</option>
                 </select>
+              </label>
+              <label class="cheat-toggle">
+                <input id="autoRevealCards" type="checkbox" />
+                <span>Сразу открывать карты</span>
               </label>
               <button id="newGameBtn" class="secondary">Новая игра</button>
             </div>
@@ -73,6 +77,6 @@
 
     </main>
 
-    <script type="module" src="./src/game.js?v=20260521-0035"></script>
+    <script type="module" src="./src/game.js?v=20260524-0305"></script>
   </body>
 </html>

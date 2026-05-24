@@ -9,6 +9,7 @@ const tadamTableEl = document.querySelector("#tadamTable");
 const ui = {
   activePlayerName: document.querySelector("#activePlayerName"),
   activePlayerRole: document.querySelector("#activePlayerRole"),
+  autoRevealCards: document.querySelector("#autoRevealCards"),
   choicePanel: document.querySelector("#choicePanel"),
   diceCount: document.querySelector("#diceCount"),
   diceValue: document.querySelector("#diceValue"),
@@ -28,6 +29,8 @@ const boardRows = 10;
 const eventToastVisibleMs = 3000;
 const eventToastFadeMs = 800;
 const eventToastQuickFadeMs = 140;
+const coinIconSrc = "./assets/icons/coin.png?v=20260524-0155";
+const diceIconSrc = "./assets/icons/dice.png?v=20260524-0305";
 const startCell = "0-9";
 const finishCell = "9-0";
 const boardLayout = [
@@ -115,7 +118,7 @@ const eventIcons = {
   green: "",
   red: "",
   "dice-fortune": '<img class="tile-icon-image tile-icon-dice-fortune" src="./assets/tiles/dice_fortune_1254.png?v=20260521-0035" alt="Кубик удачи">',
-  "pay-double": '<img class="tile-icon-image tile-icon-pay-double" src="./assets/tiles/pay_double_1024.png?v=20260521-0030" alt="Удвоение монет">',
+  "pay-double": '<img class="tile-icon-image tile-icon-pay-double" src="./assets/tiles/pay_double_1024.png?v=20260521-1205" alt="Удвоение монет">',
   shop: '<img class="tile-icon-image tile-icon-shop" src="./assets/icons/joes_shop_512.png" alt="Лавка Джо">',
   tadam: '<img class="tile-icon-image tile-icon-tadam" src="./assets/icons/tadam_512.png" alt="ТАДАМ!">',
 };
@@ -125,10 +128,10 @@ const tileIcons = {
   start: '<img class="tile-icon-image tile-icon-start" src="./assets/icons/start_512.png" alt="Старт">',
 };
 
-const goodCards = cardConfig.good;
-const badCards = cardConfig.bad;
-const tadamCards = cardConfig.tadam;
-const shopCards = cardConfig.shop;
+const goodCards = expandDeck(cardConfig.good);
+const badCards = expandDeck(cardConfig.bad);
+const tadamCards = expandDeck(cardConfig.tadam);
+const shopCards = expandDeck(cardConfig.shop);
 
 const names = [
   { name: "Пес", color: "#8b1713", token: "./assets/player-tokens/dog.png?v=20260520-0310" },
@@ -451,11 +454,11 @@ function renderScores() {
           <img src="${player.token}" alt="" aria-hidden="true">
           <strong>${player.name}</strong>
         </span>
-        <span class="pill">${tileTitle(player.position)}</span>
+        <span class="pill">${iconizeHtml(tileTitle(player.position))}</span>
       </div>
       <div class="score-stats">
-        <span><b>${player.coins}</b> монет</span>
-        <span><b>+${playerDiceBonus(player)}</b> куб.</span>
+        <span>${coinAmount(player.coins)}</span>
+        <span>${diceAmount(`+${playerDiceBonus(player)}`)}</span>
       </div>
       <div class="score-shop">
         <span>Лавка Джо</span>
@@ -468,7 +471,7 @@ function renderScores() {
 
 function renderShopBadges(player) {
   if (player.items.length === 0) return '<small>нет карт</small>';
-  return player.items.map((item) => `<small title="${item.title}">${shortShopTitle(item)}</small>`).join("");
+  return player.items.map((item) => `<small title="${item.title}">${iconizeHtml(shortShopTitle(item))}</small>`).join("");
 }
 
 function shortShopTitle(item) {
@@ -482,13 +485,13 @@ function renderTurn() {
   }
   const itemText = player.items.length ? ` Лавка: ${player.items.map((item) => item.title).join(", ")}.` : "";
   if (ui.activePlayerRole) {
-    ui.activePlayerRole.textContent = `Клетка ${cellLabel(player.position)}. Монеты: ${player.coins}.${itemText}`;
+    ui.activePlayerRole.innerHTML = iconizeHtml(`Клетка ${cellLabel(player.position)}. ${player.coins} монет.${itemText}`);
   }
   ui.fieldEffect.innerHTML = fieldEffectText(player.position);
   ui.turnActions.className = `turn-actions ${state.pendingPreRoll ? "pending-action" : ""}`.trim();
   ui.turnActions.innerHTML = turnActionsText(player);
   ui.diceValue.textContent = state.dice ?? "-";
-  ui.rollBtn.textContent = actionPromptResolver ? actionPromptButtonLabel : state.isAnimating ? "Кубик крутится" : "Бросить кубик";
+  ui.rollBtn.innerHTML = iconizeHtml(actionPromptResolver ? actionPromptButtonLabel : state.isAnimating ? "Кубик крутится" : "Бросить кубик");
   if (ui.roundTitle) {
     ui.roundTitle.textContent = state.finished ? "Игра завершена" : `Раунд ${state.round}`;
   }
@@ -522,8 +525,7 @@ function renderChoicePanel() {
       appendChoiceButton(buttons, {
         className: "shop-choice choice-button-card",
         label: card.title,
-        note: "5 монет",
-        description: card.description,
+        note: coinAmount(5),
         onClick: () => resolveShopChoice(card.id),
       });
     }
@@ -531,8 +533,7 @@ function renderChoicePanel() {
     appendChoiceButton(buttons, {
       className: "shop-choice decline",
       label: "Отказаться",
-      note: "0 монет",
-      description: "Сохранить монеты и закончить посещение Лавки Джо.",
+      note: coinAmount(0),
       onClick: () => resolveShopChoice(null),
     });
     return;
@@ -553,7 +554,6 @@ function renderChoicePanel() {
         className: choice.className || "",
         label: choice.label,
         note: choice.note,
-        description: choice.description,
         onClick: () => resolveCardChoice(choice.id),
       });
     }
@@ -653,11 +653,11 @@ function renderChoiceDialog({ kind, kicker, title, summary, buttonsClass = "" })
   kickerEl.textContent = kicker;
 
   const titleEl = document.createElement("h3");
-  titleEl.textContent = title;
+  titleEl.innerHTML = iconizeHtml(title);
 
   const summaryEl = document.createElement("p");
   summaryEl.className = "choice-summary";
-  summaryEl.textContent = summary;
+  summaryEl.innerHTML = iconizeHtml(summary);
 
   const buttons = document.createElement("div");
   buttons.className = `choice-buttons ${buttonsClass}`.trim();
@@ -669,24 +669,18 @@ function renderChoiceDialog({ kind, kicker, title, summary, buttonsClass = "" })
   return buttons;
 }
 
-function appendChoiceButton(buttons, { className = "", label, note, description = "", onClick }) {
+function appendChoiceButton(buttons, { className = "", label, note, onClick }) {
   const button = document.createElement("button");
   button.className = `choice-button ${className}`.trim();
   button.type = "button";
 
   const labelEl = document.createElement("b");
-  labelEl.textContent = label;
+  labelEl.innerHTML = iconizeHtml(label);
 
   const noteEl = document.createElement("span");
-  noteEl.textContent = note;
+  noteEl.innerHTML = iconizeHtml(note);
 
   button.append(labelEl, noteEl);
-
-  if (description) {
-    const descriptionEl = document.createElement("small");
-    descriptionEl.textContent = description;
-    button.append(descriptionEl);
-  }
 
   button.addEventListener("click", onClick);
   buttons.append(button);
@@ -786,7 +780,7 @@ async function resolveEnemyBattle(player) {
   const bonusText = bonus ? ` + ${bonus} бонус = <strong>${damage}</strong>` : "";
   if (damage >= door.damage) {
     door.openedBy.push(player.id);
-    player.diceBonus = playerDiceBonus(player) + 1;
+    addDiceBonus(player, 1);
     log(
       `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта для игрока. Награда: <strong>+1 кубик</strong>.`,
     );
@@ -806,7 +800,7 @@ async function resolveEnemyBattle(player) {
 
 async function resolveDiceFortuneField(player) {
   await showActionPrompt(
-    `${playerName(player)} попадает на кубик удачи: брось 6 кубиков. Каждая 6 дает <strong>20 монет</strong>, каждая 1 отправляет на <strong>5 шагов назад</strong>.`,
+    `${playerName(player)} попадает на кубик удачи: брось 6 кубиков. Каждая 6 дает <strong>${coinAmount(20)}</strong>, каждая 1 отправляет на <strong>5 шагов назад</strong>.`,
   );
 
   const rolls = rollDice(6);
@@ -822,7 +816,7 @@ async function resolveDiceFortuneField(player) {
   if (coins > 0) addCoins(player, coins);
 
   const resultParts = [
-    sixes ? `<strong>${coins} монет</strong>` : "",
+    sixes ? `<strong>${coinAmount(coins)}</strong>` : "",
     backwardSteps ? `<strong>${backwardSteps} шагов назад</strong>` : "",
   ].filter(Boolean);
   const resultText = resultParts.length ? resultParts.join(" и ") : "ничего не происходит";
@@ -839,13 +833,10 @@ async function resolveDiceFortuneField(player) {
 
 async function resolvePayDoubleField(player) {
   const before = player.coins;
-  const paid = Math.min(5, player.coins);
-  player.coins = Math.max(0, player.coins - 5);
-  const afterPayment = player.coins;
   player.coins *= 2;
-  const gained = player.coins - afterPayment;
-  const payText = paid === 5 ? "платит 5 монет" : `платит ${paid} монет`;
-  const message = `${playerName(player)} попадает на удвоение: ${payText}, затем удваивает оставшиеся монеты. Было <strong>${before}</strong>, стало <strong>${player.coins}</strong> (+${gained}).`;
+  const gained = player.coins - before;
+  if (gained > 0) showCoinFloat(player, gained);
+  const message = `${playerName(player)} попадает на удвоение и удваивает свое количество монет. Было <strong>${coinAmount(before)}</strong>, стало <strong>${coinAmount(player.coins)}</strong> (+${coinAmount(gained)}).`;
 
   log(message, { toast: true });
   await showActionPrompt(message);
@@ -1027,8 +1018,54 @@ async function resolveRedField(player) {
 
 async function drawAndApplyCard(player, deck, deckName) {
   const card = randomItem(deck);
-  log(`${playerName(player)} тянет карту <strong>${deckName}</strong>: ${card.title}.`, { toast: true });
+  if (deckName === "Хорошо") {
+    log(`${playerName(player)} тянет карту <strong>${deckName}</strong>: ${card.title}`);
+    await revealGoodCard(player, card);
+  } else {
+    log(`${playerName(player)} тянет карту <strong>${deckName}</strong>: ${card.title}`, { toast: true });
+  }
   await applyCardEffect(player, card.effect, { title: card.title });
+}
+
+async function revealGoodCard(player, card) {
+  const backPrompt = showActionPrompt(goodCardMarkup(player, card, { revealed: false }), { buttonLabel: "Открыть" });
+  const backResolver = actionPromptResolver;
+  wireGoodCardClick(backResolver);
+  if (ui.autoRevealCards?.checked) {
+    window.setTimeout(() => {
+      if (actionPromptResolver === backResolver) backResolver?.();
+    }, 200);
+  }
+  await backPrompt;
+
+  const facePrompt = showActionPrompt(goodCardMarkup(player, card, { revealed: true }), { buttonLabel: "Применить" });
+  wireGoodCardClick(actionPromptResolver);
+  await facePrompt;
+  log(`${playerName(player)} применяет карту <strong>Хорошо</strong>: ${card.title}`, { toast: true });
+}
+
+function wireGoodCardClick(resolver) {
+  ui.eventToast?.querySelector(".good-card-preview")?.addEventListener("click", () => {
+    if (actionPromptResolver === resolver) resolver?.();
+  });
+}
+
+function goodCardMarkup(player, card, { revealed }) {
+  const description = card.description || "";
+  const cardText = revealed
+    ? `
+      <span class="good-card-text">
+        <span>${iconizeHtml(description)}</span>
+      </span>
+    `
+    : "";
+  return `
+    <article class="good-card-reveal ${revealed ? "is-revealed" : "is-hidden"}">
+      <button class="good-card-preview" type="button" aria-label="${revealed ? "Применить карту Хорошо" : "Открыть карту Хорошо"}">
+        ${cardText}
+      </button>
+    </article>
+  `;
 }
 
 async function applyCardEffect(player, effect, source = {}) {
@@ -1045,6 +1082,8 @@ async function applyCardEffect(player, effect, source = {}) {
     stealFromRichestPlayer(player, effect.amount);
   } else if (effect.type === "give-random") {
     giveToRandomPlayer(player, effect.amount);
+  } else if (effect.type === "extra-turn") {
+    grantExtraTurn(player);
   } else if (effect.type === "optional-extra-turn") {
     await resolveOptionalExtraTurn(player, effect.cost);
   } else if (effect.type === "draw-free-shop") {
@@ -1052,6 +1091,11 @@ async function applyCardEffect(player, effect, source = {}) {
   } else if (effect.type === "buy-shop-card-from-player") {
     await resolveBuyShopCardFromPlayer(player, effect.cost);
   }
+}
+
+function grantExtraTurn(player) {
+  state.extraTurnPlayerId = player.id;
+  log(`${playerName(player)} готовит <strong>еще один ход</strong>.`, { toast: true });
 }
 
 async function resolveOptionalExtraTurn(player, cost) {
@@ -1068,14 +1112,12 @@ async function resolveOptionalExtraTurn(player, cost) {
       {
         id: "pay",
         label: "Заплатить",
-        note: `${cost} монет`,
-        description: "После текущего хода этот же игрок ходит еще раз.",
+        note: coinAmount(cost),
       },
       {
         id: "decline",
         label: "Отказаться",
-        note: "0 монет",
-        description: "Сохранить монеты и передать ход дальше.",
+        note: coinAmount(0),
       },
     ],
   });
@@ -1093,7 +1135,7 @@ async function resolveOptionalExtraTurn(player, cost) {
 function drawFreeShopCard(player) {
   const card = randomItem(shopCards);
   player.items.push(card);
-  log(`${playerName(player)} бесплатно получает карту Лавка Джо: <strong>${card.title}</strong>.`, { toast: true });
+  log(`${playerName(player)} бесплатно получает карту Лавка Джо: <strong>${card.title}</strong>`, { toast: true });
 }
 
 async function resolveBuyShopCardFromPlayer(player, cost) {
@@ -1109,7 +1151,6 @@ async function resolveBuyShopCardFromPlayer(player, cost) {
         id: `${target.id}:${card.id}`,
         label: card.title,
         note: `${target.name}: ${cost} монет`,
-        description: card.description,
       })),
     );
 
@@ -1121,8 +1162,7 @@ async function resolveBuyShopCardFromPlayer(player, cost) {
   choices.push({
     id: "decline",
     label: "Отказаться",
-    note: "0 монет",
-    description: "Ничего не покупать.",
+    note: coinAmount(0),
   });
 
   const choice = await chooseCardAction({
@@ -1147,7 +1187,7 @@ async function resolveBuyShopCardFromPlayer(player, cost) {
   addCoins(player, -cost);
   addCoins(target, cost);
   player.items.push(card);
-  log(`${playerName(player)} платит ${playerName(target)} <strong>${cost} монет</strong> и забирает карту Лавка Джо: <strong>${card.title}</strong>.`, {
+  log(`${playerName(player)} платит ${playerName(target)} <strong>${cost} монет</strong> и забирает карту Лавка Джо: <strong>${card.title}</strong>`, {
     toast: true,
   });
 }
@@ -1178,7 +1218,7 @@ function drawTadamCard(player) {
   const card = randomItem(tadamCards);
   state.tadams.push(card);
   if (state.tadams.length > 3) state.tadams.shift();
-  log(`${playerName(player)} открывает <strong>ТАДАМ!</strong>: ${card.title}.`, { toast: true });
+  log(`${playerName(player)} открывает <strong>ТАДАМ!</strong>: ${card.title}`, { toast: true });
 }
 
 async function resolveShop(player) {
@@ -1198,7 +1238,7 @@ async function resolveShop(player) {
 
   addCoins(player, -5);
   player.items.push(bought);
-  log(`${playerName(player)} покупает в Лавке Джо: <strong>${bought.title}</strong>.`, { toast: true });
+  log(`${playerName(player)} покупает в Лавке Джо: <strong>${bought.title}</strong>`, { toast: true });
 }
 
 async function resolvePassThroughShop(player) {
@@ -1276,7 +1316,10 @@ async function movePlayerSteps(player, steps) {
 
 function addCoins(player, amount) {
   const bonus = amount > 0 ? playerCoinBonus(player) : 0;
+  const before = player.coins;
   player.coins = Math.max(0, player.coins + amount + bonus);
+  const delta = player.coins - before;
+  if (delta > 0) showCoinFloat(player, delta);
   return amount + bonus;
 }
 
@@ -1379,13 +1422,13 @@ function fieldEffectText(cell) {
     enemy: ["Враг", "эффект появится позже"],
     good: ["Хорошо", "тяни карту Хорошо"],
     green: ["Зеленое поле", greenEffectLabel()],
-    "pay-double": ["Удвоение монет", "заплати 5 монет, потом удвой оставшиеся"],
+    "pay-double": ["Удвоение монет", "удвой свое количество монет"],
     red: ["Красное поле", redEffectLabel()],
     shop: ["Лавка Джо", "2 карты на выбор за 5 монет"],
     tadam: ["ТАДАМ!", "новое общее правило"],
   };
   const text = texts[cellEvents[cell]] || ["Обычная клетка", "без эффекта"];
-  return `<span>${text[0]}</span><strong>${text[1]}</strong>`;
+  return iconizeHtml(`<span>${text[0]}</span><strong>${text[1]}</strong>`);
 }
 
 function turnActionsText(player) {
@@ -1399,7 +1442,7 @@ function turnActionsText(player) {
       <div class="pre-roll-action">
         <span>
           <b>${card?.shortTitle || card?.title || "Карта Лавки Джо"}${total > 1 ? ` ${current}/${total}` : ""}</b>
-          Заплати ${cost} монеты: +${dice} кубик.
+          Заплати ${coinAmount(cost)}: ${diceAmount(`+${dice}`)}.
         </span>
         <div>
           <button type="button" data-preroll-choice="yes">Заплатить</button>
@@ -1415,8 +1458,8 @@ function turnActionsText(player) {
     const canPay = player.coins >= card.effect.cost;
     actions.push(`
       <span class="action-chip ${canPay ? "" : "disabled"}">
-        <b>${card.effect.cost} монеты</b>
-        <span>+${card.effect.dice} кубик</span>
+        <b>${coinAmount(card.effect.cost)}</b>
+        <span>${diceAmount(`+${card.effect.dice}`)}</span>
       </span>
     `);
   }
@@ -1429,14 +1472,14 @@ function greenEffectLabel() {
   const effect = activeFieldEffect("green-field");
   if (effect?.mode === "draw") return `тяни карту ${deckLabel(effect.deck)}`;
   if (effect?.mode === "move") return `${effect.steps > 0 ? "+" : ""}${effect.steps} шагов`;
-  return "+3 монеты";
+  return `+${coinAmount(3)}`;
 }
 
 function redEffectLabel() {
   const effect = activeFieldEffect("red-field");
   if (effect?.mode === "draw") return `тяни карту ${deckLabel(effect.deck)}`;
   if (effect?.mode === "move") return `${effect.steps > 0 ? "+" : ""}${effect.steps} шагов`;
-  return "-3 монеты";
+  return coinAmount(-3);
 }
 
 function doorByCell(cell) {
@@ -1554,6 +1597,12 @@ function playerDiceBonus(player) {
   return player.diceBonus || 0;
 }
 
+function addDiceBonus(player, amount) {
+  if (!player || amount <= 0) return;
+  player.diceBonus = playerDiceBonus(player) + amount;
+  showDiceFloat(player, amount);
+}
+
 function totalDiceForPlayer(player, extraDice = 0) {
   return Number(ui.diceCount.value) + playerDiceBonus(player) + extraDice;
 }
@@ -1629,6 +1678,10 @@ function randomItem(items) {
   return items[Math.floor(Math.random() * items.length)];
 }
 
+function expandDeck(cards) {
+  return cards.flatMap((card) => Array.from({ length: Math.max(1, Number(card.count) || 1) }, () => card));
+}
+
 function drawUnique(items, count) {
   const pool = [...items];
   const picked = [];
@@ -1653,13 +1706,72 @@ function playerName(player) {
   return `<span class="player-name" style="--player-color: ${player.color}">${player.name}</span>`;
 }
 
+function coinIcon() {
+  return `<img class="coin-icon" src="${coinIconSrc}" alt="" aria-hidden="true">`;
+}
+
+function coinAmount(amount) {
+  return `<span class="coin-amount"><b>${amount}</b>${coinIcon()}</span>`;
+}
+
+function diceIcon() {
+  return `<img class="dice-icon" src="${diceIconSrc}" alt="" aria-hidden="true">`;
+}
+
+function diceAmount(amount) {
+  return `<span class="dice-amount"><b>${amount}</b>${diceIcon()}</span>`;
+}
+
+function coinizeHtml(value) {
+  return String(value)
+    .replace(/([+-]?\d+)\s*монет(?:ами|ам|ах|а|ы|у)?/gi, (_, amount) => coinAmount(amount))
+    .replace(/монет(?:ами|ам|ах|а|ы|у)?/gi, coinIcon());
+}
+
+function diceizeHtml(value) {
+  return String(value)
+    .replace(/([+-]?\d+)\s*куб(?:иков|иках|икам|иками|ика|ики|ик|ов|а|ы|у|\.)?/giu, (_, amount) => diceAmount(amount))
+    .replace(/куб(?:иков|иках|икам|иками|ика|ики|ик|ов|а|ы|у|\.)?/giu, diceIcon());
+}
+
+function iconizeHtml(value) {
+  return diceizeHtml(coinizeHtml(value));
+}
+
+function showCoinFloat(player, amount) {
+  if (!player || amount <= 0) return;
+
+  const token = boardEl.querySelector(`.map-token[data-player-id="${player.id}"]`);
+  if (!token) return;
+
+  const float = document.createElement("span");
+  float.className = "coin-float";
+  float.innerHTML = `+${coinAmount(amount)}`;
+  token.append(float);
+  window.setTimeout(() => float.remove(), 1200);
+}
+
+function showDiceFloat(player, amount) {
+  if (!player || amount <= 0) return;
+
+  const token = boardEl.querySelector(`.map-token[data-player-id="${player.id}"]`);
+  if (!token) return;
+
+  const float = document.createElement("span");
+  float.className = "dice-float";
+  float.innerHTML = `+${diceAmount(amount)}`;
+  token.append(float);
+  window.setTimeout(() => float.remove(), 1200);
+}
+
 function log(message, { toast = false } = {}) {
+  const renderedMessage = iconizeHtml(message);
   const item = document.createElement("li");
-  item.innerHTML = message;
+  item.innerHTML = renderedMessage;
   gameLogEl.prepend(item);
   while (gameLogEl.children.length > 40) gameLogEl.lastElementChild.remove();
 
-  if (toast) showEventToast(message);
+  if (toast) showEventToast(renderedMessage);
 }
 
 function showEventToast(message) {
@@ -1669,7 +1781,7 @@ function showEventToast(message) {
   window.clearTimeout(eventToastHideTimer);
 
   ui.eventToast.hidden = false;
-  ui.eventToast.innerHTML = message;
+  ui.eventToast.innerHTML = iconizeHtml(message);
   ui.eventToast.classList.remove("action-prompt", "fading", "quick-fading", "visible");
   void ui.eventToast.offsetWidth;
   ui.eventToast.classList.add("visible");
@@ -1686,7 +1798,7 @@ function showActionPrompt(message, { buttonLabel = "Далее" } = {}) {
   window.clearTimeout(eventToastHideTimer);
 
   ui.eventToast.hidden = false;
-  ui.eventToast.innerHTML = `<div class="event-toast-copy">${message}</div>`;
+  ui.eventToast.innerHTML = `<div class="event-toast-copy">${iconizeHtml(message)}</div>`;
   ui.eventToast.classList.remove("fading", "quick-fading", "visible");
   ui.eventToast.classList.add("action-prompt");
   void ui.eventToast.offsetWidth;

@@ -28,9 +28,10 @@ Current important state:
 
 - Google Sheet `Cards Config` is the canonical card-edit source:
   `https://docs.google.com/spreadsheets/d/1dv8cOcoY9P1WZOw2UQ-prUccte2BprZMp0DFCSL0pME/edit`
-- Sheets/tabs: `good`, `bad`, `tadam`, `shop`. In the sheet, `description` is column M and `new description` is column N.
-- Card update workflow: user writes proposed text in `new description`; Dev applies it into `description`, updates matching local card logic/text in `src/cards.config.js`, syncs `cards-google-sheet.csv`, and clears `new description` in Google Sheet.
-- If a `new description` changes numeric rules (for example coin cost), also update the matching effect fields/logic, not only text. Example: `shop/extra-die` text changed from 2 to 5 coins, so `effect.cost` and Google Sheet `cost` were updated to `5`.
+- Sheets/tabs: `good`, `bad`, `tadam`, `shop`. Card names use `title`; Good-card face text uses `description`.
+- Current sheet/local CSV order is `deck,id,title,shortTitle,effect_type,amount,steps,cost,dice,mode,target_deck,notes,count,description`.
+- Card update workflow: update `title` and matching effect fields/logic directly, then sync `src/cards.config.js` and `cards-google-sheet.csv`.
+- If edited title/rules change numbers (for example coin cost), also update the matching effect fields/logic, not only text.
 - `cards-google-sheet.csv` is a local mirror of the Google Sheet column order, not the canonical source.
 - `src/cards.config.js` and `cards-google-sheet.csv` should stay aligned with Google Sheet when card balance or text changes.
 - `src/game.config.js` contains game-level config such as door/enemy strengths.
