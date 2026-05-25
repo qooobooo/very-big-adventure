@@ -20,6 +20,9 @@ const ui = {
   playerCount: document.querySelector("#playerCount"),
   rollBtn: document.querySelector("#rollBtn"),
   roundTitle: document.querySelector("#roundTitle"),
+  settingsPanel: document.querySelector("#settingsPanel"),
+  settingsToggle: document.querySelector("#settingsToggle"),
+  showWalkPath: document.querySelector("#showWalkPath"),
   turnActions: document.querySelector("#turnActions"),
   winnerPopup: document.querySelector("#winnerPopup"),
 };
@@ -31,10 +34,12 @@ const eventToastFadeMs = 800;
 const eventToastQuickFadeMs = 140;
 const coinIconSrc = "./assets/icons/coin.png?v=20260524-0155";
 const diceIconSrc = "./assets/icons/dice.png?v=20260524-0305";
+const enemyIconSrc = "./assets/icons/enemy_512.png";
+const finalEnemyIconSrc = "./assets/icons/final_enemy.png?v=20260525-0146";
 const startCell = "0-9";
 const finishCell = "9-0";
 const boardLayout = [
-  ["red", "shop", "bad", null, "red", "good", "bad", null, "enemy", "finish"],
+  ["red", "shop", "bad", null, "red", "good", "bad", null, "bad", "enemy"],
   ["green", null, "red", null, "red", null, "bad", "bad", "bad", null],
   ["dice-fortune", null, "tadam", "enemy", "red", null, null, null, null, null],
   ["bad", null, null, null, null, null, null, "good", "enemy", "bad"],
@@ -132,6 +137,18 @@ const goodCards = expandDeck(cardConfig.good);
 const badCards = expandDeck(cardConfig.bad);
 const tadamCards = expandDeck(cardConfig.tadam);
 const shopCards = expandDeck(cardConfig.shop);
+const starterTadamCards = [
+  {
+    id: "starter-green-coins",
+    title: `Зеленые поля дают ${coinAmount(3)}`,
+    starterKind: "green",
+  },
+  {
+    id: "starter-red-coins",
+    title: `Красные поля забирают ${coinAmount(3)}`,
+    starterKind: "red",
+  },
+];
 
 const names = [
   { name: "Пес", color: "#8b1713", token: "./assets/player-tokens/dog.png?v=20260520-0310" },
@@ -160,6 +177,7 @@ function newGame() {
     choiceResolver: null,
     dice: null,
     doors,
+    enemyBattleProgress: null,
     eventDepth: 0,
     finalBattle: null,
     finalBattleProgress: null,
@@ -184,6 +202,7 @@ function newGame() {
     round: 1,
     tadams: [],
     turns: 0,
+    walkPath: [],
   };
 
   boardEl.dataset.ready = "false";
@@ -207,6 +226,9 @@ async function rollAndMove({ animate = true } = {}) {
   if (animate) await animateDice(rolls, { bonus, player });
   const totalSteps = rolled + bonus;
   state.dice = totalSteps;
+  state.walkPath = animate && ui.showWalkPath?.checked ? buildWalkPath(player, totalSteps) : [];
+  renderTileStates();
+  if (animate && state.walkPath.length > 0) await sleep(160);
 
   for (let step = 0; step < totalSteps && player.position !== finishCell; step += 1) {
     const currentPosition = player.position;
@@ -224,6 +246,7 @@ async function rollAndMove({ animate = true } = {}) {
     }
 
     player.position = nextPosition;
+    consumeWalkPathCell(nextPosition);
     if (step < totalSteps - 1) resolveJumpSteal(player);
     if (animate) {
       render();
@@ -236,12 +259,13 @@ async function rollAndMove({ animate = true } = {}) {
 
   state.isAnimating = false;
   state.movingPlayerId = null;
+  state.walkPath = [];
   pulseTile(player.position);
   log(`${playerName(player)} бросает <strong>${formatRoll(rolls)}</strong>${totalSteps !== rolled ? ` и идет на ${totalSteps}` : ""}.`);
   await resolveLanding(player);
 
-  if (player.position === finishCell) {
-    await resolveFinalBattle(player, animate);
+  if (state.finished) {
+    state.extraTurnPlayerId = null;
   } else if (state.extraTurnPlayerId === player.id) {
     state.extraTurnPlayerId = null;
     state.dice = null;
@@ -288,6 +312,30 @@ function defaultNextCell(cell) {
   return routeNext.get(cell) || null;
 }
 
+function buildWalkPath(player, steps) {
+  const path = [];
+  let currentCell = player.position;
+
+  for (let step = 0; step < steps && currentCell !== finishCell; step += 1) {
+    const nextCell = defaultNextCell(currentCell);
+    if (!nextCell) break;
+    if (lockedDoorForTransition(player, currentCell, nextCell)) break;
+
+    path.push(nextCell);
+    currentCell = nextCell;
+  }
+
+  return path;
+}
+
+function consumeWalkPathCell(cell) {
+  if (!state.walkPath?.length) return;
+
+  const index = state.walkPath.indexOf(cell);
+  if (index < 0) return;
+  state.walkPath = state.walkPath.slice(index + 1);
+}
+
 function advanceTurn() {
   state.dice = null;
   state.turns += 1;
@@ -329,11 +377,13 @@ function buildBoardShell() {
       tile.className = `tile tile-${type}`;
       tile.dataset.cell = cell;
       tile.title = tileTitle(cell);
-      const icon = eventIcons[cellEvents[cell]] || tileIcons[type];
+      const enemyDoor = type === "enemy" ? doorByEnemyCell(cell) : null;
+      const icon = enemyDoor?.isFinalBoss
+        ? `<img class="tile-icon-image tile-icon-enemy tile-icon-final-enemy" src="${finalEnemyIconSrc}" alt="Финальный монстр">`
+        : eventIcons[cellEvents[cell]] || tileIcons[type];
       if (icon) {
         tile.innerHTML = `<span class="tile-icon">${icon}</span>`;
       }
-      const enemyDoor = type === "enemy" ? doorByEnemyCell(cell) : null;
       if (enemyDoor) {
         tile.insertAdjacentHTML("beforeend", `<span class="monster-power">${enemyDoor.damage}</span>`);
       }
@@ -371,6 +421,20 @@ function renderEnemyLocks() {
 
 function renderTileStates() {
   boardEl.querySelectorAll(".tile-landing").forEach((tile) => tile.classList.remove("tile-landing"));
+  boardEl.querySelectorAll(".walk-path-outline").forEach((outline) => outline.remove());
+
+  if (state.walkPath?.length) {
+    const finalCell = state.walkPath[state.walkPath.length - 1];
+    for (const cell of state.walkPath) {
+      const tile = boardEl.querySelector(`[data-cell="${cell}"]`);
+      if (!tile) continue;
+
+      const outline = document.createElement("span");
+      outline.className = `walk-path-outline ${cell === finalCell ? "is-final" : ""}`.trim();
+      tile.append(outline);
+    }
+  }
+
   if (!state.landingCell) return;
 
   const tile = boardEl.querySelector(`[data-cell="${state.landingCell}"]`);
@@ -517,7 +581,7 @@ function renderChoicePanel() {
       kind: "shop",
       kicker: "Лавка Джо",
       title: "Выбери карту за 5 монет",
-      summary: `${player.name}: ${player.coins} монет. Можно купить одну карту или пройти мимо.`,
+      summary: `${playerChoiceBadge(player)}: ${player.coins} монет. Можно купить одну карту или пройти мимо.`,
       buttonsClass: "shop-buttons",
     });
 
@@ -554,6 +618,7 @@ function renderChoicePanel() {
         className: choice.className || "",
         label: choice.label,
         note: choice.note,
+        noteClass: choice.noteClass || "",
         onClick: () => resolveCardChoice(choice.id),
       });
     }
@@ -570,7 +635,7 @@ function renderChoicePanel() {
     kind: "direction",
     kicker: "Развилка",
     title: "Куда идти дальше?",
-    summary: `${player.name}: клетка ${cellLabel(state.pendingChoice.currentCell)}. Осталось ${state.pendingChoice.remaining} шага.`,
+    summary: `${playerChoiceBadge(player)}: клетка ${cellLabel(state.pendingChoice.currentCell)}. Осталось ${state.pendingChoice.remaining} шага.`,
   });
 
   for (const choice of state.pendingChoice.choices) {
@@ -615,6 +680,12 @@ function renderFinalBattleHud() {
   if (!ui.finalBattleHud) return;
 
   const progress = state.finalBattleProgress;
+  const enemyProgress = state.enemyBattleProgress;
+  if (enemyProgress && !state.finished) {
+    renderEnemyBattleHud(enemyProgress);
+    return;
+  }
+
   if (!progress || state.finished) {
     ui.finalBattleHud.hidden = true;
     ui.finalBattleHud.innerHTML = "";
@@ -632,6 +703,40 @@ function renderFinalBattleHud() {
     <div class="final-battle-side boss" style="--player-color: ${boss?.color || "#ff7d5d"}">
       <span>Босс${boss ? ` - ${boss.name}` : ""}</span>
       <strong>${progress.bossForce}</strong>
+    </div>
+  `;
+}
+
+function clearEnemyBattleHud() {
+  state.enemyBattleProgress = null;
+  render();
+}
+
+function renderEnemyBattleHud(progress) {
+  const player = state.players.find((item) => item.id === progress.playerId);
+  const enemyIcon = progress.isFinalBoss ? finalEnemyIconSrc : enemyIconSrc;
+  const enemyLabel = progress.isFinalBoss ? "Финальный монстр" : "Враг";
+  const playerWon = progress.winner === "player";
+  const enemyWon = progress.winner === "enemy";
+  ui.finalBattleHud.hidden = false;
+  ui.finalBattleHud.innerHTML = `
+    <div class="final-battle-side enemy-battle-side monster ${enemyWon ? "is-winning" : ""}">
+      <span>
+        <img src="${enemyIcon}" alt="" aria-hidden="true">
+        ${enemyLabel}
+      </span>
+      <strong>${progress.enemyForce}</strong>
+    </div>
+    <div class="final-battle-vs">VS</div>
+    <div class="final-battle-side enemy-battle-side player ${playerWon ? "is-winning" : ""}" style="--player-color: ${player?.color || "#65bdc2"}">
+      <span>
+        ${player ? `<img src="${player.token}" alt="" aria-hidden="true">` : ""}
+        ${player?.name || "Игрок"}
+      </span>
+      <strong>${progress.playerForce}</strong>
+    </div>
+    <div class="final-battle-result enemy-battle-result ${progress.winner ? "is-visible" : ""}">
+      ${progress.outcome || "Брось кубики, чтобы определить силу игрока"}
     </div>
   `;
 }
@@ -669,7 +774,7 @@ function renderChoiceDialog({ kind, kicker, title, summary, buttonsClass = "" })
   return buttons;
 }
 
-function appendChoiceButton(buttons, { className = "", label, note, onClick }) {
+function appendChoiceButton(buttons, { className = "", label, note, noteClass = "", onClick }) {
   const button = document.createElement("button");
   button.className = `choice-button ${className}`.trim();
   button.type = "button";
@@ -677,10 +782,13 @@ function appendChoiceButton(buttons, { className = "", label, note, onClick }) {
   const labelEl = document.createElement("b");
   labelEl.innerHTML = iconizeHtml(label);
 
-  const noteEl = document.createElement("span");
-  noteEl.innerHTML = iconizeHtml(note);
-
-  button.append(labelEl, noteEl);
+  button.append(labelEl);
+  if (note) {
+    const noteEl = document.createElement("span");
+    noteEl.className = noteClass;
+    noteEl.innerHTML = iconizeHtml(note);
+    button.append(noteEl);
+  }
 
   button.addEventListener("click", onClick);
   buttons.append(button);
@@ -719,7 +827,7 @@ function resolveCardChoice(choiceId) {
 }
 
 async function resolveLanding(player) {
-  if (state.eventDepth > 5 || player.position === finishCell) return;
+  if (state.eventDepth > 5) return;
 
   const event = cellEvents[player.position];
   if (!event) return;
@@ -736,7 +844,7 @@ async function resolveLanding(player) {
     } else if (event === "bad") {
       await drawAndApplyCard(player, badCards, "Плохо");
     } else if (event === "tadam") {
-      drawTadamCard(player);
+      await drawTadamCard(player);
     } else if (event === "shop") {
       await resolveShop(player);
     } else if (event === "enemy") {
@@ -759,8 +867,17 @@ async function resolveEnemyBattle(player) {
   const door = doorByEnemyCell(player.position);
   if (!door || isDoorOpenForPlayer(door, player)) return;
 
+  state.enemyBattleProgress = {
+    enemyForce: door.damage,
+    outcome: `Нужно нанести ${door.damage} урона`,
+    isFinalBoss: Boolean(door.isFinalBoss),
+    playerForce: 0,
+    playerId: player.id,
+    winner: null,
+  };
+  render();
   await showActionPrompt(
-    `${playerName(player)} вступает в бой. Нужно нанести <strong>${door.damage} урона</strong>, чтобы открыть ${door.label}.`,
+    `${playerName(player)} вступает в бой. Нужно нанести <strong>${door.damage} урона</strong>, чтобы ${door.isFinalBoss ? "стать боссом" : `открыть ${door.label}`}.`,
   );
 
   const extraDice = await chooseExtraDie(player, true);
@@ -770,8 +887,12 @@ async function resolveEnemyBattle(player) {
   const bonus = playerStepBonus(player);
   state.isAnimating = true;
   state.dice = null;
+  state.enemyBattleProgress = {
+    ...state.enemyBattleProgress,
+    outcome: `${player.name} бросает кубики`,
+  };
   render();
-  await animateDice(rolls, { bonus, player });
+  await animateDice(rolls, { bonus, player, isEnemyBattle: true });
 
   const damage = rolled + bonus;
   state.dice = damage;
@@ -779,7 +900,25 @@ async function resolveEnemyBattle(player) {
 
   const bonusText = bonus ? ` + ${bonus} бонус = <strong>${damage}</strong>` : "";
   if (damage >= door.damage) {
+    state.enemyBattleProgress = {
+      enemyForce: door.damage,
+      isFinalBoss: Boolean(door.isFinalBoss),
+      outcome: door.isFinalBoss ? `${player.name} побеждает и становится боссом` : `${player.name} побеждает и получает +1 кубик`,
+      playerForce: damage,
+      playerId: player.id,
+      winner: "player",
+    };
     door.openedBy.push(player.id);
+    if (door.isFinalBoss) {
+      log(`${playerName(player)} побеждает финального монстра: ${formatRoll(rolls)}${bonusText}. Игрок становится <strong>боссом</strong>.`);
+      render();
+      await showActionPrompt(
+        `${playerName(player)} побеждает финального монстра: ${formatRoll(rolls)}${bonusText}. Игрок становится <strong>боссом</strong>.`,
+      );
+      clearEnemyBattleHud();
+      await resolveFinalBattle(player, true);
+      return;
+    }
     addDiceBonus(player, 1);
     log(
       `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта для игрока. Награда: <strong>+1 кубик</strong>.`,
@@ -788,14 +927,29 @@ async function resolveEnemyBattle(player) {
     await showActionPrompt(
       `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта. Награда: <strong>+1 кубик</strong>.`,
     );
+    clearEnemyBattleHud();
     return;
   }
 
-  log(`${playerName(player)} не побеждает врага: ${formatRoll(rolls)}${bonusText}. Игрок возвращается на старт.`);
+  state.enemyBattleProgress = {
+    enemyForce: door.damage,
+    isFinalBoss: Boolean(door.isFinalBoss),
+    outcome: `Враг побеждает. ${player.name} возвращается на старт и получает Лавку Джо`,
+    playerForce: damage,
+    playerId: player.id,
+    winner: "enemy",
+  };
   player.position = startCell;
   render();
   pulseTile(player.position);
-  await showActionPrompt(`${playerName(player)} не побеждает врага: ${formatRoll(rolls)}${bonusText}. Возврат на <strong>старт</strong>.`);
+  log(
+    `${playerName(player)} не побеждает врага: ${formatRoll(rolls)}${bonusText}. Игрок возвращается на старт и получает карту <strong>Лавка Джо</strong>.`,
+  );
+  await showActionPrompt(
+    `${playerName(player)} не побеждает врага: ${formatRoll(rolls)}${bonusText}. Возврат на <strong>старт</strong>. Получает карту <strong>Лавка Джо</strong>.`,
+  );
+  clearEnemyBattleHud();
+  await drawFreeShopCard(player, "получает карту Лавка Джо за возвращение на старт");
 }
 
 async function resolveDiceFortuneField(player) {
@@ -836,7 +990,7 @@ async function resolvePayDoubleField(player) {
   player.coins *= 2;
   const gained = player.coins - before;
   if (gained > 0) showCoinFloat(player, gained);
-  const message = `${playerName(player)} попадает на удвоение и удваивает свое количество монет. Было <strong>${coinAmount(before)}</strong>, стало <strong>${coinAmount(player.coins)}</strong> (+${coinAmount(gained)}).`;
+  const message = `${playerName(player)} попадает на удвоение и удваивает свое количество монет. Было <strong>${coinAmount(before)}</strong>, стало <strong>${coinAmount(player.coins)}</strong> <span class="nowrap">(${coinAmount(`+${gained}`)})</span>.`;
 
   log(message, { toast: true });
   await showActionPrompt(message);
@@ -855,10 +1009,10 @@ async function resolveFinalBattle(boss, animate = true) {
   };
   render();
 
-  log(`${playerName(boss)} достигает финиша и становится <strong>боссом</strong>. Начинается финальная битва.`);
+  log(`${playerName(boss)} становится <strong>боссом</strong>. Начинается финальная битва.`);
   if (animate) {
     await showActionPrompt(
-      `${playerName(boss)} дошел до финиша и становится <strong>боссом</strong>. Остальные игроки сражаются с ним.`,
+      `${playerName(boss)} становится <strong>боссом</strong>. Остальные игроки сражаются с ним.`,
     );
   }
 
@@ -912,9 +1066,10 @@ async function resolveFinalBattle(boss, animate = true) {
   );
 
   const bossWon = bossForce >= playersForce;
+  const positionBonuses = finalPositionBonuses(state.players);
   const scores = state.players.map((player) => {
     const damage = challengerResults.find((result) => result.player.id === player.id)?.total || 0;
-    return finalBattleScore(player, damage);
+    return finalBattleScore(player, damage, positionBonuses.get(player.id) || 1);
   });
   const winner = bossWon ? boss : bestFinalScorePlayer(scores, challengers);
 
@@ -940,7 +1095,7 @@ async function resolveFinalBattle(boss, animate = true) {
   } else {
     const scoreText = scores
       .filter((score) => challengers.some((player) => player.id === score.playerId))
-      .map((score) => `${state.players.find((player) => player.id === score.playerId)?.name}: ${score.total}`)
+      .map((score) => `${state.players.find((player) => player.id === score.playerId)?.name}: ${score.total} (+${score.position} за позицию)`)
       .join(", ");
     log(
       `<strong>Финальная битва завершена.</strong> Игроки побеждают босса: ${playersForce} против ${bossForce}. По очкам побеждает ${playerName(winner)} (${scoreText}).`,
@@ -972,7 +1127,7 @@ function finalBonusText(bonus, total) {
   return bonus ? ` + ${bonus} бонус = <strong>${total}</strong>` : "";
 }
 
-function finalBattleScore(player, damageToBoss) {
+function finalBattleScore(player, damageToBoss, position = 1) {
   const coins = player.coins;
   const shop = player.items.length * 5;
   const damage = damageToBoss * 2;
@@ -981,8 +1136,9 @@ function finalBattleScore(player, damageToBoss) {
     damage,
     damageToBoss,
     playerId: player.id,
+    position,
     shop,
-    total: coins + shop + damage,
+    total: coins + shop + damage + position,
   };
 }
 
@@ -990,8 +1146,40 @@ function bestFinalScorePlayer(scores, candidates) {
   const candidateIds = new Set(candidates.map((player) => player.id));
   const winnerScore = scores
     .filter((score) => candidateIds.has(score.playerId))
-    .sort((a, b) => b.total - a.total || b.coins - a.coins || b.shop - a.shop)[0];
+    .sort((a, b) => b.total - a.total || b.position - a.position || b.coins - a.coins || b.shop - a.shop)[0];
   return state.players.find((player) => player.id === winnerScore?.playerId) || candidates[0] || state.players[0];
+}
+
+function finalPositionBonuses(players) {
+  const rankedGroups = [...players]
+    .map((player) => ({
+      distance: finalDistance(player),
+      player,
+    }))
+    .sort((a, b) => a.distance - b.distance || a.player.id - b.player.id)
+    .reduce((groups, item) => {
+      const group = groups[groups.length - 1];
+      if (group && group.distance === item.distance) {
+        group.players.push(item.player);
+      } else {
+        groups.push({ distance: item.distance, players: [item.player] });
+      }
+      return groups;
+    }, []);
+
+  const bonusesByRank = [6, 3, 1];
+  const result = new Map();
+  rankedGroups.forEach((group, index) => {
+    const bonus = bonusesByRank[index] || 1;
+    group.players.forEach((player) => result.set(player.id, bonus));
+  });
+  return result;
+}
+
+function finalDistance(player) {
+  const current = routeIndex.get(player.position) || 0;
+  const finish = routeIndex.get(finishCell) || routePath.length;
+  return Math.max(0, finish - current);
 }
 
 async function resolveGreenField(player) {
@@ -1021,6 +1209,9 @@ async function drawAndApplyCard(player, deck, deckName) {
   if (deckName === "Хорошо") {
     log(`${playerName(player)} тянет карту <strong>${deckName}</strong>: ${card.title}`);
     await revealGoodCard(player, card);
+  } else if (deckName === "Плохо") {
+    log(`${playerName(player)} тянет карту <strong>${deckName}</strong>: ${card.title}`);
+    await revealBadCard(player, card);
   } else {
     log(`${playerName(player)} тянет карту <strong>${deckName}</strong>: ${card.title}`, { toast: true });
   }
@@ -1045,9 +1236,25 @@ async function revealGoodCard(player, card) {
 }
 
 function wireGoodCardClick(resolver) {
-  ui.eventToast?.querySelector(".good-card-preview")?.addEventListener("click", () => {
+  wireCardRevealClick(".good-card-preview", resolver);
+}
+
+function wireBadCardClick(resolver) {
+  wireCardRevealClick(".bad-card-preview", resolver);
+}
+
+function wireTadamCardClick(resolver) {
+  wireCardRevealClick(".tadam-card-preview", resolver);
+}
+
+function wireShopCardClick(resolver) {
+  wireCardRevealClick(".shop-card-preview", resolver);
+}
+
+function wireCardRevealClick(selector, resolver) {
+  ui.eventToast?.querySelectorAll(selector).forEach((cardPreview) => cardPreview.addEventListener("click", () => {
     if (actionPromptResolver === resolver) resolver?.();
-  });
+  }));
 }
 
 function goodCardMarkup(player, card, { revealed }) {
@@ -1068,13 +1275,200 @@ function goodCardMarkup(player, card, { revealed }) {
   `;
 }
 
+async function revealBadCard(player, card) {
+  const backPrompt = showActionPrompt(badCardMarkup(card, { revealed: false }), { buttonLabel: "Открыть" });
+  const backResolver = actionPromptResolver;
+  wireBadCardClick(backResolver);
+  await backPrompt;
+
+  const facePrompt = showActionPrompt(badCardMarkup(card, { revealed: true }), { buttonLabel: "Применить" });
+  wireBadCardClick(actionPromptResolver);
+  await facePrompt;
+  log(`${playerName(player)} применяет карту <strong>Плохо</strong>: ${card.title}`, { toast: true });
+}
+
+function badCardMarkup(card, { revealed }) {
+  const cardText = revealed
+    ? `
+      <span class="bad-card-text">
+        <span>${iconizeHtml(card.title)}</span>
+      </span>
+    `
+    : "";
+  return `
+    <article class="bad-card-reveal ${revealed ? "is-revealed" : "is-hidden"}">
+      <button class="bad-card-preview" type="button" aria-label="${revealed ? "Применить карту Плохо" : "Открыть карту Плохо"}">
+        ${cardText}
+      </button>
+    </article>
+  `;
+}
+
+async function revealTadamCard(player, card) {
+  const backPrompt = showActionPrompt(tadamCardMarkup(card, { revealed: false }), { buttonLabel: "Открыть" });
+  const backResolver = actionPromptResolver;
+  wireTadamCardClick(backResolver);
+  await backPrompt;
+
+  const facePrompt = showActionPrompt(tadamCardMarkup(card, { revealed: true }), { buttonLabel: "Применить" });
+  wireTadamCardClick(actionPromptResolver);
+  await facePrompt;
+}
+
+function tadamCardMarkup(card, { revealed }) {
+  const cardText = revealed
+    ? `
+      <span class="tadam-card-text">
+        <span>${iconizeHtml(card.title)}</span>
+      </span>
+    `
+    : "";
+  return `
+    <article class="tadam-card-reveal ${revealed ? "is-revealed" : "is-hidden"}">
+      <button class="tadam-card-preview" type="button" aria-label="${revealed ? "Применить карту ТАДАМ" : "Открыть карту ТАДАМ"}">
+        ${cardText}
+      </button>
+    </article>
+  `;
+}
+
+async function revealShopCards(cards) {
+  const backPrompt = showActionPrompt(shopCardsMarkup(cards, { revealed: false }), { buttonLabel: "Открыть" });
+  const backResolver = actionPromptResolver;
+  wireShopCardClick(backResolver);
+  await backPrompt;
+
+  const facePrompt = showActionPrompt(shopCardsMarkup(cards, { revealed: true }), { buttonLabel: "Далее" });
+  wireShopCardClick(actionPromptResolver);
+  await facePrompt;
+}
+
+async function revealSelectableShopCards(cards) {
+  const backPrompt = showActionPrompt(shopCardsMarkup(cards, { revealed: false }), { buttonLabel: "Открыть" });
+  const backResolver = actionPromptResolver;
+  wireShopCardClick(backResolver);
+  await backPrompt;
+
+  return chooseShopCardFromFace(cards);
+}
+
+function chooseShopCardFromFace(offer) {
+  if (!ui.eventToast) return Promise.resolve(null);
+
+  window.clearTimeout(eventToastFadeTimer);
+  window.clearTimeout(eventToastHideTimer);
+
+  ui.eventToast.hidden = false;
+  ui.eventToast.innerHTML = `<div class="event-toast-copy">${shopCardsMarkup(offer, {
+    revealed: true,
+    selectable: true,
+  })}</div>`;
+  ui.eventToast.classList.remove("fading", "quick-fading", "visible");
+  ui.eventToast.classList.add("action-prompt");
+  void ui.eventToast.offsetWidth;
+  ui.eventToast.classList.add("visible");
+  actionPromptButtonLabel = "Далее";
+
+  return new Promise((resolve) => {
+    let completed = false;
+    const finish = (cardId) => {
+      if (completed) return;
+      completed = true;
+      const card = offer.find((item) => item.id === cardId) || null;
+      actionPromptResolver = null;
+      actionPromptButtonLabel = "Далее";
+      hideEventToast({ quick: true });
+      render();
+      resolve(card);
+    };
+
+    actionPromptResolver = () => finish(null);
+    ui.eventToast.querySelectorAll("[data-shop-card-id]").forEach((button) => {
+      button.addEventListener("click", () => finish(button.dataset.shopCardId));
+    });
+    render();
+  });
+}
+
+function chooseRevealedShopCard(offer) {
+  if (!ui.eventToast) return Promise.resolve(null);
+
+  window.clearTimeout(eventToastFadeTimer);
+  window.clearTimeout(eventToastHideTimer);
+
+  ui.eventToast.hidden = false;
+  ui.eventToast.innerHTML = `<div class="event-toast-copy">${shopCardsMarkup(offer, {
+    revealed: true,
+    selectable: true,
+    showDecline: true,
+  })}</div>`;
+  ui.eventToast.classList.remove("fading", "quick-fading", "visible");
+  ui.eventToast.classList.add("action-prompt");
+  void ui.eventToast.offsetWidth;
+  ui.eventToast.classList.add("visible");
+  actionPromptButtonLabel = "Отказаться";
+
+  return new Promise((resolve) => {
+    let completed = false;
+    const finish = (cardId) => {
+      if (completed) return;
+      completed = true;
+      const card = offer.find((item) => item.id === cardId) || null;
+      actionPromptResolver = null;
+      actionPromptButtonLabel = "Далее";
+      hideEventToast({ quick: true });
+      render();
+      resolve(card);
+    };
+
+    actionPromptResolver = () => finish(null);
+    ui.eventToast.querySelectorAll("[data-shop-card-id]").forEach((button) => {
+      button.addEventListener("click", () => finish(button.dataset.shopCardId));
+    });
+    ui.eventToast.querySelector("[data-shop-decline]")?.addEventListener("click", () => finish(null));
+    render();
+  });
+}
+
+function shopCardsMarkup(cards, { revealed, selectable = false, showDecline = false } = {}) {
+  const className = `shop-card-reveal ${revealed ? "is-revealed" : "is-hidden"} ${selectable ? "is-selectable" : ""}`.trim();
+  const cardsMarkup = cards
+    .map((card) => {
+      const cardText = revealed
+        ? `
+          <span class="shop-card-text">
+            <span>${iconizeHtml(card.title)}</span>
+          </span>
+        `
+        : "";
+
+      return `
+        <button class="shop-card-preview" type="button" ${selectable ? `data-shop-card-id="${card.id}"` : ""} aria-label="${revealed ? "Выбрать карту Лавка Джо" : "Открыть карту Лавка Джо"}">
+          ${cardText}
+        </button>
+      `;
+    })
+    .join("");
+
+  return `
+    <article class="${className}">
+      <div class="shop-card-row">${cardsMarkup}</div>
+      ${
+        showDecline
+          ? `<button class="shop-card-decline" type="button" data-shop-decline="true">Отказаться</button>`
+          : ""
+      }
+    </article>
+  `;
+}
+
 async function applyCardEffect(player, effect, source = {}) {
   if (!effect) return;
 
   if (effect.type === "coins") {
     addCoins(player, effect.amount);
   } else if (effect.type === "move") {
-    await confirmMoveEffect(player, effect.steps, source.title);
+    await confirmMoveEffect(player, effect.steps);
     await movePlayerSteps(player, effect.steps);
   } else if (effect.type === "steal-random") {
     stealFromRandomPlayer(player, effect.amount);
@@ -1087,7 +1481,7 @@ async function applyCardEffect(player, effect, source = {}) {
   } else if (effect.type === "optional-extra-turn") {
     await resolveOptionalExtraTurn(player, effect.cost);
   } else if (effect.type === "draw-free-shop") {
-    drawFreeShopCard(player);
+    await drawFreeShopCard(player);
   } else if (effect.type === "buy-shop-card-from-player") {
     await resolveBuyShopCardFromPlayer(player, effect.cost);
   }
@@ -1107,7 +1501,7 @@ async function resolveOptionalExtraTurn(player, cost) {
   const choice = await chooseCardAction({
     kicker: "Хорошо",
     title: "Сделать еще один ход?",
-    summary: `${player.name}: ${player.coins} монет. Можно заплатить ${cost} монет и оставить ход за собой.`,
+    summary: `${playerChoiceBadge(player)}: ${player.coins} монет. Можно заплатить ${cost} монет и оставить ход за собой.`,
     choices: [
       {
         id: "pay",
@@ -1132,10 +1526,12 @@ async function resolveOptionalExtraTurn(player, cost) {
   log(`${playerName(player)} платит <strong>${cost} монет</strong> и готовит еще один ход.`, { toast: true });
 }
 
-function drawFreeShopCard(player) {
+async function drawFreeShopCard(player, reason = "бесплатно получает карту Лавка Джо") {
   const card = randomItem(shopCards);
+  await revealShopCards([card]);
   player.items.push(card);
-  log(`${playerName(player)} бесплатно получает карту Лавка Джо: <strong>${card.title}</strong>`, { toast: true });
+  render();
+  log(`${playerName(player)} ${reason}: <strong>${card.title}</strong>`, { toast: true });
 }
 
 async function resolveBuyShopCardFromPlayer(player, cost) {
@@ -1150,7 +1546,8 @@ async function resolveBuyShopCardFromPlayer(player, cost) {
       target.items.map((card) => ({
         id: `${target.id}:${card.id}`,
         label: card.title,
-        note: `${target.name}: ${cost} монет`,
+        note: playerChoiceBadge(target),
+        noteClass: "choice-player-note",
       })),
     );
 
@@ -1162,13 +1559,13 @@ async function resolveBuyShopCardFromPlayer(player, cost) {
   choices.push({
     id: "decline",
     label: "Отказаться",
-    note: coinAmount(0),
+    note: "",
   });
 
   const choice = await chooseCardAction({
     kicker: "Хорошо",
     title: "Купить карту Лавка Джо у игрока",
-    summary: `${player.name}: ${player.coins} монет. Выбери карту и заплати ее владельцу ${cost} монет.`,
+    summary: `${playerChoiceBadge(player)}: ${player.coins} монет. Выбери карту и заплати ее владельцу ${cost} монет.`,
     buttonsClass: "shop-buttons",
     choices,
   });
@@ -1204,9 +1601,8 @@ async function applyFieldEffect(player, effect, fieldName) {
   }
 }
 
-async function confirmMoveEffect(player, steps, sourceTitle = "") {
-  const source = sourceTitle ? `<span>${sourceTitle}</span>` : "";
-  await showActionPrompt(`${source}<strong>${playerName(player)}: ${moveActionText(steps)}</strong>`);
+async function confirmMoveEffect(player, steps) {
+  await showActionPrompt(`<strong>${playerName(player)}: ${moveActionText(steps)}</strong>`);
 }
 
 function moveActionText(steps) {
@@ -1214,11 +1610,13 @@ function moveActionText(steps) {
   return `Перейди на ${Math.abs(steps)} клеток ${direction}.`;
 }
 
-function drawTadamCard(player) {
+async function drawTadamCard(player) {
   const card = randomItem(tadamCards);
+  log(`${playerName(player)} тянет карту <strong>ТАДАМ!</strong>: ${card.title}`);
+  await revealTadamCard(player, card);
   state.tadams.push(card);
   if (state.tadams.length > 3) state.tadams.shift();
-  log(`${playerName(player)} открывает <strong>ТАДАМ!</strong>: ${card.title}`, { toast: true });
+  log(`${playerName(player)} применяет карту <strong>ТАДАМ!</strong>: ${card.title}`, { toast: true });
 }
 
 async function resolveShop(player) {
@@ -1230,7 +1628,8 @@ async function resolveShop(player) {
     return;
   }
 
-  const bought = await chooseShopCard(player, offer);
+  const directChoice = await revealSelectableShopCards(offer);
+  const bought = directChoice || (await chooseRevealedShopCard(offer));
   if (!bought) {
     log(`${playerName(player)} отказывается от карт Лавки Джо.`, { toast: true });
     return;
@@ -1319,7 +1718,7 @@ function addCoins(player, amount) {
   const before = player.coins;
   player.coins = Math.max(0, player.coins + amount + bonus);
   const delta = player.coins - before;
-  if (delta > 0) showCoinFloat(player, delta);
+  if (delta !== 0) showCoinFloat(player, delta);
   return amount + bonus;
 }
 
@@ -1327,6 +1726,7 @@ function stealCoins(fromPlayer, toPlayer, amount) {
   if (!fromPlayer || !toPlayer || fromPlayer.id === toPlayer.id) return 0;
   const taken = Math.min(amount, fromPlayer.coins);
   fromPlayer.coins -= taken;
+  if (taken > 0) showCoinFloat(fromPlayer, -taken);
   addCoins(toPlayer, taken);
   return taken;
 }
@@ -1374,29 +1774,38 @@ function resolveLandSteal(player) {
 
 function renderTadams() {
   tadamTableEl.innerHTML = "";
-  if (state.tadams.length === 0) {
-    tadamTableEl.innerHTML = '<p class="muted-text">Пока нет активных карт.</p>';
-    return;
-  }
+  const visibleCards = visibleTadamCards();
 
-  for (const card of state.tadams) {
+  for (let index = 0; index < 3; index += 1) {
+    const card = visibleCards[index] || null;
     const item = document.createElement("article");
-    item.className = "tadam-item";
-    item.innerHTML = `<span>🎉</span><strong>${card.title}</strong>`;
+    item.className = `tadam-slot ${card ? "is-filled" : "is-empty"} ${card?.starterKind ? `is-starter is-starter-${card.starterKind}` : ""}`.trim();
+    item.innerHTML = card
+      ? `
+        <span class="tadam-slot-text">
+          <span>${iconizeHtml(card.title)}</span>
+        </span>
+      `
+      : `<span class="tadam-slot-empty">${index + 1}</span>`;
     tadamTableEl.append(item);
   }
+}
+
+function visibleTadamCards() {
+  return [...starterTadamCards, ...state.tadams].slice(-3);
 }
 
 function tileType(cell) {
   if (fieldCells.has(cell) === false) return "empty";
   if (cell === startCell) return "start";
-  if (cell === finishCell) return "finish";
   if (cellEvents[cell]) return cellEvents[cell];
+  if (cell === finishCell) return "finish";
   return "path";
 }
 
 function tileTitle(cell) {
   if (cell === startCell) return "Старт";
+  if (doorByEnemyCell(cell)?.isFinalBoss) return "Финальный монстр";
   if (cell === finishCell) return "Финиш";
   const namesByEvent = {
     bad: "Плохо",
@@ -1414,6 +1823,7 @@ function tileTitle(cell) {
 
 function fieldEffectText(cell) {
   if (cell === startCell) return "<span>Старт</span><strong>Начальная клетка</strong>";
+  if (doorByEnemyCell(cell)?.isFinalBoss) return "<span>Финальный монстр</span><strong>победи и стань боссом</strong>";
   if (cell === finishCell) return "<span>Финиш</span><strong>финальная битва</strong>";
 
   const texts = {
@@ -1441,7 +1851,7 @@ function turnActionsText(player) {
     return `
       <div class="pre-roll-action">
         <span>
-          <b>${card?.shortTitle || card?.title || "Карта Лавки Джо"}${total > 1 ? ` ${current}/${total}` : ""}</b>
+          <b>${card?.title || "Карта Лавки Джо"}${total > 1 ? ` ${current}/${total}` : ""}</b>
           Заплати ${coinAmount(cost)}: ${diceAmount(`+${dice}`)}.
         </span>
         <div>
@@ -1706,6 +2116,15 @@ function playerName(player) {
   return `<span class="player-name" style="--player-color: ${player.color}">${player.name}</span>`;
 }
 
+function playerChoiceBadge(player) {
+  return `
+    <span class="choice-player-badge" style="--player-color: ${player.color}">
+      <img src="${player.token}" alt="" aria-hidden="true">
+      <span>${player.name}</span>
+    </span>
+  `;
+}
+
 function coinIcon() {
   return `<img class="coin-icon" src="${coinIconSrc}" alt="" aria-hidden="true">`;
 }
@@ -1739,14 +2158,15 @@ function iconizeHtml(value) {
 }
 
 function showCoinFloat(player, amount) {
-  if (!player || amount <= 0) return;
+  if (!player || amount === 0) return;
 
   const token = boardEl.querySelector(`.map-token[data-player-id="${player.id}"]`);
   if (!token) return;
 
   const float = document.createElement("span");
-  float.className = "coin-float";
-  float.innerHTML = `+${coinAmount(amount)}`;
+  const sign = amount > 0 ? "+" : "-";
+  float.className = `coin-float ${amount < 0 ? "is-negative" : "is-positive"}`;
+  float.innerHTML = `${sign}${coinAmount(Math.abs(amount))}`;
   token.append(float);
   window.setTimeout(() => float.remove(), 1200);
 }
@@ -1771,7 +2191,11 @@ function log(message, { toast = false } = {}) {
   gameLogEl.prepend(item);
   while (gameLogEl.children.length > 40) gameLogEl.lastElementChild.remove();
 
-  if (toast) showEventToast(renderedMessage);
+  if (toast) showEventToast(trimToastTrailingDot(renderedMessage));
+}
+
+function trimToastTrailingDot(message) {
+  return String(message).replace(/\.(\s*)$/, "$1");
 }
 
 function showEventToast(message) {
@@ -1781,7 +2205,7 @@ function showEventToast(message) {
   window.clearTimeout(eventToastHideTimer);
 
   ui.eventToast.hidden = false;
-  ui.eventToast.innerHTML = iconizeHtml(message);
+  ui.eventToast.innerHTML = `<div class="event-toast-copy">${iconizeHtml(message)}</div>`;
   ui.eventToast.classList.remove("action-prompt", "fading", "quick-fading", "visible");
   void ui.eventToast.offsetWidth;
   ui.eventToast.classList.add("visible");
@@ -1834,12 +2258,12 @@ function hideEventToast({ quick = false } = {}) {
   }, quick ? eventToastQuickFadeMs : eventToastFadeMs);
 }
 
-async function animateDice(rollsOrResult, { bonus = 0, label = "", player = null, isFinalBattle = false } = {}) {
+async function animateDice(rollsOrResult, { bonus = 0, label = "", player = null, isEnemyBattle = false, isFinalBattle = false } = {}) {
   const rolls = Array.isArray(rollsOrResult) ? rollsOrResult : [rollsOrResult];
   const result = rolls.reduce((sum, value) => sum + value, 0);
   const caption = diceResultCaption(rolls, bonus);
   const playerLabel = dicePlayerLabel(player, label);
-  const throwPromise = animateDiceOnBoard(rolls, { caption, playerLabel, isFinalBattle });
+  const throwPromise = animateDiceOnBoard(rolls, { caption, playerLabel, isEnemyBattle, isFinalBattle });
   ui.diceValue.classList.add("rolling");
   ui.diceValue.textContent = "-";
   const startedAt = performance.now();
@@ -1852,7 +2276,7 @@ async function animateDice(rollsOrResult, { bonus = 0, label = "", player = null
   await throwPromise;
 }
 
-async function animateDiceOnBoard(rolls, { caption = "", playerLabel = null, isFinalBattle = false } = {}) {
+async function animateDiceOnBoard(rolls, { caption = "", playerLabel = null, isEnemyBattle = false, isFinalBattle = false } = {}) {
   if (!boardEl || !rolls.length) return;
 
   boardEl.querySelectorAll(".dice-throw-layer").forEach((layer) => layer.remove());
@@ -1863,6 +2287,7 @@ async function animateDiceOnBoard(rolls, { caption = "", playerLabel = null, isF
   if (playerLabel) {
     const playerEl = document.createElement("span");
     playerEl.className = "dice-player-label";
+    if (isEnemyBattle) playerEl.classList.add("enemy-battle-label");
     if (isFinalBattle) playerEl.classList.add("final-battle-label");
     playerEl.style.setProperty("--player-color", playerLabel.color);
     if (playerLabel.icon) {
@@ -2019,6 +2444,13 @@ function shouldIgnoreEnterShortcut(event) {
 }
 
 ui.newGameBtn.addEventListener("click", newGame);
+ui.settingsToggle?.addEventListener("click", () => {
+  if (!ui.settingsPanel) return;
+
+  const nextHidden = !ui.settingsPanel.hidden;
+  ui.settingsPanel.hidden = nextHidden;
+  ui.settingsToggle.setAttribute("aria-expanded", String(!nextHidden));
+});
 ui.rollBtn.addEventListener("click", () => {
   triggerRollButtonAction();
 });

@@ -20,6 +20,731 @@ Open questions:
 - ...
 ```
 
+## 2026-05-25 02:26 - Dev 2
+
+Changed:
+- Slightly enlarged the final monster tile icon while keeping it contained inside the cell.
+- Bumped the stylesheet cache key to `20260525-0174`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Only `.tile-icon-final-enemy` sizing changed; normal enemy icons are unchanged.
+
+Open questions:
+- None.
+
+## 2026-05-25 02:25 - Dev
+
+Changed:
+- Joe's Shop revealed offer cards can now be selected immediately on the face-card screen while the main button still says `Далее`.
+- Clicking `Далее` without choosing a card keeps the previous flow: the main button changes to `Отказаться`, and the separate `Отказаться` button appears under the cards.
+- Bumped the game script cache key to `20260525-0173`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `resolveShop()` now uses `revealSelectableShopCards()` for normal paid shop offers; free shop-card rewards still use the non-selecting reveal flow.
+
+Open questions:
+- None.
+
+## 2026-05-25 02:18 - Dev 2
+
+Changed:
+- Centered and contained the final monster icon inside its tile so the full art fits without edge clipping.
+- Added an enemy-battle-specific dice player label position so the rolling player's name no longer overlaps the VS/avatar/HUD panels.
+- Bumped stylesheet and script cache keys to `20260525-0172`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Monster-fight dice animation now passes `isEnemyBattle: true`; final battle label behavior is unchanged.
+
+Open questions:
+- None.
+
+## 2026-05-25 02:17 - Dev
+
+Changed:
+- Restored `shortTitle` display for Joe's Shop cards in player score cards.
+- Full Joe's Shop card titles remain available in tooltips and other larger card/choice surfaces.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `renderShopBadges()` uses `shortShopTitle()`, now `shortTitle || title`, so long shop rules do not overflow player cards.
+
+Open questions:
+- None.
+
+## 2026-05-25 02:08 - Dev 2
+
+Changed:
+- Fixed free Joe's Shop card reveal flow.
+- Cards gained from actions now show the back first, then flip to the face before the reward toast/log appears.
+- Bumped stylesheet and script cache keys to `20260525-0166`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `revealShopCards()` now mirrors Good/Bad/TADAM reveal flow: back prompt, face prompt, then return.
+
+Open questions:
+- None.
+
+## 2026-05-25 02:03 - Dev 2
+
+Changed:
+- Added final scoring position bonus: closest player group to finish gets 6 points, next closest group gets 3, all others get 1.
+- Tied players at the same distance receive the same position bonus.
+- Final score totals now include `position`, and the player-victory score log shows the position bonus per challenger.
+- Bumped stylesheet and script cache keys to `20260525-0159`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Distance uses `routeIndex` against `finishCell`, so it follows the actual route order.
+
+Open questions:
+- None.
+
+## 2026-05-25 01:56 - Dev 2
+
+Changed:
+- Added `assets/icons/final_enemy.png` for the final monster.
+- Moved the final monster from `8-0` to the former finish cell `9-0`; changed `8-0` to a `Плохо` cell.
+- Marked the finish door config as `isFinalBoss` and moved its enemy cell to `9-0`.
+- Final monster victory now starts the final battle and does not grant +1 dice.
+- Normal monster victories still grant +1 dice.
+- Bumped stylesheet and script cache keys to `20260525-0146`.
+
+Files:
+- `assets/icons/final_enemy.png`
+- `index.html`
+- `src/game.config.js`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `9-0` remains `finishCell`, but its board event is now `enemy`; final battle starts from `resolveEnemyBattle()` after killing the `isFinalBoss` enemy.
+- Keep asset paths relative for GitHub Pages.
+
+Open questions:
+- None.
+
+## 2026-05-25 01:44 - Dev 2
+
+Changed:
+- Moved the enemy-battle result text above the enemy/player force panels so it no longer overlaps dice during monster fights.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- The change targets `.enemy-battle-result`; dice animation remains centered.
+- Current asset cache keys in `index.html` are `20260525-0138` from parallel UI work.
+
+Open questions:
+- None.
+
+## 2026-05-25 01:43 - Dev 2
+
+Changed:
+- Added a GitHub Pages path rule for future work.
+
+Files:
+- `project-memory/updates.md`
+
+Notes for others:
+- For GitHub Pages, all JS/CSS/assets paths must be relative: `./src/...`, `./assets/...`, `./styles.css`.
+- Do not use `/assets/...` or absolute local paths like `/Users/...`.
+
+Open questions:
+- None.
+
+## 2026-05-25 01:38 - Dev 2
+
+Changed:
+- Fixed passive event toast layout by wrapping normal toast text in `.event-toast-copy`.
+- Removed the broad `.event-toast-copy > span` rule that could turn inline spans, including coin/dice amounts, into separate lines.
+- Bumped stylesheet and script cache keys to `20260525-0138`.
+- Verified the page reloads with current cache keys and no browser console errors.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- The root cause was `.event-toast` using grid layout while passive toasts inserted text/inline elements directly into the grid container.
+- Action prompts already used `.event-toast-copy`; passive toasts now use the same wrapper.
+
+Open questions:
+- None.
+
+## 2026-05-25 01:31 - Dev 2
+
+Changed:
+- Added two starter TADAM display cards for the default green/red field rules.
+- Starter TADAM cards are separate from the TADAM deck and only appear through the side-panel display.
+- The TADAM panel now shows the last 3 visible cards from `[starter green, starter red, drawn TADAM cards]`, so drawn cards gradually cover the starter cards.
+- Bumped stylesheet and script cache keys to `20260525-0061`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `starterTadamCards` is display-only; do not add these cards to `cardConfig.tadam` or Google Sheet.
+
+Open questions:
+- None.
+
+## 2026-05-25 01:24 - Dev 2
+
+Changed:
+- Added an enemy-battle HUD that reuses the final-battle area for normal monster fights.
+- Monster fights now show enemy icon/strength on one side and the rolling player icon/name/strength on the other.
+- After the roll, the stronger side is highlighted and the result text says who won and what the player receives.
+- Bumped stylesheet and script cache keys to `20260525-0056`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Enemy battle HUD uses `state.enemyBattleProgress`; final battle HUD behavior is unchanged unless this state is active.
+
+Open questions:
+- None.
+
+## 2026-05-25 00:44 - Dev 2
+
+Changed:
+- Added player avatars to player-name badges in choice popups.
+- Choice popup summaries now use the same avatar/name badge for the active player.
+- "Buy Joe's Shop card from another player" choices now show the card owner's avatar next to their name.
+- Bumped stylesheet and script cache keys to `20260525-0043`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Use `playerChoiceBadge(player)` for player labels inside choice panels.
+
+Open questions:
+- None.
+
+## 2026-05-25 00:30 - Dev 2
+
+Changed:
+- Reworked the side-panel TADAM block into three visible card slots.
+- Active TADAM rules now render as mini TADAM cards instead of text list rows.
+- Empty TADAM slots show subtle placeholders so it is clear up to three cards can be active.
+- Bumped stylesheet and script cache keys.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Side-panel TADAM mini-cards use `assets/cards/tadam_front.png` as their face art and show card `title`.
+
+Open questions:
+- None.
+
+## 2026-05-25 00:28 - Dev 2
+
+Changed:
+- Widened action prompt toasts and set a stable readable text size for long field-effect messages.
+- Restored no-wrap inline icon groups in event toasts so coin/dice amounts stay together.
+- Wrapped the pay-double gained amount as one unbreakable group.
+- Bumped `index.html` asset cache keys to `20260525-0038`.
+
+Files:
+- `styles.css`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Card reveal toasts keep their transparent/card-sized styling through the existing `:has(...)` rule.
+
+Open questions:
+- None.
+
+## 2026-05-25 00:20 - Dev 2
+
+Changed:
+- Removed trailing sentence dots from toast popups to avoid orphan `.` lines.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The cleanup is toast-only; chronicle log entries keep their original text.
+
+Open questions:
+- None.
+
+## 2026-05-25 00:16 - Dev 2
+
+Changed:
+- Removed cost text from the right-side badges in the "buy Joe's Shop card from another player" choice popup.
+- Card choices now show only the card owner's name on the right.
+- The decline choice no longer shows a `0 coins` badge.
+- Empty choice notes no longer render an empty right-side badge.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The summary text still tells the player the purchase costs 5 coins; only the per-choice right badge was simplified.
+
+Open questions:
+- None.
+
+## 2026-05-25 00:09 - Dev 2
+
+Changed:
+- Shop-card UI now uses full `title` text instead of `shortTitle`.
+- Player shop-card badges, revealed Joe's Shop cards, and pre-roll shop-card prompts all show `title`.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `shortTitle` can remain in card config data, but game UI no longer reads it.
+
+Open questions:
+- None.
+
+## 2026-05-25 00:08 - Dev 2
+
+Changed:
+- Removed the source-card title line from movement action prompts.
+- Movement prompts now show only the player/action line.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- This affects move-effect prompts such as Good card forward/backward movement.
+
+Open questions:
+- None.
+
+## 2026-05-25 00:02 - Dev 2
+
+Changed:
+- Monster loss reward changed from 10 coins to a Joe's Shop card.
+- After returning to start from a monster loss, the player now opens and receives a `Лавка Джо` card through the existing shop-card reveal flow.
+- Free Joe's Shop card awards now re-render player cards immediately after adding the item.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The previous 10-coin consolation reward is no longer used for monster losses.
+
+Open questions:
+- None.
+
+## 2026-05-24 23:58 - Dev 2
+
+Changed:
+- Added TADAM card back/front assets.
+- Added TADAM reveal flow: a TADAM card now shows its back first, then flips to the face by card click or the action button before applying the global rule.
+- TADAM cards use the shared revealed-card size and lower safe text area.
+- Bumped stylesheet and script cache keys.
+
+Files:
+- `assets/cards/tadam_back.png`
+- `assets/cards/tadam_front.png`
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- TADAM card assets are both 744x1039, same source canvas size as Good/Bad/Joe's Shop card faces.
+- Active TADAM rules still appear in the side panel after the reveal flow completes.
+
+Open questions:
+- None.
+
+## 2026-05-24 23:54 - Dev 2
+
+Changed:
+- Added a cross-chat UI QA rule for future hover/focus/selected/active states.
+
+Files:
+- `project-memory/updates.md`
+
+Notes for others:
+- For future UI changes, check hover/focus/selected/active states for unwanted glow/fill.
+- Default highlight style should be a clean contour, subtle shadow, or thin edge glow.
+- Do not replace important art, dark plaques, or readable surfaces with bright gold/light fills unless explicitly requested.
+- Pay special attention to card buttons, choice cards, decline/action buttons, and overlays above the board.
+- After UI changes, verify hover/focus states in the browser when feasible.
+
+Open questions:
+- None.
+
+## 2026-05-24 23:41 - Dev 2
+
+Changed:
+- Moved the normal Joe's Shop `Отказаться` button below the revealed shop cards.
+- Strengthened the decline-button hover/focus selector so it keeps its dark background and only gets a contour highlight.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Do not add the cross-chat highlight QA rule until the user approves the proposed news prompt.
+- Stylesheet cache key is `20260524-2341`.
+
+Open questions:
+- Awaiting user approval to send the highlight-QA rule into project news.
+
+## 2026-05-24 23:31 - Dev 2
+
+Changed:
+- Added Bad card back/front assets.
+- Added Bad card reveal flow: a Bad card now shows its back first, then flips to the face by card click or the action button before applying the effect.
+- Bad cards use the shared revealed-card size and lower safe text area.
+- Bumped stylesheet and script cache keys.
+
+Files:
+- `assets/cards/bad_back.png`
+- `assets/cards/bad_front.png`
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Bad card assets are both 744x1039, same source canvas size as the latest Good/Joe's Shop card faces.
+- Bad card text uses `title`, consistent with the current title-only card text direction.
+
+Open questions:
+- None.
+
+## 2026-05-24 23:28 - Important
+
+Changed:
+- Added `project-memory/prompts/read-news.md` for the short command "прочти новости".
+- Updated onboarding docs so new chats know about the news-refresh prompt.
+
+Files:
+- `project-memory/prompts/read-news.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/README.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- "Прочти новости" means: read project memory, role inbox, recent updates, and git status when relevant; summarize fresh context without changing game code.
+
+Open questions:
+- None.
+
+## 2026-05-24 23:14 - Dev 2
+
+Changed:
+- Unified reveal card sizing for Good and Joe's Shop cards.
+- Added shared `--reveal-card-width` sizing so future revealed cards can use the same dimensions.
+- Bumped the stylesheet cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Base revealed card size now follows the former Good-card size: `clamp(158px, 24vw, 218px)`.
+- Narrow-screen revealed card size uses the shared variable too.
+
+Open questions:
+- None.
+
+## 2026-05-24 20:19 - Dev 2
+
+Changed:
+- Removed the separate Joe's Shop purchase choice popup from the normal shop flow.
+- After Shop cards are revealed, the visible cards themselves are clickable purchase choices.
+- Added an `Отказаться` button beside the revealed Shop cards.
+- Kept Shop offer cards horizontal and added compact sizing for narrow screens.
+- Bumped stylesheet and script cache keys.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `chooseShopCard`/`pendingShop` are now legacy helpers for the old popup and are not used by `resolveShop`.
+- Free Shop card reveal still uses one card and no purchase/decline controls.
+
+Open questions:
+- None.
+
+## 2026-05-24 17:42 - Dev 2
+
+Changed:
+- Added Joe's Shop card back/front assets.
+- Added Joe's Shop reveal flow: shop offers show card backs first, then flip to faces by card click or the action button before the purchase choice appears.
+- Free Joe's Shop card draws now reveal one Shop card back, then face, before adding it to the player.
+- Added card-face CSS for Shop cards with text constrained to the lower safe area.
+- Bumped stylesheet and script cache keys.
+
+Files:
+- `assets/cards/shop_back.png`
+- `assets/cards/shop_front.png`
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Shop card assets are both 744x1039, matching the latest Good card face canvas and effectively 63:88.
+- Shop reveal is separate from Good reveal but uses the same action-prompt interaction pattern.
+
+Open questions:
+- None.
+
+## 2026-05-24 17:18 - Dev 2
+
+Changed:
+- Reverted the steps icon experiment.
+- Step text now stays as text again instead of rendering as an icon.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Removed the temporary `assets/icons/steps.png` asset.
+
+Open questions:
+- None.
+
+## 2026-05-24 17:24 - Dev 2
+
+Changed:
+- Updated the Good card front art to the latest provided file.
+- Added fresh cache keys for the Good card front and stylesheet link.
+
+Files:
+- `assets/cards/good_front.png`
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- New front canvas is 744x1039, about 0.023% wider than exact 63:88 by canvas ratio.
+- Visible alpha area at high threshold is 742x1039, about 0.246% narrower than exact 63:88.
+
+Open questions:
+- None.
+
+## 2026-05-24 17:11 - Dev 2
+
+Changed:
+- Added a shared steps icon asset.
+- Text that says `1 шаг`, `2 шага`, or `5 шагов` now renders as a number with the steps icon across game UI messages.
+- Bumped the game script cache key.
+
+Files:
+- `assets/icons/steps.png`
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Step icon rendering is part of `iconizeHtml`, after coin and dice icon rendering.
+- Script cache key is `20260524-1714`.
+
+Open questions:
+- None.
+
+## 2026-05-24 17:12 - Dev 2
+
+Changed:
+- Replaced the Good card front art with the provided open-chest card face.
+- Moved and narrowed Good card text lower on the face so it stays off the chest art and away from card edges.
+- Added fresh cache keys for the Good card front and stylesheet link.
+
+Files:
+- `assets/cards/good_front.png`
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- New front source canvas is 1061x1482, essentially exact 63:88 by canvas ratio.
+- Text box is now constrained to the lower safe area of the card face.
+
+Open questions:
+- None.
+
+## 2026-05-24 17:06 - Dev 2
+
+Changed:
+- Verified the Good card back asset already matches the provided chest-back image.
+- Set the Good card reveal UI to the exact 63:88 aspect ratio.
+- Added cache keys for the Good card front/back CSS backgrounds and stylesheet link.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Measured source art ratios: `good_back.png` is 1059x1485, about 0.39% narrower than 63:88; `good_front.png` is 1024x1536, about 6.88% narrower than 63:88.
+- The UI display ratio is exact 63:88; source art files are not all exact-ratio exports.
+
+Open questions:
+- Whether to re-export/normalize `good_front.png` itself to a true 63:88 source asset.
+
+## 2026-05-24 16:46 - Dev 2
+
+Changed:
+- Replaced the inline `Сразу открывать карты` setup checkbox with a `Настройки` toggle button.
+- Added a collapsible cheat settings menu below the setup controls.
+- Moved `Сразу открывать карты` into the menu and added `Показывать контур хода`.
+- Walking path outlines now appear only when `Показывать контур хода` is enabled.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Both cheat checkboxes are unchecked by default.
+
+Open questions:
+- None.
+
+## 2026-05-24 16:35 - Dev 2
+
+Changed:
+- Replaced walking path dots with a lightly highlighted cell outline.
+- Final destination cell now uses a slightly stronger outline.
+- Bumped the game script cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- The route marker still disappears from each cell as the player reaches it.
+
+Open questions:
+- None.
+
+## 2026-05-24 16:18 - Dev 2
+
+Changed:
+- Added walking path dots after a movement dice roll.
+- Dots are rendered on each cell the player is about to traverse; each dot disappears when the player reaches that cell.
+- The final destination dot is slightly larger while staying translucent.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- The path preview is only for normal dice walking, not forced card/field movement.
+- Path preview stops before locked doors.
+
+Open questions:
+- None.
+
+## 2026-05-24 16:15 - Dev 2
+
+Changed:
+- Losing to a monster now sends the player back to start and awards coins.
+- The monster-loss coin reward uses the existing coin popup near the player's token.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The base reward is 10 coins; existing coin bonuses still apply through `addCoins`.
+
+Open questions:
+- None.
+
+## 2026-05-24 16:02 - Dev 2
+
+Changed:
+- Added a negative coin popup near the player token when coins are spent or stolen.
+- Styled negative coin popups with a red-tinted badge while keeping positive coin popups unchanged.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `addCoins` now shows a popup for any non-zero delta; `stealCoins` also shows the loss on the victim because it mutates coins directly.
+
+Open questions:
+- None.
+
 ## 2026-05-24 15:11 - Dev 2
 
 Changed:

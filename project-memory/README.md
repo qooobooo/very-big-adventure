@@ -9,6 +9,7 @@ This folder is the shared mailbox for Codex chats working on "Очень Бол�
    - `updates.md`
    - your inbox in `inbox/`
    - `prompts/next-chat.md`
+   - `prompts/read-news.md`
 2. During work, keep edits inside your assigned project folder.
 3. After meaningful work, append a short update to `updates.md`.
 4. If Dev, Important, or GD needs to act, write a note in the matching inbox file.
@@ -23,3 +24,5 @@ Do not edit local Codex session logs. They are read-only context.
 
 GitHub link for `next-chat.md`, useful for browser ChatGPT chats without local file access:
 `https://github.com/qooobooo/very-big-adventure/blob/main/project-memory/prompts/next-chat.md`
+
+Use `prompts/read-news.md` when the user says "прочти новости".

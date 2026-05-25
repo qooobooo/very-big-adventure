@@ -11,6 +11,7 @@ First read the shared memory files:
 `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/updates.md`
 `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/README.md`
 `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/prompts/next-chat.md`
+`/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/prompts/read-news.md`
 
 If you are not in Codex and cannot read local files, open `next-chat.md` from GitHub:
 
@@ -53,6 +54,10 @@ When replacing an old role chat with a new one, use:
 GitHub link:
 
 `https://github.com/qooobooo/very-big-adventure/blob/main/project-memory/prompts/next-chat.md`
+
+For refreshing current project news, use:
+
+`/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/prompts/read-news.md`
 
 Do not edit local Codex `.jsonl` session files. They are read-only context.
 ```

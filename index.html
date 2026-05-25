@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Очень Большая Бродилка — веб-прототип</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260525-0174" />
   </head>
   <body>
     <main class="app-shell">
@@ -49,11 +49,18 @@
                   <option value="4">4</option>
                 </select>
               </label>
+              <button id="settingsToggle" class="secondary settings-toggle" type="button" aria-expanded="false">Настройки</button>
+              <button id="newGameBtn" class="secondary">Новая игра</button>
+            </div>
+            <div id="settingsPanel" class="settings-panel" hidden>
               <label class="cheat-toggle">
                 <input id="autoRevealCards" type="checkbox" />
                 <span>Сразу открывать карты</span>
               </label>
-              <button id="newGameBtn" class="secondary">Новая игра</button>
+              <label class="cheat-toggle">
+                <input id="showWalkPath" type="checkbox" />
+                <span>Показывать контур хода</span>
+              </label>
             </div>
           </section>
           <section class="tadam-card">
@@ -77,6 +84,6 @@
 
     </main>
 
-    <script type="module" src="./src/game.js?v=20260524-0305"></script>
+    <script type="module" src="./src/game.js?v=20260525-0173"></script>
   </body>
 </html>

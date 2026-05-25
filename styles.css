@@ -191,11 +191,28 @@ h2 {
   justify-self: start;
 }
 
+.settings-toggle {
+  align-self: end;
+}
+
+.settings-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+[hidden].settings-panel {
+  display: none;
+}
+
 .cheat-toggle {
   align-self: stretch;
   min-height: 44px;
+  display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
+  gap: 10px;
   padding: 8px 10px;
   border: 1px solid rgba(255, 247, 232, 0.14);
   border-radius: 8px;
@@ -707,6 +724,28 @@ h2 {
   color: var(--ink);
 }
 
+.enemy-battle-side.is-winning {
+  border-color: rgba(173, 255, 117, 0.86);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.28),
+    0 0 0 2px rgba(173, 255, 117, 0.24),
+    0 0 18px rgba(173, 255, 117, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.enemy-battle-side.player {
+  border-color: color-mix(in srgb, var(--player-color) 62%, #ffd77d 38%);
+  text-align: right;
+}
+
+.enemy-battle-side.player strong {
+  color: color-mix(in srgb, var(--player-color) 24%, #fff1ad 76%);
+}
+
+.enemy-battle-side.monster strong {
+  color: #ffb49e;
+}
+
 .final-battle-side.players {
   text-align: left;
 }
@@ -717,7 +756,9 @@ h2 {
 }
 
 .final-battle-side span {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   overflow: hidden;
   color: var(--muted);
   font-size: clamp(0.62rem, 1.6vw, 0.78rem);
@@ -726,6 +767,19 @@ h2 {
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.final-battle-side span img {
+  flex: 0 0 auto;
+  width: 1.45em;
+  height: 1.45em;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.42));
+}
+
+.final-battle-side.boss span,
+.enemy-battle-side.player span {
+  justify-content: flex-end;
 }
 
 .final-battle-side strong {
@@ -753,6 +807,38 @@ h2 {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
   font-size: 0.7rem;
   font-weight: 950;
+}
+
+.final-battle-result {
+  grid-column: 1 / -1;
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 215, 125, 0.34);
+  border-radius: 8px;
+  color: var(--ink);
+  background: rgba(18, 24, 21, 0.72);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  font-size: clamp(0.74rem, 1.7vw, 0.92rem);
+  font-weight: 850;
+  line-height: 1.18;
+  text-align: center;
+}
+
+.enemy-battle-result {
+  grid-row: 1;
+}
+
+.final-battle-hud:has(.enemy-battle-result) .enemy-battle-side,
+.final-battle-hud:has(.enemy-battle-result) .final-battle-vs {
+  grid-row: 2;
+}
+
+.final-battle-result:not(.is-visible) {
+  color: var(--muted);
 }
 
 .winner-popup {
@@ -928,6 +1014,31 @@ h2 {
   filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.28));
 }
 
+.walk-path-outline {
+  position: absolute;
+  inset: 7%;
+  z-index: 5;
+  border: 2px dashed rgba(255, 226, 132, 0.66);
+  border-radius: 7px;
+  box-shadow:
+    0 0 0 1px rgba(42, 28, 12, 0.16),
+    0 0 7px rgba(255, 211, 97, 0.25),
+    inset 0 0 8px rgba(255, 225, 137, 0.1);
+  opacity: 0.82;
+  pointer-events: none;
+}
+
+.walk-path-outline.is-final {
+  inset: 5%;
+  border-color: rgba(255, 225, 124, 0.84);
+  border-style: solid;
+  box-shadow:
+    0 0 0 1px rgba(42, 28, 12, 0.2),
+    0 0 10px rgba(255, 210, 86, 0.4),
+    inset 0 0 10px rgba(255, 225, 136, 0.14);
+  opacity: 0.95;
+}
+
 .tile-icon-shop {
   width: 89%;
   height: 89%;
@@ -936,6 +1047,17 @@ h2 {
 .tile-icon-enemy {
   width: 91%;
   height: 91%;
+}
+
+.tile-icon-final-enemy {
+  width: 76%;
+  height: auto;
+  max-height: calc(100% - 10px);
+  object-fit: contain;
+  object-position: center;
+  filter:
+    drop-shadow(0 2px 2px rgba(0, 0, 0, 0.58))
+    drop-shadow(0 0 10px rgba(255, 56, 44, 0.36));
 }
 
 .tile-icon-good {
@@ -1143,6 +1265,13 @@ h2 {
 
 .dice-player-label.final-battle-label {
   top: clamp(82px, 13vh, 112px);
+}
+
+.dice-player-label.enemy-battle-label {
+  top: clamp(98px, 17vh, 140px);
+  z-index: 20;
+  max-width: min(46%, 230px);
+  transform: translate(-50%, -50%);
 }
 
 .dice-player-label-icon {
@@ -1559,6 +1688,15 @@ h2 {
     0 0 12px rgba(255, 255, 235, 0.38);
 }
 
+.coin-float.is-negative {
+  border-color: rgba(255, 134, 112, 0.82);
+  color: #ffd8cc;
+  background: rgba(42, 12, 8, 0.84);
+  box-shadow:
+    0 8px 15px rgba(0, 0, 0, 0.32),
+    0 0 12px rgba(255, 91, 70, 0.4);
+}
+
 .coin-float .coin-icon,
 .dice-float .dice-icon {
   width: 1.15em;
@@ -1744,30 +1882,73 @@ h2 {
 
 .tadam-table {
   display: grid;
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
-.tadam-item {
+.tadam-slot {
+  position: relative;
+  aspect-ratio: 63 / 88;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.tadam-slot.is-filled {
+  border: 1px solid rgba(255, 236, 166, 0.54);
+  background: url("./assets/cards/tadam_front.png?v=20260524-2340") center / cover no-repeat;
+  box-shadow:
+    0 12px 20px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(0, 0, 0, 0.42);
+}
+
+.tadam-slot.is-starter-green {
+  border-color: color-mix(in srgb, var(--green) 62%, rgba(255, 236, 166, 0.52));
+}
+
+.tadam-slot.is-starter-red {
+  border-color: color-mix(in srgb, var(--red) 62%, rgba(255, 236, 166, 0.52));
+}
+
+.tadam-slot.is-empty {
   display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: start;
-  gap: 8px;
-  padding: 10px;
-  border: 1px solid rgba(255, 215, 125, 0.28);
-  border-radius: 8px;
+  place-items: center;
+  border: 1px dashed rgba(255, 236, 166, 0.3);
   background:
-    linear-gradient(135deg, rgba(217, 170, 76, 0.12), rgba(101, 189, 194, 0.05)),
-    rgba(255, 255, 255, 0.04);
+    linear-gradient(135deg, rgba(255, 236, 166, 0.055), rgba(101, 189, 194, 0.035)),
+    rgba(255, 255, 255, 0.026);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.025);
 }
 
-.tadam-item span {
-  font-size: 1.1rem;
+.tadam-slot-empty {
+  color: rgba(255, 236, 166, 0.34);
+  font-size: clamp(1.4rem, 4vw, 2.2rem);
+  font-weight: 900;
 }
 
-.tadam-item strong {
-  color: var(--ink);
-  font-size: 0.82rem;
-  line-height: 1.25;
+.tadam-slot-text {
+  position: absolute;
+  left: 13%;
+  right: 13%;
+  top: 62%;
+  bottom: 10%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3a210f;
+  font-weight: 900;
+  line-height: 1.08;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 239, 174, 0.72);
+}
+
+.tadam-slot-text span {
+  display: block;
+  max-height: 100%;
+  overflow: hidden;
+  color: #2c1709;
+  font-size: clamp(0.56rem, 1.08vw, 0.72rem);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
 }
 
 .event-toast {
@@ -1776,11 +1957,11 @@ h2 {
   top: 18px;
   left: 50%;
   z-index: 24;
-  width: min(640px, calc(100% - 36px));
+  width: min(860px, calc(100% - 36px));
   min-height: 52px;
   display: grid;
   align-items: center;
-  padding: 12px 16px;
+  padding: 14px 18px;
   border: 1px solid rgba(255, 215, 125, 0.52);
   border-radius: 8px;
   color: var(--ink);
@@ -1843,9 +2024,13 @@ h2 {
 .event-toast.action-prompt {
   grid-template-columns: minmax(0, 1fr);
   cursor: default;
+  width: min(1220px, calc(100% - 36px));
 }
 
-.event-toast.action-prompt:has(.good-card-reveal) {
+.event-toast.action-prompt:has(.good-card-reveal),
+.event-toast.action-prompt:has(.bad-card-reveal),
+.event-toast.action-prompt:has(.tadam-card-reveal),
+.event-toast.action-prompt:has(.shop-card-reveal) {
   width: auto;
   min-height: 0;
   padding: 0;
@@ -1856,18 +2041,21 @@ h2 {
 
 .event-toast-copy {
   display: block;
+  max-width: 100%;
+  font-size: clamp(1.02rem, 1.42vw, 1.26rem);
+  font-weight: 850;
   line-height: 1.32;
   overflow-wrap: normal;
   text-align: left;
-  text-wrap: pretty;
+  text-wrap: normal;
 }
 
 .event-toast .coin-amount,
 .event-toast .dice-amount,
 .tadam-item .coin-amount,
 .tadam-item .dice-amount {
-  display: inline;
-  white-space: normal;
+  display: inline-flex;
+  white-space: nowrap;
 }
 
 .event-toast .coin-amount b,
@@ -1875,6 +2063,7 @@ h2 {
 .tadam-item .coin-amount b,
 .tadam-item .dice-amount b {
   display: inline;
+  line-height: 1;
 }
 
 .event-toast .coin-icon,
@@ -1886,31 +2075,41 @@ h2 {
   margin-left: 0.08em;
 }
 
-.event-toast-copy > span:not(.player-name) {
-  display: block;
-  color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1.25;
+.event-toast .nowrap {
+  white-space: nowrap;
 }
 
 .event-toast-copy .player-name {
   color: color-mix(in srgb, var(--player-color) 52%, #fffbe8 48%);
 }
 
-.good-card-reveal {
-  width: clamp(158px, 24vw, 218px);
+.good-card-reveal,
+.bad-card-reveal,
+.tadam-card-reveal,
+button.bad-card-preview,
+button.tadam-card-preview,
+button.shop-card-preview {
+  --reveal-card-width: clamp(158px, 24vw, 218px);
 }
 
-button.good-card-preview {
+.good-card-reveal,
+.bad-card-reveal,
+.tadam-card-reveal {
+  width: var(--reveal-card-width);
+}
+
+button.good-card-preview,
+button.bad-card-preview,
+button.tadam-card-preview {
   position: relative;
   width: 100%;
-  aspect-ratio: 0.713;
+  aspect-ratio: 63 / 88;
   display: block;
   overflow: hidden;
   padding: 0;
   border: 1px solid rgba(255, 236, 166, 0.54);
   border-radius: 12px;
-  background: var(--good-card-art) center / cover no-repeat;
+  background: var(--card-art) center / cover no-repeat;
   box-shadow:
     0 14px 28px rgba(0, 0, 0, 0.42),
     0 0 0 1px rgba(0, 0, 0, 0.44);
@@ -1922,10 +2121,14 @@ button.good-card-preview {
 }
 
 button.good-card-preview:hover:not(:disabled),
-button.good-card-preview:focus-visible {
+button.good-card-preview:focus-visible,
+button.bad-card-preview:hover:not(:disabled),
+button.bad-card-preview:focus-visible,
+button.tadam-card-preview:hover:not(:disabled),
+button.tadam-card-preview:focus-visible {
   outline: none;
   border-color: rgba(255, 236, 166, 0.54);
-  background: var(--good-card-art) center / cover no-repeat;
+  background: var(--card-art) center / cover no-repeat;
   box-shadow:
     0 14px 28px rgba(0, 0, 0, 0.42),
     0 0 0 2px rgba(255, 244, 198, 0.96);
@@ -1933,19 +2136,37 @@ button.good-card-preview:focus-visible {
 }
 
 .good-card-reveal.is-hidden .good-card-preview {
-  --good-card-art: url("./assets/cards/good_back.png");
+  --card-art: url("./assets/cards/good_back.png?v=20260524-1658");
 }
 
 .good-card-reveal.is-revealed .good-card-preview {
-  --good-card-art: url("./assets/cards/good_front.png");
+  --card-art: url("./assets/cards/good_front.png?v=20260524-1720");
 }
 
-.good-card-text {
+.bad-card-reveal.is-hidden .bad-card-preview {
+  --card-art: url("./assets/cards/bad_back.png?v=20260524-2322");
+}
+
+.bad-card-reveal.is-revealed .bad-card-preview {
+  --card-art: url("./assets/cards/bad_front.png?v=20260524-2322");
+}
+
+.tadam-card-reveal.is-hidden .tadam-card-preview {
+  --card-art: url("./assets/cards/tadam_back.png?v=20260524-2340");
+}
+
+.tadam-card-reveal.is-revealed .tadam-card-preview {
+  --card-art: url("./assets/cards/tadam_front.png?v=20260524-2340");
+}
+
+.good-card-text,
+.bad-card-text,
+.tadam-card-text {
   position: absolute;
-  left: 11%;
-  right: 11%;
-  top: 58%;
-  bottom: 12%;
+  left: 14%;
+  right: 14%;
+  top: 62%;
+  bottom: 10%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1956,14 +2177,161 @@ button.good-card-preview:focus-visible {
   text-shadow: 0 1px 0 rgba(255, 239, 174, 0.72);
 }
 
-.good-card-text span {
+.good-card-text span,
+.bad-card-text span,
+.tadam-card-text span {
   display: block;
   color: #2c1709;
   max-height: 100%;
   overflow: hidden;
-  font-size: clamp(0.64rem, 1.42vw, 0.84rem);
+  font-size: clamp(0.58rem, 1.22vw, 0.78rem);
   line-height: 1.08;
   overflow-wrap: anywhere;
+}
+
+.bad-card-text span {
+  font-size: clamp(0.56rem, 1.14vw, 0.76rem);
+}
+
+.tadam-card-text span {
+  font-size: clamp(0.52rem, 1.04vw, 0.7rem);
+}
+
+.shop-card-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: clamp(10px, 2vw, 18px);
+}
+
+.shop-card-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: clamp(10px, 2vw, 18px);
+}
+
+button.shop-card-preview {
+  position: relative;
+  width: var(--reveal-card-width);
+  aspect-ratio: 63 / 88;
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid rgba(255, 236, 166, 0.54);
+  border-radius: 12px;
+  background: var(--shop-card-art) center / cover no-repeat;
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(0, 0, 0, 0.44);
+  cursor: pointer;
+  transform-origin: center;
+  transition:
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+button.shop-card-preview:hover:not(:disabled),
+button.shop-card-preview:focus-visible {
+  outline: none;
+  border-color: rgba(255, 236, 166, 0.54);
+  background: var(--shop-card-art) center / cover no-repeat;
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.42),
+    0 0 0 2px rgba(255, 244, 198, 0.96);
+  transform: none;
+}
+
+.shop-card-reveal.is-hidden .shop-card-preview {
+  --shop-card-art: url("./assets/cards/shop_back.png?v=20260524-1738");
+}
+
+.shop-card-reveal.is-revealed .shop-card-preview {
+  --shop-card-art: url("./assets/cards/shop_front.png?v=20260524-1738");
+}
+
+.shop-card-text {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: 62%;
+  bottom: 10%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3a210f;
+  font-weight: 900;
+  line-height: 1.08;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 239, 174, 0.72);
+}
+
+.shop-card-text span {
+  display: block;
+  color: #2c1709;
+  max-height: 100%;
+  overflow: hidden;
+  font-size: clamp(0.54rem, 1.08vw, 0.72rem);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.shop-card-decline {
+  align-self: center;
+  min-width: min(100%, 224px);
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 236, 166, 0.52);
+  border-radius: 12px;
+  color: #ffe3a1;
+  background:
+    linear-gradient(180deg, rgba(42, 52, 44, 0.92), rgba(22, 29, 25, 0.92));
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+button.shop-card-decline:hover:not(:disabled),
+button.shop-card-decline:focus-visible {
+  outline: none;
+  border-color: rgba(255, 236, 166, 0.8);
+  color: #fff3c8;
+  background:
+    linear-gradient(180deg, rgba(42, 52, 44, 0.92), rgba(22, 29, 25, 0.92));
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.34),
+    0 0 0 2px rgba(255, 244, 198, 0.32);
+  transform: none;
+}
+
+@media (max-width: 640px) {
+  .good-card-reveal,
+  .bad-card-reveal,
+  .tadam-card-reveal {
+    --reveal-card-width: clamp(118px, 31vw, 148px);
+  }
+
+  .shop-card-reveal {
+    gap: 8px;
+  }
+
+  .shop-card-row {
+    gap: 8px;
+  }
+
+  button.shop-card-preview {
+    --reveal-card-width: clamp(118px, 31vw, 148px);
+  }
+
+  .shop-card-decline {
+    min-width: 88px;
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 0.82rem;
+  }
 }
 
 .choice-panel {
@@ -2041,6 +2409,26 @@ button.good-card-preview:focus-visible {
   line-height: 1.4;
 }
 
+.choice-player-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.34em;
+  color: color-mix(in srgb, var(--player-color) 52%, #fffbe8 48%);
+  font-weight: 900;
+  white-space: nowrap;
+  vertical-align: -0.18em;
+}
+
+.choice-player-badge img {
+  width: 1.55em;
+  height: 1.55em;
+  object-fit: contain;
+  border-radius: 50%;
+  filter:
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.54))
+    drop-shadow(0 0 6px color-mix(in srgb, var(--player-color) 42%, transparent));
+}
+
 .choice-buttons {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2083,7 +2471,7 @@ button.good-card-preview:focus-visible {
   overflow-wrap: anywhere;
 }
 
-.choice-button span {
+.choice-button > span {
   min-width: 0;
   padding: 4px 8px;
   border: 1px solid rgba(255, 247, 232, 0.16);
@@ -2094,6 +2482,20 @@ button.good-card-preview:focus-visible {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.choice-button .choice-player-note {
+  padding: 4px 9px 4px 6px;
+}
+
+.choice-button .choice-player-note .choice-player-badge {
+  font-size: 0.76rem;
+  vertical-align: 0;
+}
+
+.choice-button .choice-player-note .choice-player-badge img {
+  width: 1.65em;
+  height: 1.65em;
 }
 
 .choice-button.decline {
@@ -2479,7 +2881,7 @@ button.good-card-preview:focus-visible {
 
   .season-controls {
     gap: 6px;
-    grid-template-columns: minmax(68px, 0.75fr) minmax(68px, 0.75fr) minmax(104px, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .season-controls label {
@@ -2496,6 +2898,12 @@ button.good-card-preview:focus-visible {
     min-height: 32px;
     padding: 0 10px;
     font-size: 0.76rem;
+  }
+
+  .settings-panel {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    margin-top: 8px;
   }
 
   .board-header {
@@ -2605,7 +3013,7 @@ button.good-card-preview:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .choice-button span {
+  .choice-button > span {
     justify-self: start;
     white-space: normal;
   }
