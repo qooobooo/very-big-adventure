@@ -1,4 +1,4 @@
-import { cardConfig } from "./cards.config.js?v=20260525-0191";
+import { cardConfig } from "./cards.config.js?v=20260525-0195";
 import { doorConfigs } from "./game.config.js";
 
 const boardEl = document.querySelector("#board");
@@ -141,18 +141,6 @@ const goodCards = expandDeck(cardConfig.good);
 const badCards = expandDeck(cardConfig.bad);
 const tadamCards = expandDeck(cardConfig.tadam);
 const shopCards = expandDeck(cardConfig.shop);
-const starterTadamCards = [
-  {
-    id: "starter-green-coins",
-    title: `Зеленые поля дают ${coinAmount(3)}`,
-    starterKind: "green",
-  },
-  {
-    id: "starter-red-coins",
-    title: `Красные поля забирают ${coinAmount(3)}`,
-    starterKind: "red",
-  },
-];
 
 const names = [
   { name: "Пес", color: "#8b1713", token: "./assets/player-tokens/dog.png?v=20260520-0310" },
@@ -1225,10 +1213,8 @@ function finalDistance(player) {
 }
 
 async function resolveGreenField(player) {
-  if (isStarterTadamVisible("green")) {
-    addCoins(player, 3);
-    log(`${playerName(player)} получает <strong>3 монеты</strong> на зеленом поле.`, { toast: true });
-  }
+  addCoins(player, 3);
+  log(`${playerName(player)} получает <strong>3 монеты</strong> на зеленом поле.`, { toast: true });
 
   const effect = activeFieldEffect("green-field");
   if (effect) {
@@ -1237,10 +1223,8 @@ async function resolveGreenField(player) {
 }
 
 async function resolveRedField(player) {
-  if (isStarterTadamVisible("red")) {
-    addCoins(player, -3);
-    log(`${playerName(player)} теряет <strong>3 монеты</strong> на красном поле.`, { toast: true });
-  }
+  addCoins(player, -3);
+  log(`${playerName(player)} теряет <strong>3 монеты</strong> на красном поле.`, { toast: true });
 
   const effect = activeFieldEffect("red-field");
   if (effect) {
@@ -1528,6 +1512,8 @@ async function applyCardEffect(player, effect, source = {}) {
     await drawFreeShopCard(player);
   } else if (effect.type === "buy-shop-card-from-player") {
     await resolveBuyShopCardFromPlayer(player, effect.cost);
+  } else if (effect.type === "choose-player-back-roll") {
+    await resolveChoosePlayerBackRoll(player);
   }
 }
 
@@ -1631,6 +1617,40 @@ async function resolveBuyShopCardFromPlayer(player, cost) {
   log(`${playerName(player)} платит ${playerName(target)} <strong>${cost} монет</strong> и забирает карту Лавка Джо: <strong>${card.title}</strong>`, {
     toast: true,
   });
+}
+
+async function resolveChoosePlayerBackRoll(player) {
+  const choices = state.players.map((target) => ({
+    id: String(target.id),
+    label: playerChoiceBadge(target),
+    note: `${diceAmount(totalDiceForPlayer(target))} ${moveBonusText(playerStepBonus(target))}`.trim(),
+    noteClass: "choice-player-note",
+  }));
+
+  const choice = await chooseCardAction({
+    kicker: "Хорошо",
+    title: "Кого отправить назад?",
+    summary: `${playerChoiceBadge(player)} выбирает игрока, который бросит все свои кубики и пойдет назад с бонусами передвижения.`,
+    choices,
+  });
+
+  const target = state.players.find((item) => item.id === Number(choice));
+  if (!target) return;
+
+  const rolls = rollDice(totalDiceForPlayer(target));
+  const rolled = rolls.reduce((sum, value) => sum + value, 0);
+  const bonus = playerStepBonus(target);
+  const total = rolled + bonus;
+  log(
+    `${playerName(player)} отправляет ${playerName(target)} назад: ${formatRoll(rolls)}${bonus ? ` + ${bonus} бонус = <strong>${total}</strong>` : ""}.`,
+  );
+  await animateDice(rolls, { bonus, label: "Назад", player: target });
+  await showActionPrompt(`${playerName(target)} идет назад на <strong>${total}</strong>.`);
+  await movePlayerSteps(target, -total);
+}
+
+function moveBonusText(bonus) {
+  return bonus ? `+${bonus} бонус` : "";
 }
 
 async function applyFieldEffect(player, effect, fieldName) {
@@ -1823,7 +1843,7 @@ function renderTadams() {
   for (let index = 0; index < 3; index += 1) {
     const card = visibleCards[index] || null;
     const item = document.createElement("article");
-    item.className = `tadam-slot ${card ? "is-filled" : "is-empty"} ${card?.starterKind ? `is-starter is-starter-${card.starterKind}` : ""}`.trim();
+    item.className = `tadam-slot ${card ? "is-filled" : "is-empty"}`;
     item.innerHTML = card
       ? `
         <span class="tadam-slot-text">
@@ -1836,11 +1856,7 @@ function renderTadams() {
 }
 
 function visibleTadamCards() {
-  return [...starterTadamCards, ...state.tadams].slice(-3);
-}
-
-function isStarterTadamVisible(kind) {
-  return visibleTadamCards().some((card) => card?.starterKind === kind);
+  return state.tadams.slice(-3);
 }
 
 function tileType(cell) {
@@ -1928,18 +1944,18 @@ function turnActionsText(player) {
 
 function greenEffectLabel() {
   const effect = activeFieldEffect("green-field");
-  const base = isStarterTadamVisible("green") ? `+${coinAmount(3)}` : "";
+  const base = `+${coinAmount(3)}`;
   if (effect?.mode === "draw") return [base, `карта ${deckLabel(effect.deck)}`].filter(Boolean).join(" + ");
   if (effect?.mode === "move") return [base, `${effect.steps > 0 ? "+" : ""}${effect.steps} шагов`].filter(Boolean).join(" + ");
-  return base || "нет эффекта";
+  return base;
 }
 
 function redEffectLabel() {
   const effect = activeFieldEffect("red-field");
-  const base = isStarterTadamVisible("red") ? coinAmount(-3) : "";
+  const base = coinAmount(-3);
   if (effect?.mode === "draw") return [base, `карта ${deckLabel(effect.deck)}`].filter(Boolean).join(" + ");
   if (effect?.mode === "move") return [base, `${effect.steps > 0 ? "+" : ""}${effect.steps} шагов`].filter(Boolean).join(" + ");
-  return base || "нет эффекта";
+  return base;
 }
 
 function doorByCell(cell) {

@@ -20,6 +20,71 @@ Open questions:
 - ...
 ```
 
+## 2026-05-25 22:38 - Dev
+
+Changed:
+- Made green/red field coin rules permanent again: green always gives `+3`, red always takes `-3`.
+- Removed starter TADAM display cards from the initial TADAM panel.
+- Removed `green-coins` and `red-coins` from the TADAM deck locally and from Google Sheet `Cards Config` tab `tadam`.
+- Removed TADAM `mode: "coins"` field handling because coin rules are now global field defaults, not cards.
+- Bumped `cards.config.js` and game script cache keys to `20260525-0195`.
+
+Files:
+- `cards-google-sheet.csv`
+- `index.html`
+- `src/cards.config.js`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The TADAM side panel now starts with three empty slots; green/red base coin effects are shown via field labels and always resolve before any drawn TADAM move/draw field effect.
+
+Open questions:
+- None.
+
+## 2026-05-25 22:11 - Dev
+
+Changed:
+- Added the starter green/red coin rules as real TADAM deck cards: `green-coins` and `red-coins`.
+- Added TADAM `mode: "coins"` support for green/red field effects.
+- Green/red base coin rule is now active when either its starter TADAM display card is visible or its matching coin-rule TADAM card is active in the drawn TADAM set.
+- Synced `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `tadam`.
+- Bumped `cards.config.js` and game script cache keys to `20260525-0194`.
+
+Files:
+- `cards-google-sheet.csv`
+- `index.html`
+- `src/cards.config.js`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `activeFieldEffect()` ignores `mode: "coins"` because coin rules are handled as the base field rule through `isFieldCoinRuleActive()`, allowing coin cards to coexist with move/draw field TADAM effects.
+
+Open questions:
+- None.
+
+## 2026-05-25 21:30 - Dev
+
+Changed:
+- Added a new Good card: `Выбери игрока, он делает ход назад используя все свои кубики и бонусы передвижения`.
+- Added effect type `choose-player-back-roll`: the active player chooses a target, the target rolls all normal dice, adds movement bonuses, and moves backward by the total.
+- Synced `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `good`.
+- Bumped `cards.config.js` and game script cache keys to `20260525-0193`.
+
+Files:
+- `cards-google-sheet.csv`
+- `index.html`
+- `src/cards.config.js`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The effect uses `totalDiceForPlayer(target)` plus `playerStepBonus(target)`; optional paid extra-die cards are not prompted because the card says the target uses their own current dice/bonuses, not optional purchases.
+
+Open questions:
+- None.
+
 ## 2026-05-25 21:08 - Dev
 
 Changed:

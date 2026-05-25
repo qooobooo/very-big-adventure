@@ -42,6 +42,13 @@ export const cardConfig = {
       description: "Можешь заплатить 5 монет игроку и забрать его карту Лавка Джо.",
       effect: { type: "buy-shop-card-from-player", cost: 5 },
     },
+    {
+      id: "choose-player-back-roll",
+      count: 1,
+      title: "Выбери игрока, он делает ход назад используя все свои кубики и бонусы передвижения",
+      description: "Выбери игрока, он делает ход назад используя все свои кубики и бонусы передвижения.",
+      effect: { type: "choose-player-back-roll" },
+    },
   ],
   bad: [
     {
