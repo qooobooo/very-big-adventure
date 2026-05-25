@@ -1,10 +1,14 @@
-import { cardConfig } from "./cards.config.js";
+import { cardConfig } from "./cards.config.js?v=20260525-0191";
 import { doorConfigs } from "./game.config.js";
 
 const boardEl = document.querySelector("#board");
 const scoreStripEl = document.querySelector("#scoreStrip");
 const gameLogEl = document.querySelector("#gameLog");
 const tadamTableEl = document.querySelector("#tadamTable");
+const appShellEl = document.querySelector(".app-shell");
+const playAreaEl = document.querySelector(".play-area");
+const sidePanelEl = document.querySelector(".side-panel");
+const wideLayoutQuery = window.matchMedia("(min-width: 1200px)");
 
 const ui = {
   activePlayerName: document.querySelector("#activePlayerName"),
@@ -488,21 +492,17 @@ function renderTokens() {
       image.alt = player.name;
     }
     token.classList.toggle("active", player.id === state.activePlayer);
-    token.classList.toggle("ready-to-roll", isPlayerReadyToRoll(player));
+    token.classList.toggle("turn-active", isPlayerTurnActive(player));
     token.classList.toggle("moving", player.id === state.movingPlayerId);
   }
 }
 
-function isPlayerReadyToRoll(player) {
+function isPlayerTurnActive(player) {
   return (
     player.id === state.activePlayer &&
-    !actionPromptResolver &&
     !state.finished &&
-    !state.isAnimating &&
     !state.pendingCardChoice &&
-    !state.pendingChoice &&
-    !state.pendingPreRoll &&
-    !state.pendingShop
+    !state.pendingChoice
   );
 }
 
@@ -535,7 +535,27 @@ function renderScores() {
 
 function renderShopBadges(player) {
   if (player.items.length === 0) return '<small>нет карт</small>';
-  return player.items.map((item) => `<small title="${item.title}">${iconizeHtml(shortShopTitle(item))}</small>`).join("");
+  return groupedShopItems(player.items)
+    .map(({ count, item }) => {
+      const label = count > 1 ? `${shortShopTitle(item)} x${count}` : shortShopTitle(item);
+      const title = count > 1 ? `${item.title} x${count}` : item.title;
+      return `<small title="${title}">${iconizeHtml(label)}</small>`;
+    })
+    .join("");
+}
+
+function groupedShopItems(items) {
+  const groups = new Map();
+  for (const item of items) {
+    const key = item.id || item.title;
+    const group = groups.get(key);
+    if (group) {
+      group.count += 1;
+    } else {
+      groups.set(key, { count: 1, item });
+    }
+  }
+  return [...groups.values()];
 }
 
 function shortShopTitle(item) {
@@ -688,12 +708,15 @@ function renderFinalBattleHud() {
 
   if (!progress || state.finished) {
     ui.finalBattleHud.hidden = true;
+    ui.finalBattleHud.className = "final-battle-hud";
     ui.finalBattleHud.innerHTML = "";
     return;
   }
 
   const boss = state.players.find((player) => player.id === progress.bossId);
+  const bossDisplayForce = progress.bossRollsStarted ? progress.bossForce : "?";
   ui.finalBattleHud.hidden = false;
+  ui.finalBattleHud.className = "final-battle-hud";
   ui.finalBattleHud.innerHTML = `
     <div class="final-battle-side players">
       <span>Игроки</span>
@@ -702,7 +725,7 @@ function renderFinalBattleHud() {
     <div class="final-battle-vs">VS</div>
     <div class="final-battle-side boss" style="--player-color: ${boss?.color || "#ff7d5d"}">
       <span>Босс${boss ? ` - ${boss.name}` : ""}</span>
-      <strong>${progress.bossForce}</strong>
+      <strong>${bossDisplayForce}</strong>
     </div>
   `;
 }
@@ -718,25 +741,35 @@ function renderEnemyBattleHud(progress) {
   const enemyLabel = progress.isFinalBoss ? "Финальный монстр" : "Враг";
   const playerWon = progress.winner === "player";
   const enemyWon = progress.winner === "enemy";
+  const battleState = playerWon ? "is-victory" : enemyWon ? "is-defeat" : progress.isRolling ? "is-rolling" : "is-ready";
   ui.finalBattleHud.hidden = false;
+  ui.finalBattleHud.className = `final-battle-hud enemy-battle-hud ${battleState}`;
   ui.finalBattleHud.innerHTML = `
-    <div class="final-battle-side enemy-battle-side monster ${enemyWon ? "is-winning" : ""}">
-      <span>
-        <img src="${enemyIcon}" alt="" aria-hidden="true">
-        ${enemyLabel}
-      </span>
-      <strong>${progress.enemyForce}</strong>
-    </div>
-    <div class="final-battle-vs">VS</div>
-    <div class="final-battle-side enemy-battle-side player ${playerWon ? "is-winning" : ""}" style="--player-color: ${player?.color || "#65bdc2"}">
-      <span>
-        ${player ? `<img src="${player.token}" alt="" aria-hidden="true">` : ""}
-        ${player?.name || "Игрок"}
-      </span>
-      <strong>${progress.playerForce}</strong>
-    </div>
-    <div class="final-battle-result enemy-battle-result ${progress.winner ? "is-visible" : ""}">
-      ${progress.outcome || "Брось кубики, чтобы определить силу игрока"}
+    <div class="enemy-battle-panel">
+      <div class="enemy-battle-duel">
+        <div class="final-battle-side enemy-battle-side player ${playerWon ? "is-winning" : ""}" style="--player-color: ${player?.color || "#65bdc2"}">
+          <span class="enemy-battle-portrait player-portrait">
+            ${player ? `<img src="${player.token}" alt="" aria-hidden="true">` : ""}
+          </span>
+          <span class="enemy-battle-name">${player?.name || "Игрок"}</span>
+          <small>Итог броска</small>
+          <strong>${progress.playerForce || "?"}</strong>
+        </div>
+        <div class="enemy-battle-center">
+          <div class="final-battle-vs">VS</div>
+        </div>
+        <div class="final-battle-side enemy-battle-side monster ${enemyWon ? "is-winning" : ""}">
+          <span class="enemy-battle-portrait">
+            <img src="${enemyIcon}" alt="" aria-hidden="true">
+          </span>
+          <span class="enemy-battle-name">${enemyLabel}</span>
+          <small>Порог победы</small>
+          <strong>${progress.enemyForce}</strong>
+        </div>
+      </div>
+      <div class="final-battle-result enemy-battle-result ${progress.winner ? "is-visible" : ""}">
+        ${iconizeHtml(progress.outcome || "Брось кубики, чтобы определить силу игрока")}
+      </div>
     </div>
   `;
 }
@@ -889,6 +922,7 @@ async function resolveEnemyBattle(player) {
   state.dice = null;
   state.enemyBattleProgress = {
     ...state.enemyBattleProgress,
+    isRolling: true,
     outcome: `${player.name} бросает кубики`,
   };
   render();
@@ -901,11 +935,14 @@ async function resolveEnemyBattle(player) {
   const bonusText = bonus ? ` + ${bonus} бонус = <strong>${damage}</strong>` : "";
   if (damage >= door.damage) {
     state.enemyBattleProgress = {
+      bonus,
       enemyForce: door.damage,
       isFinalBoss: Boolean(door.isFinalBoss),
       outcome: door.isFinalBoss ? `${player.name} побеждает и становится боссом` : `${player.name} побеждает и получает +1 кубик`,
       playerForce: damage,
       playerId: player.id,
+      rolled,
+      rolls,
       winner: "player",
     };
     door.openedBy.push(player.id);
@@ -932,11 +969,14 @@ async function resolveEnemyBattle(player) {
   }
 
   state.enemyBattleProgress = {
+    bonus,
     enemyForce: door.damage,
     isFinalBoss: Boolean(door.isFinalBoss),
     outcome: `Враг побеждает. ${player.name} возвращается на старт и получает Лавку Джо`,
     playerForce: damage,
     playerId: player.id,
+    rolled,
+    rolls,
     winner: "enemy",
   };
   player.position = startCell;
@@ -1005,6 +1045,7 @@ async function resolveFinalBattle(boss, animate = true) {
   state.finalBattleProgress = {
     bossForce: 0,
     bossId: boss.id,
+    bossRollsStarted: false,
     playersForce: 0,
   };
   render();
@@ -1047,6 +1088,7 @@ async function resolveFinalBattle(boss, animate = true) {
     }
     const result = await rollFinalBattlePower(boss, animate, { label: `Босс - ${boss.name}` });
     bossRollResults.push(result);
+    state.finalBattleProgress.bossRollsStarted = true;
     state.finalBattleProgress.bossForce += result.rolled;
     render();
     log(
@@ -1183,25 +1225,27 @@ function finalDistance(player) {
 }
 
 async function resolveGreenField(player) {
+  if (isStarterTadamVisible("green")) {
+    addCoins(player, 3);
+    log(`${playerName(player)} получает <strong>3 монеты</strong> на зеленом поле.`, { toast: true });
+  }
+
   const effect = activeFieldEffect("green-field");
   if (effect) {
     await applyFieldEffect(player, effect, "зеленое поле");
-    return;
   }
-
-  addCoins(player, 3);
-  log(`${playerName(player)} получает <strong>3 монеты</strong> на зеленом поле.`, { toast: true });
 }
 
 async function resolveRedField(player) {
+  if (isStarterTadamVisible("red")) {
+    addCoins(player, -3);
+    log(`${playerName(player)} теряет <strong>3 монеты</strong> на красном поле.`, { toast: true });
+  }
+
   const effect = activeFieldEffect("red-field");
   if (effect) {
     await applyFieldEffect(player, effect, "красное поле");
-    return;
   }
-
-  addCoins(player, -3);
-  log(`${playerName(player)} теряет <strong>3 монеты</strong> на красном поле.`, { toast: true });
 }
 
 async function drawAndApplyCard(player, deck, deckName) {
@@ -1474,8 +1518,8 @@ async function applyCardEffect(player, effect, source = {}) {
     stealFromRandomPlayer(player, effect.amount);
   } else if (effect.type === "steal-richest") {
     stealFromRichestPlayer(player, effect.amount);
-  } else if (effect.type === "give-random") {
-    giveToRandomPlayer(player, effect.amount);
+  } else if (effect.type === "give-poorest") {
+    giveToPoorestPlayer(player, effect.amount);
   } else if (effect.type === "extra-turn") {
     grantExtraTurn(player);
   } else if (effect.type === "optional-extra-turn") {
@@ -1745,11 +1789,11 @@ function stealFromRichestPlayer(player, amount) {
   log(`${playerName(player)} забирает у самого богатого игрока ${playerName(target)} <strong>${taken} монет</strong>.`);
 }
 
-function giveToRandomPlayer(player, amount) {
-  const target = randomOpponent(player);
+function giveToPoorestPlayer(player, amount) {
+  const target = poorestOpponent(player);
   if (!target) return;
   const given = stealCoins(player, target, amount);
-  log(`${playerName(player)} отдает ${playerName(target)} <strong>${given} монет</strong>.`);
+  log(`${playerName(player)} отдает самому бедному игроку ${playerName(target)} <strong>${given} монет</strong>.`);
 }
 
 function resolveJumpSteal(player) {
@@ -1793,6 +1837,10 @@ function renderTadams() {
 
 function visibleTadamCards() {
   return [...starterTadamCards, ...state.tadams].slice(-3);
+}
+
+function isStarterTadamVisible(kind) {
+  return visibleTadamCards().some((card) => card?.starterKind === kind);
 }
 
 function tileType(cell) {
@@ -1880,16 +1928,18 @@ function turnActionsText(player) {
 
 function greenEffectLabel() {
   const effect = activeFieldEffect("green-field");
-  if (effect?.mode === "draw") return `тяни карту ${deckLabel(effect.deck)}`;
-  if (effect?.mode === "move") return `${effect.steps > 0 ? "+" : ""}${effect.steps} шагов`;
-  return `+${coinAmount(3)}`;
+  const base = isStarterTadamVisible("green") ? `+${coinAmount(3)}` : "";
+  if (effect?.mode === "draw") return [base, `карта ${deckLabel(effect.deck)}`].filter(Boolean).join(" + ");
+  if (effect?.mode === "move") return [base, `${effect.steps > 0 ? "+" : ""}${effect.steps} шагов`].filter(Boolean).join(" + ");
+  return base || "нет эффекта";
 }
 
 function redEffectLabel() {
   const effect = activeFieldEffect("red-field");
-  if (effect?.mode === "draw") return `тяни карту ${deckLabel(effect.deck)}`;
-  if (effect?.mode === "move") return `${effect.steps > 0 ? "+" : ""}${effect.steps} шагов`;
-  return coinAmount(-3);
+  const base = isStarterTadamVisible("red") ? coinAmount(-3) : "";
+  if (effect?.mode === "draw") return [base, `карта ${deckLabel(effect.deck)}`].filter(Boolean).join(" + ");
+  if (effect?.mode === "move") return [base, `${effect.steps > 0 ? "+" : ""}${effect.steps} шагов`].filter(Boolean).join(" + ");
+  return base || "нет эффекта";
 }
 
 function doorByCell(cell) {
@@ -2112,6 +2162,11 @@ function richestOpponent(player) {
   return opponents.sort((a, b) => b.coins - a.coins || a.id - b.id)[0] || null;
 }
 
+function poorestOpponent(player) {
+  const opponents = state.players.filter((target) => target.id !== player.id);
+  return opponents.sort((a, b) => a.coins - b.coins || a.id - b.id)[0] || null;
+}
+
 function playerName(player) {
   return `<span class="player-name" style="--player-color: ${player.color}">${player.name}</span>`;
 }
@@ -2283,6 +2338,7 @@ async function animateDiceOnBoard(rolls, { caption = "", playerLabel = null, isE
 
   const layer = document.createElement("div");
   layer.className = "dice-throw-layer";
+  if (isEnemyBattle) layer.classList.add("enemy-battle-dice");
 
   if (playerLabel) {
     const playerEl = document.createElement("span");
@@ -2306,7 +2362,8 @@ async function animateDiceOnBoard(rolls, { caption = "", playerLabel = null, isE
   }
 
   const boardRect = boardEl.getBoundingClientRect();
-  const dieSize = Math.min(54, Math.max(34, boardRect.width * 0.078));
+  const baseDieSize = Math.min(54, Math.max(34, boardRect.width * 0.078));
+  const dieSize = baseDieSize * (isEnemyBattle ? 1.18 : 1);
   const dieDepth = dieSize / 2;
   const centerStep = rolls.length > 2 ? 11 : 13;
   const centerStart = -((rolls.length - 1) * centerStep) / 2;
@@ -2318,7 +2375,8 @@ async function animateDiceOnBoard(rolls, { caption = "", playerLabel = null, isE
     die.style.setProperty("--die-depth", `${dieDepth}px`);
     const centerOffset = centerStart + index * centerStep;
     die.style.setProperty("--center-x", `${50 + centerOffset}%`);
-    die.style.setProperty("--center-y", `${49 + (index % 2 === 0 ? -2 : 2)}%`);
+    const centerY = isEnemyBattle ? 42 : 49;
+    die.style.setProperty("--center-y", `${centerY + (index % 2 === 0 ? -2 : 2)}%`);
     const finalRotation = diceCubeRotations[value] ?? diceCubeRotations[1];
     const spinX = rotationDegrees(finalRotation.x) + 360 * (6 + Math.floor(Math.random() * 2));
     const spinY = rotationDegrees(finalRotation.y) + 360 * (6 + Math.floor(Math.random() * 2));
@@ -2443,6 +2501,17 @@ function shouldIgnoreEnterShortcut(event) {
   return target instanceof Element && Boolean(target.closest("input, select, textarea"));
 }
 
+function syncWideScoreStripPlacement() {
+  if (!scoreStripEl || !sidePanelEl || !appShellEl || !playAreaEl) return;
+
+  if (wideLayoutQuery.matches) {
+    if (scoreStripEl.parentElement !== sidePanelEl) sidePanelEl.prepend(scoreStripEl);
+    return;
+  }
+
+  if (scoreStripEl.parentElement !== appShellEl) appShellEl.insertBefore(scoreStripEl, playAreaEl);
+}
+
 ui.newGameBtn.addEventListener("click", newGame);
 ui.settingsToggle?.addEventListener("click", () => {
   if (!ui.settingsPanel) return;
@@ -2477,5 +2546,8 @@ document.addEventListener("keydown", (event) => {
   event.preventDefault();
   triggerRollButtonAction();
 });
+
+syncWideScoreStripPlacement();
+wideLayoutQuery.addEventListener("change", syncWideScoreStripPlacement);
 
 newGame();

@@ -20,6 +20,334 @@ Open questions:
 - ...
 ```
 
+## 2026-05-25 21:08 - Dev
+
+Changed:
+- Active player token animation now stays on throughout the player's turn, including Joe's Shop pre-roll card prompts.
+- Replaced the narrow `ready-to-roll` token class with `turn-active`, which remains while the active player is deciding pre-roll actions.
+- Bumped stylesheet and script cache keys to `20260525-0192`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `isPlayerTurnActive()` still suppresses the active animation during card/direction modal choices, but no longer suppresses it for `pendingPreRoll`.
+
+Open questions:
+- None.
+
+## 2026-05-25 19:18 - Dev
+
+Changed:
+- Changed Bad card `give5` from giving 5 coins to a random player to giving 5 coins to the player with the fewest coins.
+- Updated local card config, local Google Sheet CSV mirror, and game effect logic from `give-random` to `give-poorest`.
+- Added `poorestOpponent()` with deterministic tie break by player id.
+- Updated the Google Sheet `Cards Config`, tab `bad`, row `give5` with the new title, effect type, amount/count, and description.
+- Bumped `cards.config.js` and game script cache keys to `20260525-0191`.
+
+Files:
+- `cards-google-sheet.csv`
+- `index.html`
+- `src/cards.config.js`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Google Sheet write returned success. A follow-up read verification hit a Google Sheets API read quota limit, so local files are verified and the sheet write is assumed from the successful batch response.
+
+Open questions:
+- None.
+
+## 2026-05-25 15:56 - Dev
+
+Changed:
+- Replaced `assets/cards/tadam_front.png` with the updated TADAM face art from `Downloads/card_art_moved_up_20pct.png`.
+- Moved TADAM card text zones slightly lower on reveal cards and side-panel mini cards to fit the updated face art.
+- Bumped the stylesheet cache key and TADAM front asset cache keys to `20260525-0190`.
+
+Files:
+- `assets/cards/tadam_front.png`
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Source art remains `744x1039`, matching the existing TADAM back/front canvas size.
+
+Open questions:
+- None.
+
+## 2026-05-25 15:29 - Dev 2
+
+Changed:
+- Fixed wide-screen spacing between player cards and settings for 2-player games.
+- On screens `>=1200px`, the player score strip is moved into the right side panel above settings, so side-panel gap is consistent for 2/3/4 players.
+- Simplified the wide layout back to a normal two-column `play-area` now that score cards live in the side panel in wide mode.
+- Bumped stylesheet and script cache keys to `20260525-0189`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `syncWideScoreStripPlacement()` moves the existing `#scoreStrip` element between `.app-shell` and `.side-panel`; it does not duplicate player cards.
+
+Open questions:
+- None.
+
+## 2026-05-25 13:59 - Dev 2
+
+Changed:
+- Reworked the wide-screen layout so the board occupies the full left column from the top.
+- Moved player score cards into the right column above settings/TADAM on screens `>=1200px`.
+- Increased wide board sizing now that the player strip no longer consumes vertical space above the board.
+- Bumped stylesheet and script cache keys to `20260525-0188`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is CSS-only layout work using the existing DOM; narrow/tablet layouts are unchanged.
+
+Open questions:
+- None.
+
+## 2026-05-25 13:56 - Dev 2
+
+Changed:
+- Fixed final-battle HUD so boss points are hidden until the boss actually rolls dice.
+- Added display-only `bossRollsStarted` progress flag; boss-force calculation itself is unchanged.
+- Bumped stylesheet and script cache keys to `20260525-0187`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `state.finalBattleProgress.bossForce` still accumulates the same base/opponent bonuses before boss rolls; only `renderFinalBattleHud()` displays `?` until the first boss roll has happened.
+
+Open questions:
+- None.
+
+## 2026-05-25 13:50 - Dev 2
+
+Changed:
+- Added wide-screen battle panel sizing so the monster-battle window fits inside the visible board area.
+- On screens `>=1200px`, the battle panel is raised and made more compact while keeping the same layout.
+- Bumped stylesheet and script cache keys to `20260525-0186`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- The compacting lives in the existing `@media (min-width: 1200px)` block and only affects enemy battle HUD presentation.
+
+Open questions:
+- None.
+
+## 2026-05-25 13:35 - Dev 2
+
+Changed:
+- Swapped monster-battle card positions so the player card appears on the left and the enemy card appears on the right.
+- Bumped stylesheet and script cache keys to `20260525-0185`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The central `VS`, winner highlight, and battle result logic are unchanged.
+
+Open questions:
+- None.
+
+## 2026-05-25 13:33 - Dev 2
+
+Changed:
+- Added a short winner animation around the victorious monster/player portrait in the battle panel.
+- The winner portrait now pops with a green-gold ring and ray burst when `.is-winning` is applied.
+- Bumped stylesheet and script cache keys to `20260525-0184`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- The animation is CSS-only and uses the existing `is-winning` class; battle logic is unchanged.
+
+Open questions:
+- None.
+
+## 2026-05-25 13:27 - Dev 2
+
+Changed:
+- Removed the post-roll formula/comparison chip from the center of the monster battle panel.
+- Strengthened the winning combatant card outline so the winner is indicated by the frame.
+- Monster battle result text now runs through icon replacement, so `+1 кубик` renders with the dice icon.
+- Bumped stylesheet and script cache keys to `20260525-0183`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Removed the now-unused `enemyBattleRollSummary()` helper and `.enemy-battle-formula` styles.
+
+Open questions:
+- None.
+
+## 2026-05-25 13:22 - Dev 2
+
+Changed:
+- Removed the center phase label and pending roll chip from the monster battle panel.
+- The battle center now shows only `VS` until an actual roll result exists.
+- Moved battle dimming onto the board layer so dice are no longer dimmed by the overlay.
+- Bumped stylesheet and script cache keys to `20260525-0182`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Roll formula/comparison still appears after a roll because it uses actual `enemyBattleProgress.rolls`.
+
+Open questions:
+- None.
+
+## 2026-05-25 13:00 - Dev 2
+
+Changed:
+- Restored battle-mode dice face and pip colors to match normal dice throws.
+- Kept battle dice positioning/size behavior, but removed the separate battle-only face/pip recoloring that made dice look dull.
+- Bumped stylesheet and script cache keys to `20260525-0180`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Battle dice still use `.enemy-battle-dice` for placement and layer-specific treatment, but no longer override `.die-face` or `.die-face i` colors.
+
+Open questions:
+- None.
+
+## 2026-05-25 12:54 - Dev 2
+
+Changed:
+- Strengthened the monster-battle scene without changing combat rules.
+- Added a large monster portrait area in the battle panel and moved the victory threshold into the monster side only.
+- Made battle-mode dice larger, brighter, higher-contrast, and more shadowed while leaving normal dice styling mostly separate.
+- Reduced duplicate threshold text in the center panel; roll details now show as secondary dice formula plus a compact comparison.
+- Made the battle toast more compact so it does not compete with the battle panel.
+- Bumped stylesheet and script cache keys to `20260525-0179`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- No combat mechanics changed; `rolls` was added to `enemyBattleProgress` only for UI formula display.
+- Existing uncommitted Dev changes in the same files are preserved.
+
+Open questions:
+- None.
+
+## 2026-05-25 12:26 - Dev 2
+
+Changed:
+- Reworked the normal monster battle presentation into a single adventure-style battle panel.
+- Battle UI now has clear ready/rolling/victory/defeat states, a focused background overlay, combatant cards, central VS, threshold, roll summary, and result text.
+- Enemy-battle dice now animate a little higher, leaving the battle panel below the dice instead of competing with it.
+- Bumped stylesheet and script cache keys to `20260525-0178`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- No battle mechanics were changed; added presentation-only fields (`rolled`, `bonus`, `isRolling`) to `state.enemyBattleProgress` so the HUD can display the existing calculation cleanly.
+- Existing uncommitted Dev changes around visible starter TADAM card logic are still present in the same files and were not reverted.
+
+Open questions:
+- None.
+
+## 2026-05-25 12:16 - Dev
+
+Changed:
+- Corrected green/red base coin rules to depend on visible starter TADAM cards.
+- Green gives `+3` only while the starter green TADAM card is still visible; red takes `-3` only while the starter red TADAM card is still visible.
+- Once a starter TADAM card is covered by drawn TADAM cards, its base coin rule stops applying.
+- Active drawn TADAM field effects can still apply even after a starter card is covered.
+- Bumped the game script cache key to `20260525-0178`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `isStarterTadamVisible(kind)` uses the same 3-card visible TADAM list as the side panel, so logic follows what players see.
+
+Open questions:
+- None.
+
+## 2026-05-25 12:10 - Dev 2
+
+Changed:
+- Moved the normal enemy-battle HUD below the dice area so the VS panels no longer overlap the dice animation.
+- Enemy-battle outcome/status text now renders under the enemy/player force row.
+- Bumped stylesheet and script cache keys to `20260525-0175`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Added an `enemy-battle-hud` class on `#finalBattleHud` only for normal enemy-battle rendering; final-battle HUD keeps its previous class/layout.
+
+Open questions:
+- None.
+
+## 2026-05-25 12:09 - Dev
+
+Changed:
+- Player score-card Joe's Shop badges now group identical shop cards by `id`.
+- Duplicate shop cards display as a single short badge with a multiplier, for example `+1 к броску x2`.
+- Badge tooltips also include the multiplier when grouped.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Grouping is display-only; player inventory still keeps individual card instances.
+
+Open questions:
+- None.
+
 ## 2026-05-25 02:26 - Dev 2
 
 Changed:

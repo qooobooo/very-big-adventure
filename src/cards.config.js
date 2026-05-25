@@ -58,9 +58,9 @@ export const cardConfig = {
     },
     {
       id: "give5",
-      title: "Отдать случайному игроку 5 монет",
-      description: "Отдай случайному игроку 5 монет.",
-      effect: { type: "give-random", amount: 5 },
+      title: "Отдай 5 монет игроку с наименьшим количеством монет",
+      description: "Отдай 5 монет игроку с наименьшим количеством монет.",
+      effect: { type: "give-poorest", amount: 5 },
     },
   ],
   tadam: [
