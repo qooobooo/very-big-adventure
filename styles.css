@@ -4274,7 +4274,7 @@ button.shop-card-decline:focus-visible {
   }
 }
 
-@media (max-width: 680px) {
+@media (max-width: 680px) and (hover: none) and (pointer: coarse) {
   .side-panel {
     display: contents;
   }

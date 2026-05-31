@@ -20,6 +20,24 @@ Open questions:
 - ...
 ```
 
+## 2026-05-31 03:48 - Dev 2
+
+Changed:
+- Restricted the phone-only layout to touch devices: `max-width: 680px` plus `hover: none` and `pointer: coarse`.
+- This prevents the mobile TADAM/settings order and under-board roll button from applying to narrow Codex/desktop windows.
+- Bumped JS/CSS cache keys to `20260531-0253`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Do not push yet; user explicitly asked to fix locally first.
+
+Open questions:
+- None.
+
 ## 2026-05-31 03:43 - Dev 2
 
 Changed:
