@@ -111,10 +111,17 @@ export const cardConfig = {
   shop: [
     {
       id: "step-plus",
-      title: "+1 к броску кубика",
-      shortTitle: "+1 к броску",
-      description: "+1 к броску кубика.",
+      title: "+1 к шагам",
+      shortTitle: "+1 к шагам",
+      description: "+1 к шагам каждый раз, когда двигаешься с помощью кубиков.",
       effect: { type: "passive-step-bonus", steps: 1 },
+    },
+    {
+      id: "battle-plus",
+      title: "+1 к силе",
+      shortTitle: "+1 к силе",
+      description: "+1 к силе только в битвах.",
+      effect: { type: "passive-battle-bonus", amount: 1 },
     },
     {
       id: "coin-plus",

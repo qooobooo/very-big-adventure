@@ -1,5 +1,5 @@
-import { cardConfig } from "./cards.config.js?v=20260525-0195";
-import { doorConfigs } from "./game.config.js";
+import { cardConfig } from "./cards.config.js?v=20260531-0241";
+import { boardDoorConfigs, doorConfigs } from "./game.config.js";
 
 const boardEl = document.querySelector("#board");
 const scoreStripEl = document.querySelector("#scoreStrip");
@@ -14,12 +14,18 @@ const ui = {
   activePlayerName: document.querySelector("#activePlayerName"),
   activePlayerRole: document.querySelector("#activePlayerRole"),
   autoRevealCards: document.querySelector("#autoRevealCards"),
+  botCount: document.querySelector("#botCount"),
+  boardSelect: document.querySelector("#boardSelect"),
   choicePanel: document.querySelector("#choicePanel"),
   diceCount: document.querySelector("#diceCount"),
   diceValue: document.querySelector("#diceValue"),
   eventToast: document.querySelector("#eventToast"),
+  exactMoveAmount: document.querySelector("#exactMoveAmount"),
+  exactMoveBtn: document.querySelector("#exactMoveBtn"),
   finalBattleHud: document.querySelector("#finalBattleHud"),
   fieldEffect: document.querySelector("#fieldEffect"),
+  modifierPlayerStatus: document.querySelector("#modifierPlayerStatus"),
+  passThroughMode: document.querySelector("#passThroughMode"),
   newGameBtn: document.querySelector("#newGameBtn"),
   playerCount: document.querySelector("#playerCount"),
   rollBtn: document.querySelector("#rollBtn"),
@@ -31,8 +37,244 @@ const ui = {
   winnerPopup: document.querySelector("#winnerPopup"),
 };
 
-const boardCols = 10;
-const boardRows = 10;
+const boardConfigs = {
+  field1: {
+    id: "field1",
+    cols: 10,
+    rows: 10,
+    startCell: "0-9",
+    finishCell: "9-0",
+    layout: [
+      ["red", "shop", "bad", null, "red", "good", "bad", null, "bad", "enemy"],
+      ["green", null, "red", null, "red", null, "bad", "bad", "bad", null],
+      ["dice-fortune", null, "tadam", "enemy", "red", null, null, null, null, null],
+      ["bad", null, null, null, null, null, null, "good", "vs", "bad"],
+      ["good", null, "shop", "pay-double", "red", "good", "green", "red", null, "tadam"],
+      ["green", null, "green", null, null, null, null, null, null, "green"],
+      ["red", null, "bad", null, "good", "shop", "tadam", null, null, "green"],
+      ["good", "enemy", "tadam", null, "tadam", null, "good", null, "good", "tadam"],
+      [null, null, null, null, "green", null, "green", null, "green", null],
+      ["start", "good", "green", "green", "good", null, "good", "enemy", "green", null],
+    ],
+    route: [
+      "0-9",
+      "1-9",
+      "2-9",
+      "3-9",
+      "4-9",
+      "4-8",
+      "4-7",
+      "4-6",
+      "5-6",
+      "6-6",
+      "6-7",
+      "6-8",
+      "6-9",
+      "7-9",
+      "8-9",
+      "8-8",
+      "8-7",
+      "9-7",
+      "9-6",
+      "9-5",
+      "9-4",
+      "9-3",
+      "8-3",
+      "7-3",
+      "7-4",
+      "6-4",
+      "5-4",
+      "4-4",
+      "3-4",
+      "2-4",
+      "2-5",
+      "2-6",
+      "2-7",
+      "1-7",
+      "0-7",
+      "0-6",
+      "0-5",
+      "0-4",
+      "0-3",
+      "0-2",
+      "0-1",
+      "0-0",
+      "1-0",
+      "2-0",
+      "2-1",
+      "2-2",
+      "3-2",
+      "4-2",
+      "4-1",
+      "4-0",
+      "5-0",
+      "6-0",
+      "6-1",
+      "7-1",
+      "8-1",
+      "8-0",
+      "9-0",
+    ],
+  },
+  field2: {
+    id: "field2",
+    cols: 15,
+    rows: 15,
+    startCell: "0-14",
+    finishCell: "10-6",
+    pathCells: [
+      "0-0", "1-0", "2-0", "4-0", "5-0", "6-0", "12-0", "13-0", "14-0",
+      "0-1", "2-1", "4-1", "6-1", "12-1", "14-1",
+      "0-2", "2-2", "4-2", "6-2", "7-2", "8-2", "9-2", "10-2", "11-2", "12-2", "14-2",
+      "0-3", "2-3", "4-3", "14-3",
+      "0-4", "2-4", "3-4", "4-4", "8-4", "9-4", "10-4", "11-4", "12-4", "14-4",
+      "0-5", "8-5", "12-5", "14-5",
+      "0-6", "1-6", "2-6", "3-6", "4-6", "5-6", "6-6", "8-6", "10-6", "12-6", "14-6",
+      "6-7", "8-7", "9-7", "10-7", "12-7", "13-7", "14-7",
+      "0-8", "1-8", "2-8", "3-8", "4-8", "5-8", "6-8",
+      "0-9", "8-9", "9-9", "10-9", "11-9", "12-9", "13-9", "14-9",
+      "0-10", "1-10", "2-10", "3-10", "4-10", "5-10", "6-10", "7-10", "8-10", "14-10",
+      "10-11", "11-11", "12-11", "14-11",
+      "6-12", "7-12", "8-12", "10-12", "12-12", "14-12",
+      "6-13", "8-13", "10-13", "12-13", "14-13",
+      "0-14", "1-14", "2-14", "3-14", "4-14", "5-14", "6-14", "8-14", "9-14", "10-14", "12-14", "13-14", "14-14",
+    ],
+    events: {
+      "0-14": "start",
+      "0-0": "bad",
+      "0-1": "good",
+      "0-2": "green",
+      "0-3": "red",
+      "0-4": "green",
+      "0-5": "good",
+      "0-6": "bad",
+      "0-8": "good",
+      "0-9": "vs",
+      "0-10": "tadam",
+      "1-0": "enemy",
+      "1-6": "red",
+      "1-8": "red",
+      "1-10": "green",
+      "1-14": "good",
+      "2-0": "tadam",
+      "2-1": "good",
+      "2-2": "red",
+      "2-3": "red",
+      "2-4": "bad",
+      "2-6": "red",
+      "2-8": "red",
+      "2-10": "green",
+      "2-14": "green",
+      "3-4": "bad",
+      "3-6": "red",
+      "3-8": "red",
+      "3-10": "green",
+      "3-14": "good",
+      "4-0": "green",
+      "4-1": "green",
+      "4-2": "red",
+      "4-3": "red",
+      "4-4": "bad",
+      "4-6": "bad",
+      "4-8": "tadam",
+      "4-10": "good",
+      "4-14": "good",
+      "5-0": "shop",
+      "5-6": "green",
+      "5-8": "green",
+      "5-10": "red",
+      "5-14": "green",
+      "6-0": "green",
+      "6-1": "green",
+      "6-2": "dice-fortune",
+      "6-6": "green",
+      "6-7": "shop",
+      "6-8": "green",
+      "6-10": "red",
+      "6-12": "green",
+      "6-13": "green",
+      "6-14": "good",
+      "7-2": "red",
+      "7-10": "bad",
+      "7-12": "shop",
+      "8-2": "green",
+      "8-4": "bad",
+      "8-5": "bad",
+      "8-6": "bad",
+      "8-7": "bad",
+      "8-9": "enemy",
+      "9-14": "enemy",
+      "8-10": "bad",
+      "8-12": "green",
+      "8-13": "green",
+      "8-14": "tadam",
+      "9-2": "bad",
+      "9-4": "bad",
+      "9-7": "bad",
+      "9-9": "bad",
+      "10-2": "green",
+      "10-4": "bad",
+      "10-6": "enemy",
+      "10-7": "bad",
+      "10-9": "bad",
+      "10-11": "red",
+      "10-12": "red",
+      "10-13": "red",
+      "10-14": "red",
+      "11-2": "red",
+      "11-4": "bad",
+      "11-9": "good",
+      "11-11": "bad",
+      "12-0": "good",
+      "12-1": "good",
+      "12-2": "good",
+      "12-4": "bad",
+      "12-5": "bad",
+      "12-6": "bad",
+      "12-7": "bad",
+      "12-9": "good",
+      "12-11": "tadam",
+      "12-12": "pay-double",
+      "12-13": "green",
+      "12-14": "green",
+      "13-0": "good",
+      "13-7": "red",
+      "13-9": "good",
+      "13-14": "shop",
+      "14-0": "red",
+      "14-1": "red",
+      "14-2": "red",
+      "14-3": "red",
+      "14-4": "red",
+      "14-5": "red",
+      "14-6": "red",
+      "14-7": "red",
+      "14-9": "tadam",
+      "14-10": "red",
+      "14-11": "red",
+      "14-12": "good",
+      "14-13": "green",
+      "14-14": "green",
+    },
+    route: [
+      "0-14", "1-14", "2-14", "3-14", "4-14", "5-14", "6-14", "6-13", "6-12", "7-12", "8-12", "8-13", "8-14", "9-14", "10-14", "10-13", "10-12", "10-11", "11-11", "12-11", "12-12", "12-13", "12-14", "13-14", "14-14", "14-13", "14-12", "14-11", "14-10", "14-9", "13-9", "12-9", "11-9", "10-9", "9-9", "8-9", "8-10", "7-10", "6-10", "5-10", "4-10", "3-10", "2-10", "1-10", "0-10", "0-9", "0-8", "1-8", "2-8", "3-8", "4-8", "5-8", "6-8", "6-7", "6-6", "5-6", "4-6", "3-6", "2-6", "1-6", "0-6", "0-5", "0-4", "0-3", "0-2", "0-1", "0-0", "1-0", "2-0", "2-1", "2-2", "2-3", "2-4", "3-4", "4-4", "4-3", "4-2", "4-1", "4-0", "5-0", "6-0", "6-1", "6-2", "7-2", "8-2", "9-2", "10-2", "11-2", "12-2", "12-1", "12-0", "13-0", "14-0", "14-1", "14-2", "14-3", "14-4", "14-5", "14-6", "14-7", "13-7", "12-7", "12-6", "12-5", "12-4", "11-4", "10-4", "9-4", "8-4", "8-5", "8-6", "8-7", "9-7", "10-7", "10-6",
+    ],
+  },
+};
+
+let activeBoardConfig;
+let boardCols;
+let boardRows;
+let startCell;
+let finishCell;
+let boardLayout;
+let routePath;
+let fieldCells;
+let routeCells;
+let routeIndex;
+let routeNext;
+let cellEvents;
+
 const eventToastVisibleMs = 3000;
 const eventToastFadeMs = 800;
 const eventToastQuickFadeMs = 140;
@@ -40,86 +282,8 @@ const coinIconSrc = "./assets/icons/coin.png?v=20260524-0155";
 const diceIconSrc = "./assets/icons/dice.png?v=20260524-0305";
 const enemyIconSrc = "./assets/icons/enemy_512.png";
 const finalEnemyIconSrc = "./assets/icons/final_enemy.png?v=20260525-0146";
-const startCell = "0-9";
-const finishCell = "9-0";
-const boardLayout = [
-  ["red", "shop", "bad", null, "red", "good", "bad", null, "bad", "enemy"],
-  ["green", null, "red", null, "red", null, "bad", "bad", "bad", null],
-  ["dice-fortune", null, "tadam", "enemy", "red", null, null, null, null, null],
-  ["bad", null, null, null, null, null, null, "good", "enemy", "bad"],
-  ["good", null, "shop", "pay-double", "red", "good", "green", "red", null, "tadam"],
-  ["green", null, "green", null, null, null, null, null, null, "green"],
-  ["red", null, "bad", null, "good", "shop", "tadam", null, null, "green"],
-  ["good", "enemy", "tadam", null, "tadam", null, "good", null, "good", "tadam"],
-  [null, null, null, null, "green", null, "green", null, "green", null],
-  ["start", "good", "green", "green", "good", null, "good", "tadam", "green", null],
-];
-const routePath = [
-  "0-9",
-  "1-9",
-  "2-9",
-  "3-9",
-  "4-9",
-  "4-8",
-  "4-7",
-  "4-6",
-  "5-6",
-  "6-6",
-  "6-7",
-  "6-8",
-  "6-9",
-  "7-9",
-  "8-9",
-  "8-8",
-  "8-7",
-  "9-7",
-  "9-6",
-  "9-5",
-  "9-4",
-  "9-3",
-  "8-3",
-  "7-3",
-  "7-4",
-  "6-4",
-  "5-4",
-  "4-4",
-  "3-4",
-  "2-4",
-  "2-5",
-  "2-6",
-  "2-7",
-  "1-7",
-  "0-7",
-  "0-6",
-  "0-5",
-  "0-4",
-  "0-3",
-  "0-2",
-  "0-1",
-  "0-0",
-  "1-0",
-  "2-0",
-  "2-1",
-  "2-2",
-  "3-2",
-  "4-2",
-  "4-1",
-  "4-0",
-  "5-0",
-  "6-0",
-  "6-1",
-  "7-1",
-  "8-1",
-  "8-0",
-  "9-0",
-];
-const fieldCells = buildFieldCells();
-const routeCells = buildRouteCells();
-const routeIndex = buildRouteIndex(routeCells);
-const routeNext = buildRouteNext(routePath);
-
-const cellEvents = buildCellEvents();
-
+const portalIconSrc = "./assets/icons/portal_1254.png?v=20260530-0222";
+const vsIconSrc = "./assets/icons/vs_1254.png?v=20260531-0233";
 const eventIcons = {
   bad: '<img class="tile-icon-image tile-icon-bad" src="./assets/icons/bad_tight.png" alt="Плохо">',
   enemy: '<img class="tile-icon-image tile-icon-enemy" src="./assets/icons/enemy_512.png" alt="Враг">',
@@ -130,12 +294,15 @@ const eventIcons = {
   "pay-double": '<img class="tile-icon-image tile-icon-pay-double" src="./assets/tiles/pay_double_1024.png?v=20260521-1205" alt="Удвоение монет">',
   shop: '<img class="tile-icon-image tile-icon-shop" src="./assets/icons/joes_shop_512.png" alt="Лавка Джо">',
   tadam: '<img class="tile-icon-image tile-icon-tadam" src="./assets/icons/tadam_512.png" alt="ТАДАМ!">',
+  vs: `<img class="tile-icon-image tile-icon-vs" src="${vsIconSrc}" alt="VS">`,
 };
 
 const tileIcons = {
   finish: '<img class="tile-icon-image tile-icon-finish" src="./assets/icons/finish_512.png" alt="Финиш">',
   start: '<img class="tile-icon-image tile-icon-start" src="./assets/icons/start_512.png" alt="Старт">',
 };
+
+applyBoardConfig(ui.boardSelect?.value || "field1");
 
 const goodCards = expandDeck(cardConfig.good);
 const badCards = expandDeck(cardConfig.bad);
@@ -152,15 +319,42 @@ const names = [
 let state;
 let actionPromptResolver = null;
 let actionPromptButtonLabel = "Далее";
+let actionPromptAutoPlayerId = null;
+let botActionTimer = null;
 let eventToastFadeTimer = null;
 let eventToastHideTimer = null;
 
+function applyBoardConfig(boardId) {
+  const config = boardConfigs[boardId] || boardConfigs.field1;
+  activeBoardConfig = {
+    ...config,
+    doors: boardDoorConfigs[config.id] || doorConfigs,
+  };
+  boardCols = config.cols;
+  boardRows = config.rows;
+  startCell = config.startCell;
+  finishCell = config.finishCell;
+  boardLayout = config.layout || buildBoardLayout(config);
+  routePath = config.route;
+  fieldCells = buildFieldCells();
+  routeCells = buildRouteCells();
+  routeIndex = buildRouteIndex(routeCells);
+  routeNext = buildRouteNext(routePath);
+  cellEvents = buildCellEvents();
+}
+
 function newGame() {
+  syncBotCountOptions();
   actionPromptResolver = null;
   actionPromptButtonLabel = "Далее";
+  actionPromptAutoPlayerId = null;
+  window.clearTimeout(botActionTimer);
+  botActionTimer = null;
+  applyBoardConfig(ui.boardSelect?.value || "field1");
   const playerCount = Number(ui.playerCount.value);
+  const botCount = selectedBotCount(playerCount);
   const doors = {};
-  for (const door of doorConfigs) {
+  for (const door of activeBoardConfig.doors) {
     doors[door.id] = { ...door, openedBy: [] };
   }
 
@@ -174,8 +368,10 @@ function newGame() {
     finalBattle: null,
     finalBattleProgress: null,
     finished: false,
+    botTurnPlayerId: null,
     isAnimating: false,
     landingCell: null,
+    modifierPlayerId: 0,
     movingPlayerId: null,
     extraTurnPlayerId: null,
     cardChoiceResolver: null,
@@ -183,21 +379,29 @@ function newGame() {
     pendingChoice: null,
     pendingPreRoll: null,
     pendingShop: null,
+    preRollResolver: null,
     players: names.slice(0, playerCount).map((hero, index) => ({
       ...hero,
+      battleBonus: 0,
+      bot: index >= playerCount - botCount,
       coins: 10,
       diceBonus: 0,
       id: index,
       items: [],
       position: startCell,
+      stepBonus: 0,
     })),
     round: 1,
     tadams: [],
     turns: 0,
+    vsBattleProgress: null,
     walkPath: [],
   };
 
   boardEl.dataset.ready = "false";
+  boardEl.dataset.boardId = activeBoardConfig.id;
+  boardEl.style.setProperty("--board-cols", String(boardCols));
+  boardEl.style.setProperty("--board-rows", String(boardRows));
   log("<strong>Игра началась.</strong> Побеждайте врагов, чтобы открывать двери.");
   render();
 }
@@ -206,71 +410,85 @@ async function rollAndMove({ animate = true } = {}) {
   if (state.finished || state.isAnimating || state.pendingCardChoice || state.pendingChoice || state.pendingPreRoll || state.pendingShop) return;
 
   const player = currentPlayer();
-  const extraDice = await chooseExtraDie(player, animate);
-  state.isAnimating = animate;
-  state.movingPlayerId = animate ? player.id : null;
-  state.dice = null;
-  render();
+  const botTurnPlayerId = isBot(player) ? player.id : null;
+  state.botTurnPlayerId = botTurnPlayerId;
 
-  const rolls = rollDice(totalDiceForPlayer(player, extraDice));
-  const rolled = rolls.reduce((sum, value) => sum + value, 0);
-  const bonus = playerStepBonus(player);
-  if (animate) await animateDice(rolls, { bonus, player });
-  const totalSteps = rolled + bonus;
-  state.dice = totalSteps;
-  state.walkPath = animate && ui.showWalkPath?.checked ? buildWalkPath(player, totalSteps) : [];
-  renderTileStates();
-  if (animate && state.walkPath.length > 0) await sleep(160);
-
-  for (let step = 0; step < totalSteps && player.position !== finishCell; step += 1) {
-    const currentPosition = player.position;
-    const nextPosition = await chooseNextPosition(currentPosition, totalSteps - step, animate);
-    if (!nextPosition) break;
-
-    const blockingDoor = lockedDoorForTransition(player, currentPosition, nextPosition);
-    if (blockingDoor) {
-      if (animate) {
-        await showActionPrompt(
-          `${playerName(player)} не может пройти ${blockingDoor.label}: победи врага с уроном <strong>${blockingDoor.damage}</strong>`,
-        );
-      }
-      break;
-    }
-
-    player.position = nextPosition;
-    consumeWalkPathCell(nextPosition);
-    if (step < totalSteps - 1) resolveJumpSteal(player);
-    if (animate) {
-      render();
-      await sleep(180);
-    }
-    if (step < totalSteps - 1) {
-      await resolvePassThroughShop(player);
-    }
-  }
-
-  state.isAnimating = false;
-  state.movingPlayerId = null;
-  state.walkPath = [];
-  pulseTile(player.position);
-  log(`${playerName(player)} бросает <strong>${formatRoll(rolls)}</strong>${totalSteps !== rolled ? ` и идет на ${totalSteps}` : ""}.`);
-  await resolveLanding(player);
-
-  if (state.finished) {
-    state.extraTurnPlayerId = null;
-  } else if (state.extraTurnPlayerId === player.id) {
-    state.extraTurnPlayerId = null;
+  try {
+    const extraDice = await chooseExtraDie(player, animate);
+    state.isAnimating = animate;
+    state.movingPlayerId = animate ? player.id : null;
     state.dice = null;
-    state.turns += 1;
-    log(`${playerName(player)} получает <strong>еще один ход</strong>.`, { toast: true });
-  } else {
-    advanceTurn();
-  }
+    render();
 
-  render();
+    const rolls = rollDice(totalDiceForPlayer(player, extraDice));
+    const rolled = rolls.reduce((sum, value) => sum + value, 0);
+    const bonus = playerStepBonus(player);
+    if (animate) await animateDice(rolls, { bonus, player });
+    const totalSteps = rolled + bonus;
+    state.dice = totalSteps;
+    state.walkPath = animate && ui.showWalkPath?.checked ? buildWalkPath(player, totalSteps) : [];
+    renderTileStates();
+    if (animate && state.walkPath.length > 0) await sleep(160);
+
+    for (let step = 0; step < totalSteps && player.position !== finishCell; step += 1) {
+      const currentPosition = player.position;
+      const nextPosition = await chooseNextPosition(player, currentPosition, totalSteps - step, animate);
+      if (!nextPosition) break;
+
+      const blockingDoor = lockedDoorForTransition(player, currentPosition, nextPosition);
+      if (blockingDoor) {
+        if (animate) {
+          await showActionPrompt(
+            `${playerName(player)} не может пройти ${blockingDoor.label}: победи врага с силой <strong>${blockingDoor.damage}</strong>`,
+            { autoFor: player },
+          );
+        }
+        break;
+      }
+
+      player.position = nextPosition;
+      consumeWalkPathCell(nextPosition);
+      if (step < totalSteps - 1) resolveJumpSteal(player);
+      if (animate) {
+        render();
+        await sleep(180);
+      }
+      const enemyBattle = await resolvePassThroughEnemy(player);
+      if (state.finished || player.position !== nextPosition) break;
+      if (enemyBattle?.winner === "player" && !enemyBattle.isFinalBoss && !monstersDontStopEnabled()) break;
+      await resolvePortalAtCurrentCell(player, { animate, remaining: totalSteps - step - 1 });
+      if (step < totalSteps - 1) {
+        await resolvePassThroughShop(player);
+      }
+    }
+
+    state.isAnimating = false;
+    state.movingPlayerId = null;
+    state.walkPath = [];
+    pulseTile(player.position);
+    log(`${playerName(player)} бросает <strong>${formatRoll(rolls)}</strong>${totalSteps !== rolled ? ` и идет на ${totalSteps}` : ""}.`);
+    await resolveLanding(player);
+
+    if (state.finished) {
+      state.extraTurnPlayerId = null;
+    } else if (state.extraTurnPlayerId === player.id) {
+      state.extraTurnPlayerId = null;
+      state.dice = null;
+      state.turns += 1;
+      log(`${playerName(player)} получает <strong>еще один ход</strong>.`, { toast: true });
+    } else {
+      advanceTurn();
+    }
+  } finally {
+    if (state.botTurnPlayerId === botTurnPlayerId) state.botTurnPlayerId = null;
+    state.isAnimating = false;
+    state.movingPlayerId = null;
+    state.walkPath = [];
+    render();
+  }
 }
 
-async function chooseNextPosition(currentCell, remaining, animate) {
+async function chooseNextPosition(player, currentCell, remaining, animate) {
   const choices = getNextOptions(currentCell);
   if (choices.length === 0) return null;
   if (choices.length === 1 || !animate) return choices[0].cell;
@@ -278,6 +496,7 @@ async function chooseNextPosition(currentCell, remaining, animate) {
   state.pendingChoice = {
     choices,
     currentCell,
+    playerId: player.id,
     remaining,
   };
   state.isAnimating = false;
@@ -290,6 +509,7 @@ async function chooseNextPosition(currentCell, remaining, animate) {
       state.isAnimating = true;
       resolve(nextCell);
     };
+    scheduleBotAction(botChoiceDelay("choice"), { replace: true });
   });
 }
 
@@ -338,14 +558,454 @@ function advanceTurn() {
   }
 }
 
+function selectedBotCount(playerCount = Number(ui.playerCount?.value) || 2) {
+  const count = Number(ui.botCount?.value) || 0;
+  return Math.max(0, Math.min(playerCount, count));
+}
+
+function syncBotCountOptions() {
+  if (!ui.botCount) return;
+
+  const playerCount = Number(ui.playerCount?.value) || 2;
+  const previous = selectedBotCount(playerCount);
+  ui.botCount.innerHTML = "";
+  for (let count = 0; count <= playerCount; count += 1) {
+    const option = document.createElement("option");
+    option.value = String(count);
+    option.textContent = String(count);
+    ui.botCount.append(option);
+  }
+  ui.botCount.value = String(Math.min(previous, playerCount));
+}
+
+function isBot(player) {
+  return Boolean(player?.bot);
+}
+
+function isBotPlayerId(playerId) {
+  return isBot(state?.players?.find((player) => player.id === playerId));
+}
+
+function randomChoice(items) {
+  return items.length ? items[Math.floor(Math.random() * items.length)] : null;
+}
+
+function botDelay(kind = "default") {
+  const ranges = {
+    choice: [1800, 2800],
+    card: [450, 850],
+    preRoll: [250, 500],
+    prompt: [1500, 2300],
+    result: [2200, 3400],
+    roll: [1800, 2800],
+  };
+  const [min, max] = ranges[kind] || [1500, 2400];
+  return min + Math.floor(Math.random() * (max - min + 1));
+}
+
+function botPersonality(player) {
+  const profiles = {
+    0: { battle: 1.22, chaos: 0.72, economy: 0.88, progress: 1.18, risk: 1.12, shop: 0.96, steal: 0.9 },
+    1: { battle: 0.92, chaos: 0.58, economy: 1.28, progress: 1, risk: 0.72, shop: 1.22, steal: 0.9 },
+    2: { battle: 0.98, chaos: 0.86, economy: 1, progress: 1, risk: 0.94, shop: 1.08, steal: 1.36 },
+    3: { battle: 1.18, chaos: 1.38, economy: 0.76, progress: 0.96, risk: 1.34, shop: 0.92, steal: 1.06 },
+  };
+  return profiles[player?.id] || { battle: 1, chaos: 1, economy: 1, progress: 1, risk: 1, shop: 1, steal: 1 };
+}
+
+function chooseWeightedBotOption(options, player = currentPlayer()) {
+  const legal = options.filter((option) => option && option.id !== undefined);
+  if (legal.length === 0) return null;
+  if (legal.length === 1) return legal[0];
+
+  const personality = botPersonality(player);
+  const noise = 3 + 8 * personality.chaos;
+  const scored = legal.map((option) => ({
+    ...option,
+    finalScore: Number(option.score || 0) + (Math.random() * 2 - 1) * noise,
+  }));
+  scored.sort((a, b) => b.finalScore - a.finalScore);
+
+  const spread = Math.abs(scored[0].finalScore - scored[scored.length - 1].finalScore);
+  if (spread < 0.75) return randomChoice(scored);
+
+  const bestChance = Math.max(0.72, Math.min(0.86, 0.82 - (personality.chaos - 1) * 0.08));
+  if (Math.random() < bestChance) return scored[0];
+
+  const cutoff = scored[0].finalScore - Math.max(8, 14 * personality.chaos);
+  const close = scored.filter((option) => option.finalScore >= cutoff).slice(0, 3);
+  return randomChoice(close.length ? close : scored.slice(0, Math.min(3, scored.length)));
+}
+
+function botChoiceDelay(kind = "choice") {
+  if (kind === "card") return botDelay("card");
+  if (kind === "preRoll") return botDelay("preRoll");
+  return botDelay(kind);
+}
+
+function chooseBotPreRoll(player, card) {
+  const effect = card?.effect;
+  if (!effect || player.coins < effect.cost) return false;
+
+  const personality = botPersonality(player);
+  const currentDice = totalDiceForPlayer(player);
+  const nextDice = currentDice + effect.dice;
+  const coinsAfter = player.coins - effect.cost;
+  const door = cellEvents[player.position] === "enemy" ? doorByEnemyCell(player.position) : null;
+
+  let payScore = -2;
+  let declineScore = 0;
+
+  if (door && !isDoorOpenForPlayer(door, player)) {
+    const currentChance = estimateWinChance(currentDice, playerCombatBonus(player), door.damage);
+    const nextChance = estimateWinChance(nextDice, playerCombatBonus(player), door.damage);
+    const gain = nextChance - currentChance;
+    payScore += gain * 95 * personality.battle;
+    if (nextChance >= 0.58) payScore += 15 * personality.battle;
+    if (currentChance < 0.08 && nextChance > 0.2) payScore += 10 * personality.risk;
+    if (currentChance >= 0.82) declineScore += 18;
+    if (nextChance < 0.18) declineScore += 14 / personality.risk;
+    if (door.isFinalBoss) payScore += 10 * personality.battle;
+  } else {
+    const leader = leadingPlayer();
+    const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+    payScore += Math.min(14, Math.max(0, lag * 0.45)) * personality.progress;
+    payScore += Math.min(10, player.coins * 0.45) * personality.economy;
+    payScore += nearbyInterestingCells(player, nextDice).score * personality.risk;
+    if (finalDistance(player) <= 14) payScore += 10 * personality.progress;
+    if (leader?.id === player.id) declineScore += 7 * personality.economy;
+  }
+
+  if (coinsAfter <= 2) declineScore += 22 * personality.economy;
+  else if (coinsAfter <= 6) declineScore += 10 * personality.economy;
+  if (player.coins >= 18) payScore += 6;
+
+  const choice = chooseWeightedBotOption(
+    [
+      { id: "pay", score: payScore },
+      { id: "decline", score: declineScore },
+    ],
+    player,
+  );
+  return choice?.id === "pay";
+}
+
+function chooseBotShopCard(player, offer, { allowDecline = true } = {}) {
+  const options = offer.map((card) => ({
+    id: card.id,
+    score: scoreShopCard(player, card),
+  }));
+
+  if (allowDecline) {
+    options.push({ id: null, score: scoreShopDecline(player, offer) });
+  }
+
+  return chooseWeightedBotOption(options, player)?.id ?? null;
+}
+
+function chooseBotDirection(player, choices, context = {}) {
+  const options = choices.map((choice) => ({
+    id: choice.cell,
+    score: scoreCellForBot(player, choice.cell, context) + (choice.className === "decline" ? 4 * botPersonality(player).economy : 0),
+  }));
+  return chooseWeightedBotOption(options, player)?.id ?? randomChoice(choices)?.cell ?? null;
+}
+
+function chooseBotCardAction(player, pending) {
+  const choices = pending?.choices || [];
+  if (choices.length === 0) return null;
+
+  const options = choices.map((choice) => ({
+    id: choice.id,
+    score: scoreCardChoice(player, pending, choice),
+  }));
+  return chooseWeightedBotOption(options, player)?.id ?? randomChoice(choices)?.id ?? null;
+}
+
+function scoreCardChoice(player, pending, choice) {
+  const personality = botPersonality(player);
+  if (choice.id === "decline") {
+    return player.coins <= 7 ? 18 * personality.economy : 4;
+  }
+  if (choice.id === "pay") {
+    return player.coins >= 12 ? 24 : player.coins >= 6 ? 12 : -10;
+  }
+  if (String(choice.id).includes(":")) {
+    const [targetIdText, cardId] = String(choice.id).split(":");
+    const target = state.players.find((item) => item.id === Number(targetIdText));
+    const card = target?.items.find((item) => item.id === cardId);
+    let score = scoreShopCard(player, card) + 6 * personality.steal;
+    if (target) score += leaderPressureScore(target) * 0.45 + Math.min(10, target.coins * 0.25);
+    if (player.coins <= 6) score -= 18 * personality.economy;
+    return score;
+  }
+  const target = state.players.find((item) => item.id === Number(choice.id));
+  if (target) {
+    if (target.id === player.id) return -18 / personality.chaos;
+    return leaderPressureScore(target) * personality.steal + Math.min(18, target.coins * 0.7);
+  }
+  return 0;
+}
+
+function scoreShopCard(player, card) {
+  if (!card) return 0;
+  const personality = botPersonality(player);
+  const phase = gamePhase();
+  const effect = card.effect || {};
+  let score = 0;
+
+  if (card.id === "step-plus" || effect.type === "passive-step-bonus") {
+    score = phase === "late" ? 25 : 35;
+    score += nextUnbeatenEnemy(player) ? 5 : 0;
+    score *= personality.progress;
+  } else if (card.id === "battle-plus" || effect.type === "passive-battle-bonus") {
+    score = 24 * personality.battle;
+    const enemy = nextUnbeatenEnemy(player);
+    if (enemy) score += Math.min(14, enemy.damage * 0.55) * personality.battle;
+  } else if (card.id === "coin-plus" || effect.type === "passive-coin-bonus") {
+    score = phase === "early" ? 28 : phase === "mid" ? 18 : 8;
+    score *= personality.economy;
+  } else if (card.id === "extra-die" || effect.type === "optional-extra-die") {
+    score = 25 * personality.risk;
+    if (nextUnbeatenEnemy(player)) score += 10 * personality.battle;
+    if (player.coins <= 7) score -= 10 * personality.economy;
+    if (player.coins >= 15) score += 6;
+  } else {
+    score = 12;
+  }
+
+  if (player.items.some((item) => item.id === card.id)) score -= 5;
+  return score * personality.shop;
+}
+
+function scoreShopDecline(player, offer = []) {
+  const personality = botPersonality(player);
+  let score = player.coins <= 4 ? 40 : player.coins <= 7 ? 18 : player.coins > 10 ? 5 : 10;
+  if (finalDistance(player) <= 8) score += 8;
+  const bestCardScore = Math.max(0, ...offer.map((card) => scoreShopCard(player, card)));
+  if (bestCardScore < score + 5) score += 5;
+  return score * personality.economy;
+}
+
+function scoreCellForBot(player, cell, context = {}) {
+  const personality = botPersonality(player);
+  if (!cell) return -100;
+  if (cell === finishCell) return 1000;
+
+  let score = (routeIndex.get(cell) ?? routeProgress(player)) * 0.35 * personality.progress;
+  const event = cellEvents[cell];
+  if (!event) return score + 2;
+
+  if (event === "good") score += 18;
+  else if (event === "tadam") score += 10 + 3 * personality.chaos;
+  else if (event === "shop") score += player.coins >= 5 ? 16 * personality.shop : -4;
+  else if (event === "green") score += 10 + scoreFieldTadamEffect("green-field");
+  else if (event === "red") score += -11 + scoreFieldTadamEffect("red-field");
+  else if (event === "bad") score -= 16 / personality.risk;
+  else if (event === "pay-double") score += Math.min(36, player.coins * 1.2);
+  else if (event === "dice-fortune") score += (personality.chaos - 0.8) * 16 + (player.coins < 8 ? 5 : 0);
+  else if (event === "vs") score += player.coins >= 10 ? 4 * personality.risk : -8;
+  else if (event === "enemy") {
+    const door = doorByEnemyCell(cell);
+    if (!door || isDoorOpenForPlayer(door, player)) score += 10;
+    else {
+      const chance = estimateWinChance(totalDiceForPlayer(player), playerCombatBonus(player), door.damage);
+      if (chance >= 0.6) score += 32 * chance * personality.battle;
+      else if (chance >= 0.35) score += (chance * 22 - 8) * personality.risk * personality.battle;
+      else score -= 28 / personality.risk;
+      if (door.isFinalBoss) score += 12 * personality.battle;
+    }
+  }
+
+  if (context.remaining && routeIndex.has(cell)) score += Math.min(8, context.remaining * 0.25);
+  return score;
+}
+
+function scoreFieldTadamEffect(type) {
+  const effect = activeFieldEffect(type);
+  if (!effect) return 0;
+  if (effect.mode === "draw") return effect.deck === "good" ? 10 : -10;
+  if (effect.mode === "move") return effect.steps;
+  return 0;
+}
+
+function estimateWinChance(diceCount, bonus, target) {
+  const dice = Math.max(0, Math.min(8, Math.floor(diceCount)));
+  if (dice <= 0) return bonus >= target ? 1 : 0;
+
+  let distribution = new Map([[0, 1]]);
+  for (let index = 0; index < dice; index += 1) {
+    const next = new Map();
+    for (const [sum, count] of distribution) {
+      for (let value = 1; value <= 6; value += 1) {
+        next.set(sum + value, (next.get(sum + value) || 0) + count);
+      }
+    }
+    distribution = next;
+  }
+
+  let wins = 0;
+  let total = 0;
+  for (const [sum, count] of distribution) {
+    total += count;
+    if (sum + bonus >= target) wins += count;
+  }
+  return total ? wins / total : 0;
+}
+
+function routeProgress(player) {
+  return routeIndex.get(player?.position) ?? 0;
+}
+
+function leadingPlayer() {
+  return [...state.players].sort((a, b) => getLeaderScore(b) - getLeaderScore(a))[0] || null;
+}
+
+function getLeaderScore(player) {
+  const defeated = Object.values(state.doors || {}).filter((door) => isDoorOpenForPlayer(door, player)).length;
+  return routeProgress(player) * 3 + player.coins * 0.35 + playerDiceBonus(player) * 8 + player.items.length * 5 + defeated * 14;
+}
+
+function leaderPressureScore(target) {
+  const leader = leadingPlayer();
+  const base = getLeaderScore(target) * 0.08;
+  return base + (leader?.id === target.id ? 18 : 0);
+}
+
+function gamePhase() {
+  const finish = routeIndex.get(finishCell) || routePath.length || 1;
+  const best = Math.max(0, ...state.players.map((player) => routeProgress(player)));
+  const ratio = best / finish;
+  if (ratio < 0.34) return "early";
+  if (ratio < 0.72) return "mid";
+  return "late";
+}
+
+function nextUnbeatenEnemy(player) {
+  const current = routeProgress(player);
+  return Object.values(state.doors || {})
+    .filter((door) => !isDoorOpenForPlayer(door, player) && (routeIndex.get(door.enemyCell) ?? -1) >= current)
+    .sort((a, b) => (routeIndex.get(a.enemyCell) ?? 0) - (routeIndex.get(b.enemyCell) ?? 0))[0] || null;
+}
+
+function nearbyInterestingCells(player, steps) {
+  let score = 0;
+  let cell = player.position;
+  for (let index = 0; index < steps && cell !== finishCell; index += 1) {
+    cell = defaultNextCell(cell);
+    if (!cell) break;
+    const event = cellEvents[cell];
+    if (["good", "green", "shop", "pay-double"].includes(event)) score += 3;
+    if (["bad", "red"].includes(event)) score -= 2;
+    if (event === "enemy") score += 2 * botPersonality(player).battle;
+    if (event === "dice-fortune") score += 2 * botPersonality(player).chaos;
+  }
+  return { score };
+}
+
+function shouldAutoResolvePrompt() {
+  if (!actionPromptResolver) return false;
+  if (actionPromptAutoPlayerId !== null) return isBotPlayerId(actionPromptAutoPlayerId);
+  return isBotPlayerId(state?.botTurnPlayerId);
+}
+
+function scheduleBotAction(delay = botDelay(), { replace = false } = {}) {
+  if (replace) {
+    window.clearTimeout(botActionTimer);
+    botActionTimer = null;
+  }
+  if (botActionTimer || !state || state.finished) return;
+
+  botActionTimer = window.setTimeout(() => {
+    botActionTimer = null;
+    runBotAction();
+  }, delay);
+}
+
+function runBotAction() {
+  if (!state || state.finished) return;
+
+  if (actionPromptResolver) {
+    if (shouldAutoResolvePrompt()) actionPromptResolver();
+    return;
+  }
+
+  if (state.pendingPreRoll && isBotPlayerId(state.pendingPreRoll.playerId)) {
+    const player = state.players.find((item) => item.id === state.pendingPreRoll.playerId);
+    resolvePreRollChoice(chooseBotPreRoll(player, state.pendingPreRoll.card));
+    return;
+  }
+
+  if (state.pendingShop && isBotPlayerId(state.pendingShop.playerId)) {
+    const player = state.players.find((item) => item.id === state.pendingShop.playerId);
+    resolveShopChoice(chooseBotShopCard(player, state.pendingShop.offer, { allowDecline: true }));
+    return;
+  }
+
+  if (state.pendingCardChoice && isBotPlayerId(state.pendingCardChoice.playerId)) {
+    const player = state.players.find((item) => item.id === state.pendingCardChoice.playerId);
+    const choiceId = chooseBotCardAction(player, state.pendingCardChoice);
+    if (choiceId !== null && choiceId !== undefined) resolveCardChoice(choiceId);
+    return;
+  }
+
+  if (state.pendingChoice) {
+    const playerId = state.pendingChoice.playerId ?? currentPlayer()?.id;
+    if (isBotPlayerId(playerId)) {
+      const player = state.players.find((item) => item.id === playerId);
+      const cell = chooseBotDirection(player, state.pendingChoice.choices, state.pendingChoice);
+      if (cell) resolveChoice(cell);
+    }
+    return;
+  }
+
+  const player = currentPlayer();
+  if (
+    isBot(player) &&
+    !state.isAnimating &&
+    !state.pendingCardChoice &&
+    !state.pendingChoice &&
+    !state.pendingPreRoll &&
+    !state.pendingShop
+  ) {
+    triggerRollButtonAction();
+  }
+}
+
 function render() {
   renderBoard();
   renderScores();
+  renderModifierPlayerStatus();
   renderTurn();
   renderChoicePanel();
   renderFinalBattleHud();
   renderWinnerPopup();
   renderTadams();
+  scheduleBotAction();
+}
+
+function renderModifierPlayerStatus() {
+  if (!ui.modifierPlayerStatus || !state?.players?.length) return;
+  const selected = currentModifierPlayer();
+  ui.modifierPlayerStatus.style.setProperty("--player-color", selected.color);
+  ui.modifierPlayerStatus.style.setProperty("--player-count", String(state.players.length));
+  ui.modifierPlayerStatus.classList.toggle("is-compact", state.players.length >= 4);
+  ui.modifierPlayerStatus.innerHTML = state.players
+    .map((player) => {
+      const isSelected = player.id === selected.id;
+      return `
+        <button class="modifier-player-card ${isSelected ? "selected" : ""}" type="button" data-modifier-player-id="${player.id}" style="--player-color: ${player.color}" aria-pressed="${isSelected}">
+          <span class="modifier-player">
+            <img src="${player.token}" alt="" aria-hidden="true">
+          </span>
+          <span class="modifier-values">
+            <b>${stepBonusText(playerStepBonus(player), state.players.length >= 4)}</b>
+            <b>${battleForceText(playerBattleBonus(player), state.players.length >= 4)}</b>
+          </span>
+        </button>
+      `;
+    })
+    .join("");
 }
 
 function renderBoard() {
@@ -391,10 +1051,32 @@ function buildBoardShell() {
 
 function renderEnemyLocks() {
   boardEl.querySelectorAll(".enemy-victory-marks").forEach((item) => item.remove());
+  boardEl.querySelectorAll(".portal-gate").forEach((item) => item.remove());
+  boardEl.querySelectorAll(".tile-portal-active").forEach((tile) => {
+    tile.classList.remove("tile-portal-active");
+    const door = doorByEnemyCell(tile.dataset.cell);
+    const icon = tile.querySelector(".tile-icon");
+    if (door && icon) {
+      icon.innerHTML = door.isFinalBoss
+        ? `<img class="tile-icon-image tile-icon-enemy tile-icon-final-enemy" src="${finalEnemyIconSrc}" alt="Финальный монстр">`
+        : `<img class="tile-icon-image tile-icon-enemy" src="${enemyIconSrc}" alt="Враг">`;
+    }
+  });
 
   for (const door of Object.values(state.doors)) {
     const tile = boardEl.querySelector(`[data-cell="${door.enemyCell}"]`);
     if (!tile) continue;
+
+    if (!door.isFinalBoss && isDoorOpenForAllPlayers(door)) {
+      const icon = tile.querySelector(".tile-icon");
+      if (icon) {
+        icon.innerHTML = `<img class="tile-icon-image tile-icon-portal" src="${portalIconSrc}" alt="Открытый портал">`;
+      }
+      tile.querySelector(".monster-power")?.remove();
+      tile.classList.add("tile-portal-active");
+      tile.insertAdjacentHTML("beforeend", `<span class="portal-gate" aria-label="Открытый портал"></span>`);
+      continue;
+    }
 
     const victoriousPlayers = state.players.filter((player) => isDoorOpenForPlayer(door, player));
     if (victoriousPlayers.length === 0) continue;
@@ -497,14 +1179,21 @@ function isPlayerTurnActive(player) {
 function renderScores() {
   scoreStripEl.innerHTML = "";
   for (const player of state.players) {
+    const battleBonus = playerBattleBonus(player);
+    const stepBonus = playerStepBonus(player);
     const card = document.createElement("article");
     card.className = `score-card ${player.id === state.activePlayer ? "active" : ""}`;
     card.style.setProperty("--player-color", player.color);
     card.innerHTML = `
       <div class="score-name">
-        <span class="score-player-name">
+        <span class="score-player-avatar">
           <img src="${player.token}" alt="" aria-hidden="true">
+          <small class="score-bot-badge ${isBot(player) ? "" : "is-empty"}" title="${isBot(player) ? "Бот" : ""}">${isBot(player) ? "Бот" : "Бот"}</small>
+        </span>
+        <span class="score-player-name">
           <strong>${player.name}</strong>
+          ${stepBonus ? `<span class="score-bonus score-step-bonus" title="Шаги">${stepBonusText(stepBonus)}</span>` : ""}
+          ${battleBonus ? `<span class="score-battle-bonus" title="Сила">${battleForceText(battleBonus)}</span>` : ""}
         </span>
         <span class="pill">${iconizeHtml(tileTitle(player.position))}</span>
       </div>
@@ -638,6 +1327,26 @@ function renderChoicePanel() {
     return;
   }
 
+  if (state.pendingChoice.kind === "portal") {
+    const player = state.players.find((item) => item.id === state.pendingChoice.playerId) || currentPlayer();
+    const buttons = renderChoiceDialog({
+      kind: "portal",
+      kicker: "Портал",
+      title: "Куда переместиться?",
+      summary: `${playerChoiceBadge(player)} стоит на открытом портале. Осталось ${state.pendingChoice.remaining} шага.`,
+    });
+
+    for (const choice of state.pendingChoice.choices) {
+      appendChoiceButton(buttons, {
+        className: choice.className || "",
+        label: choice.label,
+        note: choice.note,
+        onClick: () => resolveChoice(choice.cell),
+      });
+    }
+    return;
+  }
+
   const player = currentPlayer();
   const buttons = renderChoiceDialog({
     kind: "direction",
@@ -689,8 +1398,13 @@ function renderFinalBattleHud() {
 
   const progress = state.finalBattleProgress;
   const enemyProgress = state.enemyBattleProgress;
+  const vsProgress = state.vsBattleProgress;
   if (enemyProgress && !state.finished) {
     renderEnemyBattleHud(enemyProgress);
+    return;
+  }
+  if (vsProgress && !state.finished) {
+    renderVsBattleHud(vsProgress);
     return;
   }
 
@@ -702,18 +1416,76 @@ function renderFinalBattleHud() {
   }
 
   const boss = state.players.find((player) => player.id === progress.bossId);
+  const challengers = state.players.filter((player) => player.id !== progress.bossId);
   const bossDisplayForce = progress.bossRollsStarted ? progress.bossForce : "?";
   ui.finalBattleHud.hidden = false;
   ui.finalBattleHud.className = "final-battle-hud";
   ui.finalBattleHud.innerHTML = `
     <div class="final-battle-side players">
       <span>Игроки</span>
+      <div class="battle-strength-list">
+        ${challengers.map((player) => playerBattleStrengthBadge(player, { showName: true })).join("")}
+      </div>
       <strong>${progress.playersForce}</strong>
     </div>
     <div class="final-battle-vs">VS</div>
     <div class="final-battle-side boss" style="--player-color: ${boss?.color || "#ff7d5d"}">
       <span>Босс${boss ? ` - ${boss.name}` : ""}</span>
+      ${boss ? playerBattleStrengthText(boss) : ""}
       <strong>${bossDisplayForce}</strong>
+    </div>
+  `;
+}
+
+function renderVsBattleHud(progress) {
+  const results = progress.results || {};
+  const winnerId = progress.winnerId || null;
+  const tiedIds = new Set(progress.tiedIds || []);
+  const battleState = winnerId ? "is-victory" : progress.isRolling ? "is-rolling" : tiedIds.size ? "is-tie" : "is-ready";
+  const activeIds = new Set(progress.contenderIds || []);
+  const cards = state.players
+    .map((participant) => {
+      const isActive = activeIds.has(participant.id);
+      const isWinner = participant.id === winnerId;
+      const isTied = tiedIds.has(participant.id);
+      const isRolling = participant.id === progress.rollingPlayerId;
+      const force = results[participant.id] ?? "?";
+      const status = isWinner ? "Победитель" : isRolling ? "Бросает" : isTied ? "Переигровка" : isActive ? "Сила" : "Ждет";
+      return `
+        <div class="final-battle-side enemy-battle-side player vs-battle-card ${isWinner ? "is-winning" : ""} ${isTied ? "is-tied" : ""} ${isRolling ? "is-rolling" : ""} ${isActive ? "" : "is-inactive"}" style="--player-color: ${participant.color}">
+          <span class="enemy-battle-portrait player-portrait">
+            <img src="${participant.token}" alt="" aria-hidden="true">
+          </span>
+          <span class="enemy-battle-name">${participant.name}</span>
+          ${playerBattleStrengthBadge(participant)}
+          <small>${status}</small>
+          <strong>${force}</strong>
+        </div>
+      `;
+    })
+    .join("");
+
+  ui.finalBattleHud.hidden = false;
+  ui.finalBattleHud.className = `final-battle-hud enemy-battle-hud vs-battle-hud ${battleState}`;
+  ui.finalBattleHud.innerHTML = `
+    <div class="enemy-battle-panel vs-battle-panel">
+      <div class="vs-battle-header">
+        <div class="vs-battle-title">
+          <span>VS-битва</span>
+          <strong>Раунд ${progress.round}</strong>
+        </div>
+        <div class="vs-battle-emblem">VS</div>
+        <div class="vs-battle-pot">
+          <span>Банк</span>
+          <strong>${coinAmount(progress.pot || 0)}</strong>
+        </div>
+      </div>
+      <div class="vs-battle-grid">
+        ${cards}
+      </div>
+      <div class="final-battle-result enemy-battle-result ${progress.outcome ? "is-visible" : ""}">
+        ${iconizeHtml(progress.outcome || "Игроки бросают силу за общий банк")}
+      </div>
     </div>
   `;
 }
@@ -740,6 +1512,7 @@ function renderEnemyBattleHud(progress) {
             ${player ? `<img src="${player.token}" alt="" aria-hidden="true">` : ""}
           </span>
           <span class="enemy-battle-name">${player?.name || "Игрок"}</span>
+          ${player ? playerBattleStrengthBadge(player) : ""}
           <small>Итог броска</small>
           <strong>${progress.playerForce || "?"}</strong>
         </div>
@@ -760,6 +1533,16 @@ function renderEnemyBattleHud(progress) {
       </div>
     </div>
   `;
+}
+
+function playerBattleStrengthBadge(player, { showName = false } = {}) {
+  const name = showName ? `${player.name} ` : "";
+  return `<span class="battle-strength-badge" title="Сила игрока">${name}${battleForceText(playerBattleBonus(player))}</span>`;
+}
+
+function playerBattleStrengthText(player, { showName = false } = {}) {
+  const name = showName ? `${player.name} ` : "";
+  return `<span class="battle-strength-text" title="Сила игрока">${name}${battleForceText(playerBattleBonus(player))}</span>`;
 }
 
 function renderChoiceDialog({ kind, kicker, title, summary, buttonsClass = "" }) {
@@ -874,6 +1657,8 @@ async function resolveLanding(player) {
       await resolveDiceFortuneField(player);
     } else if (event === "pay-double") {
       await resolvePayDoubleField(player);
+    } else if (event === "vs") {
+      await resolveVsField(player);
     }
 
     if (player.position === landedPosition) {
@@ -886,11 +1671,11 @@ async function resolveLanding(player) {
 
 async function resolveEnemyBattle(player) {
   const door = doorByEnemyCell(player.position);
-  if (!door || isDoorOpenForPlayer(door, player)) return;
+  if (!door || isDoorOpenForPlayer(door, player)) return false;
 
   state.enemyBattleProgress = {
     enemyForce: door.damage,
-    outcome: `Нужно нанести ${door.damage} урона`,
+    outcome: `Нужно набрать силу ${door.damage}`,
     isFinalBoss: Boolean(door.isFinalBoss),
     playerForce: 0,
     playerId: player.id,
@@ -898,14 +1683,15 @@ async function resolveEnemyBattle(player) {
   };
   render();
   await showActionPrompt(
-    `${playerName(player)} вступает в бой. Нужно нанести <strong>${door.damage} урона</strong>, чтобы ${door.isFinalBoss ? "стать боссом" : `открыть ${door.label}`}.`,
+    `${playerName(player)} вступает в битву. Нужно набрать силу <strong>${door.damage}</strong>, чтобы ${door.isFinalBoss ? "стать боссом" : `открыть ${door.label}`}.`,
+    { autoFor: player },
   );
 
   const extraDice = await chooseExtraDie(player, true);
   const diceCount = totalDiceForPlayer(player, extraDice);
   const rolls = rollDice(diceCount);
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
-  const bonus = playerStepBonus(player);
+  const bonus = playerCombatBonus(player);
   state.isAnimating = true;
   state.dice = null;
   state.enemyBattleProgress = {
@@ -920,7 +1706,7 @@ async function resolveEnemyBattle(player) {
   state.dice = damage;
   state.isAnimating = false;
 
-  const bonusText = bonus ? ` + ${bonus} бонус = <strong>${damage}</strong>` : "";
+  const bonusText = bonusFormulaText(bonus, damage);
   if (damage >= door.damage) {
     state.enemyBattleProgress = {
       bonus,
@@ -935,14 +1721,15 @@ async function resolveEnemyBattle(player) {
     };
     door.openedBy.push(player.id);
     if (door.isFinalBoss) {
-      log(`${playerName(player)} побеждает финального монстра: ${formatRoll(rolls)}${bonusText}. Игрок становится <strong>боссом</strong>.`);
+    log(`${playerName(player)} побеждает финального монстра: ${formatRoll(rolls)}${bonusText}. Игрок становится <strong>боссом</strong>.`);
       render();
       await showActionPrompt(
         `${playerName(player)} побеждает финального монстра: ${formatRoll(rolls)}${bonusText}. Игрок становится <strong>боссом</strong>.`,
+        { autoFor: player },
       );
       clearEnemyBattleHud();
       await resolveFinalBattle(player, true);
-      return;
+      return { isFinalBoss: true, resolved: true, winner: "player" };
     }
     addDiceBonus(player, 1);
     log(
@@ -951,9 +1738,10 @@ async function resolveEnemyBattle(player) {
     render();
     await showActionPrompt(
       `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта. Награда: <strong>+1 кубик</strong>.`,
+      { autoFor: player },
     );
     clearEnemyBattleHud();
-    return;
+    return { isFinalBoss: false, resolved: true, winner: "player" };
   }
 
   state.enemyBattleProgress = {
@@ -975,14 +1763,17 @@ async function resolveEnemyBattle(player) {
   );
   await showActionPrompt(
     `${playerName(player)} не побеждает врага: ${formatRoll(rolls)}${bonusText}. Возврат на <strong>старт</strong>. Получает карту <strong>Лавка Джо</strong>.`,
+    { autoFor: player },
   );
   clearEnemyBattleHud();
   await drawFreeShopCard(player, "получает карту Лавка Джо за возвращение на старт");
+  return { isFinalBoss: Boolean(door.isFinalBoss), resolved: true, winner: "enemy" };
 }
 
 async function resolveDiceFortuneField(player) {
   await showActionPrompt(
     `${playerName(player)} попадает на кубик удачи: брось 6 кубиков. Каждая 6 дает <strong>${coinAmount(20)}</strong>, каждая 1 отправляет на <strong>5 шагов назад</strong>.`,
+    { autoFor: player },
   );
 
   const rolls = rollDice(6);
@@ -1004,7 +1795,7 @@ async function resolveDiceFortuneField(player) {
   const resultText = resultParts.length ? resultParts.join(" и ") : "ничего не происходит";
   const message = `${playerName(player)} бросает кубик удачи: ${formatRoll(rolls)}. Результат: ${resultText}.`;
   log(message, { toast: !backwardSteps });
-  await showActionPrompt(message);
+  await showActionPrompt(message, { autoFor: player });
 
   if (backwardSteps > 0) {
     await movePlayerSteps(player, -backwardSteps);
@@ -1021,7 +1812,138 @@ async function resolvePayDoubleField(player) {
   const message = `${playerName(player)} попадает на удвоение и удваивает свое количество монет. Было <strong>${coinAmount(before)}</strong>, стало <strong>${coinAmount(player.coins)}</strong> <span class="nowrap">(${coinAmount(`+${gained}`)})</span>.`;
 
   log(message, { toast: true });
-  await showActionPrompt(message);
+  await showActionPrompt(message, { autoFor: player });
+  render();
+}
+
+async function resolveVsField(player) {
+  const ante = 10;
+  const contributions = state.players.map((participant) => {
+    const amount = Math.min(ante, participant.coins);
+    if (amount > 0) addCoins(participant, -amount);
+    return { amount, player: participant };
+  });
+  const pot = contributions.reduce((sum, item) => sum + item.amount, 0);
+  const contributionText = contributions
+    .map(({ amount, player: participant }) => `${playerName(participant)} ${coinAmount(-amount)}`)
+    .join(", ");
+
+  log(`${playerName(player)} попадает на <strong>VS</strong>. Все игроки скидывают по ${coinAmount(ante)}: ${contributionText}. Банк: <strong>${coinAmount(pot)}</strong>.`);
+  state.vsBattleProgress = {
+    contenderIds: state.players.map((participant) => participant.id),
+    isRolling: false,
+    outcome: `${playerName(player)} запускает VS-битву за банк <strong>${coinAmount(pot)}</strong>`,
+    pot,
+    results: {},
+    rollingPlayerId: null,
+    round: 1,
+    tiedIds: [],
+    winnerId: null,
+  };
+  render();
+  await showActionPrompt(
+    `${playerName(player)} попадает на <strong>VS</strong>. Все игроки скидывают по ${coinAmount(ante)}, затем начинается битва за банк <strong>${coinAmount(pot)}</strong>.`,
+    { autoFor: player },
+  );
+
+  let contenders = [...state.players];
+  let round = 1;
+  let winner = null;
+  state.isAnimating = true;
+  state.dice = null;
+
+  while (!winner) {
+    const roundResults = [];
+    state.vsBattleProgress = {
+      contenderIds: contenders.map((contender) => contender.id),
+      isRolling: false,
+      outcome: round > 1 ? "Переигровка: бросают только игроки с ничьей" : "Все игроки бросают силу за банк",
+      pot,
+      results: {},
+      rollingPlayerId: null,
+      round,
+      tiedIds: [],
+      winnerId: null,
+    };
+    render();
+    for (const contender of contenders) {
+      state.vsBattleProgress = {
+        ...state.vsBattleProgress,
+        isRolling: true,
+        outcome: `${playerName(contender)} бросает силу в VS-битве${round > 1 ? " (переигровка)" : ""}`,
+        rollingPlayerId: contender.id,
+      };
+      render();
+      await showActionPrompt(`${playerName(contender)} бросает силу в VS-битве${round > 1 ? " (переигровка)" : ""}.`, {
+        autoFor: contender,
+        buttonLabel: "Бросить кубик",
+      });
+      const result = await rollPlayerBattlePower(contender, true, { label: `VS - ${contender.name}` });
+      roundResults.push(result);
+      state.vsBattleProgress = {
+        ...state.vsBattleProgress,
+        isRolling: false,
+        outcome: `${playerName(contender)} выбрасывает силу <strong>${result.total}</strong>`,
+        results: {
+          ...state.vsBattleProgress.results,
+          [contender.id]: result.total,
+        },
+        rollingPlayerId: null,
+      };
+      render();
+      log(`${playerName(contender)} в VS-битве: ${formatRoll(result.rolls)}${bonusFormulaText(result.bonus, result.total)}. Сила: <strong>${result.total}</strong>.`);
+    }
+
+    const bestForce = Math.max(...roundResults.map((result) => result.total));
+    const bestResults = roundResults.filter((result) => result.total === bestForce);
+    if (bestResults.length === 1) {
+      winner = bestResults[0].player;
+      state.vsBattleProgress = {
+        ...state.vsBattleProgress,
+        isRolling: false,
+        outcome: `${playerName(winner)} побеждает с силой <strong>${bestForce}</strong>`,
+        rollingPlayerId: null,
+        tiedIds: [],
+        winnerId: winner.id,
+      };
+      render();
+      break;
+    }
+
+    contenders = bestResults.map((result) => result.player);
+    const tiedNames = contenders.map((contender) => playerName(contender)).join(", ");
+    state.vsBattleProgress = {
+      ...state.vsBattleProgress,
+      isRolling: false,
+      outcome: `Ничья по силе <strong>${bestForce}</strong>. Переигровка: ${tiedNames}`,
+      rollingPlayerId: null,
+      tiedIds: contenders.map((contender) => contender.id),
+      winnerId: null,
+    };
+    render();
+    log(`VS-битва: ничья по силе <strong>${bestForce}</strong> между ${tiedNames}. Переигровка.`);
+    await showActionPrompt(`Ничья по силе <strong>${bestForce}</strong>. Переигровка: ${tiedNames}.`, {
+      autoFor: contenders.every((contender) => isBot(contender)) ? contenders[0] : null,
+    });
+    round += 1;
+  }
+
+  state.isAnimating = false;
+  state.dice = null;
+  if (pot > 0) {
+    winner.coins += pot;
+    showCoinFloat(winner, pot);
+  }
+  const message = `${playerName(winner)} выигрывает VS-битву и забирает банк <strong>${coinAmount(pot)}</strong>`;
+  state.vsBattleProgress = {
+    ...state.vsBattleProgress,
+    outcome: message,
+    winnerId: winner.id,
+  };
+  render();
+  log(message, { toast: true });
+  await showActionPrompt(message, { autoFor: winner });
+  state.vsBattleProgress = null;
   render();
 }
 
@@ -1042,13 +1964,17 @@ async function resolveFinalBattle(boss, animate = true) {
   if (animate) {
     await showActionPrompt(
       `${playerName(boss)} становится <strong>боссом</strong>. Остальные игроки сражаются с ним.`,
+      { autoFor: boss },
     );
   }
 
   const challengerResults = [];
   for (const challenger of challengers) {
     if (animate) {
-      await showActionPrompt(`${playerName(challenger)} готовится бросить кубики.`, { buttonLabel: "Бросить кубик" });
+      await showActionPrompt(`${playerName(challenger)} готовится бросить кубики.`, {
+        autoFor: challenger,
+        buttonLabel: "Бросить кубик",
+      });
     }
     const result = await rollFinalBattlePower(challenger, animate);
     challengerResults.push(result);
@@ -1064,13 +1990,14 @@ async function resolveFinalBattle(boss, animate = true) {
   log(`Итоговая сила игроков: <strong>${playersForce}</strong>.`);
 
   const bossRollResults = [];
-  const bossBonus = playerStepBonus(boss) * challengers.length;
+  const bossBonus = playerCombatBonus(boss) * challengers.length;
   const bossOpponentBonus = challengers.length;
   state.finalBattleProgress.bossForce = bossBonus + bossOpponentBonus;
   render();
   for (let index = 0; index < challengers.length; index += 1) {
     if (animate) {
       await showActionPrompt(`Босс - ${playerName(boss)} готовится бросить кубики ${index + 1}/${challengers.length}.`, {
+        autoFor: boss,
         buttonLabel: "Бросить кубик",
       });
     }
@@ -1120,7 +2047,9 @@ async function resolveFinalBattle(boss, animate = true) {
   if (bossWon) {
     log(`<strong>Финальная битва завершена.</strong> Босс ${playerName(boss)} побеждает: ${bossForce} против ${playersForce}.`);
     if (animate) {
-      await showActionPrompt(`Босс ${playerName(boss)} побеждает: <strong>${bossForce}</strong> против ${playersForce}.`);
+      await showActionPrompt(`Босс ${playerName(boss)} побеждает: <strong>${bossForce}</strong> против ${playersForce}.`, {
+        autoFor: boss,
+      });
     }
   } else {
     const scoreText = scores
@@ -1133,19 +2062,24 @@ async function resolveFinalBattle(boss, animate = true) {
     if (animate) {
       await showActionPrompt(
         `Игроки побеждают босса: <strong>${playersForce}</strong> против ${bossForce}. По очкам побеждает ${playerName(winner)}.`,
+        { autoFor: winner },
       );
     }
   }
 }
 
 async function rollFinalBattlePower(player, animate, { label = "" } = {}) {
+  return rollPlayerBattlePower(player, animate, { label, isFinalBattle: true });
+}
+
+async function rollPlayerBattlePower(player, animate, { label = "", isFinalBattle = false } = {}) {
   const rolls = rollDice(totalDiceForPlayer(player));
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
-  const bonus = playerStepBonus(player);
+  const bonus = playerCombatBonus(player);
   if (animate) {
     state.dice = null;
     render();
-    await animateDice(rolls, { bonus, label, player, isFinalBattle: true });
+    await animateDice(rolls, { bonus, label, player, isFinalBattle });
   }
   const total = rolled + bonus;
   state.dice = total;
@@ -1154,7 +2088,7 @@ async function rollFinalBattlePower(player, animate, { label = "" } = {}) {
 }
 
 function finalBonusText(bonus, total) {
-  return bonus ? ` + ${bonus} бонус = <strong>${total}</strong>` : "";
+  return bonusFormulaText(bonus, total);
 }
 
 function finalBattleScore(player, damageToBoss, position = 1) {
@@ -1247,7 +2181,10 @@ async function drawAndApplyCard(player, deck, deckName) {
 }
 
 async function revealGoodCard(player, card) {
-  const backPrompt = showActionPrompt(goodCardMarkup(player, card, { revealed: false }), { buttonLabel: "Открыть" });
+  const backPrompt = showActionPrompt(goodCardMarkup(player, card, { revealed: false }), {
+    autoFor: player,
+    buttonLabel: "Открыть",
+  });
   const backResolver = actionPromptResolver;
   wireGoodCardClick(backResolver);
   if (ui.autoRevealCards?.checked) {
@@ -1257,7 +2194,10 @@ async function revealGoodCard(player, card) {
   }
   await backPrompt;
 
-  const facePrompt = showActionPrompt(goodCardMarkup(player, card, { revealed: true }), { buttonLabel: "Применить" });
+  const facePrompt = showActionPrompt(goodCardMarkup(player, card, { revealed: true }), {
+    autoFor: player,
+    buttonLabel: "Применить",
+  });
   wireGoodCardClick(actionPromptResolver);
   await facePrompt;
   log(`${playerName(player)} применяет карту <strong>Хорошо</strong>: ${card.title}`, { toast: true });
@@ -1304,12 +2244,18 @@ function goodCardMarkup(player, card, { revealed }) {
 }
 
 async function revealBadCard(player, card) {
-  const backPrompt = showActionPrompt(badCardMarkup(card, { revealed: false }), { buttonLabel: "Открыть" });
+  const backPrompt = showActionPrompt(badCardMarkup(card, { revealed: false }), {
+    autoFor: player,
+    buttonLabel: "Открыть",
+  });
   const backResolver = actionPromptResolver;
   wireBadCardClick(backResolver);
   await backPrompt;
 
-  const facePrompt = showActionPrompt(badCardMarkup(card, { revealed: true }), { buttonLabel: "Применить" });
+  const facePrompt = showActionPrompt(badCardMarkup(card, { revealed: true }), {
+    autoFor: player,
+    buttonLabel: "Применить",
+  });
   wireBadCardClick(actionPromptResolver);
   await facePrompt;
   log(`${playerName(player)} применяет карту <strong>Плохо</strong>: ${card.title}`, { toast: true });
@@ -1333,12 +2279,18 @@ function badCardMarkup(card, { revealed }) {
 }
 
 async function revealTadamCard(player, card) {
-  const backPrompt = showActionPrompt(tadamCardMarkup(card, { revealed: false }), { buttonLabel: "Открыть" });
+  const backPrompt = showActionPrompt(tadamCardMarkup(card, { revealed: false }), {
+    autoFor: player,
+    buttonLabel: "Открыть",
+  });
   const backResolver = actionPromptResolver;
   wireTadamCardClick(backResolver);
   await backPrompt;
 
-  const facePrompt = showActionPrompt(tadamCardMarkup(card, { revealed: true }), { buttonLabel: "Применить" });
+  const facePrompt = showActionPrompt(tadamCardMarkup(card, { revealed: true }), {
+    autoFor: player,
+    buttonLabel: "Применить",
+  });
   wireTadamCardClick(actionPromptResolver);
   await facePrompt;
 }
@@ -1360,27 +2312,36 @@ function tadamCardMarkup(card, { revealed }) {
   `;
 }
 
-async function revealShopCards(cards) {
-  const backPrompt = showActionPrompt(shopCardsMarkup(cards, { revealed: false }), { buttonLabel: "Открыть" });
+async function revealShopCards(cards, player = null) {
+  const backPrompt = showActionPrompt(shopCardsMarkup(cards, { revealed: false }), {
+    autoFor: player,
+    buttonLabel: "Открыть",
+  });
   const backResolver = actionPromptResolver;
   wireShopCardClick(backResolver);
   await backPrompt;
 
-  const facePrompt = showActionPrompt(shopCardsMarkup(cards, { revealed: true }), { buttonLabel: "Далее" });
+  const facePrompt = showActionPrompt(shopCardsMarkup(cards, { revealed: true }), {
+    autoFor: player,
+    buttonLabel: "Далее",
+  });
   wireShopCardClick(actionPromptResolver);
   await facePrompt;
 }
 
-async function revealSelectableShopCards(cards) {
-  const backPrompt = showActionPrompt(shopCardsMarkup(cards, { revealed: false }), { buttonLabel: "Открыть" });
+async function revealSelectableShopCards(cards, player = null) {
+  const backPrompt = showActionPrompt(shopCardsMarkup(cards, { revealed: false }), {
+    autoFor: player,
+    buttonLabel: "Открыть",
+  });
   const backResolver = actionPromptResolver;
   wireShopCardClick(backResolver);
   await backPrompt;
 
-  return chooseShopCardFromFace(cards);
+  return chooseShopCardFromFace(cards, player);
 }
 
-function chooseShopCardFromFace(offer) {
+function chooseShopCardFromFace(offer, player = null) {
   if (!ui.eventToast) return Promise.resolve(null);
 
   window.clearTimeout(eventToastFadeTimer);
@@ -1405,6 +2366,7 @@ function chooseShopCardFromFace(offer) {
       const card = offer.find((item) => item.id === cardId) || null;
       actionPromptResolver = null;
       actionPromptButtonLabel = "Далее";
+      actionPromptAutoPlayerId = null;
       hideEventToast({ quick: true });
       render();
       resolve(card);
@@ -1415,10 +2377,15 @@ function chooseShopCardFromFace(offer) {
       button.addEventListener("click", () => finish(button.dataset.shopCardId));
     });
     render();
+    if (isBot(player)) {
+      window.setTimeout(() => finish(chooseBotShopCard(player, offer, { allowDecline: true })), botChoiceDelay("card"));
+    } else {
+      scheduleBotAction(botChoiceDelay("choice"), { replace: true });
+    }
   });
 }
 
-function chooseRevealedShopCard(offer) {
+function chooseRevealedShopCard(offer, player = null) {
   if (!ui.eventToast) return Promise.resolve(null);
 
   window.clearTimeout(eventToastFadeTimer);
@@ -1444,6 +2411,7 @@ function chooseRevealedShopCard(offer) {
       const card = offer.find((item) => item.id === cardId) || null;
       actionPromptResolver = null;
       actionPromptButtonLabel = "Далее";
+      actionPromptAutoPlayerId = null;
       hideEventToast({ quick: true });
       render();
       resolve(card);
@@ -1455,6 +2423,11 @@ function chooseRevealedShopCard(offer) {
     });
     ui.eventToast.querySelector("[data-shop-decline]")?.addEventListener("click", () => finish(null));
     render();
+    if (isBot(player)) {
+      window.setTimeout(() => finish(chooseBotShopCard(player, offer, { allowDecline: true })), botChoiceDelay("card"));
+    } else {
+      scheduleBotAction(botChoiceDelay("choice"), { replace: true });
+    }
   });
 }
 
@@ -1530,6 +2503,7 @@ async function resolveOptionalExtraTurn(player, cost) {
 
   const choice = await chooseCardAction({
     kicker: "Хорошо",
+    playerId: player.id,
     title: "Сделать еще один ход?",
     summary: `${playerChoiceBadge(player)}: ${player.coins} монет. Можно заплатить ${cost} монет и оставить ход за собой.`,
     choices: [
@@ -1558,7 +2532,7 @@ async function resolveOptionalExtraTurn(player, cost) {
 
 async function drawFreeShopCard(player, reason = "бесплатно получает карту Лавка Джо") {
   const card = randomItem(shopCards);
-  await revealShopCards([card]);
+  await revealShopCards([card], player);
   player.items.push(card);
   render();
   log(`${playerName(player)} ${reason}: <strong>${card.title}</strong>`, { toast: true });
@@ -1594,6 +2568,7 @@ async function resolveBuyShopCardFromPlayer(player, cost) {
 
   const choice = await chooseCardAction({
     kicker: "Хорошо",
+    playerId: player.id,
     title: "Купить карту Лавка Джо у игрока",
     summary: `${playerChoiceBadge(player)}: ${player.coins} монет. Выбери карту и заплати ее владельцу ${cost} монет.`,
     buttonsClass: "shop-buttons",
@@ -1629,6 +2604,7 @@ async function resolveChoosePlayerBackRoll(player) {
 
   const choice = await chooseCardAction({
     kicker: "Хорошо",
+    playerId: player.id,
     title: "Кого отправить назад?",
     summary: `${playerChoiceBadge(player)} выбирает игрока, который бросит все свои кубики и пойдет назад с бонусами передвижения.`,
     choices,
@@ -1645,7 +2621,7 @@ async function resolveChoosePlayerBackRoll(player) {
     `${playerName(player)} отправляет ${playerName(target)} назад: ${formatRoll(rolls)}${bonus ? ` + ${bonus} бонус = <strong>${total}</strong>` : ""}.`,
   );
   await animateDice(rolls, { bonus, label: "Назад", player: target });
-  await showActionPrompt(`${playerName(target)} идет назад на <strong>${total}</strong>.`);
+  await showActionPrompt(`${playerName(target)} идет назад на <strong>${total}</strong>.`, { autoFor: player });
   await movePlayerSteps(target, -total);
 }
 
@@ -1660,13 +2636,13 @@ async function applyFieldEffect(player, effect, fieldName) {
     const direction = effect.steps > 0 ? "вперед" : "назад";
     const message = `${playerName(player)} попадает на ${fieldName} и идет на <strong>${Math.abs(effect.steps)} клеток ${direction}</strong>`;
     log(message);
-    await showActionPrompt(message);
+    await showActionPrompt(message, { autoFor: player });
     await movePlayerSteps(player, effect.steps);
   }
 }
 
 async function confirmMoveEffect(player, steps) {
-  await showActionPrompt(`<strong>${playerName(player)}: ${moveActionText(steps)}</strong>`);
+  await showActionPrompt(`<strong>${playerName(player)}: ${moveActionText(steps)}</strong>`, { autoFor: player });
 }
 
 function moveActionText(steps) {
@@ -1692,8 +2668,8 @@ async function resolveShop(player) {
     return;
   }
 
-  const directChoice = await revealSelectableShopCards(offer);
-  const bought = directChoice || (await chooseRevealedShopCard(offer));
+  const directChoice = await revealSelectableShopCards(offer, player);
+  const bought = directChoice || (await chooseRevealedShopCard(offer, player));
   if (!bought) {
     log(`${playerName(player)} отказывается от карт Лавки Джо.`, { toast: true });
     return;
@@ -1706,9 +2682,16 @@ async function resolveShop(player) {
 
 async function resolvePassThroughShop(player) {
   if (cellEvents[player.position] !== "shop") return;
+  if (passThroughAllEnabled()) return;
 
   log(`${playerName(player)} проходит через <strong>Лавку Джо</strong>.`, { toast: true });
   await resolveShop(player);
+}
+
+async function resolvePassThroughEnemy(player) {
+  if (cellEvents[player.position] !== "enemy") return false;
+  if (passThroughAllEnabled()) return false;
+  return resolveEnemyBattle(player);
 }
 
 function chooseShopCard(player, offer) {
@@ -1722,6 +2705,7 @@ function chooseShopCard(player, offer) {
       state.shopResolver = null;
       resolve(card);
     };
+    scheduleBotAction(botChoiceDelay("preRoll"), { replace: true });
   });
 }
 
@@ -1735,6 +2719,7 @@ function chooseCardAction(config) {
       state.cardChoiceResolver = null;
       resolve(choiceId);
     };
+    scheduleBotAction(botChoiceDelay("card"), { replace: true });
   });
 }
 
@@ -1749,7 +2734,8 @@ async function movePlayerSteps(player, steps) {
       const blockingDoor = lockedDoorForTransition(player, currentPosition, nextPosition);
       if (blockingDoor) {
         await showActionPrompt(
-          `${playerName(player)} не может пройти ${blockingDoor.label}: победи врага с уроном <strong>${blockingDoor.damage}</strong>`,
+          `${playerName(player)} не может пройти ${blockingDoor.label}: победи врага с силой <strong>${blockingDoor.damage}</strong>`,
+          { autoFor: player },
         );
         break;
       }
@@ -1757,6 +2743,10 @@ async function movePlayerSteps(player, steps) {
       if (step < steps - 1) resolveJumpSteal(player);
       render();
       await sleep(120);
+      const enemyBattle = await resolvePassThroughEnemy(player);
+      if (state.finished || player.position !== nextPosition) break;
+      if (enemyBattle?.winner === "player" && !enemyBattle.isFinalBoss && !monstersDontStopEnabled()) break;
+      await resolvePortalAtCurrentCell(player, { remaining: steps - step - 1 });
       if (step < steps - 1) {
         await resolvePassThroughShop(player);
       }
@@ -1881,6 +2871,7 @@ function tileTitle(cell) {
     red: "Красное поле",
     shop: "Лавка Джо",
     tadam: "ТАДАМ!",
+    vs: "VS",
   };
   return namesByEvent[cellEvents[cell]] || "Клетка";
 }
@@ -1893,13 +2884,14 @@ function fieldEffectText(cell) {
   const texts = {
     bad: ["Плохо", "тяни карту Плохо"],
     "dice-fortune": ["Кубик удачи", "6 бросков: 6 = +20 монет, 1 = -5 шагов"],
-    enemy: ["Враг", "эффект появится позже"],
+    enemy: ["Враг", "битва с монстром"],
     good: ["Хорошо", "тяни карту Хорошо"],
     green: ["Зеленое поле", greenEffectLabel()],
     "pay-double": ["Удвоение монет", "удвой свое количество монет"],
     red: ["Красное поле", redEffectLabel()],
     shop: ["Лавка Джо", "2 карты на выбор за 5 монет"],
     tadam: ["ТАДАМ!", "новое общее правило"],
+    vs: ["VS", "все скидывают 10 монет и сражаются за банк"],
   };
   const text = texts[cellEvents[cell]] || ["Обычная клетка", "без эффекта"];
   return iconizeHtml(`<span>${text[0]}</span><strong>${text[1]}</strong>`);
@@ -1980,8 +2972,80 @@ function lockedDoorForTransition(player, fromCell, toCell) {
   return door && !isDoorOpenForPlayer(door, player) ? door : null;
 }
 
+async function resolvePortalAtCurrentCell(player, { animate = true, remaining = 0 } = {}) {
+  const door = doorByEnemyCell(player.position);
+  if (!door || door.isFinalBoss || !isDoorOpenForAllPlayers(door)) return false;
+
+  const targetCell = animate ? await choosePortalDestination(player, door, remaining) : null;
+  if (!targetCell || targetCell === player.position) return false;
+
+  player.position = targetCell;
+  state.walkPath = [];
+  if (animate) {
+    render();
+    await sleep(120);
+  }
+  return true;
+}
+
+function choosePortalDestination(player, currentDoor, remaining) {
+  const portalDoors = Object.values(state.doors).filter(
+    (door) => !door.isFinalBoss && door.enemyCell !== currentDoor.enemyCell && isDoorOpenForAllPlayers(door),
+  );
+  if (portalDoors.length === 0) return null;
+
+  state.pendingChoice = {
+    kind: "portal",
+    currentCell: currentDoor.enemyCell,
+    playerId: player.id,
+    remaining,
+    choices: [
+      ...portalDoors.map((door) => ({
+        cell: door.enemyCell,
+        label: door.label,
+        note: `клетка ${cellLabel(door.enemyCell)}`,
+      })),
+      {
+        cell: currentDoor.enemyCell,
+        className: "decline",
+        label: "Не входить",
+        note: "пройти дальше",
+      },
+    ],
+  };
+  state.isAnimating = false;
+  render();
+
+  return new Promise((resolve) => {
+    state.choiceResolver = (cell) => {
+      state.pendingChoice = null;
+      state.choiceResolver = null;
+      state.isAnimating = true;
+      resolve(cell);
+    };
+    scheduleBotAction(botChoiceDelay("choice"), { replace: true });
+  });
+}
+
 function isDoorOpenForPlayer(door, player) {
   return door.openedBy?.includes(player.id);
+}
+
+function isDoorOpenForAllPlayers(door) {
+  return state.players.every((player) => isDoorOpenForPlayer(door, player));
+}
+
+function buildBoardLayout(config) {
+  const layout = Array.from({ length: config.rows }, () => Array.from({ length: config.cols }, () => null));
+  for (const cell of config.pathCells || config.route || []) {
+    const [col, row] = parseCell(cell);
+    if (layout[row]) layout[row][col] = "path";
+  }
+  for (const [cell, type] of Object.entries(config.events || {})) {
+    const [col, row] = parseCell(cell);
+    if (layout[row]) layout[row][col] = type;
+  }
+  return layout;
 }
 
 function buildFieldCells() {
@@ -2043,6 +3107,20 @@ function currentPlayer() {
   return state.players[state.activePlayer];
 }
 
+function currentModifierPlayer() {
+  const selected = state.players.find((player) => player.id === state.modifierPlayerId);
+  if (selected) return selected;
+  const fallback = currentPlayer();
+  state.modifierPlayerId = fallback.id;
+  return fallback;
+}
+
+function selectModifierPlayer(playerId) {
+  if (!state?.players?.some((player) => player.id === playerId)) return;
+  state.modifierPlayerId = playerId;
+  render();
+}
+
 function findWinner() {
   if (state.finalBattle?.winnerId !== undefined) {
     return state.players.find((player) => player.id === state.finalBattle.winnerId) || state.players[0];
@@ -2064,9 +3142,40 @@ function activeFieldEffect(type) {
 }
 
 function playerStepBonus(player) {
-  return player.items
+  return playerManualStepBonus(player) + player.items
     .filter((item) => item.effect?.type === "passive-step-bonus")
     .reduce((sum, item) => sum + item.effect.steps, 0);
+}
+
+function playerManualStepBonus(player) {
+  return player?.stepBonus || 0;
+}
+
+function playerBattleBonus(player) {
+  return playerManualBattleBonus(player) + player.items
+    .filter((item) => item.effect?.type === "passive-battle-bonus")
+    .reduce((sum, item) => sum + item.effect.amount, 0);
+}
+
+function playerManualBattleBonus(player) {
+  return player?.battleBonus || 0;
+}
+
+function playerCombatBonus(player) {
+  return playerBattleBonus(player);
+}
+
+function battleForceText(amount, compact = false) {
+  return `${compact ? "С" : "Сила"} ${amount >= 0 ? "+" : ""}${amount}`;
+}
+
+function stepBonusText(amount, compact = false) {
+  return `${compact ? "Ш" : "Шаги"} ${amount >= 0 ? "+" : ""}${amount}`;
+}
+
+function bonusFormulaText(bonus, total) {
+  if (!bonus) return "";
+  return ` ${bonus > 0 ? "+" : "-"} ${Math.abs(bonus)} бонус = <strong>${total}</strong>`;
 }
 
 function playerDiceBonus(player) {
@@ -2077,6 +3186,87 @@ function addDiceBonus(player, amount) {
   if (!player || amount <= 0) return;
   player.diceBonus = playerDiceBonus(player) + amount;
   showDiceFloat(player, amount);
+}
+
+function addSelectedPlayerBattleBonus(amount) {
+  if (!state?.players?.length) return;
+  const player = currentModifierPlayer();
+  if (!player || !Number.isFinite(amount) || amount === 0) return;
+  player.battleBonus = playerManualBattleBonus(player) + amount;
+  log(`${playerName(player)}: сила ${amount > 0 ? "+" : "-"}<strong>${Math.abs(amount)}</strong>. Сейчас: <strong>${battleForceText(playerBattleBonus(player))}</strong>.`);
+  render();
+}
+
+function addSelectedPlayerStepBonus(amount) {
+  if (!state?.players?.length) return;
+  const player = currentModifierPlayer();
+  if (!player || !Number.isFinite(amount) || amount === 0) return;
+  player.stepBonus = playerManualStepBonus(player) + amount;
+  log(`${playerName(player)}: шаги ${amount > 0 ? "+" : "-"}<strong>${Math.abs(amount)}</strong>. Сейчас: <strong>${stepBonusText(playerStepBonus(player))}</strong>.`);
+  render();
+}
+
+function exactMoveControlAmount() {
+  const amount = Number(ui.exactMoveAmount?.value);
+  return Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 4;
+}
+
+function passThroughMode() {
+  return ui.passThroughMode?.value || "default";
+}
+
+function monstersDontStopEnabled() {
+  return passThroughMode() === "monsters" || passThroughMode() === "all";
+}
+
+function passThroughAllEnabled() {
+  return passThroughMode() === "all";
+}
+
+async function moveActivePlayerExactSteps() {
+  if (
+    state.finished ||
+    state.isAnimating ||
+    state.pendingCardChoice ||
+    state.pendingChoice ||
+    state.pendingPreRoll ||
+    state.pendingShop ||
+    actionPromptResolver
+  ) {
+    return;
+  }
+
+  const player = currentPlayer();
+  const steps = exactMoveControlAmount();
+  state.isAnimating = true;
+  state.movingPlayerId = player.id;
+  state.dice = null;
+  state.walkPath = [];
+  log(`${playerName(player)} идет читом ровно на <strong>${steps}</strong> шагов без кубиков и бонусов.`);
+  render();
+
+  try {
+    await movePlayerExactSteps(player, steps);
+  } finally {
+    state.isAnimating = false;
+    state.movingPlayerId = null;
+    render();
+  }
+}
+
+async function movePlayerExactSteps(player, steps) {
+  const currentIndex = routeCells.findIndex((cell) => cellKey(cell.col, cell.row) === player.position);
+  if (currentIndex < 0 || steps <= 0) return;
+
+  const targetIndex = Math.min(routeCells.length - 1, currentIndex + steps);
+  for (let index = currentIndex + 1; index <= targetIndex; index += 1) {
+    player.position = cellKey(routeCells[index].col, routeCells[index].row);
+    render();
+    await sleep(120);
+  }
+
+  pulseTile(player.position);
+  await resolveLanding(player);
 }
 
 function totalDiceForPlayer(player, extraDice = 0) {
@@ -2137,6 +3327,7 @@ function chooseSingleExtraDie(player, card, index, total) {
       state.preRollResolver = null;
       resolve(useExtraDie);
     };
+    scheduleBotAction(botChoiceDelay("card"), { replace: true });
   });
 }
 
@@ -2286,7 +3477,7 @@ function showEventToast(message) {
   }, eventToastVisibleMs);
 }
 
-function showActionPrompt(message, { buttonLabel = "Далее" } = {}) {
+function showActionPrompt(message, { buttonLabel = "Далее", autoFor = null } = {}) {
   if (!ui.eventToast) return Promise.resolve();
 
   window.clearTimeout(eventToastFadeTimer);
@@ -2299,16 +3490,26 @@ function showActionPrompt(message, { buttonLabel = "Далее" } = {}) {
   void ui.eventToast.offsetWidth;
   ui.eventToast.classList.add("visible");
   actionPromptButtonLabel = buttonLabel;
+  actionPromptAutoPlayerId = autoFor?.id ?? null;
 
   return new Promise((resolve) => {
     actionPromptResolver = () => {
       actionPromptResolver = null;
       actionPromptButtonLabel = "Далее";
+      actionPromptAutoPlayerId = null;
       hideEventToast({ quick: true });
       render();
       resolve();
     };
     render();
+    const promptDelay = ["Открыть", "Применить"].includes(buttonLabel)
+      ? "card"
+      : buttonLabel === "Бросить кубик"
+        ? "roll"
+        : buttonLabel === "Далее"
+          ? "result"
+          : "prompt";
+    scheduleBotAction(botDelay(promptDelay), { replace: true });
   });
 }
 
@@ -2431,7 +3632,7 @@ function dicePlayerLabel(player, label = "") {
 function diceResultCaption(rolls, bonus = 0) {
   if (!bonus) return "";
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
-  return `${rolls.join(" + ")} + ${bonus} бонус = <strong>${rolled + bonus}</strong>`;
+  return `${rolls.join(" + ")} ${bonus > 0 ? "+" : "-"} ${Math.abs(bonus)} бонус = <strong>${rolled + bonus}</strong>`;
 }
 
 function rotationDegrees(value) {
@@ -2529,6 +3730,26 @@ function syncWideScoreStripPlacement() {
 }
 
 ui.newGameBtn.addEventListener("click", newGame);
+ui.boardSelect?.addEventListener("change", newGame);
+ui.playerCount?.addEventListener("change", syncBotCountOptions);
+ui.settingsPanel?.addEventListener("click", (event) => {
+  const button = event.target instanceof Element ? event.target.closest("[data-step-bonus-preset], [data-battle-bonus-preset]") : null;
+  if (!button) return;
+
+  if (button.dataset.stepBonusPreset) {
+    addSelectedPlayerStepBonus(Number(button.dataset.stepBonusPreset));
+  } else if (button.dataset.battleBonusPreset) {
+    addSelectedPlayerBattleBonus(Number(button.dataset.battleBonusPreset));
+  }
+});
+ui.exactMoveBtn?.addEventListener("click", () => {
+  moveActivePlayerExactSteps();
+});
+ui.modifierPlayerStatus?.addEventListener("click", (event) => {
+  const button = event.target instanceof Element ? event.target.closest("[data-modifier-player-id]") : null;
+  if (!button) return;
+  selectModifierPlayer(Number(button.dataset.modifierPlayerId));
+});
 ui.settingsToggle?.addEventListener("click", () => {
   if (!ui.settingsPanel) return;
 

@@ -20,6 +20,907 @@ Open questions:
 - ...
 ```
 
+## 2026-05-31 03:34 - Dev 2
+
+Changed:
+- Made `Поле 1` the default board again in the board selector and JS fallbacks.
+- Bumped JS/CSS cache keys to `20260531-0251`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Поле 2` remains available in the selector.
+
+Open questions:
+- None.
+
+## 2026-05-31 03:28 - Dev 2
+
+Changed:
+- Added a phone-only layout at `max-width: 680px` that moves the roll/action button below the board.
+- Kept tablet, desktop, and Codex-sized layouts unchanged.
+- Bumped JS/CSS cache keys to `20260531-0250`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- The mobile board panel uses CSS grid areas with status controls above the map, the map in the middle, and `#rollBtn` below the map.
+
+Open questions:
+- None.
+
+## 2026-05-31 03:24 - Dev 2
+
+Changed:
+- Reserved bot-label space under every score-card avatar so adding `Бот` does not shift card layout.
+- Non-bot cards render an invisible placeholder with the same height.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- This fixes coin/dice rows shifting when bot labels appear.
+
+Open questions:
+- None.
+
+## 2026-05-31 03:20 - Dev 2
+
+Changed:
+- Final-battle boss strength now renders as plain text instead of a chip.
+- Added a reusable text style for battle strength display where chip styling is too heavy.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- VS/enemy battle player strength chips are unchanged.
+
+Open questions:
+- None.
+
+## 2026-05-31 03:16 - Dev 2
+
+Changed:
+- Moved the `Бот` label under the player avatar on score cards.
+- Restyled `Бот` as a small text label instead of a chip to prevent overlap with step/strength chips and the tile label.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Score-card bonus chips remain in the name row; bot status is now part of the avatar column.
+
+Open questions:
+- None.
+
+## 2026-05-31 03:14 - Dev
+
+Changed:
+- Bot action prompts for enemy battles, field/card effects, VS/final battle, and locked doors now carry explicit `autoFor` where relevant, so bot turns do not wait for a human `Далее`.
+- Bot card reveal/apply prompts and card decisions now use faster card timing: about 0.45-0.85 seconds.
+- Added a separate fast bot delay for paid extra-die choices before a roll: about 0.25-0.5 seconds.
+- Kept normal route choices and roll/result prompts slower so bot turns remain readable.
+- Bumped JS/CSS cache keys to `20260531-0249`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` passes.
+
+Open questions:
+- None.
+
+## 2026-05-31 03:02 - Dev 2
+
+Changed:
+- Setup controls now place all five controls in one row: `Игроков`, `Ботов`, dice count, `Настройки`, `Новая игра`.
+- Narrow layout also keeps the row at five compact columns with smaller button text.
+- Bumped JS/CSS cache keys to `20260531-0248`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Removed the previous two-row layout for setup buttons.
+
+Open questions:
+- None.
+
+## 2026-05-31 02:59 - Dev
+
+Changed:
+- Slowed down bot auto-click timing so bot turns are easier to follow.
+- Bot choices now wait about 1.8-2.8 seconds, roll prompts about 1.8-2.8 seconds, and result/`Далее` prompts about 2.2-3.4 seconds.
+- Bumped JS/CSS cache keys to `20260531-0247`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser reload confirmed `game.js?v=20260531-0247` and `styles.css?v=20260531-0247` are loaded with no console warnings/errors.
+- `node --check src/game.js` passes.
+
+Open questions:
+- None.
+
+## 2026-05-31 02:51 - Dev
+
+Changed:
+- Replaced fully random bot choices with lightweight heuristic AI.
+- Added bot personalities for Dog, Cat, Otter, and Alpaca that affect risk, economy, shop value, battle preference, progress, and stealing.
+- Added scored smart-random choice helpers with noise and occasional near-best picks.
+- Added exact dice probability estimation for bot decisions about paying for optional extra dice, especially in monster battles.
+- Added heuristic scoring for Joe's Shop cards, shop decline, route/portal choices, card-action choices, leader pressure, and target selection.
+- Improved bot action timing ranges and fixed stale bot timers so prompts/choices are re-scheduled reliably.
+- Bumped JS/CSS cache keys to `20260531-0246`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Rules, card balance, field events, monster strengths, and dice mechanics were not changed; only bot choice logic changed.
+- Browser verification with 4 bots on field1 confirmed bots continued playing, bought/declined shop cards, used optional extra dice, targeted another player with a card, and did not leave choice panels open.
+- Browser loaded `game.js?v=20260531-0246` and `styles.css?v=20260531-0246`; console warnings/errors were empty.
+- `node --check src/game.js` passes.
+
+Open questions:
+- None.
+
+## 2026-05-31 02:24 - Dev 2
+
+Changed:
+- Kept `Настройки` and `Новая игра` in one shared row below the numeric setup controls.
+- On narrow layouts, the two buttons now split the row into equal halves instead of stacking vertically.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Numeric setup controls remain in the row above: `Игроков`, `Ботов`, dice count.
+
+Open questions:
+- None.
+
+## 2026-05-31 02:21 - Dev 2
+
+Changed:
+- Settings top controls now keep the numeric blocks `Игроков`, `Ботов`, and dice count in one row.
+- Settings action buttons move below them without widening the UI.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Mobile/narrow layout uses three compact numeric columns and full-width buttons below.
+
+Open questions:
+- None.
+
+## 2026-05-31 02:18 - Dev 2
+
+Changed:
+- Score-card strength chips are now hidden while the player's strength bonus is zero.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Battle HUD strength chips still show strength during battles.
+
+Open questions:
+- None.
+
+## 2026-05-31 02:15 - Dev 2
+
+Changed:
+- Restyled score-card step bonus chips to match the quieter strength chip style.
+- Step chips still stay hidden while the player has no step bonus.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- The score-card logic already hid step bonuses at `0`; this update is visual only.
+
+Open questions:
+- None.
+
+## 2026-05-31 02:12 - Dev 2
+
+Changed:
+- Battle HUDs now show player strength badges during enemy battles, VS battles, and the final battle.
+- Added compact `Сила +N` chips inside battle cards and a final-battle strength list for non-boss players.
+- Bumped JS/CSS cache keys to `20260531-0242`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Strength badges use `playerBattleBonus(player)`, so Joe's Shop `+1 к силе` is visible during battles.
+
+Open questions:
+- None.
+
+## 2026-05-31 02:08 - Dev 2
+
+Changed:
+- Restyled the score-card strength badge to look closer to Joe's Shop item chips with a quieter fill and a slightly brighter player-colored outline.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Step bonus chips keep their previous stronger styling.
+
+Open questions:
+- None.
+
+## 2026-05-31 02:05 - Dev 2
+
+Changed:
+- Player score cards now always show the current strength badge, including `Сила +0`.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Step badges are still hidden when the step bonus is zero.
+
+Open questions:
+- None.
+
+## 2026-05-31 02:01 - Dev 2
+
+Changed:
+- Removed the Joe's Shop card text `+1 к броску кубика`.
+- Added Joe's Shop cards `+1 к силе` and `+1 к шагам`.
+- Added `passive-battle-bonus`; battle strength now uses battle bonuses only, while step bonuses apply to dice-based movement.
+- Synced local card config and CSV mirror; bumped JS/cards cache keys to `20260531-0241`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/updates.md`
+
+Notes for others:
+- `+1 к силе` uses `effect.type = passive-battle-bonus` and applies only in enemy/VS/final battle strength.
+- `+1 к шагам` uses `effect.type = passive-step-bonus` and applies when movement distance is based on dice rolls.
+
+Open questions:
+- Google Sheet canonical source still needs the same card rows if it was not edited separately.
+
+## 2026-05-31 01:52 - Dev 2
+
+Changed:
+- Changed the two user-marked bottom-row field2 cells `3-14` and `4-14` from green to `Хорошо`.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The cells were identified from the red rectangle on the screenshot.
+
+Open questions:
+- None.
+
+## 2026-05-31 02:34 - Dev
+
+Changed:
+- Added a `Ботов` selector next to the player-count setting; bot options are capped by the current player count.
+- New games mark the last N players as bots and show a `Бот` badge on their score cards.
+- Bots automatically roll on their turns, advance action prompts, make random pre-roll/card/shop/route/portal choices, and can roll automatically during VS/final battle prompts when the prompt belongs to that bot.
+- Bumped JS/CSS cache keys to `20260531-0244`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification with 2 bots confirmed they started playing by themselves, drew/applied cards, displayed bot badges, and did not produce console warnings/errors.
+- Browser reload confirmed `styles.css?v=20260531-0244`, `game.js?v=20260531-0244`, and the `#botCount` selector are loaded.
+- `node --check src/game.js` passes.
+
+Open questions:
+- None.
+
+## 2026-05-31 01:51 - Dev
+
+Changed:
+- Compacted the VS player-battle HUD so it fits inside the visible board window.
+- Moved the VS HUD to the lower edge of the board and changed player cards from large duel cards to compact horizontal cards.
+- Removed trailing periods from VS HUD result messages so no stray dot appears after the coin icon.
+- Bumped JS/CSS cache keys to `20260531-0240`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification confirmed the VS HUD loads with `game.js?v=20260531-0240` / `styles.css?v=20260531-0240`, the result text no longer ends with a dot, and no console warnings/errors appeared.
+- `node --check src/game.js` passes.
+
+Open questions:
+- None.
+
+## 2026-05-31 01:42 - Dev 2
+
+Changed:
+- Rebuilt `Поле 2` cell events from the user screenshot legend while keeping the existing 15x15 size and route.
+- Made `Поле 2` the default board in the settings select and JS fallbacks.
+- Moved the field2 middle monster from `8-10` to `8-9`; its door transition now leads to `8-10`.
+- Bumped JS/CSS cache keys to `20260531-0239`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `src/game.config.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Static validation confirms field2 has 115 path cells, 115 event cells, no events outside the path, and enemies at `1-0`, `8-9`, `9-14`, `10-6`.
+- `10-6` remains the final monster / finish cell.
+
+Open questions:
+- None.
+
+## 2026-05-31 01:23 - Dev
+
+Changed:
+- Added a VS player-battle HUD using the existing monster-battle overlay style.
+- VS battles now show the round, shared bank, all player portraits, current rolling player, per-player strength results, tie rerolls, and the winner.
+- Bumped JS/CSS cache keys to `20260531-0237`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification used exact movement to land on the field1 VS cell, confirmed the VS HUD appears during the battle and winner prompt, and found no console warnings/errors.
+- `node --check src/game.js` and `node --check src/game.config.js` pass.
+
+Open questions:
+- None.
+
+## 2026-05-31 01:14 - Dev 2
+
+Changed:
+- Fixed exact movement from the settings `Пройти` control to move exactly the entered number of route steps.
+- Exact movement now resolves only the final landing cell, so `22` steps from the shown start position lands on the marked VS cell at `8-3` instead of stopping one cell early.
+- Added working convention: red arrows drawn on user screenshots mark the primary cell/UI area to inspect or change.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification confirmed `Пройти 22` lands on tile `8-3` (`VS`) and shows the VS prompt.
+- Treat future red arrows in screenshots as the user's exact focus marker unless the text says otherwise.
+
+Open questions:
+- None.
+
+## 2026-05-31 01:09 - Dev
+
+Changed:
+- Replaced the `Монстры не останавливают` checkbox with a three-option pass-through mode select: `По умолчанию`, `Монстры не останавливают`, `Проходить все`.
+- `По умолчанию`: pass-through monster victory stops remaining movement, and pass-through shops still trigger.
+- `Монстры не останавливают`: pass-through monster victory allows remaining movement to continue.
+- `Проходить все`: pass-through monsters and shops do not trigger their effects during movement.
+- Bumped JS/CSS cache keys to `20260531-0236`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification confirms the select exists, defaults to `По умолчанию`, has all three options, and loads `game.js?v=20260531-0236` with no warnings/errors.
+- `node --check src/game.js` and `node --check src/game.config.js` pass.
+
+Open questions:
+- None.
+
+## 2026-05-31 00:57 - Dev 2
+
+Changed:
+- Changed selected-player modifier presets to `+5`, `+50`, `-5`, `-50` for both `Шаги` and `Сила`.
+- Removed the `+10` preset.
+- Updated modifier preset logic to allow negative values.
+- Bumped JS/CSS cache keys to `20260531-0235`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification confirmed both modifier rows fit in one line and negative presets update selected player values correctly.
+
+Open questions:
+- None.
+
+## 2026-05-31 00:55 - Dev
+
+Changed:
+- Added a settings checkbox `Монстры не останавливают`, default off.
+- When off, winning a pass-through monster battle stops the remaining movement for ordinary rolls and exact/forced forward movement.
+- When on, winning a pass-through monster battle lets the player continue the remaining movement.
+- Bumped JS/CSS cache keys to `20260531-0234`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification confirms the checkbox exists, is unchecked by default, and the page loads `game.js?v=20260531-0234` without warnings/errors.
+- `node --check src/game.js` and `node --check src/game.config.js` pass.
+
+Open questions:
+- None.
+
+## 2026-05-31 00:48 - Dev 2
+
+Changed:
+- Replaced custom amount inputs for selected-player modifiers with preset buttons only: `Шаги +5 +10 +50` and `Сила +5 +10 +50`.
+- Added an exact-move cheat row below modifiers with default value `4` and an `Идти` button.
+- Exact move uses the active turn player and moves exactly the typed number of steps without dice or movement bonuses.
+- Bumped JS/CSS cache keys to `20260531-0233`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification confirmed old modifier amount inputs are gone, presets update the selected modifier player, exact move default is `4`, and exact move ignored an existing `Шаги +10` bonus.
+
+Open questions:
+- None.
+
+## 2026-05-31 00:45 - Dev
+
+Changed:
+- Swapped the highlighted field1 VS and red cells per user correction.
+- Field1 `8-3` is now `vs`; field1 `7-4` is now `red`.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser DOM verification confirms `8-3` renders as `tile-vs` and `7-4` renders as `tile-red`.
+
+Open questions:
+- None.
+
+## 2026-05-31 00:43 - Dev
+
+Changed:
+- Added a new `VS` field type on field1 at `7-4`, replacing the marked red cell.
+- Copied the provided VS icon into `assets/icons/vs_1254.png` and wired it into board rendering.
+- Restored `8-3` as a red field after briefly placing VS there during implementation.
+- Added VS field rules: all players discard up to 10 coins into a shared pot, then all players roll battle strength; the highest strength wins the pot.
+- Added tie rerolls among only tied top-strength players.
+- Updated battle wording toward the new concepts: battle strength is dice plus bonuses, and monster prompts now refer to strength instead of damage/урон.
+- Bumped JS/CSS cache keys to `20260531-0233`.
+
+Files:
+- `assets/icons/vs_1254.png`
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification confirms `7-4` renders as `tile-vs` using `./assets/icons/vs_1254.png?v=20260531-0233`, and `8-3` is red.
+- `node --check src/game.js` and `node --check src/game.config.js` pass.
+
+Open questions:
+- None.
+
+## 2026-05-31 00:31 - Dev 2
+
+Changed:
+- Fixed enemy pass-through handling: entering an enemy cell during ordinary dice movement or forced forward movement now immediately resolves the enemy battle.
+- This fixes field2 lower monster not triggering when a player crosses it via a green-field forward movement effect.
+- If the battle sends the player away or finishes the game, remaining movement stops; if the player wins and stays on the enemy cell, remaining movement can continue.
+- Bumped JS/CSS cache keys to `20260531-0232`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser reload verification passed with `game.js?v=20260531-0232` and no warnings/errors.
+
+Open questions:
+- None.
+
+## 2026-05-31 00:26 - Dev
+
+Changed:
+- Corrected the previous field1 cell swap.
+- Restored red on `7-4`.
+- Moved the first field1 monster (`damage: 6`, door `middle`) from `8-3` to `7-9`.
+- Changed the old monster cell `8-3` to red.
+
+Files:
+- `src/game.js`
+- `src/game.config.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser DOM verification confirms `7-4` is red, `7-9` is enemy with power 6, and `8-3` is red.
+
+Open questions:
+- None.
+
+## 2026-05-31 00:03 - Dev
+
+Changed:
+- Swapped two field1 cells from the user screenshot: `7-4` is now `tadam`, and `7-9` is now `red`.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser DOM verification on field1 confirms `7-4` renders as `ТАДАМ!` and `7-9` renders as `Красное поле`.
+
+Open questions:
+- None.
+
+## 2026-05-30 23:52 - Dev 2
+
+Changed:
+- Removed player names from the modifier player cards; they now show avatar plus step/strength values only.
+- Swapped modifier controls so `Шаги` appears above `Сила`.
+- Prevented modifier player cards from using the global gold button hover fill; hover now preserves the dark card background.
+- Bumped JS/CSS cache keys to `20260530-0231`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification confirmed control order is `Шаги` then `Сила`, and selected-card hover keeps the same dark background.
+
+Open questions:
+- None.
+
+## 2026-05-30 23:47 - Dev 2
+
+Changed:
+- Renamed modifier labels from `Бой` to `Сила` and from `Шаг` to `Шаги`.
+- Kept 4-player compact modifier cards short as `С +N` / `Ш +N`.
+- Put modifier amount inputs and `-` / `+` controls in one horizontal row matching the player modifier row height.
+- Changed selected modifier-card styling to use only border/outline highlighting without color-filling the full card.
+- Bumped JS/CSS cache keys to `20260530-0229`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification confirmed modifier control rows and player-card row are each `58px` tall, controls stay on one line, and selected-card background matches unselected cards.
+
+Open questions:
+- None.
+
+## 2026-05-30 23:43 - Dev 2
+
+Changed:
+- Added compact 4-player styling for the modifier player row.
+- In 4-player games, modifier cards use smaller avatar/text and compact labels `Ш +N` / `Б +N`.
+- Bumped JS/CSS cache keys to `20260530-0226`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification with 4 players confirmed all four modifier cards stay in one row without overflow.
+
+Open questions:
+- None.
+
+## 2026-05-30 23:39 - Dev 2
+
+Changed:
+- Replaced the single active-player modifier status with a compact row of clickable modifier cards for every player in the current party.
+- Added selected-player state for step/battle modifier controls; `-` / `+` now apply to the selected modifier card, not the active turn player.
+- Highlighted the selected modifier card and kept all modifier cards in one row.
+- Bumped JS/CSS cache keys to `20260530-0225`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification confirmed selecting player 2 and pressing both `+` buttons updates only player 2 to `Шаг +5` / `Бой +5`; player 1 remains at `0`.
+
+Open questions:
+- None.
+
+## 2026-05-30 23:33 - Dev 2
+
+Changed:
+- Added step-bonus settings matching the battle-force controls: amount input plus `-` / `+` buttons for the active player.
+- Added an active-player status row in settings with avatar, name, current `Шаг` value, and current `Бой` value.
+- Step and battle badges still appear next to the player name in score cards only when nonzero.
+- Bumped JS/CSS cache keys to `20260530-0224`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification confirmed the settings row starts at `Шаг +0` / `Бой +0`, and clicking both `+` buttons updates status and score-card badges to `+5`.
+
+Open questions:
+- None.
+
+## 2026-05-30 23:29 - Dev 2
+
+Changed:
+- Open portal rendering now removes the monster strength badge from the tile instead of only hiding it.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser reload verification passed with no warnings/errors.
+
+Open questions:
+- None.
+
+## 2026-05-30 23:08 - Dev 2
+
+Changed:
+- Fixed regular enemy battles to include the player's full combat bonus: passive step bonus plus battle-force bonus.
+- Fixed normal movement to use only passive step bonus, so battle-force edits no longer change walk distance.
+- Fixed boss final-battle modifier setup to include battle-force bonus alongside passive step bonus.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser reload verification passed with no warnings/errors.
+
+Open questions:
+- None.
+
+## 2026-05-30 23:01 - Dev 2
+
+Changed:
+- Moved the battle-force bonus display from score stats to a small badge next to the player's name.
+- Hidden the battle-force badge when the player's battle bonus is `0`.
+- Made `field1` the default board in the board selector and JS fallback.
+- Bumped JS/CSS cache keys to `20260530-0223`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification confirmed default board is `field1`, the rendered board is 10x10, and no battle bonus badges render at `0`.
+
+Open questions:
+- None.
+
+## 2026-05-30 22:56 - Dev 2
+
+Changed:
+- Added the new portal image as `assets/icons/portal_1254.png`.
+- Open portal cells now replace the defeated monster icon with the portal icon and hide the monster strength badge.
+- Bumped JS/CSS cache keys to `20260530-0222`.
+
+Files:
+- `assets/icons/portal_1254.png`
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Portal travel logic is unchanged; this update is visual only.
+
+Open questions:
+- None.
+
+## 2026-05-30 22:52 - Dev
+
+Changed:
+- Added battle-force controls to settings: a numeric amount input defaulting to 5 and `-` / `+` buttons for the active player.
+- Added per-player `battleBonus`, shown in score cards as `Бой +N`.
+- Included battle bonus in regular enemy battles and final-battle rolls, alongside existing passive step bonuses.
+- Updated bonus text formatting so negative battle bonuses display cleanly.
+- Bumped `index.html` stylesheet and game script cache keys to `20260530-0197`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser verification confirmed settings controls exist, default amount is `5`, `+` changes the active player from `Бой +0` to `Бой +5`, and `-` returns it to `Бой +0`.
+
+Open questions:
+- None.
+
+## 2026-05-30 22:39 - Dev 2
+
+Changed:
+- Continued the interrupted portal rule work from the previous Dev 2 chat.
+- Added open portals on monster cells once every current player has defeated that monster.
+- Portal cells now ask the moving player to choose any other open portal or skip when stepped on or passed through, then continue remaining forward movement from the chosen portal.
+- Added visible portal styling and kept final monster excluded from ordinary portal travel.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified `field2` still renders as 15x15 with monsters at `9-14`, `8-10`, `1-0`, and final monster `10-6`.
+- Verified switching to `field1` renders 10x10 and browser console has no warnings/errors after reload and board switch.
+
+Open questions:
+- None.
+
+## 2026-05-30 21:51 - Dev
+
+Changed:
+- Moved field2 monsters to match the latest reference image.
+- Field2 monster cells are now `9-14` strength 6, `8-10` strength 10, `1-0` strength 16, and final monster `10-6` strength 24.
+- Removed enemy events from the old field2 monster cells `11-11`, `0-9`, and `3-4`.
+
+Files:
+- `src/game.js`
+- `src/game.config.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser DOM verification confirms new monster powers and old cells are normal path tiles.
+- Field2 monster spacing by route order is now 22, 30, 46 cells between consecutive monsters.
+
+Open questions:
+- None.
+
+## 2026-05-30 21:48 - Dev
+
+Changed:
+- Removed the remaining extra visual tile on field2 at `14-8`.
+- Kept the field2 route unchanged because `14-8` was only in `pathCells`, not in the route.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser DOM verification confirms `14-8` now renders as empty while `14-7` and `14-9` remain path tiles.
+
+Open questions:
+- None.
+
+## 2026-05-30 21:46 - Dev
+
+Changed:
+- Corrected the field2 final approach to match the original 15x15 reference drawing.
+- Restored the lower bridge cells `12-7` and `13-7` that were removed by mistake.
+- Removed the actual extra shortcut cell `11-6`.
+- Routed the final segment through the drawn central block: `12-7 -> 12-6 -> 12-5 -> 12-4 -> 11-4 -> 10-4 -> 9-4 -> 8-4 -> 8-5 -> 8-6 -> 8-7 -> 9-7 -> 10-7 -> 10-6`.
+- Rechecked field2 route continuity; all route steps are adjacent. Field2 monster spacing is now 26, 27, 40 cells.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Previous 21:41 update removed the wrong cells; this entry supersedes that field2 route note.
+- Browser DOM verification confirms `11-6` is empty, `12-7` and `13-7` are path tiles, and there are no browser warnings/errors.
+
+Open questions:
+- None.
+
+## 2026-05-30 21:41 - Dev
+
+Changed:
+- Removed two extra tiles from field2 near the final-monster area: `12-7` and `13-7`.
+- Rerouted the final approach through `13-6` so the visible route remains continuous into the final monster.
+- Rechecked field2 monster spacing after the change: 26, 27, 28 cells between consecutive monsters.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser DOM verification confirmed `12-7` and `13-7` now render as empty tiles and there are no browser warnings/errors.
+
+Open questions:
+- None.
+
+## 2026-05-30 21:37 - Dev
+
+Changed:
+- Continued the interrupted field-selection work from the previous Dev.
+- Added dynamic board grid sizing in CSS so `field1` renders as 10x10 and `field2` renders as 15x15 from `--board-cols` / `--board-rows`.
+- Kept `field2` as the default board in settings and added compact icon/token sizing for the 15x15 board.
+- Bumped `index.html` stylesheet and game script cache keys to `20260530-0196`.
+- Calculated monster spacing by route order: field1 has 10, 12, 9 cells between consecutive monsters; field2 has 26, 27, 30 cells between consecutive monsters.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `src/game.config.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- In-app Browser blocked direct navigation to local `127.0.0.1`; verification used `node --check`, local server `curl`, and route/config calculations instead.
+
+Open questions:
+- None.
+
 ## 2026-05-25 22:38 - Dev
 
 Changed:
