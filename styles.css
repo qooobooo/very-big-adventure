@@ -4292,6 +4292,16 @@ button.shop-card-decline:focus-visible {
     line-height: 1.05;
   }
 
+  .settings-toggle {
+    font-size: 0;
+  }
+
+  .settings-toggle::after {
+    content: "Настр.";
+    font-size: 0.82rem;
+    line-height: 1.05;
+  }
+
   .board-panel {
     display: grid;
     grid-template-columns: 42px minmax(0, 1fr) minmax(0, 1.45fr);
@@ -4340,67 +4350,67 @@ button.shop-card-decline:focus-visible {
   .enemy-battle-hud {
     top: auto;
     right: 6px;
-    bottom: 8px;
+    bottom: 6px;
     left: 6px;
   }
 
   .enemy-battle-panel {
     width: 100%;
-    max-height: min(238px, calc(100% - 16px));
-    gap: 5px;
-    padding: 6px;
+    max-height: calc(100% - 12px);
+    gap: 4px;
+    padding: 5px;
     overflow: hidden;
   }
 
   .enemy-battle-duel {
-    grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
     gap: 4px;
   }
 
   .enemy-battle-hud .final-battle-side {
-    min-height: 98px;
-    padding: 5px 6px;
+    min-height: 78px;
+    padding: 4px 5px;
   }
 
   .enemy-battle-hud .enemy-battle-portrait,
   .enemy-battle-hud .enemy-battle-portrait.player-portrait {
-    width: 40px;
-    height: 40px;
-    margin-bottom: 3px;
+    width: 34px;
+    height: 34px;
+    margin-bottom: 2px;
   }
 
   .enemy-battle-hud .final-battle-vs {
-    width: 32px;
-    height: 32px;
-    font-size: 0.76rem;
+    width: 28px;
+    height: 28px;
+    font-size: 0.66rem;
   }
 
   .enemy-battle-hud .enemy-battle-name {
-    font-size: 0.64rem;
+    font-size: 0.58rem;
   }
 
   .battle-strength-badge {
-    min-height: 17px;
-    margin-top: 4px;
-    padding: 1px 6px;
-    font-size: 0.54rem;
+    min-height: 15px;
+    margin-top: 2px;
+    padding: 1px 5px;
+    font-size: 0.48rem;
   }
 
   .enemy-battle-side small {
-    margin-top: 4px;
-    font-size: 0.52rem;
+    margin-top: 3px;
+    font-size: 0.46rem;
   }
 
   .enemy-battle-side strong {
-    margin-top: 2px;
-    font-size: 1.16rem;
+    margin-top: 1px;
+    font-size: 1rem;
   }
 
   .enemy-battle-result {
-    min-height: 30px;
-    padding: 5px 8px;
-    font-size: 0.68rem;
-    line-height: 1.12;
+    min-height: 0;
+    padding: 4px 6px;
+    font-size: 0.58rem;
+    line-height: 1.08;
   }
 
   .event-toast.action-prompt:has(.good-card-reveal),

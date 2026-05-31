@@ -15,6 +15,7 @@ const ui = {
   activePlayerRole: document.querySelector("#activePlayerRole"),
   autoRevealCards: document.querySelector("#autoRevealCards"),
   botCount: document.querySelector("#botCount"),
+  botSpeed: document.querySelector("#botSpeed"),
   boardSelect: document.querySelector("#boardSelect"),
   choicePanel: document.querySelector("#choicePanel"),
   diceCount: document.querySelector("#diceCount"),
@@ -591,6 +592,8 @@ function randomChoice(items) {
 }
 
 function botDelay(kind = "default") {
+  if (fastBotsEnabled()) return 0;
+
   const ranges = {
     choice: [1800, 2800],
     card: [450, 850],
@@ -641,6 +644,10 @@ function botChoiceDelay(kind = "choice") {
   if (kind === "card") return botDelay("card");
   if (kind === "preRoll") return botDelay("preRoll");
   return botDelay(kind);
+}
+
+function fastBotsEnabled() {
+  return ui.botSpeed?.value === "fast";
 }
 
 function chooseBotPreRoll(player, card) {

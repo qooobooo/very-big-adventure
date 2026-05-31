@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Очень Большая Бродилка — веб-прототип</title>
-    <link rel="stylesheet" href="./styles.css?v=20260531-0256" />
+    <link rel="stylesheet" href="./styles.css?v=20260531-0257" />
   </head>
   <body>
     <main class="app-shell">
@@ -100,6 +100,13 @@
                   <option value="all">Проходить все</option>
                 </select>
               </label>
+              <label class="settings-select">
+                <span>Скорость ботов</span>
+                <select id="botSpeed">
+                  <option value="standard" selected>Стандартно</option>
+                  <option value="fast">Быстро</option>
+                </select>
+              </label>
               <label class="cheat-toggle">
                 <input id="autoRevealCards" type="checkbox" />
                 <span>Сразу открывать карты</span>
@@ -131,6 +138,6 @@
 
     </main>
 
-    <script type="module" src="./src/game.js?v=20260531-0256"></script>
+    <script type="module" src="./src/game.js?v=20260531-0257"></script>
   </body>
 </html>

@@ -20,6 +20,41 @@ Open questions:
 - ...
 ```
 
+## 2026-05-31 04:23 - Dev 2
+
+Changed:
+- Tightened the touch-phone enemy battle HUD further so the result row and duel cards fit inside the board overlay.
+- On touch phones, the `Настройки` button is visually shortened to `Настр.` without changing the desktop/Codex label.
+- Kept the existing local cache key `20260531-0257`.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- There were already local uncommitted `Скорость ботов` changes in `index.html`, `src/game.js`, and this updates file before this entry.
+
+Open questions:
+- None.
+
+## 2026-05-31 04:20 - Dev
+
+Changed:
+- Added a settings dropdown `Скорость ботов` with `Стандартно` default and `Быстро`.
+- In fast bot speed mode, bot thinking delays return `0`, so choices, card actions, pre-roll decisions, and prompt confirmations happen as fast as the current animations allow.
+- Bumped JS/CSS cache keys to `20260531-0257`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` passes.
+
+Open questions:
+- None.
+
 ## 2026-05-31 03:59 - Dev 2
 
 Changed:
