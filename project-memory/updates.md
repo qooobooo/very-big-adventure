@@ -20,6 +20,24 @@ Open questions:
 - ...
 ```
 
+## 2026-05-31 03:43 - Dev 2
+
+Changed:
+- On phone-only layout, swapped the mobile order of TADAM and setup/settings so TADAM appears above setup controls.
+- Reduced the mobile `Настройки` button text size so it fits in the one-row setup layout.
+- Bumped JS/CSS cache keys to `20260531-0252`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is limited to `@media (max-width: 680px)` and should not affect desktop/Codex layouts.
+
+Open questions:
+- None.
+
 ## 2026-05-31 03:34 - Dev 2
 
 Changed:

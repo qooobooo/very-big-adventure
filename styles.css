@@ -4275,6 +4275,23 @@ button.shop-card-decline:focus-visible {
 }
 
 @media (max-width: 680px) {
+  .side-panel {
+    display: contents;
+  }
+
+  .tadam-card {
+    order: 1;
+  }
+
+  .game-settings {
+    order: 2;
+  }
+
+  .settings-toggle {
+    font-size: 0.58rem;
+    line-height: 1.05;
+  }
+
   .board-panel {
     display: grid;
     grid-template-columns: 42px minmax(0, 1fr) minmax(0, 1.45fr);
