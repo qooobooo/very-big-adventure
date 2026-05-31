@@ -20,6 +20,24 @@ Open questions:
 - ...
 ```
 
+## 2026-05-31 03:59 - Dev 2
+
+Changed:
+- On touch phones, card reveal prompts for Good/Bad/TADAM/Joe Shop now use fixed positioning in the center of the visible screen.
+- Kept desktop/Codex reveal positioning unchanged by keeping the rule scoped to the phone-only touch media query.
+- Bumped JS/CSS cache keys to `20260531-0256`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- This replaces the previous phone-only bottom anchoring for reveal cards.
+
+Open questions:
+- None.
+
 ## 2026-05-31 03:56 - Dev 2
 
 Changed:

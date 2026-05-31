@@ -4407,16 +4407,20 @@ button.shop-card-decline:focus-visible {
   .event-toast.action-prompt:has(.bad-card-reveal),
   .event-toast.action-prompt:has(.tadam-card-reveal),
   .event-toast.action-prompt:has(.shop-card-reveal) {
-    top: auto;
-    bottom: 8px;
+    position: fixed;
+    top: 50%;
+    bottom: auto;
+    left: 50%;
+    z-index: 80;
     width: auto;
-    max-width: calc(100% - 16px);
-    max-height: calc(100% - 16px);
+    max-width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
     justify-items: center;
+    transform: translate(-50%, -50%);
   }
 
   .event-toast.action-prompt:has(.shop-card-reveal) {
-    width: calc(100% - 16px);
+    width: calc(100vw - 16px);
   }
 
   .event-toast.action-prompt:has(.good-card-reveal) .event-toast-copy,
