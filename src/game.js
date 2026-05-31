@@ -916,6 +916,13 @@ function shouldAutoResolvePrompt() {
   return isBotPlayerId(state?.botTurnPlayerId);
 }
 
+function botControlsLocked() {
+  if (!state || state.finished) return false;
+  if (actionPromptResolver) return shouldAutoResolvePrompt();
+  if (isBotPlayerId(state.botTurnPlayerId)) return true;
+  return isBot(currentPlayer());
+}
+
 function scheduleBotAction(delay = botDelay(), { replace = false } = {}) {
   if (replace) {
     window.clearTimeout(botActionTimer);
@@ -975,7 +982,7 @@ function runBotAction() {
     !state.pendingPreRoll &&
     !state.pendingShop
   ) {
-    triggerRollButtonAction();
+    triggerRollButtonAction({ fromBot: true });
   }
 }
 
@@ -1185,6 +1192,7 @@ function isPlayerTurnActive(player) {
 
 function renderScores() {
   scoreStripEl.innerHTML = "";
+  const compactBonusLabels = isPhoneLayout();
   for (const player of state.players) {
     const battleBonus = playerBattleBonus(player);
     const stepBonus = playerStepBonus(player);
@@ -1199,8 +1207,8 @@ function renderScores() {
         </span>
         <span class="score-player-name">
           <strong>${player.name}</strong>
-          ${stepBonus ? `<span class="score-bonus score-step-bonus" title="Шаги">${stepBonusText(stepBonus)}</span>` : ""}
-          ${battleBonus ? `<span class="score-battle-bonus" title="Сила">${battleForceText(battleBonus)}</span>` : ""}
+          ${stepBonus ? `<span class="score-bonus score-step-bonus" title="Шаги">${stepBonusText(stepBonus, compactBonusLabels)}</span>` : ""}
+          ${battleBonus ? `<span class="score-battle-bonus" title="Сила">${battleForceText(battleBonus, compactBonusLabels)}</span>` : ""}
         </span>
         <span class="pill">${iconizeHtml(tileTitle(player.position))}</span>
       </div>
@@ -1215,6 +1223,10 @@ function renderScores() {
     `;
     scoreStripEl.append(card);
   }
+}
+
+function isPhoneLayout() {
+  return window.matchMedia?.("(max-width: 680px) and (hover: none) and (pointer: coarse)")?.matches ?? false;
 }
 
 function renderShopBadges(player) {
@@ -1264,13 +1276,14 @@ function renderTurn() {
     ui.roundTitle.textContent = state.finished ? "Игра завершена" : `Раунд ${state.round}`;
   }
   ui.rollBtn.disabled =
-    !actionPromptResolver &&
-    (state.finished ||
-      state.isAnimating ||
-      Boolean(state.pendingCardChoice) ||
-      Boolean(state.pendingChoice) ||
-      Boolean(state.pendingPreRoll) ||
-      Boolean(state.pendingShop));
+    botControlsLocked() ||
+    (!actionPromptResolver &&
+      (state.finished ||
+        state.isAnimating ||
+        Boolean(state.pendingCardChoice) ||
+        Boolean(state.pendingChoice) ||
+        Boolean(state.pendingPreRoll) ||
+        Boolean(state.pendingShop)));
 }
 
 function renderChoicePanel() {
@@ -3705,12 +3718,13 @@ function formatRoll(rolls) {
   return rolls.length === 1 ? String(total) : `${rolls.join(" + ")} = ${total}`;
 }
 
-function triggerRollButtonAction() {
+function triggerRollButtonAction({ fromBot = false } = {}) {
+  if (!fromBot && (botControlsLocked() || ui.rollBtn.disabled)) return;
   if (actionPromptResolver) {
     actionPromptResolver();
     return;
   }
-  if (ui.rollBtn.disabled) return;
+  if (!fromBot && ui.rollBtn.disabled) return;
   hidePassiveEventToast();
   rollAndMove();
 }

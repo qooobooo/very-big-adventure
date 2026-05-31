@@ -20,6 +20,58 @@ Open questions:
 - ...
 ```
 
+## 2026-05-31 04:42 - Dev
+
+Changed:
+- Adjusted the bot-control lock so disabled `Далее` / `Бросить кубик` blocks human clicks/Enter but still allows bot auto-actions.
+- Bot roll starts now call the shared button action with an internal `fromBot` flag.
+- Bumped JS/CSS cache keys to `20260531-0259`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` passes.
+
+Open questions:
+- None.
+
+## 2026-05-31 04:36 - Dev 2
+
+Changed:
+- On touch-phone layout, top player card bonus chips now show compact labels `Ш +N` and `С +N` instead of `Шаги +N` and `Сила +N`.
+- Desktop/Codex layouts keep the full labels.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- There were already local uncommitted `0258` cache and bot-control lock changes in `index.html`/`src/game.js` before this update.
+
+Open questions:
+- None.
+
+## 2026-05-31 04:35 - Dev
+
+Changed:
+- Added a bot-control lock so the main `Далее` / `Бросить кубик` button is disabled while a bot owns the current prompt or turn.
+- Guarded the button handler too, so click/Enter cannot manually advance bot prompts.
+- Bumped JS/CSS cache keys to `20260531-0258`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` passes.
+
+Open questions:
+- None.
+
 ## 2026-05-31 04:23 - Dev 2
 
 Changed:
