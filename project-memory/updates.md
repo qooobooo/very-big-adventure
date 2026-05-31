@@ -20,6 +20,42 @@ Open questions:
 - ...
 ```
 
+## 2026-05-31 03:56 - Dev 2
+
+Changed:
+- On touch phones, card reveal prompts for Good/Bad/TADAM/Joe Shop now anchor to the bottom of the board instead of appearing high over the playfield.
+- Kept the existing desktop/Codex reveal positioning unchanged by scoping the rule to `@media (max-width: 680px) and (hover: none) and (pointer: coarse)`.
+- Bumped JS/CSS cache keys to `20260531-0255`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- This builds on the previous phone-only compact enemy battle HUD change in the same local commit.
+
+Open questions:
+- None.
+
+## 2026-05-31 03:53 - Dev 2
+
+Changed:
+- Added phone-only compact enemy battle HUD rules so battle UI fits inside the visible board area on touch phones.
+- On phones, enemy battle HUD anchors near the bottom of the board and uses smaller cards, portraits, VS marker, strength chip, and result text.
+- Bumped JS/CSS cache keys to `20260531-0254`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Rules are inside `@media (max-width: 680px) and (hover: none) and (pointer: coarse)`, so Codex/desktop layouts are not targeted.
+
+Open questions:
+- None.
+
 ## 2026-05-31 03:48 - Dev 2
 
 Changed:

@@ -4336,4 +4336,94 @@ button.shop-card-decline:focus-visible {
     min-height: 48px;
     font-size: 0.9rem;
   }
+
+  .enemy-battle-hud {
+    top: auto;
+    right: 6px;
+    bottom: 8px;
+    left: 6px;
+  }
+
+  .enemy-battle-panel {
+    width: 100%;
+    max-height: min(238px, calc(100% - 16px));
+    gap: 5px;
+    padding: 6px;
+    overflow: hidden;
+  }
+
+  .enemy-battle-duel {
+    grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .enemy-battle-hud .final-battle-side {
+    min-height: 98px;
+    padding: 5px 6px;
+  }
+
+  .enemy-battle-hud .enemy-battle-portrait,
+  .enemy-battle-hud .enemy-battle-portrait.player-portrait {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 3px;
+  }
+
+  .enemy-battle-hud .final-battle-vs {
+    width: 32px;
+    height: 32px;
+    font-size: 0.76rem;
+  }
+
+  .enemy-battle-hud .enemy-battle-name {
+    font-size: 0.64rem;
+  }
+
+  .battle-strength-badge {
+    min-height: 17px;
+    margin-top: 4px;
+    padding: 1px 6px;
+    font-size: 0.54rem;
+  }
+
+  .enemy-battle-side small {
+    margin-top: 4px;
+    font-size: 0.52rem;
+  }
+
+  .enemy-battle-side strong {
+    margin-top: 2px;
+    font-size: 1.16rem;
+  }
+
+  .enemy-battle-result {
+    min-height: 30px;
+    padding: 5px 8px;
+    font-size: 0.68rem;
+    line-height: 1.12;
+  }
+
+  .event-toast.action-prompt:has(.good-card-reveal),
+  .event-toast.action-prompt:has(.bad-card-reveal),
+  .event-toast.action-prompt:has(.tadam-card-reveal),
+  .event-toast.action-prompt:has(.shop-card-reveal) {
+    top: auto;
+    bottom: 8px;
+    width: auto;
+    max-width: calc(100% - 16px);
+    max-height: calc(100% - 16px);
+    justify-items: center;
+  }
+
+  .event-toast.action-prompt:has(.shop-card-reveal) {
+    width: calc(100% - 16px);
+  }
+
+  .event-toast.action-prompt:has(.good-card-reveal) .event-toast-copy,
+  .event-toast.action-prompt:has(.bad-card-reveal) .event-toast-copy,
+  .event-toast.action-prompt:has(.tadam-card-reveal) .event-toast-copy,
+  .event-toast.action-prompt:has(.shop-card-reveal) .event-toast-copy {
+    max-height: 100%;
+    overflow: auto;
+  }
 }
