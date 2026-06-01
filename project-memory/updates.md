@@ -20,6 +20,1367 @@ Open questions:
 - ...
 ```
 
+## 2026-06-02 00:46 - Dev
+
+Changed:
+- Made multiple active TADAM cards `Охота на монстра` stack.
+- `awardMonsterHuntReward()` now sums every active `monster-win-coins` TADAM effect instead of using only the first one.
+- Added `activeTadamEffects(type)` helper for multi-card TADAM effects.
+- Bumped the game script cache key to `20260602-0306`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Two active `Охота на монстра` cards now grant 30 coins on a monster victory; three grant 45.
+- Other TADAM effects that intentionally use the first active matching rule still use `activeTadamEffect()`.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser reload confirmed `./src/game.js?v=20260602-0306` and no broken images.
+
+Open questions:
+- None.
+
+## 2026-06-02 00:44 - Dev
+
+Changed:
+- Added a `Показать поле` button to the regular opened-monster portal choice.
+- In portal field-preview mode the portal-choice UI is hidden, the main roll button changes to `Портал`, and clicking it returns to the portal-choice UI.
+- Added pulsing `portal-preview-outline` markers on cells where the player would finish after exiting each available portal.
+- Bumped the stylesheet cache key to `styles.css?v=20260602-0305`; the game script cache key is now `game.js?v=20260602-0306` after the later TADAM stacking update.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- This applies to ordinary portals created from enemies defeated by all players, not to `Портал хаоса`.
+- The endpoint preview follows the current default route and locked-door checks from the chosen exit for the remaining steps.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser smoke on `localhost:5173` opened two field2 portals in a one-player test setup, landed on an opened portal, confirmed `Показать поле`, confirmed the hidden choice panel + `Портал` roll button + one preview outline, then confirmed the portal-choice UI returns and outlines are removed.
+- Screenshot saved under `outputs/portal-preview-check.png`.
+
+Open questions:
+- None.
+
+## 2026-06-02 00:23 - Dev
+
+Changed:
+- Restored the Shop card `extra-die` / `Перед ходом можешь заплатить 5 монет и кинуть на 1 кубик больше` after it was mistakenly removed.
+- Restored the matching `shop,extra-die` row in `cards-google-sheet.csv`.
+- Wrote the same `extra-die` row back to Google Sheet `Cards Config`, tab `shop`, row 5.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/updates.md`
+
+Notes for others:
+- The old passive `+1 к броску кубика` text remains removed: local search and Google Sheet search for `броску кубика` return no rows.
+- Shop card config is now: `step-plus` / `+1 к шагам`, `battle-plus` / `+1 к силе`, `coin-plus` / `+2 к монетам`, and `extra-die` / paid +1 die before a turn.
+- Local config/CSV comparison reports 21 cards total, Shop 4, with no mismatches.
+- `node --check src/cards.config.js`, `node --check src/game.js`, and `git diff --check` pass.
+
+Open questions:
+- None.
+
+## 2026-06-02 00:19 - Dev
+
+Changed:
+- Fixed roll-event rule prompts overlapping the dice roll button, especially in the `Настольный` UI.
+- Added an explicit `roll-event-prompt` class for dice-event prompts so layout no longer depends only on CSS `:has(...)`.
+- Made the roll-event card narrower, anchored it away from the roll button on desktop/tablet, and kept a narrower mobile width.
+- Extended viewport correction to one-column layouts up to `1180px` so the prompt stays visible after page scroll.
+- Bumped cache keys to `styles.css?v=20260602-0304` and `game.js?v=20260602-0302`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- No gameplay mechanics were changed.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser smoke on `localhost:5173` with `Настольный` UI checked Chaos Portal prompt at 1116px, 1440px, and 390px; `overlapRoll` was false, card stayed within viewport, and no broken images/errors were reported.
+- Screenshots saved under `outputs/roll-event-no-overlap-1116.png`, `outputs/roll-event-no-overlap-1440.png`, and `outputs/roll-event-no-overlap-390.png`.
+
+Open questions:
+- None.
+
+## 2026-06-02 00:16 - Dev
+
+Changed:
+- Removed the old Shop card `extra-die` / `+1 кубик за 5` from `src/cards.config.js`.
+- Removed the matching `shop,extra-die` row from `cards-google-sheet.csv`.
+- Synced Google Sheet `Cards Config` tab `shop` to the current three cards: `step-plus` / `+1 к шагам`, `battle-plus` / `+1 к силе`, and `coin-plus` / `+2 к монетам`.
+- Fixed the Google Sheet `shop` tab row that still showed `+1 к броску кубика` for `step-plus`.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/updates.md`
+
+Notes for others:
+- Local comparison now reports 20 cards in both `src/cards.config.js` and `cards-google-sheet.csv`: Good 7, Bad 3, TADAM 7, Shop 3, with no mismatches.
+- Google Sheet `shop` tab was reread after update and no longer contains `броску кубика`; `battle-plus` is present on row 3.
+- `node --check src/cards.config.js`, `node --check src/game.js`, and `git diff --check` pass.
+
+Open questions:
+- None.
+
+## 2026-06-02 00:15 - Art/UI
+
+Changed:
+- Made the field2 final monster tile icon slightly larger while keeping a stricter max-height inset guard so it stays inside the cell.
+- Bumped the stylesheet cache key to `20260602-0303`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- No monster rules, final boss stats, route cells, door logic, or battle UI changed.
+- Browser verification confirmed field2 final boss cell `10-6` renders `final_enemy.png` at about `22.94x26.15` inside a `35x35` tile, with about `6px` left/right/top inset and about `2.7px` bottom inset; no broken images.
+
+Open questions:
+- None.
+
+## 2026-06-02 00:08 - Dev
+
+Changed:
+- Added reusable roll-event rule cards for action prompts where a field asks the player to roll before the effect resolves.
+- `Портал хаоса` now shows its actual 1-2 / 3-4 / 5 / 6 outcomes and destination cells before the roll.
+- `Кубик удачи` now shows its 6 / 1 / 2-5 rules before rolling and uses the `Бросить кубик` action button.
+- Added responsive styling and a viewport correction so roll-event cards remain visible on mobile after page scroll.
+- Bumped CSS/JS cache keys to `styles.css?v=20260601-0297` and `game.js?v=20260601-0299`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Mechanics, dice math, destinations, and card/shop/portal rules were not changed.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser smoke on `localhost:5173` checked desktop 1440px Chaos Portal, mobile 390px Chaos Portal, and desktop Dice Fortune; all showed the rules card, no viewport overflow, no console/page errors, and no broken images.
+- Screenshots saved under `outputs/roll-event-desktop-chaos.png`, `outputs/roll-event-mobile-chaos.png`, and `outputs/roll-event-desktop-dice-fortune.png`.
+
+Open questions:
+- None.
+
+## 2026-06-01 23:52 - Dev
+
+Changed:
+- Changed visual card text rendering to use `description` with fallback to `title`.
+- Applied it to Good, Bad, TADAM, Joe Shop reveal cards, TADAM side-panel slots, and card choice buttons in Shop / player-card purchase / Joe Auction prize selection.
+- Kept logs, Chronicle names, saved item titles, and compact player inventory badges on `title` / `shortTitle`.
+- Bumped the game script cache key to `20260601-0295`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a display-only change; card effects, card config, decks, Google Sheet/CSV contents, and bot logic were not changed.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser reload confirmed the game loads the updated script cache key and has no broken images.
+
+Open questions:
+- None.
+
+## 2026-06-01 23:52 - Art/UI
+
+Changed:
+- Replaced the `Черный рынок` board tile icon with a more minimal black-market symbol focused on one large violet lantern/sign silhouette.
+- Saved a chroma-key source, transparent high-res PNG, and 512px board-ready PNG.
+- Bumped the game script cache key to `20260601-0294`.
+
+Files:
+- `assets/icons/black_market_ultra_simple_source.png`
+- `assets/icons/black_market_ultra_simple_1254.png`
+- `assets/icons/black_market_ultra_simple_512.png`
+- `outputs/black-market-ultra-simple-preview.png`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- No Dev inbox task was added; this was applied directly after user approval to continue the replacement.
+- The previous `black_market_512.png` asset was left in place.
+- Browser check confirmed field2 cell `2-6` loads `./assets/icons/black_market_ultra_simple_512.png?v=20260601-0294` at 512x512, with no broken images, under `./src/game.js?v=20260601-0294`.
+
+Open questions:
+- None.
+
+## 2026-06-01 22:31 - Dev
+
+Changed:
+- Changed `Портал хаоса` outcome `5` from nearest TADAM to nearest `Хорошо`.
+- Updated the chaos-portal player choice option for roll `6` from TADAM to `Хорошо`.
+- Updated chaos-portal roll label, tile tooltip, and field text from `5: к TADAM` to `5: к Хорошо`.
+- Bumped the game script cache key to `20260601-0292`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- No chaos portal placement, icon, dice ranges, monster/shop outcomes, or Good-card mechanics changed.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser check confirmed field2 chaos portal tiles now show tooltip `5: к Хорошо` and load `./src/game.js?v=20260601-0292`.
+
+Open questions:
+- None.
+
+## 2026-06-01 22:30 - Dev
+
+Changed:
+- Made `Классический` the default UI style.
+- Updated initial body style, UI selector default option, and JS fallback default from `tabletop` to `classic`.
+- Bumped the game script cache key to `20260601-0291`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- No game rules, field layout, cards, bot logic, History, Chronicle, or visual assets changed.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser check confirmed a fresh load has `body[data-ui-style="classic"]`, `#uiStyle.value === "classic"`, script `./src/game.js?v=20260601-0291`, field2 still active, and no broken images.
+
+Open questions:
+- None.
+
+## 2026-06-01 22:25 - Art / UI
+
+Changed:
+- Applied the simplified `Аукцион Лавки Джо` icon in game rendering.
+- Updated `joeAuctionIconSrc` to use `assets/icons/joe_auction_simple_512.png?v=20260601-0290`.
+- Bumped the game script cache key in `index.html` to `20260601-0290`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The previous detailed `joe_auction_512.png` asset remains in `assets/icons/` as an alternate; the game now uses the simpler version.
+- No `joe-auction` mechanics, placement, bid options, tie roll-off, bot scoring, History, Chronicle, or tooltip text changed.
+- Browser check confirmed the tile loads `./assets/icons/joe_auction_simple_512.png?v=20260601-0290` at 512x512.
+- `node --check src/game.js` and `git diff --check` pass.
+
+Open questions:
+- None.
+
+## 2026-06-01 22:20 - Art / UI
+
+Changed:
+- Proposed a simpler alternate `Аукцион Лавки Джо` icon focused on one large gavel, one gold bid token, and two large card silhouettes.
+- Saved transparent PNG variants: high-res `joe_auction_simple_1254.png` and tile-friendly `joe_auction_simple_512.png`.
+- Added a small visual comparison image for old/new 512px and simulated 35px tile readability.
+
+Files:
+- `assets/icons/joe_auction_simple_source.png`
+- `assets/icons/joe_auction_simple_1254.png`
+- `assets/icons/joe_auction_simple_512.png`
+- `outputs/joe-auction-icon-comparison.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Per user instruction, no Dev inbox/task note was added without approval.
+- The simple variant is intended to read better at field tile size than the current detailed gavel/cards/coin/stall composition.
+
+Open questions:
+- Awaiting user approval before replacing the current `joe_auction_512.png` or writing any Dev-facing instruction.
+
+## 2026-06-01 22:15 - Dev
+
+Changed:
+- Updated field2 event layout to match the new 15x15 reference image sent by the user.
+- Moved `black-market` to `2-6`.
+- Moved `joe-auction` to `14-0`.
+- Set `5-0` and `6-7` back to ordinary Joe Shop cells.
+- Added/moved `big-rest` cells to `0-3`, `14-4`, and `11-9`; `12-0` is now a Good cell.
+- Updated smaller reference differences: `6-13` and `14-13` are TADAM, `8-14` is Good.
+- Bumped the game script cache key to `20260601-0289`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+- `outputs/field-reference-update.png`
+
+Notes for others:
+- The field2 route path, monster gate positions, door config, mechanics, cards, bot logic, History, Chronicle, and tooltips were not changed.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser check confirmed field2 renders as 15x15 with 115 route cells, loads `./src/game.js?v=20260601-0289`, has no broken images, and all checked reference cells match their expected event classes.
+
+Open questions:
+- None.
+
+## 2026-06-01 16:51 - Art / UI
+
+Changed:
+- Reduced board tile icon rendering sizes so event art no longer touches or overlaps tile borders.
+- Added a max-size guard for `.tile-icon-image` and reduced oversized field2/special icon rules, including `black-market`, `joe-auction`, `big-rest`, portals, TADAM, shop, good/bad, start/finish, and enemy icons.
+- Bumped the stylesheet cache key to `20260601-0288`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- No gameplay rules, routes, cards, History, Chronicle, tooltip, or bot logic changed.
+- Browser check confirmed black market, Joe auction, big rest, chaos portal, shop, TADAM, good/bad, and enemy icons now have about 5-6px visual inset inside 35px field2 tiles.
+- `node --check src/game.js` and `git diff --check` pass.
+
+Open questions:
+- None.
+
+## 2026-06-01 16:33 - Art / UI
+
+Changed:
+- Redrew `Черный рынок` as a simpler small-tile icon focused on a large purple lantern, black-purple awning, and gold secret emblem.
+- Replaced the working `black_market_512.png` / `black_market_1254.png` assets with the simplified version.
+- Bumped the black market icon cache key in `src/game.js` to `20260601-0287` and the module cache key in `index.html` to `20260601-0287`.
+- Removed the now-completed black market icon task from Dev inbox.
+
+Files:
+- `assets/icons/black_market_source.png`
+- `assets/icons/black_market_1254.png`
+- `assets/icons/black_market_512.png`
+- `index.html`
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- No `black-market` mechanics, placement, choices, costs, rewards, bot scoring, History, Chronicle, or tooltip text were changed.
+- Browser check confirmed field2 cell `5-0` loads `./assets/icons/black_market_512.png?v=20260601-0287` at 512x512 and is more readable at the 35px tile size.
+- `node --check src/game.js` and `git diff --check` pass.
+
+Open questions:
+- None.
+
+## 2026-06-01 16:30 - Dev
+
+Changed:
+- Normalized tabletop tile outlines so landing-only special tiles use the same standard border/shadow as ordinary cells.
+- Removed colored outline/glow exceptions from `joe-auction`, `big-rest`, `black-market`, and `chaos-portal` tile frames while keeping their icons/background identity.
+- Kept accent tile outlines only for pass-through effect cells: `shop` and `enemy`.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+- `outputs/tile-border-normalization.png`
+
+Notes for others:
+- No gameplay rules, placement, movement, card, History, Chronicle, tooltip, or bot logic changed.
+- `git diff --check` and `node --check src/game.js` pass.
+- Browser check on field2 confirmed `black-market`, `joe-auction`, `big-rest`, and `chaos-portal` computed borders/shadows match standard green/TADAM tiles; `shop` and `enemy` remain visually accented.
+
+Open questions:
+- None.
+
+## 2026-06-01 15:56 - Dev 2
+
+Changed:
+- Restored classic-style tile outlines in `Настольный` UI.
+- Reapplied the classic border and shadow treatment for normal tiles and special tiles like Joe Shop, Joe Auction, Big Rest, Black Market, Chaos Portal, and enemies.
+- Bumped the CSS cache key to `20260601-0286`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- In-app browser check confirmed stylesheet `./styles.css?v=20260601-0286` and classic-style computed borders/shadows on green, shop, auction, big-rest, and enemy tiles in tabletop mode.
+
+Open questions:
+- None.
+
+## 2026-06-01 15:51 - Dev
+
+Changed:
+- Replaced the CSS-drawn `Черный рынок` tile icon with dedicated PNG `assets/icons/black_market_512.png`.
+- Removed the old black-market tent/counter/lantern CSS icon pieces from tile rendering.
+- Bumped the JS cache key to `20260601-0285`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `outputs/black-market-tile-check.png`
+
+Notes for others:
+- No `black-market` mechanics, placement, choices, costs, rewards, bot scoring, History/Chronicle labels, or tooltip text were changed.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser check on field2 confirmed cell `5-0` is `tile-black-market`, loads `./assets/icons/black_market_512.png?v=20260601-0285` at 512x512, has no old CSS icon remnants, keeps the existing tooltip, and remains visually distinct from Joe Shop / Joe Auction / Big Rest / TADAM / Chaos Portal icon sources.
+
+Open questions:
+- None.
+
+## 2026-06-01 15:48 - Art / UI
+
+Changed:
+- User approved writing the `Черный рынок` icon instruction for Dev.
+- Added a Dev inbox task to replace the current CSS-drawn black market tile icon with `black_market_512.png` / `black_market_1254.png`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Dev-facing notes should continue to be written only after user approval.
+- The task is asset-only: no `black-market` mechanics, placement, choices, costs, rewards, bot scoring, History, Chronicle, or tooltip changes.
+
+Open questions:
+- None.
+
+## 2026-06-01 15:38 - Art / UI
+
+Changed:
+- Generated a dedicated `Черный рынок` icon asset.
+- Saved transparent PNG variants: high-res `black_market_1254.png` and tile-friendly `black_market_512.png`.
+
+Files:
+- `assets/icons/black_market_source.png`
+- `assets/icons/black_market_1254.png`
+- `assets/icons/black_market_512.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Per user instruction, no Dev inbox/task note was added without approval.
+- The icon uses a black/purple market awning, purple lantern, secret emblem, coins, bottles, and shady goods so it reads as black market rather than ordinary Joe Shop or Joe Auction.
+
+Open questions:
+- Awaiting user approval before writing any Dev-facing instruction to use this asset.
+
+## 2026-06-01 15:31 - Dev 2
+
+Changed:
+- Polished the `Настольный` UI player cards by hiding the current-cell ribbon inside score cards.
+- Recolored the tabletop roll/action button from cyan to a warmer orange-gold fantasy treatment, including hover/active states.
+- Bumped the CSS cache key to `20260601-0285`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- In-app browser check confirmed `body[data-ui-style="tabletop"]`, stylesheet `./styles.css?v=20260601-0285`, `.score-cell-ribbon` computed as `display: none`, and `#rollBtn` using the new orange gradient.
+
+Open questions:
+- None.
+
+## 2026-06-01 15:30 - Dev
+
+Changed:
+- Replaced the `Аукцион Лавки Джо` tile icon treatment with dedicated PNG `assets/icons/joe_auction_512.png`.
+- Removed the old composite auction icon presentation based on `joes_shop_512.png` plus coin overlay.
+- Bumped JS/CSS cache keys to `20260601-0284`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `outputs/joe-auction-tile-check.png`
+
+Notes for others:
+- No `joe-auction` mechanics, placement, bid options, tie roll-off, bot scoring, History/Chronicle labels, or tooltip text were changed.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser check on field2 confirmed cell `6-7` is `tile-joe-auction`, loads `./assets/icons/joe_auction_512.png?v=20260601-0284` at 512x512, keeps the existing tooltip, and remains visually distinct from ordinary Joe Shop / Big Rest / TADAM / Chaos Portal icon sources.
+
+Open questions:
+- None.
+
+## 2026-06-01 15:26 - Art / UI
+
+Changed:
+- User approved writing the `Аукцион Лавки Джо` icon instruction for Dev.
+- Added a Dev inbox task to replace the current auction tile icon treatment with `joe_auction_512.png` / `joe_auction_1254.png`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Dev-facing notes should continue to be written only after user approval.
+- The task is asset-only: no `joe-auction` mechanics, placement, bid options, tie roll-off, bot scoring, History, Chronicle, or tooltip changes.
+
+Open questions:
+- None.
+
+## 2026-06-01 15:24 - Dev
+
+Changed:
+- Replaced the CSS-drawn `Большой привал` tile icon with the fire-focused PNG `assets/icons/big_rest_fire_512.png`.
+- Removed the old CSS tent/fire sub-shapes for that tile icon.
+- Bumped JS/CSS cache keys to `20260601-0283`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- No `big-rest` mechanics, rewards, placement, History/Chronicle labels, or tooltip text were changed.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser check on field2 confirmed cell `12-0` is `tile-big-rest`, loads `./assets/icons/big_rest_fire_512.png` at 512x512, keeps the existing tooltip, and does not use the shop/TADAM/chaos portal icon classes.
+
+Open questions:
+- None.
+
+## 2026-06-01 15:23 - Art / UI
+
+Changed:
+- Generated a dedicated `Аукцион Лавки Джо` icon asset.
+- Saved transparent PNG variants: high-res `joe_auction_1254.png` and tile-friendly `joe_auction_512.png`.
+
+Files:
+- `assets/icons/joe_auction_source.png`
+- `assets/icons/joe_auction_1254.png`
+- `assets/icons/joe_auction_512.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Per user instruction, no Dev inbox/task note was added without approval.
+- The icon uses a large auction gavel, three shop-card lots, coins, and a small Joe-shop-style sign/accent so it reads as an auction rather than an ordinary shop.
+
+Open questions:
+- Awaiting user approval before writing any Dev-facing instruction to use this asset.
+
+## 2026-06-01 15:20 - Art / UI
+
+Changed:
+- User approved writing the `Большой привал` fire-icon instruction for Dev.
+- Updated the Dev inbox task to use `big_rest_fire_512.png` / `big_rest_fire_1254.png` instead of the earlier tent version.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Dev-facing notes should continue to be written only after user approval.
+
+Open questions:
+- None.
+
+## 2026-06-01 15:18 - Art / UI
+
+Changed:
+- Redrew the `Большой привал` icon as a more readable fire-focused variant with no tent.
+- Saved transparent PNG variants: high-res `big_rest_fire_1254.png` and tile-friendly `big_rest_fire_512.png`.
+
+Files:
+- `assets/icons/big_rest_fire_source.png`
+- `assets/icons/big_rest_fire_1254.png`
+- `assets/icons/big_rest_fire_512.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Per user instruction, no Dev inbox/task note was added without approval.
+- The new variant emphasizes a large campfire, stone ring, logs, small bedroll/backpack/sign details, and golden beneficial glow.
+
+Open questions:
+- Awaiting user approval before writing any Dev-facing instruction to use this variant.
+
+## 2026-06-01 14:58 - Art / UI
+
+Changed:
+- Generated a dedicated `Большой привал` icon asset in the existing hand-painted board-game style.
+- Saved transparent PNG variants for Dev: high-res `big_rest_1254.png` and tile-friendly `big_rest_512.png`.
+- Added a Dev inbox task to replace the current CSS-drawn `big-rest` tile icon with the new PNG without changing event rules or placement.
+
+Files:
+- `assets/icons/big_rest_source.png`
+- `assets/icons/big_rest_1254.png`
+- `assets/icons/big_rest_512.png`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- The icon uses a cozy campfire/tent/bedroll/backpack composition with a golden beneficial aura, intended to read as rest/preparation and not as Joe Shop, TADAM, or portal.
+- `big_rest_source.png` is the chroma-key source; use the transparent PNGs in game UI.
+
+Open questions:
+- None.
+
+## 2026-06-01 11:08 - Dev 2
+
+Changed:
+- Implemented and verified the new field wow moment `big-rest` / `Большой привал`.
+- Placed `Большой привал` only on field2 at `12-0`, replacing the previous `good` cell; field1 was not changed.
+- Added the camp-style tile icon/CSS, tooltip/field text, History field label, Chronicle logs, and the landing choice flow.
+- Added the three landing-player-only rewards: `Восстановиться` gives +15 coins, `Потренироваться` gives permanent `Сила +1`, and `Ускориться` gives permanent `Шаги +2`.
+- Added smart-random bot scoring for `big-rest`: bots weigh money reserve, monster/final gate pressure, speed/strength balance, catch-up pressure, and race-to-finish context.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser smoke on field2 confirmed exact landing on `12-0`, all three human choices, landing-player-only rewards, bot auto-choice, `Шаги +2` affecting subsequent dice movement, `Сила +1` affecting a final-monster battle, and strength flowing into the final battle bonus pipeline.
+- Source audit confirmed VS uses the same `rollPlayerBattlePower` / `playerCombatBonus` path as the other battle modes, so the permanent `Сила +1` applies there too.
+- `node --check src/game.js`, `node --check src/game.config.js`, and `git diff --check` pass.
+
+Open questions:
+- None.
+
+## 2026-06-01 11:04 - Dev
+
+Changed:
+- Completed browser smoke verification for `joe-auction` / `Аукцион Лавки Джо` after the earlier implementation.
+
+Files:
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` and `git diff --check` still pass.
+- Browser smoke on field2 confirmed: exact move to `6-7`, tile/tooltip rendering, all-pass outcome, one clear human winner, human winner card choice, tied bids with 1d6 roll-off, bot winner card choice, passers/losers paying 0, and only the final winner paying the bid and receiving exactly 1 Joe Shop card.
+
+Open questions:
+- None for the auction implementation.
+
+## 2026-06-01 02:03 - Dev 3
+
+Changed:
+- Added the new field event `black-market` / `Черный рынок` on field 2 at `5-0`, replacing the previous normal Joe Shop cell.
+- Implemented landing-only Black Market choices:
+  - `Карта Лавки Джо` for 5 coins, revealing and granting exactly 1 random Joe Shop card.
+  - `Тайная тренировка` for 10 coins, granting permanent `Сила +1`.
+  - `Зелье ярости` for 15 coins, granting one-use `+10` in the next ordinary/final monster gate battle.
+  - `Уйти` for 0 coins.
+- Paid Black Market choices are shown only when affordable; `Зелье ярости` is hidden while the player already has an active one-use potion.
+- Added potion consume logic to monster gate battles only, with formula/log text `+10 зелье ярости`; it burns on the next monster battle whether the player wins or loses.
+- Confirmed the potion does not affect VS or the final players-vs-boss battle.
+- Added Black Market bot scoring using existing smart-random/reserve-coin/monster-gate-pressure patterns.
+- Added Black Market tile tooltip, history field label, CSS-only tent/lantern tile icon, dark-market choice styling, and compact active potion badges in player/action UI.
+- Bumped JS/CSS cache keys to `20260601-0282`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser smoke covered 9 scenarios: all 4 human choices, insufficient coins, bot auto-choice, Joe Shop card cost/card count, permanent training, rage potion purchase, ordinary monster win/loss burn, final monster gate burn, VS ignored potion, and final players-vs-boss battle ignored potion.
+- Smoke screenshots saved at `outputs/black-market-field2.png` and `outputs/black-market-choice.png`.
+
+Open questions:
+- None.
+
+## 2026-06-01 01:54 - Dev
+
+Changed:
+- Added the new field event `joe-auction` / `Аукцион Лавки Джо`.
+- Placed `joe-auction` on field2 at `6-7`, replacing the previous ordinary Joe Shop cell; field1 was not changed.
+- Added tile icon/style, tooltip/field text, History field label, and bot cell scoring for the auction.
+- Implemented landing-only auction flow with 3 unique revealed Joe Shop cards, closed bids `0/5/10/15/20`, all-pass outcome, highest-bid winner, 1d6 tie roll-off, and winner card choice.
+- Preserved the economic contract: bids do not charge during selection, passers/losers pay nothing, and only the final winner pays the winning bid before receiving exactly one Joe Shop card.
+- Bot bidding uses smart-random over current shop-card valuation, coin reserve pressure, comeback pressure, gate pressure, and personality modifiers; bot prize choice uses existing shop-card scoring without decline.
+- Bumped JS/CSS cache keys to `20260601-0281`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser check confirmed field2 cell `6-7` renders as `tile-joe-auction` with the correct tooltip.
+- Full browser smoke through every auction branch still needs a cleaner debug path or careful manual run; exact-move smoke is slowed by legitimate monster gates and intervening prompts.
+
+Open questions:
+- Add a temporary/local-only debug harness for event-branch smoke tests, or verify the remaining auction branches manually in browser.
+
+## 2026-06-01 01:45 - GD
+
+Changed:
+- Turned the proposed wow moment `Черный рынок` into an implementation-ready Dev task.
+- Spec defines a landing-player-only market with deals for 5/10/15 coins, including the requested `15 монет -> +10 к силе в следующей битве с монстром`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Suggested internal id: `black-market`.
+- `Зелье ярости` should be a one-use stored effect for the next ordinary/final monster gate battle only; it should not affect VS or the player-vs-boss final battle.
+- First playtest placement: replace field 2 `5-0`, currently a normal Joe Shop, to keep shop-like event density stable.
+
+Open questions:
+- After implementation, verify whether `+10` for 15 coins is too reliable on the final monster gate or if the price/effect needs tuning.
+
+## 2026-06-01 01:41 - Dev 3
+
+Changed:
+- Added a new TADAM card `Охота на монстра`: after the card is active, a player who defeats a monster receives 15 coins.
+- Implemented the card as effect type `monster-win-coins` with amount `15`, applying to ordinary monster victories and final monster victories.
+- Synced the card across Google Sheet `Cards Config` tab `tadam`, `src/cards.config.js`, and `cards-google-sheet.csv`.
+- Bumped the game/card cache keys to `20260601-0281`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js`, `node --check src/cards.config.js`, and `git diff --check` pass.
+- Browser smoke confirmed the page loads the new game/card cache keys, the new TADAM card is present, and a monster victory with active `Охота на монстра` logs/grants the 15-coin reward.
+
+Open questions:
+- None.
+
+## 2026-06-01 01:38 - Art / UI
+
+Changed:
+- Reviewed the updated dark tabletop UI in browser.
+- Added a Dev prompt focused on making `#rollBtn` bright and attractive while fitting the dark fantasy board-game style.
+- Included secondary action-strip polish notes so the current cell/status/button area feels like one fantasy tabletop control bar.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Diagnosis: dark UI works overall, but the roll button still reads too much like a modern cyan web CTA.
+- Direction: enchanted dice artifact / rune plaque with deeper teal core, antique gold rim, warm ivory text, violet shadow, tactile pressed states, and no layout drift.
+
+Open questions:
+- None.
+
+## 2026-06-01 01:28 - Dev 3
+
+Changed:
+- Implemented the Art/UI dark fantasy `Настольный` skin as a CSS-only tabletop override.
+- Converted the page/table, panels, settings, score cards, TADAM empty slots, Chronicle, and History to dark walnut / smoky violet graphite surfaces with antique gold borders and warm ivory text.
+- Kept the board and route tiles bright/readable while giving the map frame a darker tabletop surround.
+- Strengthened `#rollBtn` as the brightest teal-blue CTA with a gold rim, including hover/disabled states.
+- Preserved the dedicated chaos portal icon and violet/gold glow on the darker UI.
+- Bumped JS/CSS cache keys to `20260601-0278`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `git diff --check` passes. JS gameplay was not changed for this skin pass.
+- Desktop 1440px tabletop/classic rect comparison stayed at `0` drift for app shell, play area, board/map, roll button, score strip, settings, TADAM, Chronicle, and History.
+- Mobile touch 390px check confirmed the roll button is below the board/map, visible, and hit-testable.
+- Browser screenshots saved at `outputs/dark-fantasy-tabletop-desktop.png`, `outputs/dark-fantasy-tabletop-mobile.png`, and `outputs/dark-fantasy-mobile-rollbtn.png`.
+
+Open questions:
+- None.
+
+## 2026-06-01 01:27 - GD
+
+Changed:
+- Turned the proposed wow moment `Аукцион Лавки Джо` into an implementation-ready Dev task.
+- Spec defines a safe participation auction: all players can bid, losers/passers pay nothing, and only the final winner pays the winning bid.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Suggested internal id: `joe-auction`.
+- First playtest placement: replace field 2 `6-7`, currently a normal Joe Shop, to keep shop-like event density stable.
+- Auction uses 3 revealed Joe Shop cards and sealed fixed bids `0/5/10/15/20`; ties above 0 resolve by roll-off.
+
+Open questions:
+- After implementation, check if max bid `20` is too high or if the auction needs a lower cap such as `15`.
+
+## 2026-06-01 01:19 - Art / UI
+
+Changed:
+- Reviewed the updated tabletop UI in browser after the recent portal/TADAM/control changes.
+- Added a Dev prompt to turn `Настольный` UI into a dark fantasy tabletop skin while keeping the board bright and preserving the stabilized layout geometry.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Direction: dark walnut/charcoal/violet UI shell, antique gold borders, ivory text, bright readable board, `#rollBtn` as the strongest CTA.
+- The task explicitly asks Dev not to change rules, balance, routes, cards, bots, events, or current control availability.
+
+Open questions:
+- Whether dark tabletop should replace the current light `Настольный` skin or eventually become a third UI option.
+
+## 2026-06-01 01:18 - Dev
+
+Changed:
+- Updated field 2 to match the latest reference image for `Портал Хаоса` placement.
+- Moved chaos portals from `7-10` and `14-6` to `2-8` and `13-7`.
+- Restored old chaos-portal cells to the reference types: `7-10` is `Плохо`, `14-6` is `Красное`.
+- Bumped JS/CSS cache keys to `20260601-0277`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser reload confirmed field 2 has chaos portals at `2-8` and `13-7`; `7-10` renders as bad and `14-6` renders as red.
+
+Open questions:
+- None.
+
+## 2026-06-01 01:18 - Dev 3
+
+Changed:
+- Replaced the chaos portal tile icon with the dedicated `chaos_portal_1254.png` asset.
+- Adjusted the chaos portal icon CSS to use the asset's yellow-violet palette and glow instead of recoloring the old portal art.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser check confirmed both visible chaos portal tiles load `./assets/icons/chaos_portal_1254.png?v=20260601-0276` with no broken images.
+- Screenshot saved at `outputs/chaos-portal-icon-check.png`.
+
+Open questions:
+- None.
+
+## 2026-06-01 01:15 - Dev 2
+
+Changed:
+- Polished the `Настольный` UI skin without changing stable layout dimensions: stronger fantasy roll/action button, more printed-card material on panels, clearer player-card accents, and stronger empty TADAM card slots.
+- Kept the tabletop/classic geometry invariant: desktop 1440px rect comparison still shows no drift for key app, board, action, score, settings, and TADAM blocks.
+- Fixed manual `Пройти` / `Идти` movement so a completed exact move now finishes the turn and changes the active player using the same movement-turn completion path as normal dice movement.
+- Bumped JS/CSS cache keys to `20260601-0276`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js`, `node --check src/game.config.js`, and `git diff --check` pass.
+- Browser verification: desktop tabletop/classic rect diff max is `0`; `Далее` remains visible/hit-testable; exact move test changed active player from `Пес` to `Кот` after `Идти` and `Далее`; mobile touch width stays at `390px` with the roll button below the board.
+- Saved QA screenshots under `outputs/tabletop-polish-desktop.png` and `outputs/tabletop-polish-mobile.png`.
+
+Open questions:
+- None.
+
+## 2026-06-01 01:15 - Art / UI
+
+Changed:
+- Generated a distinct `Портал хаоса` icon asset that does not reuse the visual language of the ordinary blue stone portal.
+- Saved transparent PNG variants for Dev: high-res `chaos_portal_1254.png` and tile-friendly `chaos_portal_512.png`.
+- Added the asset paths to the existing Dev task for `Портал хаоса`.
+
+Files:
+- `assets/icons/chaos_portal_source.png`
+- `assets/icons/chaos_portal_1024.png`
+- `assets/icons/chaos_portal_1254.png`
+- `assets/icons/chaos_portal_512.png`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- The final icon uses a violet/gold jagged rift plus a die cue, intentionally avoiding the existing blue/cyan stone-arch portal style.
+- `chaos_portal_source.png` is the chroma-key source; use the transparent PNGs in game UI.
+
+Open questions:
+- Whether Dev should use the 512 or 1254 variant in the field tile renderer.
+
+## 2026-06-01 01:07 - Dev
+
+Changed:
+- Replaced the `Проход` dropdown with a single unchecked checkbox: `Проходить все`.
+- Removed the `Монстры не останавливают` option and its separate behavior path.
+- Kept default movement rules when the checkbox is off; when on, pass-through-all behavior still skips stopping-cell effects such as Joe Shop and enemies.
+- Bumped JS/CSS cache keys to `20260601-0276`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser reload confirmed `#passThroughMode` is an unchecked checkbox labeled `Проходить все`, and the old `Монстры не останавливают` text is gone.
+
+Open questions:
+- None.
+
+## 2026-06-01 00:57 - GD
+
+Changed:
+- Turned the proposed wow moment `Большой привал` into an implementation-ready Dev task.
+- Spec defines a landing-player-only choice between `+15 монет`, permanent `+1 к силе`, and permanent `+2 к скорости/шагам`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Suggested internal id: `big-rest`.
+- First playtest placement: replace field 2 `12-0` currently `good`; this places the rest after `монстр 3` and before the late red/bad canyon/final push.
+- `+2 к скорости` should use the existing permanent step/movement bonus system, currently surfaced as `Шаги +N`.
+
+Open questions:
+- After implementation, test whether `+2 к скорости` is too strong compared with `+1 к силе` and `+15 монет`.
+
+## 2026-06-01 00:56 - Dev 3
+
+Changed:
+- Added a new field event type `chaos-portal` / `Портал хаоса`, separate from opened-monster portals.
+- Placed chaos portals on field2 at `7-10` and `14-6`, replacing the previous `bad` and `red` cells.
+- Added chaos portal UI: reused portal art with separate cyan/purple glow, tile title, field text, and history field label.
+- Implemented the chaos portal landing flow: prompt, 1d6 roll, branches `1-2` previous monster/start, `3-4` nearest Joe Shop, `5` nearest TADAM, `6` player choice.
+- Teleports are instant jumps, clear walk path, pulse the destination, avoid pass-through effects, process the destination landing once, and guard against portal-to-portal chains.
+- Added Chronicle logs for portal roll and destination.
+- Added bot scoring for roll `6`, preserving smart-random choice style while valuing Joe Shop, TADAM comeback, and monster/start escape differently.
+- Bumped JS/CSS cache keys to `20260601-0275`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser smoke on field2 covered both chaos portal cells, roll branches `1-2`, `3-4`, `5`, human `6` choice, bot `6` auto-choice, and a separate old opened-monster portal activation after both players opened `монстр 1`.
+- Smoke screenshot saved at `outputs/chaos-portal-smoke.png`.
+
+Open questions:
+- None.
+
+## 2026-06-01 00:50 - Art / UI
+
+Changed:
+- Reviewed the new `Настольный` UI in the in-app browser against the style direction: board-game "Большая Бродилка" plus bright fantasy.
+- Added a Dev 2 prompt for tabletop UI polish focused on the roll/action button, player score cards, tabletop panel material, TADAM empty card slots, and future `Портал хаоса` visual direction.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- The prompt explicitly preserves current rules, balance, board routes, bot logic, and the recent no-layout-drift invariant between `Настольный` and `Классический`.
+
+Open questions:
+- Whether Dev 2 should implement the UI polish before or after the `Портал хаоса` gameplay task.
+
+## 2026-06-01 00:42 - Dev 2
+
+Changed:
+- Softened the `Настольный` UI palette so the new skin is less bright and less saturated.
+- Removed the tabletop font/layout drift: the new theme no longer changes the measured sizes of the main app shell, play area, board header, map, score cards, settings, or roll/action button compared with `Классический`.
+- Kept wide score cards in the same side-panel placement as the classic layout.
+- Made the roll/action button explicitly visible in tabletop mode so `Далее` renders with contrast when the button label changes.
+- Bumped CSS/JS cache keys to `20260601-0274`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js`, `node --check src/game.config.js`, and `git diff --check` pass.
+- Browser verification: at 1440px, tabletop/classic key element rects match exactly; `#rollBtn` with text `Далее` is visible and hit-testable; mobile touch viewport stays at document width 390px with the roll button below the board.
+
+Open questions:
+- None.
+
+## 2026-06-01 00:40 - GD
+
+Changed:
+- Turned the proposed wow moment `Портал хаоса` into an implementation-ready Dev task.
+- Spec includes roll table, teleport behavior, bot choice for result 6, UI/Chronicle needs, first field 2 placement, and verification notes.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Internal event id should be distinct from existing opened-monster portals; suggested `chaos-portal`.
+- First playtest placement: replace field 2 `7-10` bad and `14-6` red with `Портал хаоса`.
+
+Open questions:
+- After implementation, test whether two chaos portals is enough frequency or whether field 2 wants only one.
+
+## 2026-06-01 00:27 - Dev
+
+Changed:
+- Tuned bot AI scoring after the GD audit without changing rules, cards, monster values, costs, or dice math.
+- Joe Shop bot scoring now values `+1 к силе` more when an unbeaten monster gate is ahead, especially for damage 16 and the final monster.
+- Added win-chance threshold scoring around ~35%, 50%, 65%, and 80% for strength and extra-die decisions.
+- Added stronger diminishing returns for repeated `+1 к шагам`, especially when a low-strength bot is approaching a hard monster.
+- Made `+1 кубик за 5` more conservative for ordinary movement and more chance-driven in monster/final-monster battles.
+- Added reserve-coin pressure to shop decline decisions.
+- Cached a bot's Joe Shop choice per offer so it cannot decline on the first reveal and reconsider on the follow-up reveal.
+- Bumped JS/CSS cache keys to `20260601-0273`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` and `git diff --check` pass.
+- Ran a 4-bot fast field 2 party in the browser. Result: Kот won after clearing the final monster with `Шаги +3`, `Сила +1`; Выдра ended `Шаги +1`, `Сила +2`; Альпака ended `Шаги +1`, `Сила +1`; no bot repeated the audited failure pattern of `Шаги +4` with `Сила +0` before hard gates.
+
+Open questions:
+- More long-run bot telemetry would still be useful before final balance, because smart-random can produce outlier parties.
+
+## 2026-06-01 00:12 - GD
+
+Changed:
+- Ran a broader gameplay audit from current rules/config: field 2 route, event density, cards, monster gates, VS, final battle, History, and recent bot-playtest evidence.
+- Added Dev-facing follow-ups for balance telemetry, optional monster checkpoint mode, and a future Events deck prototype.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Field 2 route has 115 cells: 18 Good, 24 Green, 9 TADAM, 4 Shop, 4 Enemy, 26 Red, 26 Bad, 1 VS, 1 x2 coins, 1 Dice Fortune.
+- GD diagnosis: the game has strong chaotic adventure texture, but needs more mid-term agency, better balance observability, and a way to test whether full-start monster resets are too punishing in late game.
+- Do not implement checkpoint mode or Events deck without user confirmation; telemetry is safe and useful regardless.
+
+Open questions:
+- Which experiment should be prioritized after bot AI: telemetry, checkpoint mode, Events deck, or shop deck expansion.
+
+## 2026-06-01 00:08 - Dev 2
+
+Changed:
+- Added a `UI` selector with `Настольный` default and `Классический` fallback.
+- Added `body[data-ui-style]` theme switching; changing UI style does not restart the game.
+- Added a first-pass `Настольный` CSS layer with parchment panels, illustrated-board framing, tabletop buttons, light player cards, and current-cell ribbons visible only in the new UI.
+- On wide tabletop layout, player cards move into the settings column between top controls and numeric setup controls.
+- Added `uiStyle` to collected game settings and bumped JS/CSS cache keys to `20260531-0272`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Классический` is intended to preserve the current dark UI.
+- Built on top of existing uncommitted History/Google Sheets/field/config/GD notes changes; do not revert them.
+
+Open questions:
+- Art/UI can replace the v1 CSS approximation with dedicated parchment/tile/button assets later.
+
+## 2026-06-01 00:05 - GD
+
+Changed:
+- Audited current bot scoring logic in `src/game.js` and watched a full 4-bot fast field 2 party in browser.
+- Added a Dev-ready bot AI tuning task focused on shop card valuation, strength-vs-steps balance, coin reserves, and optional extra-die spending.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Playtest evidence: a bot with `Шаги +4` and `Сила +0` failed `монстр 3` six times and never cleared it; the winner had `Сила +3` and cleared the final monster.
+- Design direction: keep smart-random personalities, but make bots value strength as a monster-gate insurance purchase and spend optional extra dice conservatively outside battles.
+- Browser screenshot from the observed party was saved at `outputs/bot-audit-party-1.png`.
+
+Open questions:
+- After Dev tunes bot AI, run another 4-bot field 2 party and compare repeated step stacking, coin reserves, and monster clear rates.
+
+## 2026-05-31 23:51 - GD
+
+Changed:
+- Accepted fresh GD handoff context about bot decision logic, future Event cards, final scoring, and battle UI direction.
+- Added two implementation-ready Dev tasks: stable per-visit Joe Shop bot decision and enemy battle UI polish without rule changes.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Bot choices should stay smart-random, not deterministic-optimal.
+- Event cards are a design direction, not yet a Dev-ready implementation request.
+- Before documenting final scoring, re-check current code because position bonuses may now be included.
+
+Open questions:
+- Which first 3-5 Event cards should enter the prototype once the user wants that mechanic implemented.
+
+## 2026-05-31 23:45 - Dev
+
+Changed:
+- Updated field 2 event layout to match the new 15x15 reference image.
+- Preserved the existing field 2 route and monster/final monster positions.
+- Bumped JS/CSS and `game.config.js` import cache keys to `20260531-0271`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser reload confirmed field 2 renders as 15x15 with start at `0-14`, VS at `0-9`, and enemies at `1-0`, `8-9`, `9-14`, `10-6`.
+
+Open questions:
+- None.
+
+## 2026-05-31 23:36 - Dev
+
+Changed:
+- Added new TADAM rule: the player who opens a TADAM card immediately gains 5 coins.
+- The coin gain uses `addCoins`, so it updates coin floats and History earned-coins stats.
+- Bumped JS/CSS cache keys to `20260531-0270`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` passes.
+
+Open questions:
+- None.
+
+## 2026-05-31 22:57 - Dev
+
+Changed:
+- Renamed field 2 ordinary monster labels from `нижний монстр`, `средний монстр`, `верхний монстр` to `монстр 1`, `монстр 2`, `монстр 3`.
+- Portal choices use the same door labels, so opened portal choices now use the new monster names too.
+- Added a cache key to the `game.config.js` import and bumped JS/CSS cache keys to `20260531-0269`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `src/game.config.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` passes.
+- Search found no remaining `нижн/средн/верхн` labels in `src/game.config.js` or `src/game.js`.
+
+Open questions:
+- None.
+
+## 2026-05-31 22:39 - Dev 2
+
+Changed:
+- Bot Joe Shop card choices now run through the same selected-card glow animation as human choices.
+- Added a small helper to map the bot's chosen card id back to the visible card button before resolving the prompt.
+- Bumped JS/CSS cache keys to `20260531-0268`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Declines still close immediately; the glow applies when a bot chooses one of the visible cards.
+
+Open questions:
+- None.
+
+## 2026-05-31 22:36 - Dev 2
+
+Changed:
+- Made `Поле 2` the default board in the board selector.
+- Updated JS board fallback paths so initial load, new game, and settings snapshots default to `field2`.
+- Bumped JS/CSS cache keys to `20260531-0267`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Built on top of existing local Chronicle/History save changes, Google Sheets save wiring, and selected-card animation.
+
+Open questions:
+- None.
+
+## 2026-05-31 22:35 - Dev
+
+Changed:
+- Connected the `Сохранить` history button to the provided Google Apps Script Web App URL.
+- Save now writes the snapshot to localStorage first, then sends the same snapshot to Google Sheets using a no-CORS POST.
+- Save button shows `Отправка`, `Сохранено`, `Локально`, or `Ошибка` depending on the save path.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` and `git diff --check` pass.
+- Because the browser uses `mode: "no-cors"`, success means the request was sent, but the app cannot inspect the Apps Script JSON response.
+
+Open questions:
+- Confirm rows appear in the Google Sheet after clicking `Сохранить`.
+
+## 2026-05-31 22:31 - Dev 2
+
+Changed:
+- Added a light selected-card animation for choosing one of several revealed Joe Shop cards.
+- The selected shop card briefly glows around the contour while other choices dim/lock before the prompt closes.
+- Bumped JS/CSS cache keys to `20260531-0266`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Built on top of existing local Chronicle/History save changes.
+
+Open questions:
+- None.
+
+## 2026-05-31 22:23 - Dev
+
+Changed:
+- Added a `Сохранить` button to the `История` block.
+- Saving creates a party snapshot in browser `localStorage` under `very-big-adventure.saved-games`.
+- Snapshot includes save time, started/current settings, game state, players, full history stats, and current Chronicle text.
+- Saved games are kept as a local archive capped at 50 snapshots.
+- Bumped JS/CSS cache keys to `20260531-0265`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` and `git diff --check` pass.
+- This is the local-save layer; Google Sheets can use the same snapshot payload later via Apps Script.
+
+Open questions:
+- None.
+
+## 2026-05-31 22:12 - Dev
+
+Changed:
+- Fixed Chronicle ordered-list numbering so two-digit markers are not clipped in expanded view.
+- Bumped JS/CSS cache keys to `20260531-0264`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- CSS-only fix; no JS behavior changed.
+
+Open questions:
+- None.
+
+## 2026-05-31 17:27 - Dev
+
+Changed:
+- Chronicle now shows 5 latest events by default.
+- Added a `Показать 20` / `Показать 5` toggle in the Chronicle header.
+- Expanded Chronicle view shows up to 20 latest events while the internal log still keeps up to 40 entries.
+- Bumped JS/CSS cache keys to `20260531-0263`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` and `git diff --check` pass.
+
+Open questions:
+- None.
+
+## 2026-05-31 17:23 - Dev
+
+Changed:
+- Changed `История` field stats to count only fields where a player stops, not every field passed through.
+- Split history movement tracking into passed-cell totals and stopped-field visits.
+- Bumped JS/CSS cache keys to `20260531-0262`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` passes.
+
+Open questions:
+- None.
+
+## 2026-05-31 13:54 - Dev
+
+Changed:
+- Added a new `История` block below `Хроника`.
+- Added game history state with elapsed game time, total played TADAM cards, and per-player stats.
+- Per-player history now tracks turns, passed cells, coins earned/spent, field visits by type, max Joe Shop cards, current Joe Shop cards, monster battle attempts and winning force, effects received from other players, max dice thrown, final strength, and final steps.
+- Hooked history counters into movement, rolls, coins, TADAM, Joe Shop cards, monster battles, portals, steal/give effects, and player-targeting card effects.
+- Backward movement records each traversed route cell for field-visit stats instead of repeating only the final cell.
+- Bumped JS/CSS cache keys to `20260531-0261`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser visual verification was not run in this turn.
+
+Open questions:
+- None.
+
+## 2026-05-31 12:39 - Dev
+
+Changed:
+- Removed the current-cell pill from player score cards.
+- Changed score-card header alignment back to left-packed, so player names sit closer to avatars.
+- Bumped JS/CSS cache keys to `20260531-0260`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- `node --check src/game.js` passes.
+
+Open questions:
+- None.
+
 ## 2026-05-31 04:42 - Dev
 
 Changed:

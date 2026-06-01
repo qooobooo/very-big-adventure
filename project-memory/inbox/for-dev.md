@@ -4,6 +4,122 @@ For tasks related to "Очень Большая Бродилка" in `/Users/qoo
 
 ## Open Items
 
+- Approved Art/UI asset task: replace the current `Аукцион Лавки Джо` tile icon treatment with the dedicated PNG asset:
+  - Use `assets/icons/joe_auction_512.png` for tile/icon rendering, or `assets/icons/joe_auction_1254.png` if the existing asset pipeline prefers high-res sources.
+  - `assets/icons/joe_auction_source.png` is only the chroma-key source and should not be used in the game UI.
+  - Visual intent: a readable fantasy auction symbol with large wooden gavel, three shop-card lots, gold coins, and a small Joe-shop-style sign/accent. It should read as auction/bidding, not as ordinary Joe Shop.
+  - Prefer this dedicated asset over the current composite `joes_shop_512.png` + coin treatment.
+  - Do not change `joe-auction` rules, placement, bid options, tie roll-off, bot scoring, History, Chronicle, or tooltip text unless separately requested.
+  - Keep the current tile dimensions and layout stable; only swap/improve the icon presentation and any low-risk CSS needed to fit the PNG.
+  - Verification:
+    - Browser check field2 at `6-7`: `Аукцион Лавки Джо` tile shows the new icon and remains readable at board tile size.
+    - Confirm it does not visually confuse with ordinary `joes_shop_512.png`, `big_rest_fire_512.png`, `tadam_512.png`, or `chaos_portal_512.png`.
+    - `git diff --check`; `node --check src/game.js` only if JS is touched.
+
+- Approved Art/UI asset task: replace the current CSS-drawn `Большой привал` tile icon with the new fire-focused PNG asset:
+  - Use `assets/icons/big_rest_fire_512.png` for tile/icon rendering, or `assets/icons/big_rest_fire_1254.png` if the existing asset pipeline prefers high-res sources.
+  - `assets/icons/big_rest_fire_source.png` is only the chroma-key source and should not be used in the game UI.
+  - Visual intent: a very readable cozy fantasy rest stop centered on a large campfire, stone ring, logs, small bedroll/backpack/sign details, and golden beneficial aura. No tent.
+  - Prefer this fire-focused variant over the earlier `big_rest_512.png` / `big_rest_1254.png` tent version.
+  - Do not change `big-rest` rules, placement, rewards, bot scoring, History, Chronicle, or tooltip text unless separately requested.
+  - Keep the current tile dimensions and layout stable; only swap/improve the icon presentation and any low-risk CSS needed to fit the PNG.
+  - Verification:
+    - Browser check field2 at `12-0`: `Большой привал` tile shows the new icon and remains readable at board tile size.
+    - Confirm it does not visually confuse with `joes_shop_512.png`, `tadam_512.png`, or `chaos_portal_512.png`.
+    - `git diff --check`; `node --check src/game.js` only if JS is touched.
+
+- Art/UI prompt for Dev: refine the dark tabletop UI with a fantasy roll/action button as the main focus:
+  - Current diagnosis from browser review: the dark fantasy tabletop skin is working overall, but `#rollBtn` still reads too much like a bright modern web CTA. It is visible, but it does not fully belong to the dark board-game/fantasy table.
+  - Goal: make the roll/action button bright, attractive, and clearly primary, while making it feel like a fantasy board-game artifact: a raised enchanted dice button, rune plaque, or small magical relic on the action strip.
+  - Do not change gameplay rules, balance, turn flow, labels, routes, cards, events, or bot logic.
+  - Do not change layout geometry or button dimensions. Preserve the stabilized rects and mobile placement; `#rollBtn` must remain below the board on mobile touch layout.
+  - Button art direction:
+    - Move away from clean cyan/glass web-button styling.
+    - Use a deeper magical teal/blue core, antique gold/bronze rim, warm ivory text, and subtle violet shadow so it fits the dark walnut/graphite UI shell.
+    - Add a board-game tactile feel: bevel, inner rim, pressed state, soft magical glow, and darker grounding shadow.
+    - Make the dice cue feel intentional. Prefer the existing dice asset/icon treatment over a plain emoji if that can be done cleanly; otherwise make the emoji sit better visually.
+    - Keep both `Бросить` and `Далее` highly readable. `Далее` should still look like a valid primary action, not a disabled/secondary state.
+    - Disabled state should dim like an inactive magic artifact, not disappear.
+  - Surrounding action strip:
+    - Slightly unify the action/header strip with the new button: the current cell card, action/status card, and button should feel like parts of one carved tabletop control bar.
+    - Do not add explanatory text or move controls.
+    - Keep the board itself bright and unchanged.
+  - Secondary polish if low-risk:
+    - Add a little more fantasy identity to the top action widgets: subtle rune/metal edge, warmer active-cell highlight, and clearer current-player emphasis.
+    - Ensure the chaos portal violet/gold tiles still pop on the board against the dark frame.
+    - Keep settings/History/Chronicle readable; do not spend this task on broad panel redesign unless needed for button harmony.
+  - Verification:
+    - `git diff --check`.
+    - `node --check src/game.js` if JS is touched.
+    - Browser screenshot/check at current/default viewport, desktop 1440px, and mobile touch width around 390px.
+    - Confirm no text overlap in `#rollBtn` for `Бросить` and `Далее`.
+    - Confirm button remains hit-testable and visible in normal, hover/active, disabled, and `Далее` states.
+    - Confirm tabletop/classic rects do not meaningfully drift from the stabilized baseline.
+
+- Art/UI prompt for Dev: make `Настольный` UI dark fantasy while keeping the board bright and readable:
+  - Goal: turn tabletop mode from light parchment into a dark fantasy board-game table. It should feel like a bright adventure board lying on a dark wooden/magical table, not like a beige settings prototype.
+  - Do not change game rules, balance, board route, card effects, bot logic, or event behavior.
+  - Do not change the current layout geometry. Preserve the stabilized rects for app shell, play area, board header, board/map, score cards, settings, TADAM panel, Chronicle/History panels, and `#rollBtn`.
+  - Keep the actual board/route tiles bright enough. The dark treatment should mostly affect the surrounding UI shell, panels, controls, card containers, and page background.
+  - Palette direction:
+    - Page/table background: deep warm charcoal / dark walnut / muted indigo shadows.
+    - Panels: dark brown-violet or smoky graphite with subtle parchment texture only as a low-opacity overlay.
+    - Borders: antique gold/bronze, not neon.
+    - Text: warm ivory for primary text, muted sand for secondary labels.
+    - Accents: magenta/violet magic and teal-blue sparingly, especially for active states and chaos portal context.
+  - Roll/action button:
+    - Make `#rollBtn` the brightest CTA in tabletop mode: blue-teal magical fill with gold rim, high-contrast text, clear hover/active/disabled states.
+    - Verify both `Бросить` and `Далее` are readable.
+  - Player score cards:
+    - Convert from light parchment cards to dark hero plaques.
+    - Keep player color identity visible with accent strips/glows.
+    - Improve contrast for coin/dice/step/strength numbers and `нет карт`.
+    - Do not move cards or change their dimensions.
+  - Settings panel:
+    - Make it recede visually. It should feel like a control tray on the table, not the main visual object.
+    - Selects, inputs, and buttons need dark surfaces, ivory text, and clear focus outlines.
+    - Keep all controls exactly available.
+  - TADAM / Chronicle / History:
+    - TADAM slots can stay magical and brighter than panels, but should sit on a dark card-table surface.
+    - Chronicle and History should use dark panels with readable entries; avoid low-contrast gray-on-brown.
+  - Chaos portal:
+    - Continue using `assets/icons/chaos_portal_1254.png` / `assets/icons/chaos_portal_512.png`.
+    - Its violet/gold glow should remain visibly distinct from ordinary blue opened portals on the darker UI.
+  - Verification:
+    - `node --check src/game.js` if JS is touched.
+    - `git diff --check`.
+    - Browser screenshots/checks at desktop 1440px and mobile touch width around 390px.
+    - Confirm no text overlap in score cards, controls, roll button, TADAM slots, Chronicle, or History.
+    - Confirm mobile roll button remains below the board.
+    - Confirm tabletop/classic key element rects do not meaningfully drift from the current stabilized baseline.
+
+- Art/UI prompt for Dev 2: tabletop UI polish toward "Большая Бродилка" + bright fantasy, without layout drift:
+  - Keep the current `Настольный` layout dimensions stable. Do not change game rules, balance, dice math, card effects, board routes, or bot logic.
+  - Preserve the recent invariant: at 1440px, key tabletop/classic rects should remain effectively aligned for the app shell, play area, board header, map, score cards, settings panel, and roll/action button.
+  - Primary visual goal: make tabletop mode feel more like a printed adventure board game rather than a prototype settings screen.
+  - Priority 1, roll/action button:
+    - Make `#rollBtn` the strongest visual action on the screen in tabletop mode.
+    - Use a brighter fantasy treatment that still fits the softened palette: teal/blue magic fill, warm gold/brown border, readable dark text, and a slightly stronger pressed/hover state.
+    - Ensure the label `Далее` remains high-contrast and hit-testable.
+  - Priority 2, player score cards:
+    - Add clearer board-game identity without changing card placement or dimensions: stronger avatar/token presence, colored player accent edge, clearer coin/dice/step/strength grouping, and a small card-slot feel for `нет карт`.
+    - Avoid adding large text blocks or moving score cards out of the wide settings column.
+  - Priority 3, tabletop panels:
+    - Add subtle printed-card/tabletop material feeling to panels: restrained paper grain, inner border, soft inset/highlight, slightly more intentional title hierarchy.
+    - Settings should read less like an admin panel. If possible within current markup/CSS, visually separate player-facing setup from debug/test controls while keeping the same controls and layout.
+  - Priority 4, TADAM empty card slots:
+    - Make empty TADAM slots read as card backs/placeholders: clearer dashed border, faint magic glow, and stronger card silhouette.
+    - Do not change TADAM rules or reveal flow.
+  - Future-facing visual note for `Портал хаоса`:
+    - When/if the chaos portal task is implemented, distinguish it from opened-monster portals visually: reuse portal art if needed, but add yellow-violet chaotic glow and a small dice/roulette cue.
+    - Tooltip text should remain compact: `1-2: к монстру, 3-4: к Лавке Джо, 5: к TADAM, 6: выбор`.
+  - Verification:
+    - `node --check src/game.js` if JS is touched.
+    - `git diff --check`.
+    - Browser screenshots/checks at desktop 1440px and mobile touch width around 390px.
+    - Confirm mobile roll button stays below the board and no text overlaps in score cards, settings controls, TADAM slots, or the roll/action button.
+    - Confirm tabletop/classic layout rects do not meaningfully drift from the current stabilized baseline.
+
 - Card config workflow:
   - Treat Google Sheet `Cards Config` as the canonical card-edit source: `https://docs.google.com/spreadsheets/d/1dv8cOcoY9P1WZOw2UQ-prUccte2BprZMp0DFCSL0pME/edit`.
   - Tabs are `good`, `bad`, `tadam`, `shop`.
@@ -12,3 +128,300 @@ For tasks related to "Очень Большая Бродилка" in `/Users/qoo
   - When the user asks to apply config changes, update `title` and matching effect fields/logic directly, then sync `src/cards.config.js` and `cards-google-sheet.csv`.
   - If edited title/rules change numbers, update matching effect fields too, not just text.
   - Keep `src/cards.config.js` and `cards-google-sheet.csv` aligned with Google Sheet when card balance or text changes.
+
+- Joe Shop bot decision polish:
+  - Keep the current smart-random bot choice model: utility score, personality modifiers, random noise, and occasional near-best choices.
+  - Make the bot's buy/decline decision stable for one Joe Shop visit.
+  - Current suspected issue: if a bot picks decline during the first selectable revealed-card prompt, `resolveShop()` may show a second revealed prompt with `Отказаться`; random noise can make the bot reconsider and buy after initially declining.
+  - Desired behavior: one decision per shop offer, reused across the follow-up prompt/animation path.
+  - Do not make bot choices perfectly optimal; only remove the visible inconsistency.
+
+- Enemy battle UI polish without rule changes:
+  - Add a larger monster portrait zone in the battle panel using the current enemy art.
+  - Show enemy context near the portrait: `Враг` and `Порог победы: X`.
+  - Make dice in battle mode more readable: slightly larger, brighter faces, darker pips, stronger shadow, optional subtle glow/rim light.
+  - Reduce duplicate threshold/result text; keep the threshold in the battle panel and let the status line describe the current action/result.
+  - Make battle states visually distinct: ready, rolling, victory, defeat.
+  - Ensure top toast/status does not compete with the battle panel during combat.
+  - Do not change roll math, bonuses, thresholds, rewards, or return-to-start behavior.
+
+- Bot AI tuning after GD playtest:
+  - Keep the existing smart-random model and personalities; tune scoring, not rules.
+  - Evidence from a 4-bot field 2 playtest: the bot with `Шаги +4` and `Сила +0` had 6 failed attempts on `монстр 3` and never cleared it; the winner had `Сила +3` and cleared the final monster. This suggests bots overvalue repeated `+1 к шагам` and undervalue `+1 к силе` before hard monsters.
+  - Shop scoring should treat `+1 к силе` as a threshold/insurance purchase when an unbeaten monster is ahead:
+    - If the next unbeaten monster is within the next route segment and current win chance is below about 60%, `+1 к силе` should usually beat `+1 к шагам`.
+    - If `+1 к силе` pushes win chance across useful thresholds, add strong score: about 35%, 50%, 65%, and 80%.
+    - Extra weight for monsters with damage 16 and 24; they are major progress gates.
+  - `+1 к шагам` should get diminishing returns:
+    - First `+1 к шагам` is good, second is still useful, third/fourth should lose value unless the bot is far behind or trying to catch up.
+    - If the bot has unresolved hard monsters ahead and low/no strength, more steps should be penalized because they make it hit gates faster and bounce to start.
+  - `+1 к силе` should also have mild diminishing returns after the bot reaches comfortable chances for the next monster, but less harsh than steps while final monster remains ahead.
+  - `+1 кубик за 5` pre-roll spending should be more conservative for movement:
+    - If not in a monster/final battle and the bot has fewer than 10 coins, usually decline.
+    - Spend on walking only for clear tactical reasons: escaping a bad cluster, crossing a dangerous stretch, catching a leader near the finish, reaching a high-value cell, or when coins after payment remain at least about 10.
+    - In monster/final battle, spending is good when the added die meaningfully improves win chance, especially if it crosses about 35%, 50%, 65%, or 80%.
+    - Avoid spending when current chance is already high, or when next chance is still hopeless.
+  - Shop decline should become more likely if buying would leave the bot below key reserves:
+    - Below 10 coins, preserve money for monster extra dice and future shop choices unless the card solves an immediate problem.
+    - Below 5 coins, decline almost always unless the card is free or essential.
+  - Target behavior for bot personality:
+    - Dog can still prefer battle/progress, but should learn strength before hard gates.
+    - Cat can buy economy/shop cards, but should not ignore strength if repeatedly failing monsters.
+    - Otter can steal/pressure leaders, but should value strength if leader race is blocked by monsters.
+    - Alpaca can remain chaotic/risky, but should not spend the last useful 5 coins on walking too often.
+  - Suggested implementation shape:
+    - Add helper functions around current scoring, for example `monsterGatePressure(player)`, `winChanceDeltaScore(before, after)`, `shopDuplicatePenalty(player, card)`, and `coinReservePenalty(player, coinsAfter, context)`.
+    - Use them inside `scoreShopCard`, `scoreShopDecline`, and `chooseBotPreRoll`.
+    - No card text, card config, monster strength, dice math, or player-facing rules should change.
+  - Verification:
+    - Run at least one 4-bot fast field 2 party.
+    - Check that bots still make varied choices, but repeated `+1 к шагам` stacking without strength becomes rarer.
+    - Check that bots with optional extra-die cards do not regularly spend down below 10 coins for ordinary movement.
+
+- Gameplay audit follow-up: balance telemetry for GD iteration:
+  - Add a compact end-of-game / saved-history summary that helps GD compare parties without reading the full Chronicle.
+  - Include per-player:
+    - final placement / winner / boss status;
+    - turns, route cells passed, current route position;
+    - coins earned/spent and current coins;
+    - shop cards by type;
+    - final strength, final step bonus, max dice thrown;
+    - monster attempts/wins per monster;
+    - optional extra-die spends split into `movement` vs `monster/final battle`;
+    - VS contributions and VS winnings if easy to track.
+  - This should not change gameplay rules.
+  - Use existing History/snapshot structure where possible so the same data can go to Google Sheets.
+  - Purpose: make future GD tuning evidence-based, especially for shop balance, monster fail loops, and coin economy.
+
+- Gameplay audit follow-up: optional monster checkpoint mode (needs user confirmation before implementation):
+  - Current monster loss returns the player to start and grants a free Joe Shop card.
+  - This creates drama, but on field 2 it can also create long late-game loops when players repeatedly fail `монстр 3` or the final monster.
+  - Suggested experiment: add a Settings option for monster-loss penalty:
+    - `На старт` (current/default);
+    - `К последнему открытому монстру` or `К последней развилке/лагерю` (checkpoint mode).
+  - In checkpoint mode, losing to a non-final monster sends the player to the previous cleared monster gate / route milestone instead of full start, while still granting the free Joe Shop card.
+  - Do not replace the default rule without user approval; this is a playtest variant to compare party length and frustration.
+
+- Gameplay audit follow-up: Events deck prototype (needs user confirmation before implementation):
+  - GD recommends adding a small `События` deck as the next new mechanic once bot AI and battle UI are stable.
+  - Event cards should be mini-tests: `1d6 + player parameter`, with tiered rewards.
+  - First prototype should be 3-5 cards only:
+    - one checks strength;
+    - one checks step bonus;
+    - one checks coins/economy, capped;
+    - one checks dice count;
+    - one checks route progress/position.
+  - Purpose: make builds useful in more contexts than movement/monster gates and add mid-game variety without simply adding more `получи/потеряй`.
+  - Implementation likely needs a new deck in card config and a new board event type; exact field placement should be confirmed with GD before coding.
+
+- Implement new wow-moment field: `Портал хаоса`:
+  - Add a new board event type distinct from existing opened-monster portals; suggested internal id: `chaos-portal`.
+  - Player-facing name: `Портал хаоса`.
+  - Core rule when a player lands on it:
+    - Show an action prompt: `Портал хаоса мерцает. Брось кубик и узнай, куда он тебя отправит.`
+    - Roll 1d6.
+    - Result `1-2`: teleport to the previous monster cell on the route. If there is no previous monster, teleport to Start.
+    - Result `3-4`: teleport forward to the nearest Joe Shop cell on the route. If there is no Joe Shop ahead, teleport to the nearest Joe Shop on the board by route distance, preferring forward wraparound.
+    - Result `5`: teleport forward to the nearest TADAM cell on the route. If there is no TADAM ahead, teleport to the nearest TADAM on the board by route distance, preferring forward wraparound.
+    - Result `6`: player chooses one of three destinations: previous monster/Start, nearest Joe Shop, nearest TADAM.
+  - Teleport behavior:
+    - This is an instant portal jump, not walking; do not trigger pass-through effects between source and destination.
+    - After arriving, pulse/render the destination and resolve the landing event there once.
+    - Prevent infinite loops: if the destination is another `chaos-portal`, do not immediately trigger it again in the same resolution chain, or rely on/adjust `eventDepth` safely.
+    - Record movement/history as a special jump if possible; at minimum update position and render.
+  - Bot behavior:
+    - For result `6`, bot should choose with existing `scoreCellForBot` style logic:
+      - Joe Shop if it has 5+ coins and wants cards.
+      - TADAM if chaos/risk or behind.
+      - Previous monster/Start only if it wants to retry a gate, escape a bad late segment, or has no money/poor alternatives.
+    - Keep smart-random; do not make bots deterministic.
+  - Visual/UI:
+    - Replace the temporary/reused opened-portal art with the dedicated Art/UI asset: `assets/icons/chaos_portal_1254.png` for high-res use or `assets/icons/chaos_portal_512.png` for tile/icon use.
+    - The icon is intentionally unlike the existing blue stone portal: violet/gold jagged rift with a die cue, so it should not be confused with opened monster portals.
+    - Add tooltip/field text: `1-2: назад к монстру, 3-4: к Лавке Джо, 5: к TADAM, 6: выбор`.
+    - Add Chronicle entries for roll result and destination.
+  - First placement for playtest:
+    - Add 2 `chaos-portal` cells to field 2 by replacing existing harsh cells, not adding more punishment:
+      - Mid-game: replace `7-10` currently `bad`.
+      - Late red canyon: replace `14-6` currently `red`.
+    - Do not add it to field 1 unless user asks.
+  - Verification:
+    - `node --check src/game.js`.
+    - Browser smoke test: land on/force exact move to each chaos portal and verify all result branches can resolve.
+    - Test result `6` with a human choice and with a bot choice.
+    - Confirm existing opened-monster portals still work and are not confused with `chaos-portal`.
+
+- Implement new wow-moment field: `Большой привал`:
+  - Add a new board event type; suggested internal id: `big-rest`.
+  - Player-facing name: `Большой привал`.
+  - This event affects only the player who lands on the field. It is not a global/all-players event.
+  - Core rule when a player lands on it:
+    - Show a choice prompt: `Большой привал. Выбери, как подготовиться к дороге.`
+    - Choices:
+      - `Восстановиться`: gain `+15 монет`.
+      - `Потренироваться`: gain permanent `+1 к силе`.
+      - `Ускориться`: gain permanent `+2 к скорости`.
+  - Mechanics mapping:
+    - `+1 к силе` should use the existing permanent player strength/battle bonus path, same kind of bonus shown as `Сила +N`.
+    - `+2 к скорости` should mechanically use the existing permanent movement/step bonus path, same kind of bonus currently shown as `Шаги +N`. If UI text must stay consistent, display it as `+2 к шагам`; flavor copy can call it speed/acceleration.
+    - Use existing helpers such as `addCoins`, `addBattleBonus`, and `addStepBonus` if available, so History, floats, and logs stay consistent.
+  - Bot behavior:
+    - Keep smart-random, not deterministic.
+    - Prefer `Восстановиться` if the bot has low coins, wants Joe Shop cards, or needs reserve for optional extra dice before monster gates.
+    - Prefer `Потренироваться` if an unbeaten monster/final monster is ahead and current win chance is not comfortable.
+    - Prefer `Ускориться` if the bot is behind, has enough strength for the next gate, or is in a race-to-finish phase.
+    - Add diminishing returns for speed if the bot already has high step bonus and low strength.
+  - Visual/UI:
+    - Add a tile icon/style for `Большой привал`; campfire/tent/rest stop flavor is ideal.
+    - Tooltip/field text: `Выбери: +15 монет, +1 сила навсегда или +2 скорость навсегда`.
+    - Add Chronicle entries for the chosen option and resulting bonus.
+    - Add History field label for `Большой привал`.
+  - First placement for playtest:
+    - Add 1 `big-rest` cell to field 2 only.
+    - Suggested placement: replace `12-0`, currently `good`, with `big-rest`.
+    - Reason: it appears after `монстр 3` and before the late red/bad canyon/final push, so it works as preparation/comeback rather than early snowball.
+    - Do not add it to field 1 unless user asks.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Browser smoke on field 2: exact-move/force land on `12-0`, test all three human choices, and confirm only the landing player receives the reward.
+    - Browser smoke with at least one bot landing on `Большой привал` and auto-choosing.
+    - Confirm permanent `+1 к силе` affects later monster/VS/final battle strength and permanent `+2 к скорости/шагам` affects later movement.
+
+- Implement new wow-moment field: `Аукцион Лавки Джо`:
+  - Add a new board event type; suggested internal id: `joe-auction`.
+  - Player-facing name: `Аукцион Лавки Джо`.
+  - This is a table-wide auction triggered by the player who lands on the field, but participation is safe for everyone:
+    - Losing bidders pay nothing.
+    - Players who pass pay nothing.
+    - Only the final winner pays their winning bid.
+  - Core flow:
+    - When a player lands on `Аукцион Лавки Джо`, reveal 3 unique Joe Shop cards.
+    - Prompt/log: `Аукцион Лавки Джо открывает 3 карты. Игроки делают ставки. Проигравшие ничего не платят.`
+    - Each player chooses a sealed bid from fixed affordable options: `0`, `5`, `10`, `15`, `20`.
+    - A player may only choose bids they can currently afford; if they have fewer than 5 coins, they can only bid `0`.
+    - `0` means `Пас`.
+    - After all bids are chosen, the highest bid wins.
+    - If all bids are `0`, no one buys a card; discard/close the offer and log that everyone passed.
+    - If exactly one player has the highest bid, that player pays that amount to the bank and chooses 1 of the 3 revealed cards.
+    - If several players tie for the highest bid above `0`, resolve the tie with a quick roll-off among tied players:
+      - tied players each roll 1d6;
+      - highest roll wins;
+      - if still tied, reroll only tied leaders until one winner remains.
+      - winner pays their original tied bid, not an extra amount.
+    - Add the chosen card to the winner's Joe Shop items and record it like a normal shop-card gain.
+  - Important economy contract:
+    - Do not subtract bids during bidding.
+    - Do not charge losers.
+    - Do not charge an entry/participation fee.
+    - Only call the coin-spend path for the final winner after the winner is known.
+  - Card choice:
+    - Human winner chooses one of the 3 revealed cards.
+    - Bot winner chooses using existing shop-card scoring, but without decline because it already won the auction.
+  - Bot bidding:
+    - Keep smart-random, not deterministic.
+    - Estimate the best card value from the 3 revealed cards using existing `scoreShopCard` / bot shop valuation.
+    - Bid more if:
+      - the best card solves an immediate monster-gate problem, especially `+1 к силе`;
+      - the bot has enough coins after the bid to keep a useful reserve;
+      - the bot is behind and needs a comeback;
+      - the bot personality values shop/economy/risk.
+    - Bid less/pass if:
+      - all cards are low value or mostly duplicate existing cards;
+      - the bid would leave the bot below key reserve, especially under ~10 coins before hard monsters;
+      - the bot has fewer than 5 coins.
+    - Suggested bid bands:
+      - low value: `0` or `5`;
+      - useful card: `5` or `10`;
+      - high-impact card: `10` or `15`;
+      - emergency/comeback/key gate card and rich bot: up to `20`.
+  - UI/Chronicle:
+    - Add a distinct tile icon/style for `Аукцион Лавки Джо`; reuse Joe Shop art with auction/gavel/coin treatment if no new asset exists.
+    - Tooltip/field text: `3 карты Лавки Джо. Все делают ставки. Проигравшие не платят.`
+    - Show the 3 revealed cards during bidding and winner choice.
+    - Chronicle should include:
+      - triggered auction and revealed card names;
+      - each player's bid, with `Пас` for `0`;
+      - tie roll-off if any;
+      - winner, paid amount, and chosen card;
+      - if all pass, `Все спасовали. Аукцион закрыт.`
+    - Add History field label for `Аукцион Лавки Джо`.
+  - First placement for playtest:
+    - Add 1 `joe-auction` cell to field 2 only.
+    - Suggested placement: replace `6-7`, currently a normal `shop`, with `joe-auction`.
+    - Reason: keeps shop-like event density stable and puts the auction around the middle of the route, when players usually have enough coins for meaningful bids.
+    - Do not add it to field 1 unless user asks.
+  - Interaction with movement:
+    - Trigger on landing like a normal field event.
+    - Do not trigger on pass-through movement unless Dev deliberately chooses to mirror Joe Shop pass-through behavior; GD preference for first test is landing-only to keep the flow from becoming too interruptive.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Browser smoke on field 2: force/exact-move land on the auction cell.
+    - Test all-pass outcome.
+    - Test a single clear winning bid.
+    - Test a tie and roll-off.
+    - Test human winner card choice and bot winner card choice.
+    - Confirm losers and passers lose 0 coins.
+    - Confirm only the winner pays and receives exactly one Joe Shop card.
+
+- Implement new wow-moment field: `Черный рынок`:
+  - Add a new board event type; suggested internal id: `black-market`.
+  - Player-facing name: `Черный рынок`.
+  - This event affects only the player who lands on the field.
+  - Core rule when a player lands on it:
+    - Show a choice prompt: `Черный рынок предлагает опасные сделки. Что покупаешь?`
+    - Choices:
+      - `Карта Лавки Джо`: pay `5 монет`, receive 1 random/revealed Joe Shop card.
+      - `Тайная тренировка`: pay `10 монет`, gain permanent `+1 к силе`.
+      - `Зелье ярости`: pay `15 монет`, gain one-use `+10 к силе в следующей битве с монстром`.
+      - `Уйти`: pay `0`, no effect.
+    - Only show or enable paid choices the player can afford.
+    - If the player cannot afford any paid deal, still show/log the market and allow `Уйти`.
+  - One-use monster bonus contract:
+    - `Зелье ярости` creates a temporary stored player effect, suggested state name like `nextMonsterBattleBonus: 10`.
+    - It applies only to the player's next monster-gate battle through the enemy/monster battle flow.
+    - It should apply to ordinary monsters and the final monster gate, because both are monster battles.
+    - It should not apply to VS battle, player-vs-boss final battle, movement rolls, reverse-roll card effects, or ordinary dice.
+    - Consume the effect when that next monster battle rolls, whether the player wins or loses.
+    - Show the bonus in the battle formula/log, for example: `+10 зелье ярости`.
+    - If a player buys `Зелье ярости` again before using the previous one, do not stack infinitely. GD preference: refresh/set the stored bonus to `10`; alternatively allow max one active potion and disable the choice while active.
+  - Permanent bonus mapping:
+    - `Тайная тренировка` should use the existing permanent strength/battle bonus path, same kind of bonus shown as `Сила +N`.
+    - `Карта Лавки Джо` should use the same reveal/gain path as other free Joe Shop card rewards when possible.
+    - Use existing coin helpers so History and coin floats stay consistent.
+  - Bot behavior:
+    - Keep smart-random.
+    - `Карта Лавки Джо`: attractive when bot has spare coins, few shop cards, shop/economy personality, or needs build options.
+    - `Тайная тренировка`: attractive before unbeaten monster gates, especially if win chance is below comfortable thresholds.
+    - `Зелье ярости`: attractive when a hard unbeaten monster/final monster is ahead soon and `+10` would convert a low/medium chance into a likely clear.
+    - `Уйти`: attractive when spending would drop below reserve, when no hard monster is ahead, when already has active `Зелье ярости`, or when all deals are low value.
+    - Preserve coin reserve logic from recent bot AI tuning; avoid spending last useful 15 coins unless the next monster gate matters.
+  - UI/Chronicle:
+    - Add a distinct tile icon/style for `Черный рынок`; black tent, shady stall, purple lantern, or masked merchant flavor works.
+    - Tooltip/field text: `Сделки: 5 за Лавку, 10 за +1 силу навсегда, 15 за +10 в следующей битве с монстром`.
+    - Chronicle should include:
+      - market triggered;
+      - selected deal and cost;
+      - for `Зелье ярости`, that the next monster battle gets `+10`;
+      - when potion is consumed in a monster battle.
+    - Add History field label for `Черный рынок`.
+    - If feasible, show active one-use monster bonus in the player score card/action area, but keep it compact.
+  - First placement for playtest:
+    - Add 1 `black-market` cell to field 2 only.
+    - Suggested placement: replace `5-0`, currently a normal Joe Shop.
+    - Reason: keeps shop-like event density stable and places the market after `монстр 3` on the route, where the `+10 next monster battle` deal becomes a meaningful final-push choice rather than early snowball.
+    - Do not add it to field 1 unless user asks.
+  - Interaction with movement:
+    - Trigger on landing like a normal field event.
+    - GD preference for first test: landing-only, not pass-through, because the choice can be impactful and should not interrupt every walk through the cell.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Browser smoke on field 2: force/exact-move land on the black market cell.
+    - Test all four human choices.
+    - Test insufficient-coins state.
+    - Test bot auto-choice.
+    - Confirm `Карта Лавки Джо` costs 5 and grants exactly one shop card.
+    - Confirm `Тайная тренировка` costs 10 and permanently increases monster/VS/final battle strength through existing strength bonus.
+    - Confirm `Зелье ярости` costs 15, applies exactly once to the next ordinary/final monster gate battle, is consumed after that battle, and does not affect VS or player-vs-boss final battle.

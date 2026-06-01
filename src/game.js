@@ -1,14 +1,19 @@
-import { cardConfig } from "./cards.config.js?v=20260531-0241";
-import { boardDoorConfigs, doorConfigs } from "./game.config.js";
+import { cardConfig } from "./cards.config.js?v=20260601-0281";
+import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260531-0271";
 
 const boardEl = document.querySelector("#board");
 const scoreStripEl = document.querySelector("#scoreStrip");
 const gameLogEl = document.querySelector("#gameLog");
+const gameHistoryEl = document.querySelector("#gameHistory");
 const tadamTableEl = document.querySelector("#tadamTable");
 const appShellEl = document.querySelector(".app-shell");
 const playAreaEl = document.querySelector(".play-area");
 const sidePanelEl = document.querySelector(".side-panel");
 const wideLayoutQuery = window.matchMedia("(min-width: 1200px)");
+const savedGamesStorageKey = "very-big-adventure.saved-games";
+const googleSheetsSaveUrl = "https://script.google.com/macros/s/AKfycbxNXmGjR9w3U0vmUd9xS5Rc2KHwR8Q7ViB5Pcl70qIOEhwIJp_M_1faO7RvpDtuPLqkdQ/exec";
+const defaultUiStyle = "classic";
+const uiStyleValues = new Set(["tabletop", "classic"]);
 
 const ui = {
   activePlayerName: document.querySelector("#activePlayerName"),
@@ -25,16 +30,19 @@ const ui = {
   exactMoveBtn: document.querySelector("#exactMoveBtn"),
   finalBattleHud: document.querySelector("#finalBattleHud"),
   fieldEffect: document.querySelector("#fieldEffect"),
+  logToggle: document.querySelector("#logToggle"),
   modifierPlayerStatus: document.querySelector("#modifierPlayerStatus"),
   passThroughMode: document.querySelector("#passThroughMode"),
   newGameBtn: document.querySelector("#newGameBtn"),
   playerCount: document.querySelector("#playerCount"),
   rollBtn: document.querySelector("#rollBtn"),
   roundTitle: document.querySelector("#roundTitle"),
+  saveHistoryBtn: document.querySelector("#saveHistoryBtn"),
   settingsPanel: document.querySelector("#settingsPanel"),
   settingsToggle: document.querySelector("#settingsToggle"),
   showWalkPath: document.querySelector("#showWalkPath"),
   turnActions: document.querySelector("#turnActions"),
+  uiStyle: document.querySelector("#uiStyle"),
   winnerPopup: document.querySelector("#winnerPopup"),
 };
 
@@ -145,7 +153,7 @@ const boardConfigs = {
       "0-0": "bad",
       "0-1": "good",
       "0-2": "green",
-      "0-3": "red",
+      "0-3": "big-rest",
       "0-4": "green",
       "0-5": "good",
       "0-6": "bad",
@@ -162,9 +170,9 @@ const boardConfigs = {
       "2-2": "red",
       "2-3": "red",
       "2-4": "bad",
-      "2-6": "red",
-      "2-8": "red",
-      "2-10": "green",
+      "2-6": "black-market",
+      "2-8": "chaos-portal",
+      "2-10": "good",
       "2-14": "green",
       "3-4": "bad",
       "3-6": "red",
@@ -193,7 +201,7 @@ const boardConfigs = {
       "6-8": "green",
       "6-10": "red",
       "6-12": "green",
-      "6-13": "green",
+      "6-13": "tadam",
       "6-14": "good",
       "7-2": "red",
       "7-10": "bad",
@@ -208,7 +216,7 @@ const boardConfigs = {
       "8-10": "bad",
       "8-12": "green",
       "8-13": "green",
-      "8-14": "tadam",
+      "8-14": "good",
       "9-2": "bad",
       "9-4": "bad",
       "9-7": "bad",
@@ -221,11 +229,11 @@ const boardConfigs = {
       "10-11": "red",
       "10-12": "red",
       "10-13": "red",
-      "10-14": "red",
+      "10-14": "tadam",
       "11-2": "red",
       "11-4": "bad",
-      "11-9": "good",
-      "11-11": "bad",
+      "11-9": "big-rest",
+      "11-11": "pay-double",
       "12-0": "good",
       "12-1": "good",
       "12-2": "good",
@@ -235,18 +243,18 @@ const boardConfigs = {
       "12-7": "bad",
       "12-9": "good",
       "12-11": "tadam",
-      "12-12": "pay-double",
+      "12-12": "bad",
       "12-13": "green",
       "12-14": "green",
-      "13-0": "good",
-      "13-7": "red",
+      "13-0": "tadam",
+      "13-7": "chaos-portal",
       "13-9": "good",
       "13-14": "shop",
-      "14-0": "red",
+      "14-0": "joe-auction",
       "14-1": "red",
       "14-2": "red",
       "14-3": "red",
-      "14-4": "red",
+      "14-4": "big-rest",
       "14-5": "red",
       "14-6": "red",
       "14-7": "red",
@@ -254,7 +262,7 @@ const boardConfigs = {
       "14-10": "red",
       "14-11": "red",
       "14-12": "good",
-      "14-13": "green",
+      "14-13": "tadam",
       "14-14": "green",
     },
     route: [
@@ -279,20 +287,31 @@ let cellEvents;
 const eventToastVisibleMs = 3000;
 const eventToastFadeMs = 800;
 const eventToastQuickFadeMs = 140;
+const blackMarketShopCost = 5;
+const blackMarketTrainingCost = 10;
+const blackMarketRageCost = 15;
+const blackMarketRageBonus = 10;
 const coinIconSrc = "./assets/icons/coin.png?v=20260524-0155";
 const diceIconSrc = "./assets/icons/dice.png?v=20260524-0305";
 const enemyIconSrc = "./assets/icons/enemy_512.png";
 const finalEnemyIconSrc = "./assets/icons/final_enemy.png?v=20260525-0146";
+const blackMarketIconSrc = "./assets/icons/black_market_ultra_simple_512.png?v=20260601-0294";
+const chaosPortalIconSrc = "./assets/icons/chaos_portal_1254.png?v=20260601-0276";
+const joeAuctionIconSrc = "./assets/icons/joe_auction_simple_512.png?v=20260601-0290";
 const portalIconSrc = "./assets/icons/portal_1254.png?v=20260530-0222";
 const vsIconSrc = "./assets/icons/vs_1254.png?v=20260531-0233";
 const eventIcons = {
   bad: '<img class="tile-icon-image tile-icon-bad" src="./assets/icons/bad_tight.png" alt="Плохо">',
+  "big-rest": '<img class="tile-icon-image tile-icon-big-rest" src="./assets/icons/big_rest_fire_512.png" alt="Большой привал">',
+  "black-market": `<img class="tile-icon-image tile-icon-black-market" src="${blackMarketIconSrc}" alt="Черный рынок">`,
+  "chaos-portal": `<img class="tile-icon-image tile-icon-chaos-portal" src="${chaosPortalIconSrc}" alt="Портал хаоса">`,
   enemy: '<img class="tile-icon-image tile-icon-enemy" src="./assets/icons/enemy_512.png" alt="Враг">',
   good: '<img class="tile-icon-image tile-icon-good" src="./assets/icons/good_512.png" alt="Хорошо">',
   green: "",
   red: "",
   "dice-fortune": '<img class="tile-icon-image tile-icon-dice-fortune" src="./assets/tiles/dice_fortune_1254.png?v=20260521-0035" alt="Кубик удачи">',
   "pay-double": '<img class="tile-icon-image tile-icon-pay-double" src="./assets/tiles/pay_double_1024.png?v=20260521-1205" alt="Удвоение монет">',
+  "joe-auction": `<img class="tile-icon-image tile-icon-joe-auction" src="${joeAuctionIconSrc}" alt="Аукцион Лавки Джо">`,
   shop: '<img class="tile-icon-image tile-icon-shop" src="./assets/icons/joes_shop_512.png" alt="Лавка Джо">',
   tadam: '<img class="tile-icon-image tile-icon-tadam" src="./assets/icons/tadam_512.png" alt="ТАДАМ!">',
   vs: `<img class="tile-icon-image tile-icon-vs" src="${vsIconSrc}" alt="VS">`,
@@ -303,7 +322,8 @@ const tileIcons = {
   start: '<img class="tile-icon-image tile-icon-start" src="./assets/icons/start_512.png" alt="Старт">',
 };
 
-applyBoardConfig(ui.boardSelect?.value || "field1");
+applyUiStyle();
+applyBoardConfig(ui.boardSelect?.value || "field2");
 
 const goodCards = expandDeck(cardConfig.good);
 const badCards = expandDeck(cardConfig.bad);
@@ -317,16 +337,38 @@ const names = [
   { name: "Альпака", color: "#d56b00", token: "./assets/player-tokens/alpaca.png?v=20260520-0310" },
 ];
 
+const historyFieldLabels = {
+  bad: "Плохо",
+  "big-rest": "Большой привал",
+  "black-market": "Черный рынок",
+  "chaos-portal": "Портал хаоса",
+  "dice-fortune": "Кубик удачи",
+  enemy: "Монстр",
+  finish: "Финиш",
+  good: "Хорошо",
+  green: "Зеленое",
+  "joe-auction": "Аукцион Лавки Джо",
+  "pay-double": "x2 монеты",
+  path: "Обычное",
+  red: "Красное",
+  shop: "Лавка Джо",
+  start: "Старт",
+  tadam: "ТАДАМ",
+  vs: "VS",
+};
+
 let state;
 let actionPromptResolver = null;
 let actionPromptButtonLabel = "Далее";
 let actionPromptAutoPlayerId = null;
 let botActionTimer = null;
+const botShopOfferChoices = new WeakMap();
 let eventToastFadeTimer = null;
 let eventToastHideTimer = null;
+let logExpanded = false;
 
 function applyBoardConfig(boardId) {
-  const config = boardConfigs[boardId] || boardConfigs.field1;
+  const config = boardConfigs[boardId] || boardConfigs.field2;
   activeBoardConfig = {
     ...config,
     doors: boardDoorConfigs[config.id] || doorConfigs,
@@ -344,14 +386,25 @@ function applyBoardConfig(boardId) {
   cellEvents = buildCellEvents();
 }
 
+function selectedUiStyle() {
+  const value = ui.uiStyle?.value || document.body?.dataset.uiStyle || defaultUiStyle;
+  return uiStyleValues.has(value) ? value : defaultUiStyle;
+}
+
+function applyUiStyle() {
+  if (document.body) document.body.dataset.uiStyle = selectedUiStyle();
+  syncWideScoreStripPlacement();
+}
+
 function newGame() {
+  applyUiStyle();
   syncBotCountOptions();
   actionPromptResolver = null;
   actionPromptButtonLabel = "Далее";
   actionPromptAutoPlayerId = null;
   window.clearTimeout(botActionTimer);
   botActionTimer = null;
-  applyBoardConfig(ui.boardSelect?.value || "field1");
+  applyBoardConfig(ui.boardSelect?.value || "field2");
   const playerCount = Number(ui.playerCount.value);
   const botCount = selectedBotCount(playerCount);
   const doors = {};
@@ -369,6 +422,7 @@ function newGame() {
     finalBattle: null,
     finalBattleProgress: null,
     finished: false,
+    gameSettings: collectGameSettings(),
     botTurnPlayerId: null,
     isAnimating: false,
     landingCell: null,
@@ -389,6 +443,7 @@ function newGame() {
       diceBonus: 0,
       id: index,
       items: [],
+      nextMonsterBattleBonus: 0,
       position: startCell,
       stepBonus: 0,
     })),
@@ -398,6 +453,7 @@ function newGame() {
     vsBattleProgress: null,
     walkPath: [],
   };
+  state.history = createGameHistory(state.players);
 
   boardEl.dataset.ready = "false";
   boardEl.dataset.boardId = activeBoardConfig.id;
@@ -407,12 +463,124 @@ function newGame() {
   render();
 }
 
+function createGameHistory(players) {
+  return {
+    finishedAt: null,
+    startedAt: Date.now(),
+    tadamPlayed: 0,
+    players: Object.fromEntries(players.map((player) => [player.id, createPlayerHistory()])),
+  };
+}
+
+function collectGameSettings() {
+  const playerCount = Number(ui.playerCount?.value) || 0;
+  return {
+    autoRevealCards: Boolean(ui.autoRevealCards?.checked),
+    board: ui.boardSelect?.value || "field2",
+    botCount: selectedBotCount(playerCount),
+    botSpeed: ui.botSpeed?.value || "standard",
+    diceCount: Number(ui.diceCount?.value) || 1,
+    exactMoveAmount: exactMoveControlAmount(),
+    passThroughMode: passThroughMode(),
+    playerCount,
+    showWalkPath: Boolean(ui.showWalkPath?.checked),
+    uiStyle: selectedUiStyle(),
+  };
+}
+
+function createPlayerHistory() {
+  return {
+    cellsPassed: 0,
+    coinsEarned: 0,
+    coinsSpent: 0,
+    effectsReceived: 0,
+    fieldVisits: {},
+    maxDiceThrown: 0,
+    maxShopCards: 0,
+    monsterBattles: {},
+    turns: 0,
+  };
+}
+
+function playerHistory(player) {
+  if (!state?.history || !player) return null;
+  if (!state.history.players[player.id]) state.history.players[player.id] = createPlayerHistory();
+  return state.history.players[player.id];
+}
+
+function recordTurnStarted(player) {
+  const history = playerHistory(player);
+  if (history) history.turns += 1;
+}
+
+function recordPlayerMoved(player, cell = player?.position) {
+  const history = playerHistory(player);
+  if (!history || !cell) return;
+  history.cellsPassed += 1;
+}
+
+function recordPlayerStopped(player, cell = player?.position) {
+  const history = playerHistory(player);
+  if (!history || !cell) return;
+  const fieldType = tileType(cell);
+  const label = historyFieldLabels[fieldType] || fieldType || "Поле";
+  history.fieldVisits[label] = (history.fieldVisits[label] || 0) + 1;
+}
+
+function recordCoinDelta(player, delta) {
+  const history = playerHistory(player);
+  if (!history || !delta) return;
+  if (delta > 0) history.coinsEarned += delta;
+  else history.coinsSpent += Math.abs(delta);
+}
+
+function recordShopCards(player) {
+  const history = playerHistory(player);
+  if (!history) return;
+  history.maxShopCards = Math.max(history.maxShopCards, player.items.length);
+}
+
+function recordDiceThrown(player, diceCount) {
+  const history = playerHistory(player);
+  if (!history) return;
+  history.maxDiceThrown = Math.max(history.maxDiceThrown, diceCount);
+}
+
+function recordEffectReceived(target, actor = null) {
+  if (!target || !actor || target.id === actor.id) return;
+  const history = playerHistory(target);
+  if (history) history.effectsReceived += 1;
+}
+
+function recordMonsterBattle(player, door, force, won) {
+  const history = playerHistory(player);
+  if (!history || !door) return;
+  const key = door.label || `Монстр ${door.damage}`;
+  const battle = history.monsterBattles[key] || {
+    attempts: 0,
+    clearedForce: null,
+    damage: door.damage,
+    wins: 0,
+  };
+  battle.attempts += 1;
+  if (won) {
+    battle.wins += 1;
+    battle.clearedForce = force;
+  }
+  history.monsterBattles[key] = battle;
+}
+
+function recordTadamPlayed() {
+  if (state?.history) state.history.tadamPlayed += 1;
+}
+
 async function rollAndMove({ animate = true } = {}) {
   if (state.finished || state.isAnimating || state.pendingCardChoice || state.pendingChoice || state.pendingPreRoll || state.pendingShop) return;
 
   const player = currentPlayer();
   const botTurnPlayerId = isBot(player) ? player.id : null;
   state.botTurnPlayerId = botTurnPlayerId;
+  recordTurnStarted(player);
 
   try {
     const extraDice = await chooseExtraDie(player, animate);
@@ -422,6 +590,7 @@ async function rollAndMove({ animate = true } = {}) {
     render();
 
     const rolls = rollDice(totalDiceForPlayer(player, extraDice));
+    recordDiceThrown(player, rolls.length);
     const rolled = rolls.reduce((sum, value) => sum + value, 0);
     const bonus = playerStepBonus(player);
     if (animate) await animateDice(rolls, { bonus, player });
@@ -448,6 +617,7 @@ async function rollAndMove({ animate = true } = {}) {
       }
 
       player.position = nextPosition;
+      recordPlayerMoved(player, nextPosition);
       consumeWalkPathCell(nextPosition);
       if (step < totalSteps - 1) resolveJumpSteal(player);
       if (animate) {
@@ -456,7 +626,7 @@ async function rollAndMove({ animate = true } = {}) {
       }
       const enemyBattle = await resolvePassThroughEnemy(player);
       if (state.finished || player.position !== nextPosition) break;
-      if (enemyBattle?.winner === "player" && !enemyBattle.isFinalBoss && !monstersDontStopEnabled()) break;
+      if (enemyBattle?.winner === "player" && !enemyBattle.isFinalBoss && !passThroughAllEnabled()) break;
       await resolvePortalAtCurrentCell(player, { animate, remaining: totalSteps - step - 1 });
       if (step < totalSteps - 1) {
         await resolvePassThroughShop(player);
@@ -470,16 +640,7 @@ async function rollAndMove({ animate = true } = {}) {
     log(`${playerName(player)} бросает <strong>${formatRoll(rolls)}</strong>${totalSteps !== rolled ? ` и идет на ${totalSteps}` : ""}.`);
     await resolveLanding(player);
 
-    if (state.finished) {
-      state.extraTurnPlayerId = null;
-    } else if (state.extraTurnPlayerId === player.id) {
-      state.extraTurnPlayerId = null;
-      state.dice = null;
-      state.turns += 1;
-      log(`${playerName(player)} получает <strong>еще один ход</strong>.`, { toast: true });
-    } else {
-      advanceTurn();
-    }
+    completeMovementTurn(player);
   } finally {
     if (state.botTurnPlayerId === botTurnPlayerId) state.botTurnPlayerId = null;
     state.isAnimating = false;
@@ -556,6 +717,19 @@ function advanceTurn() {
 
   if (state.activePlayer === 0) {
     state.round += 1;
+  }
+}
+
+function completeMovementTurn(player) {
+  if (state.finished) {
+    state.extraTurnPlayerId = null;
+  } else if (state.extraTurnPlayerId === player.id) {
+    state.extraTurnPlayerId = null;
+    state.dice = null;
+    state.turns += 1;
+    log(`${playerName(player)} получает <strong>еще один ход</strong>.`, { toast: true });
+  } else {
+    advanceTurn();
   }
 }
 
@@ -650,6 +824,86 @@ function fastBotsEnabled() {
   return ui.botSpeed?.value === "fast";
 }
 
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function chanceThresholdScore(before, after, scale = 1) {
+  const thresholds = [
+    [0.35, 12],
+    [0.5, 16],
+    [0.65, 20],
+    [0.8, 16],
+  ];
+  return thresholds.reduce((score, [threshold, amount]) => (
+    before < threshold && after >= threshold ? score + amount * scale : score
+  ), 0);
+}
+
+function winChanceDeltaScore(before, after, scale = 1) {
+  const gain = Math.max(0, after - before);
+  let score = gain * 100 * scale + chanceThresholdScore(before, after, scale);
+  if (before >= 0.82) score -= 18 * scale;
+  if (after < 0.18) score -= 12 * scale;
+  return score;
+}
+
+function monsterGateWeight(door) {
+  if (!door) return 1;
+  if (door.isFinalBoss) return 1.65;
+  if (door.damage >= 16) return 1.45;
+  if (door.damage >= 10) return 1.15;
+  return 1;
+}
+
+function monsterGatePressure(player) {
+  const door = nextUnbeatenEnemy(player);
+  if (!door) return null;
+
+  const distance = Math.max(0, (routeIndex.get(door.enemyCell) ?? routeProgress(player)) - routeProgress(player));
+  const dice = totalDiceForPlayer(player);
+  const bonus = playerMonsterBattleBonus(player);
+  const chance = estimateWinChance(dice, bonus, door.damage);
+  const weight = monsterGateWeight(door);
+  const nearby = distance <= 32;
+  const hardGate = door.isFinalBoss || door.damage >= 16;
+  const failedAttempts = playerHistory(player)?.monsterBattles?.[door.label]?.attempts || 0;
+  const pressure = (
+    clamp((0.68 - chance) * 1.7, 0, 1.15) * weight +
+    (nearby ? 0.28 : 0) +
+    (hardGate ? 0.22 : 0) +
+    Math.min(0.35, failedAttempts * 0.08)
+  );
+
+  return { bonus, chance, dice, distance, door, failedAttempts, hardGate, nearby, pressure, weight };
+}
+
+function shopDuplicatePenalty(player, card) {
+  if (!player || !card) return 0;
+  const effectType = card.effect?.type;
+  const copies = player.items.filter((item) => item.id === card.id || item.effect?.type === effectType).length;
+  if (copies <= 0) return 0;
+  if (effectType === "passive-step-bonus") return [0, 8, 28, 50, 72][Math.min(copies, 4)] || 72;
+  if (effectType === "passive-battle-bonus") return [0, 4, 9, 16, 24][Math.min(copies, 4)] || 24;
+  if (effectType === "optional-extra-die") return [0, 7, 18, 30, 42][Math.min(copies, 4)] || 42;
+  return 5 * copies;
+}
+
+function coinReservePenalty(player, coinsAfter, context = {}) {
+  const personality = botPersonality(player);
+  const gate = monsterGatePressure(player);
+  let penalty = 0;
+
+  if (coinsAfter < 5) penalty += (context.critical ? 16 : 34) * personality.economy;
+  else if (coinsAfter < 10) penalty += (context.critical ? 6 : 18) * personality.economy;
+  else if (coinsAfter < 12 && gate?.pressure > 0.8) penalty += 7 * personality.economy;
+
+  if (context.movement && player.coins < 10) penalty += 14 * personality.economy;
+  if (context.movement && gate?.pressure > 0.7) penalty += 5 * gate.pressure * personality.economy;
+  if (context.battle && gate?.door?.isFinalBoss) penalty *= 0.75;
+  return penalty;
+}
+
 function chooseBotPreRoll(player, card) {
   const effect = card?.effect;
   if (!effect || player.coins < effect.cost) return false;
@@ -660,32 +914,40 @@ function chooseBotPreRoll(player, card) {
   const coinsAfter = player.coins - effect.cost;
   const door = cellEvents[player.position] === "enemy" ? doorByEnemyCell(player.position) : null;
 
-  let payScore = -2;
+  let payScore = -6;
   let declineScore = 0;
 
   if (door && !isDoorOpenForPlayer(door, player)) {
-    const currentChance = estimateWinChance(currentDice, playerCombatBonus(player), door.damage);
-    const nextChance = estimateWinChance(nextDice, playerCombatBonus(player), door.damage);
-    const gain = nextChance - currentChance;
-    payScore += gain * 95 * personality.battle;
-    if (nextChance >= 0.58) payScore += 15 * personality.battle;
+    const currentChance = estimateWinChance(currentDice, playerMonsterBattleBonus(player), door.damage);
+    const nextChance = estimateWinChance(nextDice, playerMonsterBattleBonus(player), door.damage);
+    const gateWeight = monsterGateWeight(door);
+    payScore += winChanceDeltaScore(currentChance, nextChance, gateWeight) * personality.battle;
+    if (currentChance < 0.6 && nextChance >= 0.6) payScore += 16 * gateWeight * personality.battle;
     if (currentChance < 0.08 && nextChance > 0.2) payScore += 10 * personality.risk;
-    if (currentChance >= 0.82) declineScore += 18;
-    if (nextChance < 0.18) declineScore += 14 / personality.risk;
-    if (door.isFinalBoss) payScore += 10 * personality.battle;
+    if (currentChance >= 0.82) declineScore += 24 * personality.economy;
+    if (nextChance < 0.18) declineScore += 18 / personality.risk;
+    if (door.isFinalBoss) payScore += 12 * personality.battle;
+    payScore -= coinReservePenalty(player, coinsAfter, { battle: true, critical: nextChance >= 0.5 });
   } else {
     const leader = leadingPlayer();
     const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
-    payScore += Math.min(14, Math.max(0, lag * 0.45)) * personality.progress;
-    payScore += Math.min(10, player.coins * 0.45) * personality.economy;
-    payScore += nearbyInterestingCells(player, nextDice).score * personality.risk;
-    if (finalDistance(player) <= 14) payScore += 10 * personality.progress;
-    if (leader?.id === player.id) declineScore += 7 * personality.economy;
+    const expectedExtraSteps = effect.dice * 3.5;
+    const currentReach = currentDice * 3.5 + playerStepBonus(player);
+    const nextReach = nextDice * 3.5 + playerStepBonus(player);
+    const currentCells = nearbyInterestingCells(player, Math.ceil(currentReach)).score;
+    const nextCells = nearbyInterestingCells(player, Math.ceil(nextReach)).score;
+    const cellGain = nextCells - currentCells;
+    payScore += Math.min(12, Math.max(0, lag * 0.35)) * personality.progress;
+    payScore += cellGain * 1.6 * personality.risk;
+    if (lag >= 18) payScore += 8 * personality.progress;
+    if (finalDistance(player) <= currentReach + expectedExtraSteps + 4) payScore += 9 * personality.progress;
+    if (leader?.id === player.id) declineScore += 8 * personality.economy;
+    payScore -= coinReservePenalty(player, coinsAfter, { movement: true });
   }
 
-  if (coinsAfter <= 2) declineScore += 22 * personality.economy;
-  else if (coinsAfter <= 6) declineScore += 10 * personality.economy;
-  if (player.coins >= 18) payScore += 6;
+  if (coinsAfter <= 2) declineScore += 28 * personality.economy;
+  else if (coinsAfter <= 6) declineScore += 14 * personality.economy;
+  if (player.coins >= 18 && coinsAfter >= 10) payScore += 5;
 
   const choice = chooseWeightedBotOption(
     [
@@ -718,6 +980,46 @@ function chooseBotDirection(player, choices, context = {}) {
   return chooseWeightedBotOption(options, player)?.id ?? randomChoice(choices)?.cell ?? null;
 }
 
+function chooseBotChaosPortalDestination(player, choices) {
+  const options = choices.map((choice) => ({
+    id: choice.cell,
+    score: scoreChaosPortalChoice(player, choice),
+  }));
+  return chooseWeightedBotOption(options, player)?.id ?? randomChoice(choices)?.cell ?? null;
+}
+
+function scoreChaosPortalChoice(player, choice) {
+  const personality = botPersonality(player);
+  const base = scoreCellForBot(player, choice.cell, { chaosPortal: true });
+  const leader = leadingPlayer();
+  const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+  let score = base;
+
+  if (choice.id === "shop") {
+    score += player.coins >= 5 ? 20 * personality.shop : -12 * personality.economy;
+    if (player.items.length <= 1 && player.coins >= 5) score += 8 * personality.shop;
+    if (monsterGatePressure(player)?.pressure > 0.7 && player.coins >= 10) score += 5 * personality.economy;
+  } else if (choice.id === "good") {
+    score += 14 + 8 * personality.progress;
+    if (lag > 14) score += Math.min(18, lag * 0.45) * personality.risk;
+    if (player.coins < 8) score += 5 * personality.chaos;
+  } else if (choice.id === "monster") {
+    const door = doorByEnemyCell(choice.cell);
+    if (!door) {
+      score += player.coins < 5 ? 10 * personality.economy : -12;
+    } else if (isDoorOpenForPlayer(door, player)) {
+      score += 8 * personality.progress;
+    } else {
+      const chance = estimateWinChance(totalDiceForPlayer(player), playerMonsterBattleBonus(player), door.damage);
+      score += chance >= 0.55 ? 22 * chance * personality.battle : -20 / personality.risk;
+      if (player.coins < 5) score += 8 * personality.economy;
+    }
+    if (choice.cell === startCell) score -= 8 * personality.progress;
+  }
+
+  return score;
+}
+
 function chooseBotCardAction(player, pending) {
   const choices = pending?.choices || [];
   if (choices.length === 0) return null;
@@ -730,6 +1032,9 @@ function chooseBotCardAction(player, pending) {
 }
 
 function scoreCardChoice(player, pending, choice) {
+  if (pending?.kind === "big-rest") return scoreBigRestChoice(player, choice.id);
+  if (pending?.kind === "black-market") return scoreBlackMarketChoice(player, choice.id);
+
   const personality = botPersonality(player);
   if (choice.id === "decline") {
     return player.coins <= 7 ? 18 * personality.economy : 4;
@@ -759,39 +1064,219 @@ function scoreShopCard(player, card) {
   const personality = botPersonality(player);
   const phase = gamePhase();
   const effect = card.effect || {};
+  const gate = monsterGatePressure(player);
   let score = 0;
 
   if (card.id === "step-plus" || effect.type === "passive-step-bonus") {
-    score = phase === "late" ? 25 : 35;
-    score += nextUnbeatenEnemy(player) ? 5 : 0;
+    const stepBonus = playerStepBonus(player);
+    const leader = leadingPlayer();
+    const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+    score = phase === "late" ? 20 : 28;
+    if (stepBonus === 0) score += 4;
+    else if (stepBonus === 1) score -= 8;
+    else if (stepBonus === 2) score -= lag > 18 ? 20 : 34;
+    else score -= lag > 28 ? 38 : 64;
+    if (lag > 18) score += 8 * personality.progress;
+    if (gate?.pressure > 0.55) {
+      const lowStrength = playerCombatBonus(player) <= 1;
+      score -= (22 + gate.pressure * 30 + (lowStrength ? 18 : 0)) * gate.weight;
+      if (gate.hardGate && lowStrength) score -= 24 * gate.weight;
+      if (stepBonus >= 2 && lag <= 30) score -= 28 * gate.weight;
+    }
     score *= personality.progress;
   } else if (card.id === "battle-plus" || effect.type === "passive-battle-bonus") {
-    score = 24 * personality.battle;
-    const enemy = nextUnbeatenEnemy(player);
-    if (enemy) score += Math.min(14, enemy.damage * 0.55) * personality.battle;
+    score = 28 * personality.battle;
+    if (gate) {
+      const afterChance = estimateWinChance(gate.dice, gate.bonus + (effect.amount || 1), gate.door.damage);
+      score += winChanceDeltaScore(gate.chance, afterChance, gate.weight) * personality.battle;
+      if (gate.chance < 0.6) score += (28 + gate.pressure * 36) * gate.weight * personality.battle;
+      if (gate.hardGate) score += 22 * personality.battle;
+      if (gate.failedAttempts > 0) score += Math.min(22, gate.failedAttempts * 5) * personality.battle;
+    }
   } else if (card.id === "coin-plus" || effect.type === "passive-coin-bonus") {
     score = phase === "early" ? 28 : phase === "mid" ? 18 : 8;
     score *= personality.economy;
   } else if (card.id === "extra-die" || effect.type === "optional-extra-die") {
-    score = 25 * personality.risk;
-    if (nextUnbeatenEnemy(player)) score += 10 * personality.battle;
+    score = 22 * personality.risk;
+    if (gate) {
+      const afterChance = estimateWinChance(gate.dice + (effect.dice || 1), gate.bonus, gate.door.damage);
+      score += winChanceDeltaScore(gate.chance, afterChance, gate.weight) * 0.75 * personality.battle;
+      if (gate.chance < 0.6 && afterChance >= 0.35) score += 8 * gate.weight * personality.risk;
+    }
     if (player.coins <= 7) score -= 10 * personality.economy;
-    if (player.coins >= 15) score += 6;
+    if (player.coins >= 15) score += 5;
   } else {
     score = 12;
   }
 
-  if (player.items.some((item) => item.id === card.id)) score -= 5;
+  score -= shopDuplicatePenalty(player, card);
+  score -= coinReservePenalty(player, player.coins - 5, {
+    critical: (card.id === "battle-plus" || effect.type === "passive-battle-bonus") && gate?.pressure > 0.65,
+  }) * 0.45;
   return score * personality.shop;
 }
 
 function scoreShopDecline(player, offer = []) {
   const personality = botPersonality(player);
-  let score = player.coins <= 4 ? 40 : player.coins <= 7 ? 18 : player.coins > 10 ? 5 : 10;
+  const gate = monsterGatePressure(player);
+  let score = player.coins <= 4 ? 52 : player.coins <= 7 ? 30 : player.coins < 10 ? 18 : player.coins > 15 ? 4 : 10;
   if (finalDistance(player) <= 8) score += 8;
   const bestCardScore = Math.max(0, ...offer.map((card) => scoreShopCard(player, card)));
+  if (player.coins - 5 < 5) score += 22 * personality.economy;
+  else if (player.coins - 5 < 10 && bestCardScore < 42) score += 12 * personality.economy;
+  if (gate?.pressure > 0.75 && !offer.some((card) => card.effect?.type === "passive-battle-bonus")) {
+    score += 16 * personality.economy;
+  }
   if (bestCardScore < score + 5) score += 5;
   return score * personality.economy;
+}
+
+function chooseBotAuctionBid(player, offer = []) {
+  const personality = botPersonality(player);
+  const bestCardScore = Math.max(0, ...offer.map((card) => scoreShopCard(player, card)));
+  const leader = leadingPlayer();
+  const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+  const gate = monsterGatePressure(player);
+  const affordableBids = auctionBidOptions(player);
+  const options = affordableBids.map((bid) => {
+    if (bid === 0) {
+      const passScore = player.coins < 5
+        ? 35
+        : bestCardScore < 18
+          ? 18 * personality.economy
+          : 4 * personality.economy;
+      return { id: bid, score: passScore };
+    }
+
+    const coinsAfter = player.coins - bid;
+    let score = bestCardScore * 0.82 - bid * 1.7;
+    score += Math.min(12, Math.max(0, lag * 0.28)) * personality.progress;
+    score += (personality.shop - 1) * 8 + (personality.risk - 1) * 6;
+    if (gate?.pressure > 0.75 && offer.some((card) => card.effect?.type === "passive-battle-bonus")) {
+      score += 16 * gate.weight * personality.battle;
+    }
+    if (bestCardScore >= 60 && coinsAfter >= 10) score += bid >= 15 ? 10 : 4;
+    if (bestCardScore >= 42 && bid <= 10) score += 8;
+    score -= coinReservePenalty(player, coinsAfter, { critical: bestCardScore >= 55 }) * 0.8;
+    if (coinsAfter < 5) score -= 28 * personality.economy;
+    else if (coinsAfter < 10) score -= 12 * personality.economy;
+    return { id: bid, score };
+  });
+  return chooseWeightedBotOption(options, player)?.id ?? 0;
+}
+
+function chooseBotBigRestOption(player) {
+  const options = bigRestChoices().map((choice) => ({
+    id: choice.id,
+    score: scoreBigRestChoice(player, choice.id),
+  }));
+  return chooseWeightedBotOption(options, player)?.id || "recover";
+}
+
+function scoreBlackMarketChoice(player, choiceId) {
+  const personality = botPersonality(player);
+  const gate = monsterGatePressure(player);
+  const cost = blackMarketDealCost(choiceId);
+  if (cost > player.coins) return -120;
+  const coinsAfter = player.coins - cost;
+  let score = 0;
+
+  if (choiceId === "shop-card") {
+    const shopScores = shopCards.map((card) => scoreShopCard(player, card));
+    const averageShopScore = shopScores.reduce((sum, item) => sum + item, 0) / Math.max(1, shopScores.length);
+    score = 16 * personality.shop + Math.max(8, averageShopScore * 0.42);
+    if (player.items.length === 0) score += 16 * personality.shop;
+    else if (player.items.length <= 2) score += 8 * personality.shop;
+    if (gate?.pressure > 0.7) score += 5 * personality.economy;
+    score -= coinReservePenalty(player, coinsAfter, { critical: averageShopScore > 45 }) * 0.55;
+  } else if (choiceId === "secret-training") {
+    score = 18 * personality.battle;
+    if (gate) {
+      const afterChance = estimateWinChance(gate.dice, gate.bonus + 1, gate.door.damage);
+      score += winChanceDeltaScore(gate.chance, afterChance, gate.weight) * personality.battle;
+      if (gate.chance < 0.65) score += (24 + gate.pressure * 34) * gate.weight * personality.battle;
+      if (gate.hardGate) score += 18 * personality.battle;
+      if (gate.failedAttempts > 0) score += Math.min(18, gate.failedAttempts * 5) * personality.battle;
+    } else {
+      score += gamePhase() === "late" ? 8 * personality.battle : 0;
+    }
+    score -= coinReservePenalty(player, coinsAfter, { critical: gate?.pressure > 0.65 }) * 0.72;
+  } else if (choiceId === "rage-potion") {
+    if (nextMonsterBattleBonus(player) > 0) return -120;
+    score = gate ? 8 * personality.risk : -18 * personality.economy;
+    if (gate) {
+      const afterChance = estimateWinChance(gate.dice, gate.bonus + blackMarketRageBonus, gate.door.damage);
+      score += winChanceDeltaScore(gate.chance, afterChance, gate.weight) * 1.2 * personality.battle;
+      if (gate.chance < 0.45 && afterChance >= 0.65) score += 34 * gate.weight * personality.battle;
+      if (gate.chance < 0.6 && afterChance >= 0.8) score += 22 * gate.weight * personality.battle;
+      if (gate.hardGate) score += 20 * personality.battle;
+      if (gate.distance <= 18) score += 10 * personality.progress;
+      if (afterChance < 0.35) score -= 18 / personality.risk;
+    }
+    score -= coinReservePenalty(player, coinsAfter, { battle: true, critical: gate?.pressure > 0.7 }) * 0.82;
+    if (coinsAfter < 5 && gate?.chance > 0.55) score -= 18 * personality.economy;
+  } else {
+    score = player.coins < 5 ? 52 : player.coins < 10 ? 26 : player.coins < 15 ? 15 : 7;
+    if (!gate) score += 10 * personality.economy;
+    if (nextMonsterBattleBonus(player) > 0) score += 18 * personality.economy;
+    if (gate?.chance >= 0.75 && player.coins < 20) score += 12 * personality.economy;
+    if (finalDistance(player) <= 8) score += 6;
+  }
+
+  return score;
+}
+
+function blackMarketDealCost(choiceId) {
+  if (choiceId === "shop-card") return blackMarketShopCost;
+  if (choiceId === "secret-training") return blackMarketTrainingCost;
+  if (choiceId === "rage-potion") return blackMarketRageCost;
+  return 0;
+}
+
+function scoreBigRestChoice(player, choiceId) {
+  const personality = botPersonality(player);
+  const gate = monsterGatePressure(player);
+  const leader = leadingPlayer();
+  const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+  const coins = player.coins;
+  const stepBonus = playerStepBonus(player);
+  const strength = playerCombatBonus(player);
+  const distanceToFinish = finalDistance(player);
+  let score = 0;
+
+  if (choiceId === "recover") {
+    score = 12 * personality.economy;
+    if (coins < 5) score += 48 * personality.economy;
+    else if (coins < 10) score += 34 * personality.economy;
+    else if (coins < 15) score += 17 * personality.economy;
+    if (gate?.pressure > 0.65) score += (8 + gate.pressure * 10) * personality.economy;
+    if (player.items.some((item) => item.effect?.type === "optional-extra-die") && coins < 12) score += 8 * personality.risk;
+  } else if (choiceId === "train") {
+    score = 20 * personality.battle;
+    if (gate) {
+      const afterChance = estimateWinChance(gate.dice, gate.bonus + 1, gate.door.damage);
+      score += winChanceDeltaScore(gate.chance, afterChance, gate.weight) * personality.battle;
+      if (gate.chance < 0.6) score += (26 + gate.pressure * 34) * gate.weight * personality.battle;
+      if (gate.hardGate) score += 18 * personality.battle;
+      if (gate.failedAttempts > 0) score += Math.min(20, gate.failedAttempts * 5) * personality.battle;
+      if (afterChance >= 0.8 && strength >= 3) score -= 8 * personality.battle;
+    } else if (distanceToFinish <= 24) {
+      score += 12 * personality.battle;
+    }
+  } else if (choiceId === "speed") {
+    score = 18 * personality.progress;
+    if (lag > 12) score += Math.min(30, lag * 0.7) * personality.progress;
+    if (distanceToFinish <= 28) score += 14 * personality.progress;
+    if (gate) {
+      if (gate.chance >= 0.65) score += 10 * personality.progress;
+      else score -= (12 + gate.pressure * 22) * gate.weight;
+      if (strength <= 1 && gate.hardGate) score -= 22 * gate.weight;
+    }
+    if (stepBonus >= 2) score -= 10 + stepBonus * 8;
+    if (stepBonus >= 4 && lag <= 24) score -= 24;
+  }
+
+  return score;
 }
 
 function scoreCellForBot(player, cell, context = {}) {
@@ -804,8 +1289,21 @@ function scoreCellForBot(player, cell, context = {}) {
   if (!event) return score + 2;
 
   if (event === "good") score += 18;
+  else if (event === "big-rest") score += Math.max(
+    scoreBigRestChoice(player, "recover"),
+    scoreBigRestChoice(player, "train"),
+    scoreBigRestChoice(player, "speed"),
+  ) * 0.72;
   else if (event === "tadam") score += 10 + 3 * personality.chaos;
   else if (event === "shop") score += player.coins >= 5 ? 16 * personality.shop : -4;
+  else if (event === "black-market") score += Math.max(
+    scoreBlackMarketChoice(player, "shop-card"),
+    scoreBlackMarketChoice(player, "secret-training"),
+    scoreBlackMarketChoice(player, "rage-potion"),
+    scoreBlackMarketChoice(player, "leave"),
+  ) * 0.72;
+  else if (event === "joe-auction") score += player.coins >= 5 ? 14 * personality.shop + Math.min(10, player.coins * 0.35) : 2;
+  else if (event === "chaos-portal") score += 8 * personality.chaos + (player.coins < 5 ? 4 : 0);
   else if (event === "green") score += 10 + scoreFieldTadamEffect("green-field");
   else if (event === "red") score += -11 + scoreFieldTadamEffect("red-field");
   else if (event === "bad") score -= 16 / personality.risk;
@@ -816,7 +1314,7 @@ function scoreCellForBot(player, cell, context = {}) {
     const door = doorByEnemyCell(cell);
     if (!door || isDoorOpenForPlayer(door, player)) score += 10;
     else {
-      const chance = estimateWinChance(totalDiceForPlayer(player), playerCombatBonus(player), door.damage);
+      const chance = estimateWinChance(totalDiceForPlayer(player), playerMonsterBattleBonus(player), door.damage);
       if (chance >= 0.6) score += 32 * chance * personality.battle;
       else if (chance >= 0.35) score += (chance * 22 - 8) * personality.risk * personality.battle;
       else score -= 28 / personality.risk;
@@ -902,8 +1400,9 @@ function nearbyInterestingCells(player, steps) {
     cell = defaultNextCell(cell);
     if (!cell) break;
     const event = cellEvents[cell];
-    if (["good", "green", "shop", "pay-double"].includes(event)) score += 3;
+    if (["good", "green", "shop", "black-market", "joe-auction", "pay-double"].includes(event)) score += 3;
     if (["bad", "red"].includes(event)) score -= 2;
+    if (event === "chaos-portal") score += 2 * botPersonality(player).chaos;
     if (event === "enemy") score += 2 * botPersonality(player).battle;
     if (event === "dice-fortune") score += 2 * botPersonality(player).chaos;
   }
@@ -958,7 +1457,11 @@ function runBotAction() {
 
   if (state.pendingCardChoice && isBotPlayerId(state.pendingCardChoice.playerId)) {
     const player = state.players.find((item) => item.id === state.pendingCardChoice.playerId);
-    const choiceId = chooseBotCardAction(player, state.pendingCardChoice);
+    const choiceId = state.pendingCardChoice.kind === "joe-auction-bid"
+      ? chooseBotAuctionBid(player, state.pendingCardChoice.offer)
+      : state.pendingCardChoice.kind === "joe-auction-prize"
+        ? chooseBotShopCard(player, state.pendingCardChoice.offer, { allowDecline: false })
+        : chooseBotCardAction(player, state.pendingCardChoice);
     if (choiceId !== null && choiceId !== undefined) resolveCardChoice(choiceId);
     return;
   }
@@ -967,7 +1470,9 @@ function runBotAction() {
     const playerId = state.pendingChoice.playerId ?? currentPlayer()?.id;
     if (isBotPlayerId(playerId)) {
       const player = state.players.find((item) => item.id === playerId);
-      const cell = chooseBotDirection(player, state.pendingChoice.choices, state.pendingChoice);
+      const cell = state.pendingChoice.kind === "chaos-portal"
+        ? chooseBotChaosPortalDestination(player, state.pendingChoice.choices)
+        : chooseBotDirection(player, state.pendingChoice.choices, state.pendingChoice);
       if (cell) resolveChoice(cell);
     }
     return;
@@ -993,6 +1498,7 @@ function render() {
   renderTurn();
   renderChoicePanel();
   renderFinalBattleHud();
+  renderHistory();
   renderWinnerPopup();
   renderTadams();
   scheduleBotAction();
@@ -1109,7 +1615,7 @@ function renderEnemyLocks() {
 
 function renderTileStates() {
   boardEl.querySelectorAll(".tile-landing").forEach((tile) => tile.classList.remove("tile-landing"));
-  boardEl.querySelectorAll(".walk-path-outline").forEach((outline) => outline.remove());
+  boardEl.querySelectorAll(".walk-path-outline, .portal-preview-outline").forEach((outline) => outline.remove());
 
   if (state.walkPath?.length) {
     const finalCell = state.walkPath[state.walkPath.length - 1];
@@ -1123,10 +1629,27 @@ function renderTileStates() {
     }
   }
 
+  if (portalPreviewActive()) {
+    renderPortalPreviewOutlines();
+  }
+
   if (!state.landingCell) return;
 
   const tile = boardEl.querySelector(`[data-cell="${state.landingCell}"]`);
   if (tile) tile.classList.add("tile-landing");
+}
+
+function renderPortalPreviewOutlines() {
+  const previewCells = portalPreviewEndCells();
+  for (const { cell, label } of previewCells) {
+    const tile = boardEl.querySelector(`[data-cell="${cell}"]`);
+    if (!tile) continue;
+
+    const outline = document.createElement("span");
+    outline.className = "portal-preview-outline";
+    outline.title = `${label}: финиш хода`;
+    tile.append(outline);
+  }
 }
 
 function renderTokens() {
@@ -1195,6 +1718,7 @@ function renderScores() {
   const compactBonusLabels = isPhoneLayout();
   for (const player of state.players) {
     const battleBonus = playerBattleBonus(player);
+    const rageBonus = nextMonsterBattleBonus(player);
     const stepBonus = playerStepBonus(player);
     const card = document.createElement("article");
     card.className = `score-card ${player.id === state.activePlayer ? "active" : ""}`;
@@ -1209,9 +1733,10 @@ function renderScores() {
           <strong>${player.name}</strong>
           ${stepBonus ? `<span class="score-bonus score-step-bonus" title="Шаги">${stepBonusText(stepBonus, compactBonusLabels)}</span>` : ""}
           ${battleBonus ? `<span class="score-battle-bonus" title="Сила">${battleForceText(battleBonus, compactBonusLabels)}</span>` : ""}
+          ${rageBonus ? `<span class="score-rage-bonus" title="Зелье ярости: +${rageBonus} в следующей битве с монстром">Зелье +${rageBonus}</span>` : ""}
         </span>
-        <span class="pill">${iconizeHtml(tileTitle(player.position))}</span>
       </div>
+      <span class="score-cell-ribbon">${iconizeHtml(tileTitle(player.position))}</span>
       <div class="score-stats">
         <span>${coinAmount(player.coins)}</span>
         <span>${diceAmount(`+${playerDiceBonus(player)}`)}</span>
@@ -1223,6 +1748,178 @@ function renderScores() {
     `;
     scoreStripEl.append(card);
   }
+}
+
+function renderHistory() {
+  if (!gameHistoryEl || !state?.history) return;
+
+  const historyEnd = state.history.finishedAt || Date.now();
+  const elapsed = formatDuration(historyEnd - state.history.startedAt);
+  const playerCards = state.players.map((player) => renderPlayerHistory(player)).join("");
+  gameHistoryEl.innerHTML = `
+    <div class="history-summary">
+      <span><b>${elapsed}</b><small>время игры</small></span>
+      <span><b>${state.history.tadamPlayed}</b><small>ТАДАМ разыграно</small></span>
+    </div>
+    <div class="history-players">${playerCards}</div>
+  `;
+}
+
+function renderPlayerHistory(player) {
+  const history = playerHistory(player) || createPlayerHistory();
+  const fields = renderHistoryPairs(history.fieldVisits, "нет");
+  const monsters = renderMonsterHistory(history.monsterBattles);
+  return `
+    <article class="history-player" style="--player-color: ${player.color}">
+      <div class="history-player-title">
+        <span class="history-avatar"><img src="${player.token}" alt="" aria-hidden="true"></span>
+        <strong>${player.name}</strong>
+      </div>
+      <dl class="history-stats">
+        <div><dt>Ходы</dt><dd>${history.turns}</dd></div>
+        <div><dt>Клетки</dt><dd>${history.cellsPassed}</dd></div>
+        <div><dt>Монеты +</dt><dd>${history.coinsEarned}</dd></div>
+        <div><dt>Монеты -</dt><dd>${history.coinsSpent}</dd></div>
+        <div><dt>Макс. Лавок</dt><dd>${history.maxShopCards}</dd></div>
+        <div><dt>Лавок сейчас</dt><dd>${player.items.length}</dd></div>
+        <div><dt>Эффекты игроков</dt><dd>${history.effectsReceived}</dd></div>
+        <div><dt>Макс. кубиков</dt><dd>${history.maxDiceThrown}</dd></div>
+        <div><dt>Итоговая сила</dt><dd>${battleForceText(playerBattleBonus(player))}</dd></div>
+        <div><dt>Итоговые шаги</dt><dd>${stepBonusText(playerStepBonus(player))}</dd></div>
+      </dl>
+      <div class="history-detail">
+        <h3>Поля</h3>
+        <p>${fields}</p>
+      </div>
+      <div class="history-detail">
+        <h3>Монстры</h3>
+        <p>${monsters}</p>
+      </div>
+    </article>
+  `;
+}
+
+function renderHistoryPairs(data, emptyText) {
+  const entries = Object.entries(data || {}).filter(([, count]) => count > 0);
+  if (entries.length === 0) return emptyText;
+  return entries
+    .sort(([a], [b]) => a.localeCompare(b, "ru"))
+    .map(([label, count]) => `<span>${label}: <b>${count}</b></span>`)
+    .join("");
+}
+
+function renderMonsterHistory(monsters) {
+  const entries = Object.entries(monsters || {});
+  if (entries.length === 0) return "нет боев";
+  return entries
+    .map(([label, item]) => {
+      const force = item.clearedForce === null ? "не пройден" : `пройден силой ${item.clearedForce}`;
+      return `<span>${label}: <b>${item.attempts}</b> боев, ${force}</span>`;
+    })
+    .join("");
+}
+
+function buildGameHistorySnapshot() {
+  const savedAt = new Date().toISOString();
+  const historyEnd = state.history.finishedAt || Date.now();
+  return cloneData({
+    id: `game-${savedAt}-${Math.random().toString(36).slice(2, 8)}`,
+    savedAt,
+    version: 1,
+    settings: {
+      current: collectGameSettings(),
+      startedWith: state.gameSettings,
+    },
+    game: {
+      activeBoard: activeBoardConfig.id,
+      elapsedMs: historyEnd - state.history.startedAt,
+      finished: state.finished,
+      finalBattle: state.finalBattle,
+      round: state.round,
+      turns: state.turns,
+    },
+    players: state.players.map((player) => ({
+      battleBonus: playerBattleBonus(player),
+      bot: player.bot,
+      coins: player.coins,
+      diceBonus: playerDiceBonus(player),
+      id: player.id,
+      items: player.items.map((item) => ({ id: item.id, title: item.title })),
+      name: player.name,
+      nextMonsterBattleBonus: nextMonsterBattleBonus(player),
+      position: player.position,
+      stepBonus: playerStepBonus(player),
+    })),
+    history: state.history,
+    chronicle: Array.from(gameLogEl?.children || []).map((item) => item.textContent.trim()),
+  });
+}
+
+function cloneData(data) {
+  return JSON.parse(JSON.stringify(data));
+}
+
+function readSavedGames() {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(savedGamesStorageKey) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function saveCurrentGameHistory() {
+  if (!state?.history) return;
+  const snapshot = buildGameHistorySnapshot();
+  const savedGames = [snapshot, ...readSavedGames()].slice(0, 50);
+  try {
+    window.localStorage.setItem(savedGamesStorageKey, JSON.stringify(savedGames));
+  } catch {
+    flashSaveHistoryButton("Ошибка");
+    showEventToast("Не удалось сохранить историю в браузере.");
+    return;
+  }
+
+  flashSaveHistoryButton("Отправка");
+  try {
+    await sendGameHistoryToGoogleSheets(snapshot);
+    flashSaveHistoryButton("Сохранено");
+    showEventToast("История партии сохранена локально и отправлена в Google Таблицу.");
+  } catch {
+    flashSaveHistoryButton("Локально");
+    showEventToast("История сохранена локально. В Google Таблицу отправить не удалось.");
+  }
+}
+
+function sendGameHistoryToGoogleSheets(snapshot) {
+  return window.fetch(googleSheetsSaveUrl, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8",
+    },
+    body: JSON.stringify(snapshot),
+  });
+}
+
+function flashSaveHistoryButton(text) {
+  if (!ui.saveHistoryBtn) return;
+  const defaultText = "Сохранить";
+  ui.saveHistoryBtn.textContent = text;
+  ui.saveHistoryBtn.disabled = true;
+  window.setTimeout(() => {
+    ui.saveHistoryBtn.textContent = defaultText;
+    ui.saveHistoryBtn.disabled = false;
+  }, 1300);
+}
+
+function formatDuration(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
 function isPhoneLayout() {
@@ -1258,20 +1955,33 @@ function shortShopTitle(item) {
   return item.shortTitle || item.title;
 }
 
+function cardDisplayText(card) {
+  return card.description || card.title || "";
+}
+
 function renderTurn() {
   const player = currentPlayer();
   if (ui.activePlayerName) {
     ui.activePlayerName.textContent = player.name;
   }
   const itemText = player.items.length ? ` Лавка: ${player.items.map((item) => item.title).join(", ")}.` : "";
+  const rageText = nextMonsterBattleBonus(player) ? ` Зелье ярости: +${nextMonsterBattleBonus(player)} к следующему монстру.` : "";
   if (ui.activePlayerRole) {
-    ui.activePlayerRole.innerHTML = iconizeHtml(`Клетка ${cellLabel(player.position)}. ${player.coins} монет.${itemText}`);
+    ui.activePlayerRole.innerHTML = iconizeHtml(`Клетка ${cellLabel(player.position)}. ${player.coins} монет.${itemText}${rageText}`);
   }
   ui.fieldEffect.innerHTML = fieldEffectText(player.position);
   ui.turnActions.className = `turn-actions ${state.pendingPreRoll ? "pending-action" : ""}`.trim();
   ui.turnActions.innerHTML = turnActionsText(player);
   ui.diceValue.textContent = state.dice ?? "-";
-  ui.rollBtn.innerHTML = iconizeHtml(actionPromptResolver ? actionPromptButtonLabel : state.isAnimating ? "Кубик крутится" : "Бросить кубик");
+  ui.rollBtn.innerHTML = iconizeHtml(
+    actionPromptResolver
+      ? actionPromptButtonLabel
+      : portalPreviewActive()
+        ? "Портал"
+        : state.isAnimating
+          ? "Кубик крутится"
+          : "Бросить кубик",
+  );
   if (ui.roundTitle) {
     ui.roundTitle.textContent = state.finished ? "Игра завершена" : `Раунд ${state.round}`;
   }
@@ -1281,7 +1991,7 @@ function renderTurn() {
       (state.finished ||
         state.isAnimating ||
         Boolean(state.pendingCardChoice) ||
-        Boolean(state.pendingChoice) ||
+        (Boolean(state.pendingChoice) && !portalPreviewActive()) ||
         Boolean(state.pendingPreRoll) ||
         Boolean(state.pendingShop)));
 }
@@ -1305,7 +2015,7 @@ function renderChoicePanel() {
     for (const card of state.pendingShop.offer) {
       appendChoiceButton(buttons, {
         className: "shop-choice choice-button-card",
-        label: card.title,
+        label: cardDisplayText(card),
         note: coinAmount(5),
         onClick: () => resolveShopChoice(card.id),
       });
@@ -1322,11 +2032,13 @@ function renderChoicePanel() {
 
   if (state.pendingCardChoice) {
     const pending = state.pendingCardChoice;
+    const panelKind = pending.kind || "card-action";
     const buttons = renderChoiceDialog({
-      kind: "card-action",
+      kind: panelKind,
       kicker: pending.kicker,
       title: pending.title,
       summary: pending.summary,
+      bodyHtml: pending.bodyHtml || "",
       buttonsClass: pending.buttonsClass || "",
     });
 
@@ -1348,6 +2060,11 @@ function renderChoicePanel() {
   }
 
   if (state.pendingChoice.kind === "portal") {
+    if (state.pendingChoice.previewField) {
+      hideChoicePanel();
+      return;
+    }
+
     const player = state.players.find((item) => item.id === state.pendingChoice.playerId) || currentPlayer();
     const buttons = renderChoiceDialog({
       kind: "portal",
@@ -1359,6 +2076,32 @@ function renderChoicePanel() {
     for (const choice of state.pendingChoice.choices) {
       appendChoiceButton(buttons, {
         className: choice.className || "",
+        label: choice.label,
+        note: choice.note,
+        onClick: () => resolveChoice(choice.cell),
+      });
+    }
+    appendChoiceButton(buttons, {
+      className: "portal-map-preview",
+      label: "Показать поле",
+      note: "финиши хода",
+      onClick: () => setPortalPreviewMode(true),
+    });
+    return;
+  }
+
+  if (state.pendingChoice.kind === "chaos-portal") {
+    const player = state.players.find((item) => item.id === state.pendingChoice.playerId) || currentPlayer();
+    const buttons = renderChoiceDialog({
+      kind: "chaos-portal",
+      kicker: "Портал хаоса",
+      title: "Куда отправиться?",
+      summary: `${playerChoiceBadge(player)} выбросил 6 и удерживает портал открытым.`,
+    });
+
+    for (const choice of state.pendingChoice.choices) {
+      appendChoiceButton(buttons, {
+        className: `chaos-portal-choice choice-${choice.id}`,
         label: choice.label,
         note: choice.note,
         onClick: () => resolveChoice(choice.cell),
@@ -1565,7 +2308,7 @@ function playerBattleStrengthText(player, { showName = false } = {}) {
   return `<span class="battle-strength-text" title="Сила игрока">${name}${battleForceText(playerBattleBonus(player))}</span>`;
 }
 
-function renderChoiceDialog({ kind, kicker, title, summary, buttonsClass = "" }) {
+function renderChoiceDialog({ bodyHtml = "", buttonsClass = "", kind, kicker, title, summary }) {
   ui.choicePanel.hidden = false;
   ui.choicePanel.className = `choice-panel choice-panel-${kind}`;
   ui.choicePanel.setAttribute("aria-label", title);
@@ -1588,10 +2331,15 @@ function renderChoiceDialog({ kind, kicker, title, summary, buttonsClass = "" })
   summaryEl.className = "choice-summary";
   summaryEl.innerHTML = iconizeHtml(summary);
 
+  const bodyEl = document.createElement("div");
+  bodyEl.className = "choice-body";
+  bodyEl.innerHTML = iconizeHtml(bodyHtml);
+
   const buttons = document.createElement("div");
   buttons.className = `choice-buttons ${buttonsClass}`.trim();
 
   copy.append(kickerEl, titleEl, summaryEl);
+  if (bodyHtml) copy.append(bodyEl);
   dialog.append(copy, buttons);
   ui.choicePanel.append(dialog);
 
@@ -1632,6 +2380,16 @@ function resolveChoice(nextCell) {
   render();
 }
 
+function portalPreviewActive() {
+  return Boolean(state?.pendingChoice?.kind === "portal" && state.pendingChoice.previewField);
+}
+
+function setPortalPreviewMode(enabled) {
+  if (state?.pendingChoice?.kind !== "portal") return;
+  state.pendingChoice.previewField = Boolean(enabled);
+  render();
+}
+
 function resolveShopChoice(cardId) {
   if (!state.shopResolver) return;
   state.shopResolver(cardId);
@@ -1653,6 +2411,7 @@ function resolveCardChoice(choiceId) {
 async function resolveLanding(player) {
   if (state.eventDepth > 5) return;
 
+  recordPlayerStopped(player);
   const event = cellEvents[player.position];
   if (!event) return;
 
@@ -1667,10 +2426,18 @@ async function resolveLanding(player) {
       await drawAndApplyCard(player, goodCards, "Хорошо");
     } else if (event === "bad") {
       await drawAndApplyCard(player, badCards, "Плохо");
+    } else if (event === "big-rest") {
+      await resolveBigRest(player);
+    } else if (event === "black-market") {
+      await resolveBlackMarket(player);
+    } else if (event === "chaos-portal") {
+      await resolveChaosPortal(player);
     } else if (event === "tadam") {
       await drawTadamCard(player);
     } else if (event === "shop") {
       await resolveShop(player);
+    } else if (event === "joe-auction") {
+      await resolveJoeAuction(player);
     } else if (event === "enemy") {
       await resolveEnemyBattle(player);
     } else if (event === "dice-fortune") {
@@ -1687,6 +2454,136 @@ async function resolveLanding(player) {
   } finally {
     state.eventDepth -= 1;
   }
+}
+
+function bigRestChoices() {
+  return [
+    {
+      id: "recover",
+      label: "Восстановиться",
+      note: `+${coinAmount(15)}`,
+    },
+    {
+      id: "train",
+      label: "Потренироваться",
+      note: "Сила +1 навсегда",
+    },
+    {
+      id: "speed",
+      label: "Ускориться",
+      note: "Шаги +2 навсегда",
+    },
+  ];
+}
+
+async function resolveBigRest(player) {
+  const choice = await chooseCardAction({
+    buttonsClass: "big-rest-buttons",
+    choices: bigRestChoices(),
+    kicker: "Большой привал",
+    kind: "big-rest",
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} может восстановиться, потренироваться или ускориться перед финальным рывком.`,
+    title: "Большой привал. Выбери, как подготовиться к дороге.",
+  });
+
+  let message = "";
+  if (choice === "train") {
+    addBattleBonus(player, 1);
+    message = `${playerName(player)} использует <strong>Большой привал</strong>: тренируется и получает <strong>Сила +1</strong> навсегда.`;
+  } else if (choice === "speed") {
+    addStepBonus(player, 2);
+    message = `${playerName(player)} использует <strong>Большой привал</strong>: ускоряется и получает <strong>Шаги +2</strong> навсегда.`;
+  } else {
+    addCoins(player, 15);
+    message = `${playerName(player)} использует <strong>Большой привал</strong>: восстанавливается и получает <strong>${coinAmount(15)}</strong>.`;
+  }
+
+  render();
+  log(message, { toast: true });
+  await showActionPrompt(message, { autoFor: player });
+}
+
+function blackMarketChoices(player) {
+  const choices = [];
+  if (player.coins >= blackMarketShopCost) {
+    choices.push({
+      id: "shop-card",
+      label: "Карта Лавки Джо",
+      note: `${coinAmount(blackMarketShopCost)} • 1 карта`,
+    });
+  }
+  if (player.coins >= blackMarketTrainingCost) {
+    choices.push({
+      id: "secret-training",
+      label: "Тайная тренировка",
+      note: `${coinAmount(blackMarketTrainingCost)} • Сила +1`,
+    });
+  }
+  if (player.coins >= blackMarketRageCost && nextMonsterBattleBonus(player) <= 0) {
+    choices.push({
+      id: "rage-potion",
+      label: "Зелье ярости",
+      note: `${coinAmount(blackMarketRageCost)} • +${blackMarketRageBonus} к монстру`,
+    });
+  }
+  choices.push({
+    className: "decline",
+    id: "leave",
+    label: "Уйти",
+    note: coinAmount(0),
+  });
+  return choices;
+}
+
+function blackMarketSummary(player) {
+  const rage = nextMonsterBattleBonus(player);
+  const activePotion = rage ? ` Активно: Зелье ярости даст +${rage} в следующей битве с монстром.` : "";
+  return `${playerChoiceBadge(player)}: ${player.coins} монет. Платные сделки доступны только если хватает монет.${activePotion}`;
+}
+
+async function resolveBlackMarket(player) {
+  log(`${playerName(player)} попадает на <strong>Черный рынок</strong>. Опасные сделки открыты.`);
+  const choice = await chooseCardAction({
+    buttonsClass: "black-market-buttons",
+    choices: blackMarketChoices(player),
+    kicker: "Черный рынок",
+    kind: "black-market",
+    playerId: player.id,
+    summary: blackMarketSummary(player),
+    title: "Черный рынок предлагает опасные сделки. Что покупаешь?",
+  });
+
+  if (choice === "shop-card") {
+    addCoins(player, -blackMarketShopCost);
+    log(`${playerName(player)} выбирает <strong>Карта Лавки Джо</strong> на Черном рынке и платит <strong>${coinAmount(blackMarketShopCost)}</strong>.`);
+    await drawFreeShopCard(player, "получает на Черном рынке карту Лавка Джо");
+    return;
+  }
+
+  if (choice === "secret-training") {
+    addCoins(player, -blackMarketTrainingCost);
+    addBattleBonus(player, 1);
+    const message = `${playerName(player)} выбирает <strong>Тайная тренировка</strong> на Черном рынке, платит <strong>${coinAmount(blackMarketTrainingCost)}</strong> и получает <strong>Сила +1</strong> навсегда.`;
+    render();
+    log(message, { toast: true });
+    await showActionPrompt(message, { autoFor: player });
+    return;
+  }
+
+  if (choice === "rage-potion") {
+    addCoins(player, -blackMarketRageCost);
+    setNextMonsterBattleBonus(player, blackMarketRageBonus);
+    const message = `${playerName(player)} выбирает <strong>Зелье ярости</strong> на Черном рынке, платит <strong>${coinAmount(blackMarketRageCost)}</strong>. Следующая битва с монстром получит <strong>+${blackMarketRageBonus}</strong> к силе.`;
+    render();
+    log(message, { toast: true });
+    await showActionPrompt(message, { autoFor: player });
+    return;
+  }
+
+  const message = `${playerName(player)} уходит с <strong>Черного рынка</strong> без сделки.`;
+  log(message, { toast: true });
+  await showActionPrompt(message, { autoFor: player });
 }
 
 async function resolveEnemyBattle(player) {
@@ -1710,8 +2607,14 @@ async function resolveEnemyBattle(player) {
   const extraDice = await chooseExtraDie(player, true);
   const diceCount = totalDiceForPlayer(player, extraDice);
   const rolls = rollDice(diceCount);
+  recordDiceThrown(player, diceCount);
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
-  const bonus = playerCombatBonus(player);
+  const baseBonus = playerCombatBonus(player);
+  const rageBonus = consumeNextMonsterBattleBonus(player);
+  const bonus = baseBonus + rageBonus;
+  if (rageBonus > 0) {
+    log(`${playerName(player)} использует <strong>Зелье ярости</strong>: <strong>+${rageBonus}</strong> к этой битве с монстром. Зелье сгорает.`);
+  }
   state.isAnimating = true;
   state.dice = null;
   state.enemyBattleProgress = {
@@ -1723,10 +2626,11 @@ async function resolveEnemyBattle(player) {
   await animateDice(rolls, { bonus, player, isEnemyBattle: true });
 
   const damage = rolled + bonus;
+  recordMonsterBattle(player, door, damage, damage >= door.damage);
   state.dice = damage;
   state.isAnimating = false;
 
-  const bonusText = bonusFormulaText(bonus, damage);
+  const bonusText = monsterBattleBonusFormulaText(baseBonus, rageBonus, damage);
   if (damage >= door.damage) {
     state.enemyBattleProgress = {
       bonus,
@@ -1741,10 +2645,12 @@ async function resolveEnemyBattle(player) {
     };
     door.openedBy.push(player.id);
     if (door.isFinalBoss) {
-    log(`${playerName(player)} побеждает финального монстра: ${formatRoll(rolls)}${bonusText}. Игрок становится <strong>боссом</strong>.`);
+      const monsterHuntReward = awardMonsterHuntReward(player);
+      const monsterHuntText = monsterHuntRewardText(monsterHuntReward);
+      log(`${playerName(player)} побеждает финального монстра: ${formatRoll(rolls)}${bonusText}. Игрок становится <strong>боссом</strong>.${monsterHuntText}`);
       render();
       await showActionPrompt(
-        `${playerName(player)} побеждает финального монстра: ${formatRoll(rolls)}${bonusText}. Игрок становится <strong>боссом</strong>.`,
+        `${playerName(player)} побеждает финального монстра: ${formatRoll(rolls)}${bonusText}. Игрок становится <strong>боссом</strong>.${monsterHuntText}`,
         { autoFor: player },
       );
       clearEnemyBattleHud();
@@ -1752,12 +2658,14 @@ async function resolveEnemyBattle(player) {
       return { isFinalBoss: true, resolved: true, winner: "player" };
     }
     addDiceBonus(player, 1);
+    const monsterHuntReward = awardMonsterHuntReward(player);
+    const monsterHuntText = monsterHuntRewardText(monsterHuntReward);
     log(
-      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта для игрока. Награда: <strong>+1 кубик</strong>.`,
+      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта для игрока. Награда: <strong>+1 кубик</strong>.${monsterHuntText}`,
     );
     render();
     await showActionPrompt(
-      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта. Награда: <strong>+1 кубик</strong>.`,
+      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта. Награда: <strong>+1 кубик</strong>.${monsterHuntText}`,
       { autoFor: player },
     );
     clearEnemyBattleHud();
@@ -1790,13 +2698,191 @@ async function resolveEnemyBattle(player) {
   return { isFinalBoss: Boolean(door.isFinalBoss), resolved: true, winner: "enemy" };
 }
 
+async function resolveChaosPortal(player) {
+  const options = chaosPortalOptions(player);
+  await showActionPrompt(chaosPortalPromptMarkup(player, options), {
+    buttonLabel: "Бросить кубик",
+    autoFor: player,
+  });
+
+  const rolls = rollDice(1);
+  recordDiceThrown(player, 1);
+  state.isAnimating = true;
+  state.dice = null;
+  render();
+  await animateDice(rolls, { label: "Портал хаоса", player });
+  state.isAnimating = false;
+
+  const roll = rolls[0];
+  const result = roll <= 2
+    ? options.find((option) => option.id === "monster")
+    : roll <= 4
+      ? options.find((option) => option.id === "shop")
+      : roll === 5
+        ? options.find((option) => option.id === "good")
+        : await chooseChaosPortalDestination(player, options);
+
+  const destination = result || options.find((option) => option.id === "monster") || {
+    cell: startCell,
+    id: "monster",
+    label: "Старт",
+    note: "запасной выход",
+  };
+  log(`${playerName(player)} бросает <strong>Портал хаоса</strong>: <strong>${roll}</strong>.`);
+  log(`${playerName(player)} исчезает в портале: ${chaosPortalRollLabel(roll)} → <strong>${destination.label}</strong> (${cellTitleWithLabel(destination.cell)}).`, {
+    toast: true,
+  });
+
+  await teleportFromChaosPortal(player, destination);
+}
+
+function chaosPortalPromptMarkup(player, options) {
+  const optionById = Object.fromEntries(options.map((option) => [option.id, option]));
+  const monster = optionById.monster || { cell: startCell, label: "Старт" };
+  const shop = optionById.shop || { cell: startCell };
+  const good = optionById.good || { cell: startCell };
+
+  return rollEventPromptMarkup({
+    kicker: "Портал хаоса",
+    title: "Портал хаоса мерцает",
+    intro: `${playerChoiceBadge(player)} бросает кубик и узнает, куда портал его отправит.`,
+    rules: [
+      {
+        roll: "1-2",
+        effect: `назад к монстру: <strong>${monster.label}</strong> (${cellLabel(monster.cell)})`,
+      },
+      {
+        roll: "3-4",
+        effect: `к Лавке Джо: <strong>${cellLabel(shop.cell)}</strong>`,
+      },
+      {
+        roll: "5",
+        effect: `к Хорошо: <strong>${cellLabel(good.cell)}</strong>`,
+      },
+      {
+        roll: "6",
+        effect: "выбор одного из трех направлений",
+      },
+    ],
+    footer: "Прыжок мгновенный: клетки между порталом и целью не срабатывают.",
+  });
+}
+
+function chaosPortalOptions(player) {
+  const currentCell = player.position;
+  const monster = previousMonsterOrStartOption(currentCell);
+  return [
+    monster,
+    {
+      cell: nearestForwardEventCell(currentCell, "shop") || nearestEventCell(currentCell, "shop") || startCell,
+      id: "shop",
+      label: "Лавка Джо",
+      note: "3-4: к ближайшей лавке",
+    },
+    {
+      cell: nearestForwardEventCell(currentCell, "good") || nearestEventCell(currentCell, "good") || startCell,
+      id: "good",
+      label: "Хорошо",
+      note: "5: к ближайшему Хорошо",
+    },
+  ];
+}
+
+function previousMonsterOrStartOption(cell) {
+  const current = routeIndex.get(cell) ?? 0;
+  const door = Object.values(state.doors || {})
+    .filter((item) => (routeIndex.get(item.enemyCell) ?? -1) < current)
+    .sort((a, b) => (routeIndex.get(b.enemyCell) ?? 0) - (routeIndex.get(a.enemyCell) ?? 0))[0];
+
+  if (!door) {
+    return {
+      cell: startCell,
+      id: "monster",
+      label: "Старт",
+      note: "1-2: монстра сзади нет",
+    };
+  }
+
+  return {
+    cell: door.enemyCell,
+    id: "monster",
+    label: door.label || "Монстр",
+    note: "1-2: назад к монстру",
+  };
+}
+
+function nearestForwardEventCell(cell, eventType) {
+  const current = routeIndex.get(cell) ?? 0;
+  return routePath
+    .filter((candidate) => cellEvents[candidate] === eventType && (routeIndex.get(candidate) ?? -1) > current)
+    .sort((a, b) => (routeIndex.get(a) ?? 0) - (routeIndex.get(b) ?? 0))[0] || null;
+}
+
+function nearestEventCell(cell, eventType) {
+  const current = routeIndex.get(cell) ?? 0;
+  return routePath
+    .filter((candidate) => cellEvents[candidate] === eventType)
+    .sort((a, b) => Math.abs((routeIndex.get(a) ?? 0) - current) - Math.abs((routeIndex.get(b) ?? 0) - current))[0] || null;
+}
+
+function chooseChaosPortalDestination(player, options) {
+  state.pendingChoice = {
+    choices: options.map((option) => ({
+      ...option,
+      note: `${option.note}; клетка ${cellLabel(option.cell)}`,
+    })),
+    kind: "chaos-portal",
+    playerId: player.id,
+  };
+  state.isAnimating = false;
+  render();
+
+  return new Promise((resolve) => {
+    state.choiceResolver = (cell) => {
+      const choice = state.pendingChoice?.choices.find((option) => option.cell === cell) || null;
+      state.pendingChoice = null;
+      state.choiceResolver = null;
+      state.isAnimating = true;
+      resolve(choice);
+    };
+    scheduleBotAction(botChoiceDelay("choice"), { replace: true });
+  });
+}
+
+async function teleportFromChaosPortal(player, destination) {
+  const targetCell = destination?.cell || startCell;
+  if (!fieldCells.has(targetCell)) return;
+
+  player.position = targetCell;
+  recordPlayerMoved(player, targetCell);
+  state.walkPath = [];
+  render();
+  pulseTile(targetCell);
+  await sleep(180);
+
+  if (cellEvents[targetCell] === "chaos-portal") {
+    log(`<strong>Портал хаоса</strong> гаснет на клетке ${cellTitleWithLabel(targetCell)}, чтобы не запустить бесконечную цепочку.`);
+    return;
+  }
+
+  await resolveLanding(player);
+}
+
+function chaosPortalRollLabel(roll) {
+  if (roll <= 2) return "назад к монстру";
+  if (roll <= 4) return "к Лавке Джо";
+  if (roll === 5) return "к Хорошо";
+  return "выбор игрока";
+}
+
 async function resolveDiceFortuneField(player) {
-  await showActionPrompt(
-    `${playerName(player)} попадает на кубик удачи: брось 6 кубиков. Каждая 6 дает <strong>${coinAmount(20)}</strong>, каждая 1 отправляет на <strong>5 шагов назад</strong>.`,
-    { autoFor: player },
-  );
+  await showActionPrompt(diceFortunePromptMarkup(player), {
+    buttonLabel: "Бросить кубик",
+    autoFor: player,
+  });
 
   const rolls = rollDice(6);
+  recordDiceThrown(player, 6);
   const sixes = rolls.filter((value) => value === 6).length;
   const ones = rolls.filter((value) => value === 1).length;
   const coins = sixes * 20;
@@ -1822,6 +2908,50 @@ async function resolveDiceFortuneField(player) {
   } else {
     render();
   }
+}
+
+function diceFortunePromptMarkup(player) {
+  return rollEventPromptMarkup({
+    kicker: "Кубик удачи",
+    title: "Испытай удачу",
+    intro: `${playerChoiceBadge(player)} бросает 6 кубиков. Каждый кубик может дать награду или откат.`,
+    rules: [
+      {
+        roll: "6",
+        effect: `<strong>${coinAmount(20)}</strong> за каждую шестерку`,
+      },
+      {
+        roll: "1",
+        effect: "<strong>5 шагов назад</strong> за каждую единицу",
+      },
+      {
+        roll: "2-5",
+        effect: "без эффекта",
+      },
+    ],
+    footer: "Все результаты считаются сразу после броска.",
+  });
+}
+
+function rollEventPromptMarkup({ kicker, title, intro, rules, footer = "" }) {
+  const rows = rules
+    .map((rule) => `
+      <div class="roll-event-row">
+        <b>${rule.roll}</b>
+        <span>${rule.effect}</span>
+      </div>
+    `)
+    .join("");
+
+  return `
+    <section class="roll-event-card">
+      <p class="roll-event-kicker">${kicker}</p>
+      <h3>${title}</h3>
+      <p class="roll-event-intro">${intro}</p>
+      <div class="roll-event-rules">${rows}</div>
+      ${footer ? `<p class="roll-event-footer">${footer}</p>` : ""}
+    </section>
+  `;
 }
 
 async function resolvePayDoubleField(player) {
@@ -2060,6 +3190,7 @@ async function resolveFinalBattle(boss, animate = true) {
     winnerId: winner.id,
   };
   state.finished = true;
+  if (state.history) state.history.finishedAt = Date.now();
   state.isAnimating = false;
   state.finalBattleProgress = null;
   state.dice = null;
@@ -2093,7 +3224,9 @@ async function rollFinalBattlePower(player, animate, { label = "" } = {}) {
 }
 
 async function rollPlayerBattlePower(player, animate, { label = "", isFinalBattle = false } = {}) {
-  const rolls = rollDice(totalDiceForPlayer(player));
+  const diceCount = totalDiceForPlayer(player);
+  const rolls = rollDice(diceCount);
+  recordDiceThrown(player, diceCount);
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const bonus = playerCombatBonus(player);
   if (animate) {
@@ -2246,7 +3379,7 @@ function wireCardRevealClick(selector, resolver) {
 }
 
 function goodCardMarkup(player, card, { revealed }) {
-  const description = card.description || "";
+  const description = cardDisplayText(card);
   const cardText = revealed
     ? `
       <span class="good-card-text">
@@ -2282,10 +3415,11 @@ async function revealBadCard(player, card) {
 }
 
 function badCardMarkup(card, { revealed }) {
+  const description = cardDisplayText(card);
   const cardText = revealed
     ? `
       <span class="bad-card-text">
-        <span>${iconizeHtml(card.title)}</span>
+        <span>${iconizeHtml(description)}</span>
       </span>
     `
     : "";
@@ -2316,10 +3450,11 @@ async function revealTadamCard(player, card) {
 }
 
 function tadamCardMarkup(card, { revealed }) {
+  const description = cardDisplayText(card);
   const cardText = revealed
     ? `
       <span class="tadam-card-text">
-        <span>${iconizeHtml(card.title)}</span>
+        <span>${iconizeHtml(description)}</span>
       </span>
     `
     : "";
@@ -2380,25 +3515,28 @@ function chooseShopCardFromFace(offer, player = null) {
 
   return new Promise((resolve) => {
     let completed = false;
-    const finish = (cardId) => {
+    const finish = (cardId, { selectedButton = null } = {}) => {
       if (completed) return;
       completed = true;
       const card = offer.find((item) => item.id === cardId) || null;
-      actionPromptResolver = null;
-      actionPromptButtonLabel = "Далее";
-      actionPromptAutoPlayerId = null;
-      hideEventToast({ quick: true });
-      render();
-      resolve(card);
+      if (selectedButton) markSelectedShopCard(selectedButton);
+      window.setTimeout(() => {
+        actionPromptResolver = null;
+        actionPromptButtonLabel = "Далее";
+        actionPromptAutoPlayerId = null;
+        hideEventToast({ quick: true });
+        render();
+        resolve(card);
+      }, selectedButton ? 260 : 0);
     };
 
     actionPromptResolver = () => finish(null);
     ui.eventToast.querySelectorAll("[data-shop-card-id]").forEach((button) => {
-      button.addEventListener("click", () => finish(button.dataset.shopCardId));
+      button.addEventListener("click", () => finish(button.dataset.shopCardId, { selectedButton: button }));
     });
     render();
     if (isBot(player)) {
-      window.setTimeout(() => finish(chooseBotShopCard(player, offer, { allowDecline: true })), botChoiceDelay("card"));
+      window.setTimeout(() => finishBotShopCardChoice(player, offer, finish), botChoiceDelay("card"));
     } else {
       scheduleBotAction(botChoiceDelay("choice"), { replace: true });
     }
@@ -2425,40 +3563,73 @@ function chooseRevealedShopCard(offer, player = null) {
 
   return new Promise((resolve) => {
     let completed = false;
-    const finish = (cardId) => {
+    const finish = (cardId, { selectedButton = null } = {}) => {
       if (completed) return;
       completed = true;
       const card = offer.find((item) => item.id === cardId) || null;
-      actionPromptResolver = null;
-      actionPromptButtonLabel = "Далее";
-      actionPromptAutoPlayerId = null;
-      hideEventToast({ quick: true });
-      render();
-      resolve(card);
+      if (selectedButton) markSelectedShopCard(selectedButton);
+      window.setTimeout(() => {
+        actionPromptResolver = null;
+        actionPromptButtonLabel = "Далее";
+        actionPromptAutoPlayerId = null;
+        hideEventToast({ quick: true });
+        render();
+        resolve(card);
+      }, selectedButton ? 260 : 0);
     };
 
     actionPromptResolver = () => finish(null);
     ui.eventToast.querySelectorAll("[data-shop-card-id]").forEach((button) => {
-      button.addEventListener("click", () => finish(button.dataset.shopCardId));
+      button.addEventListener("click", () => finish(button.dataset.shopCardId, { selectedButton: button }));
     });
     ui.eventToast.querySelector("[data-shop-decline]")?.addEventListener("click", () => finish(null));
     render();
     if (isBot(player)) {
-      window.setTimeout(() => finish(chooseBotShopCard(player, offer, { allowDecline: true })), botChoiceDelay("card"));
+      window.setTimeout(() => finishBotShopCardChoice(player, offer, finish), botChoiceDelay("card"));
     } else {
       scheduleBotAction(botChoiceDelay("choice"), { replace: true });
     }
   });
 }
 
+function finishBotShopCardChoice(player, offer, finish) {
+  let offerChoices = botShopOfferChoices.get(offer);
+  if (!offerChoices) {
+    offerChoices = new Map();
+    botShopOfferChoices.set(offer, offerChoices);
+  }
+  if (!offerChoices.has(player.id)) {
+    offerChoices.set(player.id, chooseBotShopCard(player, offer, { allowDecline: true }));
+  }
+  const cardId = offerChoices.get(player.id);
+  const selectedButton = cardId ? shopCardButton(cardId) : null;
+  finish(cardId, { selectedButton });
+}
+
+function shopCardButton(cardId) {
+  return Array.from(ui.eventToast?.querySelectorAll("[data-shop-card-id]") || [])
+    .find((button) => button.dataset.shopCardId === String(cardId)) || null;
+}
+
+function markSelectedShopCard(selectedButton) {
+  const reveal = selectedButton.closest(".shop-card-reveal");
+  reveal?.classList.add("is-choice-locked");
+  reveal?.querySelectorAll("[data-shop-card-id], [data-shop-decline]").forEach((control) => {
+    if (control !== selectedButton) control.disabled = true;
+  });
+  selectedButton.classList.add("is-selected");
+  selectedButton.setAttribute("aria-pressed", "true");
+}
+
 function shopCardsMarkup(cards, { revealed, selectable = false, showDecline = false } = {}) {
   const className = `shop-card-reveal ${revealed ? "is-revealed" : "is-hidden"} ${selectable ? "is-selectable" : ""}`.trim();
   const cardsMarkup = cards
     .map((card) => {
+      const description = cardDisplayText(card);
       const cardText = revealed
         ? `
           <span class="shop-card-text">
-            <span>${iconizeHtml(card.title)}</span>
+            <span>${iconizeHtml(description)}</span>
           </span>
         `
         : "";
@@ -2554,6 +3725,7 @@ async function drawFreeShopCard(player, reason = "бесплатно получ�
   const card = randomItem(shopCards);
   await revealShopCards([card], player);
   player.items.push(card);
+  recordShopCards(player);
   render();
   log(`${playerName(player)} ${reason}: <strong>${card.title}</strong>`, { toast: true });
 }
@@ -2569,7 +3741,7 @@ async function resolveBuyShopCardFromPlayer(player, cost) {
     .flatMap((target) =>
       target.items.map((card) => ({
         id: `${target.id}:${card.id}`,
-        label: card.title,
+        label: cardDisplayText(card),
         note: playerChoiceBadge(target),
         noteClass: "choice-player-note",
       })),
@@ -2609,6 +3781,8 @@ async function resolveBuyShopCardFromPlayer(player, cost) {
   addCoins(player, -cost);
   addCoins(target, cost);
   player.items.push(card);
+  recordShopCards(player);
+  recordEffectReceived(target, player);
   log(`${playerName(player)} платит ${playerName(target)} <strong>${cost} монет</strong> и забирает карту Лавка Джо: <strong>${card.title}</strong>`, {
     toast: true,
   });
@@ -2633,7 +3807,9 @@ async function resolveChoosePlayerBackRoll(player) {
   const target = state.players.find((item) => item.id === Number(choice));
   if (!target) return;
 
-  const rolls = rollDice(totalDiceForPlayer(target));
+  const diceCount = totalDiceForPlayer(target);
+  const rolls = rollDice(diceCount);
+  recordDiceThrown(target, diceCount);
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const bonus = playerStepBonus(target);
   const total = rolled + bonus;
@@ -2642,6 +3818,7 @@ async function resolveChoosePlayerBackRoll(player) {
   );
   await animateDice(rolls, { bonus, label: "Назад", player: target });
   await showActionPrompt(`${playerName(target)} идет назад на <strong>${total}</strong>.`, { autoFor: player });
+  recordEffectReceived(target, player);
   await movePlayerSteps(target, -total);
 }
 
@@ -2674,8 +3851,11 @@ async function drawTadamCard(player) {
   const card = randomItem(tadamCards);
   log(`${playerName(player)} тянет карту <strong>ТАДАМ!</strong>: ${card.title}`);
   await revealTadamCard(player, card);
+  addCoins(player, 5);
   state.tadams.push(card);
+  recordTadamPlayed();
   if (state.tadams.length > 3) state.tadams.shift();
+  log(`${playerName(player)} получает <strong>${coinAmount(5)}</strong> за открытие <strong>ТАДАМ!</strong>.`, { toast: true });
   log(`${playerName(player)} применяет карту <strong>ТАДАМ!</strong>: ${card.title}`, { toast: true });
 }
 
@@ -2697,7 +3877,127 @@ async function resolveShop(player) {
 
   addCoins(player, -5);
   player.items.push(bought);
+  recordShopCards(player);
   log(`${playerName(player)} покупает в Лавке Джо: <strong>${bought.title}</strong>`, { toast: true });
+}
+
+async function resolveJoeAuction(player) {
+  const offer = drawUnique(shopCards, 3);
+  const cardNames = offer.map((card) => `<strong>${card.title}</strong>`).join(" / ");
+  log(`Аукцион Лавки Джо открывает 3 карты: ${cardNames}. Игроки делают ставки. Проигравшие ничего не платят.`);
+  await showActionPrompt(
+    `
+      <strong>Аукцион Лавки Джо</strong> открывает 3 карты. Игроки делают ставки. Проигравшие ничего не платят.
+      ${shopCardsMarkup(offer, { revealed: true })}
+    `,
+    { autoFor: player },
+  );
+
+  const bids = [];
+  for (const bidder of state.players) {
+    const bid = await chooseAuctionBid(bidder, offer);
+    bids.push({ bid, player: bidder });
+  }
+  log(`Ставки аукциона: ${bids.map(({ bid, player }) => `${playerName(player)} - <strong>${formatAuctionBid(bid)}</strong>`).join(", ")}.`);
+
+  const highestBid = Math.max(0, ...bids.map((item) => item.bid));
+  if (highestBid <= 0) {
+    log("Все спасовали. Аукцион закрыт.", { toast: true });
+    return;
+  }
+
+  let leaders = bids.filter((item) => item.bid === highestBid).map((item) => item.player);
+  if (leaders.length > 1) {
+    leaders = await resolveJoeAuctionTie(leaders, highestBid);
+  }
+  const winner = leaders[0];
+  const picked = await chooseAuctionPrizeCard(winner, offer, highestBid);
+  if (!picked) {
+    log(`${playerName(winner)} выигрывает аукцион, но не выбирает карту. Аукцион закрыт.`);
+    return;
+  }
+
+  addCoins(winner, -highestBid);
+  winner.items.push(picked);
+  recordShopCards(winner);
+  log(
+    `${playerName(winner)} выигрывает <strong>Аукцион Лавки Джо</strong>, платит в банк <strong>${coinAmount(highestBid)}</strong> и забирает карту <strong>${picked.title}</strong>.`,
+    { toast: true },
+  );
+}
+
+async function chooseAuctionBid(player, offer) {
+  const choices = auctionBidOptions(player).map((bid) => ({
+    id: bid,
+    label: formatAuctionBid(bid),
+    note: bid === 0 ? "без оплаты" : `${coinAmount(bid)} если победишь`,
+  }));
+  const choice = await chooseCardAction({
+    bodyHtml: shopCardsMarkup(offer, { revealed: true }),
+    buttonsClass: "auction-bid-buttons",
+    choices,
+    kicker: "Аукцион Лавки Джо",
+    kind: "joe-auction-bid",
+    offer,
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} делает закрытую ставку. Монеты сейчас: ${coinAmount(player.coins)}. Проигравшие и пасующие не платят.`,
+    title: "Сделай ставку",
+  });
+  return Number(choice) || 0;
+}
+
+async function resolveJoeAuctionTie(players, bid) {
+  let tied = [...players];
+  let round = 1;
+  while (tied.length > 1) {
+    log(`Ничья в аукционе за <strong>${coinAmount(bid)}</strong>: ${tied.map(playerName).join(", ")} бросают 1 кубик.`);
+    const rolls = [];
+    for (const player of tied) {
+      await showActionPrompt(`${playerName(player)} бросает кубик за победу в аукционе.`, {
+        autoFor: player,
+        buttonLabel: "Бросить кубик",
+      });
+      const roll = d6();
+      state.dice = null;
+      render();
+      await animateDice([roll], { label: `Аукцион Лавки Джо ${round}`, player });
+      state.dice = roll;
+      rolls.push({ player, roll });
+    }
+    log(`Переигровка аукциона: ${rolls.map(({ player, roll }) => `${playerName(player)} - <strong>${roll}</strong>`).join(", ")}.`);
+    const best = Math.max(...rolls.map((item) => item.roll));
+    tied = rolls.filter((item) => item.roll === best).map((item) => item.player);
+    if (tied.length > 1) log(`Снова ничья: ${tied.map(playerName).join(", ")} переигрывают.`);
+    round += 1;
+  }
+  return tied;
+}
+
+async function chooseAuctionPrizeCard(player, offer, bid) {
+  const choiceId = await chooseCardAction({
+    bodyHtml: shopCardsMarkup(offer, { revealed: true }),
+    buttonsClass: "auction-prize-buttons",
+    choices: offer.map((card) => ({
+      id: card.id,
+      label: cardDisplayText(card),
+      note: `выигрыш за ${coinAmount(bid)}`,
+    })),
+    kicker: "Аукцион Лавки Джо",
+    kind: "joe-auction-prize",
+    offer,
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} победил в аукционе. Выбери одну из 3 карт.`,
+    title: "Выбери карту Лавки Джо",
+  });
+  return offer.find((card) => card.id === choiceId) || null;
+}
+
+function auctionBidOptions(player) {
+  return [0, 5, 10, 15, 20].filter((bid) => bid === 0 || player.coins >= bid);
+}
+
+function formatAuctionBid(bid) {
+  return bid > 0 ? coinAmount(bid) : "Пас";
 }
 
 async function resolvePassThroughShop(player) {
@@ -2760,12 +4060,13 @@ async function movePlayerSteps(player, steps) {
         break;
       }
       player.position = nextPosition;
+      recordPlayerMoved(player, nextPosition);
       if (step < steps - 1) resolveJumpSteal(player);
       render();
       await sleep(120);
       const enemyBattle = await resolvePassThroughEnemy(player);
       if (state.finished || player.position !== nextPosition) break;
-      if (enemyBattle?.winner === "player" && !enemyBattle.isFinalBoss && !monstersDontStopEnabled()) break;
+      if (enemyBattle?.winner === "player" && !enemyBattle.isFinalBoss && !passThroughAllEnabled()) break;
       await resolvePortalAtCurrentCell(player, { remaining: steps - step - 1 });
       if (step < steps - 1) {
         await resolvePassThroughShop(player);
@@ -2775,6 +4076,9 @@ async function movePlayerSteps(player, steps) {
     const currentIndex = routeCells.findIndex((cell) => cellKey(cell.col, cell.row) === player.position);
     if (currentIndex >= 0) {
       const targetIndex = Math.max(0, currentIndex + steps);
+      for (let index = currentIndex - 1; index >= targetIndex; index -= 1) {
+        recordPlayerMoved(player, cellKey(routeCells[index].col, routeCells[index].row));
+      }
       player.position = cellKey(routeCells[targetIndex].col, routeCells[targetIndex].row);
       render();
       await sleep(160);
@@ -2792,15 +4096,32 @@ function addCoins(player, amount) {
   const before = player.coins;
   player.coins = Math.max(0, player.coins + amount + bonus);
   const delta = player.coins - before;
+  recordCoinDelta(player, delta);
   if (delta !== 0) showCoinFloat(player, delta);
   return amount + bonus;
+}
+
+function awardMonsterHuntReward(player) {
+  const amount = activeTadamEffects("monster-win-coins")
+    .reduce((sum, effect) => sum + Math.max(0, Number(effect.amount) || 0), 0);
+  if (amount <= 0) return 0;
+  addCoins(player, amount);
+  return amount;
+}
+
+function monsterHuntRewardText(amount) {
+  if (amount <= 0) return "";
+  return ` ТАДАМ: <strong>Охота на монстра</strong> дает <strong>${coinAmount(amount)}</strong>.`;
 }
 
 function stealCoins(fromPlayer, toPlayer, amount) {
   if (!fromPlayer || !toPlayer || fromPlayer.id === toPlayer.id) return 0;
   const taken = Math.min(amount, fromPlayer.coins);
   fromPlayer.coins -= taken;
-  if (taken > 0) showCoinFloat(fromPlayer, -taken);
+  if (taken > 0) {
+    recordCoinDelta(fromPlayer, -taken);
+    showCoinFloat(fromPlayer, -taken);
+  }
   addCoins(toPlayer, taken);
   return taken;
 }
@@ -2809,6 +4130,7 @@ function stealFromRandomPlayer(player, amount) {
   const target = randomOpponent(player);
   if (!target) return;
   const taken = stealCoins(target, player, amount);
+  if (taken > 0) recordEffectReceived(target, player);
   log(`${playerName(player)} забирает у ${playerName(target)} <strong>${taken} монет</strong>.`);
 }
 
@@ -2816,6 +4138,7 @@ function stealFromRichestPlayer(player, amount) {
   const target = richestOpponent(player);
   if (!target) return;
   const taken = stealCoins(target, player, amount);
+  if (taken > 0) recordEffectReceived(target, player);
   log(`${playerName(player)} забирает у самого богатого игрока ${playerName(target)} <strong>${taken} монет</strong>.`);
 }
 
@@ -2823,6 +4146,7 @@ function giveToPoorestPlayer(player, amount) {
   const target = poorestOpponent(player);
   if (!target) return;
   const given = stealCoins(player, target, amount);
+  if (given > 0) recordEffectReceived(target, player);
   log(`${playerName(player)} отдает самому бедному игроку ${playerName(target)} <strong>${given} монет</strong>.`);
 }
 
@@ -2832,7 +4156,10 @@ function resolveJumpSteal(player) {
   for (const target of state.players) {
     if (target.id === player.id || target.position !== player.position) continue;
     const taken = stealCoins(target, player, effect.amount);
-    if (taken > 0) log(`${playerName(player)} перепрыгивает ${playerName(target)} и забирает <strong>${taken} монет</strong>.`);
+    if (taken > 0) {
+      recordEffectReceived(target, player);
+      log(`${playerName(player)} перепрыгивает ${playerName(target)} и забирает <strong>${taken} монет</strong>.`);
+    }
   }
 }
 
@@ -2842,7 +4169,10 @@ function resolveLandSteal(player) {
   for (const target of state.players) {
     if (target.id === player.id || target.position !== player.position) continue;
     const taken = stealCoins(target, player, effect.amount);
-    if (taken > 0) log(`${playerName(player)} останавливается рядом с ${playerName(target)} и забирает <strong>${taken} монет</strong>.`);
+    if (taken > 0) {
+      recordEffectReceived(target, player);
+      log(`${playerName(player)} останавливается рядом с ${playerName(target)} и забирает <strong>${taken} монет</strong>.`);
+    }
   }
 }
 
@@ -2857,7 +4187,7 @@ function renderTadams() {
     item.innerHTML = card
       ? `
         <span class="tadam-slot-text">
-          <span>${iconizeHtml(card.title)}</span>
+          <span>${iconizeHtml(cardDisplayText(card))}</span>
         </span>
       `
       : `<span class="tadam-slot-empty">${index + 1}</span>`;
@@ -2883,10 +4213,14 @@ function tileTitle(cell) {
   if (cell === finishCell) return "Финиш";
   const namesByEvent = {
     bad: "Плохо",
+    "big-rest": "Большой привал — выбери: +15 монет, +1 сила навсегда или +2 скорость навсегда",
+    "black-market": "Черный рынок — сделки: 5 за Лавку, 10 за +1 силу навсегда, 15 за +10 в следующей битве с монстром",
+    "chaos-portal": "Портал хаоса — 1-2: назад к монстру, 3-4: к Лавке Джо, 5: к Хорошо, 6: выбор",
     "dice-fortune": "Кубик удачи",
     enemy: "Враг",
     good: "Хорошо",
     green: "Зеленое поле",
+    "joe-auction": "Аукцион Лавки Джо — 3 карты Лавки Джо, все делают ставки, проигравшие не платят",
     "pay-double": "Удвоение монет",
     red: "Красное поле",
     shop: "Лавка Джо",
@@ -2903,10 +4237,14 @@ function fieldEffectText(cell) {
 
   const texts = {
     bad: ["Плохо", "тяни карту Плохо"],
+    "big-rest": ["Большой привал", "выбери: +15 монет, +1 сила навсегда или +2 скорость навсегда"],
+    "black-market": ["Черный рынок", "5 за Лавку, 10 за +1 силу, 15 за +10 к следующему монстру"],
+    "chaos-portal": ["Портал хаоса", "1-2: назад к монстру, 3-4: к Лавке Джо, 5: к Хорошо, 6: выбор"],
     "dice-fortune": ["Кубик удачи", "6 бросков: 6 = +20 монет, 1 = -5 шагов"],
     enemy: ["Враг", "битва с монстром"],
     good: ["Хорошо", "тяни карту Хорошо"],
     green: ["Зеленое поле", greenEffectLabel()],
+    "joe-auction": ["Аукцион Лавки Джо", "3 карты Лавки Джо. Все делают ставки. Проигравшие не платят"],
     "pay-double": ["Удвоение монет", "удвой свое количество монет"],
     red: ["Красное поле", redEffectLabel()],
     shop: ["Лавка Джо", "2 карты на выбор за 5 монет"],
@@ -2939,6 +4277,15 @@ function turnActionsText(player) {
   }
 
   const actions = [];
+  const rageBonus = nextMonsterBattleBonus(player);
+  if (rageBonus > 0) {
+    actions.push(`
+      <span class="action-chip rage-action-chip" title="Зелье ярости сработает в следующей битве с монстром">
+        <b>+${rageBonus}</b>
+        <span>зелье ярости</span>
+      </span>
+    `);
+  }
   const extraDiceCards = optionalExtraDieCards(player);
   for (const card of extraDiceCards) {
     const canPay = player.coins >= card.effect.cost;
@@ -3000,6 +4347,7 @@ async function resolvePortalAtCurrentCell(player, { animate = true, remaining = 
   if (!targetCell || targetCell === player.position) return false;
 
   player.position = targetCell;
+  recordPlayerMoved(player, targetCell);
   state.walkPath = [];
   if (animate) {
     render();
@@ -3018,6 +4366,7 @@ function choosePortalDestination(player, currentDoor, remaining) {
     kind: "portal",
     currentCell: currentDoor.enemyCell,
     playerId: player.id,
+    previewField: false,
     remaining,
     choices: [
       ...portalDoors.map((door) => ({
@@ -3045,6 +4394,39 @@ function choosePortalDestination(player, currentDoor, remaining) {
     };
     scheduleBotAction(botChoiceDelay("choice"), { replace: true });
   });
+}
+
+function portalPreviewEndCells() {
+  const pending = state?.pendingChoice;
+  if (pending?.kind !== "portal") return [];
+
+  const player = state.players.find((item) => item.id === pending.playerId) || currentPlayer();
+  const usedCells = new Set();
+  return pending.choices
+    .filter((choice) => choice.cell !== pending.currentCell && choice.className !== "decline")
+    .map((choice) => ({
+      cell: projectedPortalEndCell(player, choice.cell, pending.remaining),
+      label: choice.label,
+    }))
+    .filter((item) => {
+      if (!item.cell || usedCells.has(item.cell)) return false;
+      usedCells.add(item.cell);
+      return true;
+    });
+}
+
+function projectedPortalEndCell(player, exitCell, remaining = 0) {
+  let currentCell = exitCell;
+  const steps = Math.max(0, Number(remaining) || 0);
+
+  for (let step = 0; step < steps && currentCell !== finishCell; step += 1) {
+    const nextCell = defaultNextCell(currentCell);
+    if (!nextCell) break;
+    if (lockedDoorForTransition(player, currentCell, nextCell)) break;
+    currentCell = nextCell;
+  }
+
+  return currentCell;
 }
 
 function isDoorOpenForPlayer(door, player) {
@@ -3123,6 +4505,10 @@ function cellLabel(cell) {
   return `${col + 1}:${row + 1}`;
 }
 
+function cellTitleWithLabel(cell) {
+  return `${tileTitle(cell)} ${cellLabel(cell)}`;
+}
+
 function currentPlayer() {
   return state.players[state.activePlayer];
 }
@@ -3156,6 +4542,12 @@ function activeTadamEffect(type) {
   return state.tadams.find((card) => card.effect?.type === type)?.effect || null;
 }
 
+function activeTadamEffects(type) {
+  return state.tadams
+    .filter((card) => card.effect?.type === type)
+    .map((card) => card.effect);
+}
+
 function activeFieldEffect(type) {
   const card = state.tadams.find((item) => item.effect?.type === type);
   return card?.effect || null;
@@ -3185,6 +4577,25 @@ function playerCombatBonus(player) {
   return playerBattleBonus(player);
 }
 
+function nextMonsterBattleBonus(player) {
+  return Math.max(0, Number(player?.nextMonsterBattleBonus) || 0);
+}
+
+function playerMonsterBattleBonus(player) {
+  return playerCombatBonus(player) + nextMonsterBattleBonus(player);
+}
+
+function setNextMonsterBattleBonus(player, amount) {
+  if (!player) return;
+  player.nextMonsterBattleBonus = Math.max(0, Number(amount) || 0);
+}
+
+function consumeNextMonsterBattleBonus(player) {
+  const bonus = nextMonsterBattleBonus(player);
+  if (bonus > 0) player.nextMonsterBattleBonus = 0;
+  return bonus;
+}
+
 function battleForceText(amount, compact = false) {
   return `${compact ? "С" : "Сила"} ${amount >= 0 ? "+" : ""}${amount}`;
 }
@@ -3198,6 +4609,13 @@ function bonusFormulaText(bonus, total) {
   return ` ${bonus > 0 ? "+" : "-"} ${Math.abs(bonus)} бонус = <strong>${total}</strong>`;
 }
 
+function monsterBattleBonusFormulaText(baseBonus, rageBonus, total) {
+  const parts = [];
+  if (baseBonus) parts.push(`${baseBonus > 0 ? "+" : "-"} ${Math.abs(baseBonus)} бонус`);
+  if (rageBonus) parts.push(`+ ${rageBonus} зелье ярости`);
+  return parts.length ? ` ${parts.join(" ")} = <strong>${total}</strong>` : "";
+}
+
 function playerDiceBonus(player) {
   return player.diceBonus || 0;
 }
@@ -3208,11 +4626,21 @@ function addDiceBonus(player, amount) {
   showDiceFloat(player, amount);
 }
 
+function addBattleBonus(player, amount) {
+  if (!player || !Number.isFinite(amount) || amount === 0) return;
+  player.battleBonus = playerManualBattleBonus(player) + amount;
+}
+
+function addStepBonus(player, amount) {
+  if (!player || !Number.isFinite(amount) || amount === 0) return;
+  player.stepBonus = playerManualStepBonus(player) + amount;
+}
+
 function addSelectedPlayerBattleBonus(amount) {
   if (!state?.players?.length) return;
   const player = currentModifierPlayer();
   if (!player || !Number.isFinite(amount) || amount === 0) return;
-  player.battleBonus = playerManualBattleBonus(player) + amount;
+  addBattleBonus(player, amount);
   log(`${playerName(player)}: сила ${amount > 0 ? "+" : "-"}<strong>${Math.abs(amount)}</strong>. Сейчас: <strong>${battleForceText(playerBattleBonus(player))}</strong>.`);
   render();
 }
@@ -3221,7 +4649,7 @@ function addSelectedPlayerStepBonus(amount) {
   if (!state?.players?.length) return;
   const player = currentModifierPlayer();
   if (!player || !Number.isFinite(amount) || amount === 0) return;
-  player.stepBonus = playerManualStepBonus(player) + amount;
+  addStepBonus(player, amount);
   log(`${playerName(player)}: шаги ${amount > 0 ? "+" : "-"}<strong>${Math.abs(amount)}</strong>. Сейчас: <strong>${stepBonusText(playerStepBonus(player))}</strong>.`);
   render();
 }
@@ -3232,11 +4660,7 @@ function exactMoveControlAmount() {
 }
 
 function passThroughMode() {
-  return ui.passThroughMode?.value || "default";
-}
-
-function monstersDontStopEnabled() {
-  return passThroughMode() === "monsters" || passThroughMode() === "all";
+  return ui.passThroughMode?.checked ? "all" : "default";
 }
 
 function passThroughAllEnabled() {
@@ -3258,6 +4682,7 @@ async function moveActivePlayerExactSteps() {
 
   const player = currentPlayer();
   const steps = exactMoveControlAmount();
+  recordTurnStarted(player);
   state.isAnimating = true;
   state.movingPlayerId = player.id;
   state.dice = null;
@@ -3266,7 +4691,7 @@ async function moveActivePlayerExactSteps() {
   render();
 
   try {
-    await movePlayerExactSteps(player, steps);
+    if (await movePlayerExactSteps(player, steps)) completeMovementTurn(player);
   } finally {
     state.isAnimating = false;
     state.movingPlayerId = null;
@@ -3276,17 +4701,19 @@ async function moveActivePlayerExactSteps() {
 
 async function movePlayerExactSteps(player, steps) {
   const currentIndex = routeCells.findIndex((cell) => cellKey(cell.col, cell.row) === player.position);
-  if (currentIndex < 0 || steps <= 0) return;
+  if (currentIndex < 0 || steps <= 0) return false;
 
   const targetIndex = Math.min(routeCells.length - 1, currentIndex + steps);
   for (let index = currentIndex + 1; index <= targetIndex; index += 1) {
     player.position = cellKey(routeCells[index].col, routeCells[index].row);
+    recordPlayerMoved(player, player.position);
     render();
     await sleep(120);
   }
 
   pulseTile(player.position);
   await resolveLanding(player);
+  return true;
 }
 
 function totalDiceForPlayer(player, extraDice = 0) {
@@ -3472,8 +4899,19 @@ function log(message, { toast = false } = {}) {
   item.innerHTML = renderedMessage;
   gameLogEl.prepend(item);
   while (gameLogEl.children.length > 40) gameLogEl.lastElementChild.remove();
+  updateLogLimit();
 
   if (toast) showEventToast(trimToastTrailingDot(renderedMessage));
+}
+
+function updateLogLimit() {
+  if (!gameLogEl) return;
+  gameLogEl.classList.toggle("is-expanded", logExpanded);
+  gameLogEl.dataset.limit = logExpanded ? "20" : "5";
+  if (ui.logToggle) {
+    ui.logToggle.textContent = logExpanded ? "Показать 5" : "Показать 20";
+    ui.logToggle.setAttribute("aria-expanded", String(logExpanded));
+  }
 }
 
 function trimToastTrailingDot(message) {
@@ -3488,7 +4926,8 @@ function showEventToast(message) {
 
   ui.eventToast.hidden = false;
   ui.eventToast.innerHTML = `<div class="event-toast-copy">${iconizeHtml(message)}</div>`;
-  ui.eventToast.classList.remove("action-prompt", "fading", "quick-fading", "visible");
+  ui.eventToast.classList.remove("action-prompt", "roll-event-prompt", "fading", "quick-fading", "visible");
+  ui.eventToast.style.removeProperty("top");
   void ui.eventToast.offsetWidth;
   ui.eventToast.classList.add("visible");
 
@@ -3505,10 +4944,12 @@ function showActionPrompt(message, { buttonLabel = "Далее", autoFor = null 
 
   ui.eventToast.hidden = false;
   ui.eventToast.innerHTML = `<div class="event-toast-copy">${iconizeHtml(message)}</div>`;
+  ui.eventToast.classList.toggle("roll-event-prompt", Boolean(ui.eventToast.querySelector(".roll-event-card")));
   ui.eventToast.classList.remove("fading", "quick-fading", "visible");
   ui.eventToast.classList.add("action-prompt");
   void ui.eventToast.offsetWidth;
   ui.eventToast.classList.add("visible");
+  syncRollEventPromptViewport();
   actionPromptButtonLabel = buttonLabel;
   actionPromptAutoPlayerId = autoFor?.id ?? null;
 
@@ -3545,9 +4986,27 @@ function hideEventToast({ quick = false } = {}) {
 
   eventToastHideTimer = window.setTimeout(() => {
     ui.eventToast.hidden = true;
-    ui.eventToast.classList.remove("action-prompt", "visible", "fading", "quick-fading");
+    ui.eventToast.classList.remove("action-prompt", "roll-event-prompt", "visible", "fading", "quick-fading");
     ui.eventToast.innerHTML = "";
+    ui.eventToast.style.removeProperty("top");
   }, quick ? eventToastQuickFadeMs : eventToastFadeMs);
+}
+
+function syncRollEventPromptViewport() {
+  if (!ui.eventToast) return;
+
+  const isRollEventPrompt = ui.eventToast.classList.contains("roll-event-prompt");
+  const needsViewportOffset = isRollEventPrompt && window.matchMedia("(max-width: 1180px)").matches;
+  if (!needsViewportOffset) {
+    ui.eventToast.style.removeProperty("top");
+    return;
+  }
+
+  ui.eventToast.style.top = "10px";
+  const rect = ui.eventToast.getBoundingClientRect();
+  if (rect.top < 10) {
+    ui.eventToast.style.top = `${Math.round(20 - rect.top)}px`;
+  }
 }
 
 async function animateDice(rollsOrResult, { bonus = 0, label = "", player = null, isEnemyBattle = false, isFinalBattle = false } = {}) {
@@ -3719,6 +5178,10 @@ function formatRoll(rolls) {
 }
 
 function triggerRollButtonAction({ fromBot = false } = {}) {
+  if (!fromBot && portalPreviewActive()) {
+    setPortalPreviewMode(false);
+    return;
+  }
   if (!fromBot && (botControlsLocked() || ui.rollBtn.disabled)) return;
   if (actionPromptResolver) {
     actionPromptResolver();
@@ -3752,6 +5215,9 @@ function syncWideScoreStripPlacement() {
 
 ui.newGameBtn.addEventListener("click", newGame);
 ui.boardSelect?.addEventListener("change", newGame);
+ui.uiStyle?.addEventListener("change", () => {
+  applyUiStyle();
+});
 ui.playerCount?.addEventListener("change", syncBotCountOptions);
 ui.settingsPanel?.addEventListener("click", (event) => {
   const button = event.target instanceof Element ? event.target.closest("[data-step-bonus-preset], [data-battle-bonus-preset]") : null;
@@ -3777,6 +5243,13 @@ ui.settingsToggle?.addEventListener("click", () => {
   const nextHidden = !ui.settingsPanel.hidden;
   ui.settingsPanel.hidden = nextHidden;
   ui.settingsToggle.setAttribute("aria-expanded", String(!nextHidden));
+});
+ui.logToggle?.addEventListener("click", () => {
+  logExpanded = !logExpanded;
+  updateLogLimit();
+});
+ui.saveHistoryBtn?.addEventListener("click", () => {
+  void saveCurrentGameHistory();
 });
 ui.rollBtn.addEventListener("click", () => {
   triggerRollButtonAction();
@@ -3807,5 +5280,7 @@ document.addEventListener("keydown", (event) => {
 
 syncWideScoreStripPlacement();
 wideLayoutQuery.addEventListener("change", syncWideScoreStripPlacement);
+window.setInterval(renderHistory, 1000);
+updateLogLimit();
 
 newGame();

@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Очень Большая Бродилка — веб-прототип</title>
-    <link rel="stylesheet" href="./styles.css?v=20260531-0259" />
+    <link rel="stylesheet" href="./styles.css?v=20260602-0305" />
   </head>
-  <body>
+  <body data-ui-style="classic">
     <main class="app-shell">
       <section class="score-strip" id="scoreStrip" aria-label="Игроки"></section>
 
@@ -66,8 +66,15 @@
               <label class="settings-select">
                 <span>Поле</span>
                 <select id="boardSelect">
-                  <option value="field1" selected>Поле 1</option>
-                  <option value="field2">Поле 2</option>
+                  <option value="field1">Поле 1</option>
+                  <option value="field2" selected>Поле 2</option>
+                </select>
+              </label>
+              <label class="settings-select">
+                <span>UI</span>
+                <select id="uiStyle">
+                  <option value="tabletop">Настольный</option>
+                  <option value="classic" selected>Классический</option>
                 </select>
               </label>
               <div id="modifierPlayerStatus" class="modifier-player-status" aria-live="polite"></div>
@@ -92,13 +99,9 @@
                 </label>
                 <button id="exactMoveBtn" class="secondary" type="button">Идти</button>
               </div>
-              <label class="settings-select">
-                <span>Проход</span>
-                <select id="passThroughMode">
-                  <option value="default" selected>По умолчанию</option>
-                  <option value="monsters">Монстры не останавливают</option>
-                  <option value="all">Проходить все</option>
-                </select>
+              <label class="cheat-toggle">
+                <input id="passThroughMode" type="checkbox" />
+                <span>Проходить все</span>
               </label>
               <label class="settings-select">
                 <span>Скорость ботов</span>
@@ -131,13 +134,21 @@
         <article class="log-panel">
           <div class="section-title">
             <h2>Хроника</h2>
+            <button id="logToggle" class="log-toggle" type="button" aria-expanded="false">Показать 20</button>
           </div>
           <ol id="gameLog" class="game-log"></ol>
+        </article>
+        <article class="history-panel">
+          <div class="section-title">
+            <h2>История</h2>
+            <button id="saveHistoryBtn" class="history-save" type="button">Сохранить</button>
+          </div>
+          <div id="gameHistory" class="game-history"></div>
         </article>
       </section>
 
     </main>
 
-    <script type="module" src="./src/game.js?v=20260531-0259"></script>
+    <script type="module" src="./src/game.js?v=20260602-0306"></script>
   </body>
 </html>

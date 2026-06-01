@@ -107,6 +107,12 @@ export const cardConfig = {
       description: "Если остановился на клетке с другим игроком, забери у него 10 монет.",
       effect: { type: "land-steal", amount: 10 },
     },
+    {
+      id: "monster-hunt",
+      title: "Охота на монстра",
+      description: "За победу над монстром игрок получает 15 монет.",
+      effect: { type: "monster-win-coins", amount: 15 },
+    },
   ],
   shop: [
     {
