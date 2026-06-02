@@ -20,6 +20,255 @@ Open questions:
 - ...
 ```
 
+## 2026-06-02 16:55 - Art/UI
+
+Changed:
+- Fixed the mobile setup button label so `Настройки` becomes exactly `Настр.` instead of rendering as `НастройкиНастр.`.
+- Replaced the CSS pseudo-label approach with JS label sync based on the existing phone media query.
+- Bumped JS/CSS cache keys to `20260602-0318`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `outputs/mobile-settings-toggle-label.png`
+
+Notes for others:
+- UI-only fix; no settings behavior, rules, layout structure, or Dev inbox tasks changed.
+- Mobile touch check confirmed `#settingsToggle.textContent === "Настр."`, `aria-label="Настройки"`, no `::after` content, and no broken images.
+
+Open questions:
+- None.
+
+## 2026-06-02 16:55 - Dev
+
+Changed:
+- Fixed a turn-order race where repeated roll input could start another move over the previous one or immediately consume the next player's turn.
+- Added a synchronous `movementActionInProgress` guard that is set before any awaited pre-roll/card logic.
+- Applied the same movement guard to the exact-move dev control.
+- Added a short human roll cooldown after a human movement completes, and ignored repeated Enter keydown events.
+- Bumped the game script cache key to `20260602-0317`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- No movement rules, dice math, bot logic, field effects, or card effects were changed.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser regression with fixed d6=2 verified: two synchronous roll clicks only moved `Пес` once and left `Кот` active; repeated Enter with `event.repeat=true` did not start another turn. Active token count stayed 1 and moving token count returned to 0.
+- Screenshot saved as `outputs/double-roll-lock-check.png`.
+
+Open questions:
+- None.
+
+## 2026-06-02 16:06 - Art/UI
+
+Changed:
+- Fixed the pre-roll extra-die action UI so multiple `+1 кубик за 5` cards no longer break the `turn-actions` panel.
+- Grouped identical optional extra-die actions into one compact chip with a count badge.
+- Shortened the pre-roll payment prompt to use `shortTitle`, added a compact progress badge, and made the mobile layout stack text/buttons inside the same panel.
+- Bumped JS/CSS cache keys to `20260602-0315`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `outputs/extra-die-actions-desktop-normal.png`
+- `outputs/extra-die-actions-desktop-pending.png`
+- `outputs/extra-die-actions-mobile-normal.png`
+- `outputs/extra-die-actions-mobile-pending.png`
+
+Notes for others:
+- UI-only fix: no card cost, dice math, pre-roll sequence, bot logic, or balance changed.
+- Stress test checked six grouped extra-die actions plus a rage chip, and pending state `5/6`, on desktop 1440px and mobile 390px.
+- Live in-app browser reload confirmed `./src/game.js?v=20260602-0315`, `./styles.css?v=20260602-0315`, and no broken images.
+
+Open questions:
+- None.
+
+## 2026-06-02 15:58 - Dev 2
+
+Changed:
+- Reduced `Кубик удачи` reward for each rolled 6 from `+20 монет` to `+10 монет`.
+- Updated the pre-roll rule card and field-effect text to show `+10 монет`.
+- Bumped the game script cache key; current loaded key is `20260602-0315`.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- The 6-dice roll count and the `1 = -5 шагов` rule were not changed.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser check on `localhost:5173` confirmed the field/prompt show `6 = +10 монет`; with forced sixes, six rolled 6s awarded `60` coins and raised the active player from 10 to 70 coins.
+- Screenshot saved under `outputs/dice-fortune-10-coins-check.png`.
+
+Open questions:
+- None.
+
+## 2026-06-02 15:57 - Dev
+
+Changed:
+- Fixed final battle boss scoring so the boss bonus is applied as a separate pre-roll action instead of first appearing together with the first boss roll.
+- Final battle HUD now shows the boss counter after the bonus action using `bossBonusApplied`, while boss rolls still add only rolled dice values.
+- Added log/action prompt text for the boss pre-roll bonus breakdown.
+- Current game script cache key is `20260602-0315` after parallel updates.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Final battle math is unchanged: boss total remains boss dice + boss combat modifiers per challenger + +1 per challenger.
+
+Open questions:
+- None.
+
+## 2026-06-02 13:57 - Dev
+
+Changed:
+- Added a field-preview button to card choice popups whose options target players.
+- Player-choice popups now show `Показать поле`; clicking it hides the popup and lets the player inspect the board.
+- While field preview is active, the main roll button becomes `К выбору` and returns to the same choice popup.
+- Reused the portal map-preview button styling for the new player-choice preview button.
+- Bumped the stylesheet cache key to `styles.css?v=20260602-0306`; the current game script cache key is `game.js?v=20260602-0311` after the parallel portal-preview update.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is UI-only; card effects, bot choices, movement, and dice math were not changed.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser smoke forced the Good card `choose-player-back-roll`: the `Кого отправить назад?` popup showed `Показать поле`, preview hid the popup and showed the board, `К выбору` was enabled, and returning restored the same popup.
+- Screenshot saved as `outputs/player-choice-field-preview.png`.
+
+Open questions:
+- None.
+
+## 2026-06-02 13:56 - Dev
+
+Changed:
+- Portal field preview now also highlights the projected finish cell for choosing `Не входить`, so players can see where they land if they do not move through a portal.
+- Bumped the game script cache key to `20260602-0311`.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Portal choice mechanics, movement, enemy gates, and remaining-step projection were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-02 13:50 - Dev 2
+
+Changed:
+- Renamed the `big-rest` field player-facing label from `Большой привал` to `Привал`.
+- Reduced the `Восстановиться` reward from `+15 монет` to `+10 монет`.
+- Updated the choice note, prompt title, log/toast messages, tile tooltip, and field-effect text.
+- Bumped the game script cache key; current loaded key is `20260602-0310`.
+- Removed the stale already-implemented Big Rest task from `project-memory/inbox/for-dev.md` so the old `Большой привал` / `+15 монет` spec no longer appears as an open Dev item.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Internal event id stays `big-rest`; placement, icon, bot choice model, `+1 сила`, and `+2 шаги` options were not changed.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser check on `localhost:5173` confirmed the field tooltip/choice panel say `Привал` and `+10`; choosing `Восстановиться` after a 32-step exact move raised the active player's coins from 10 to 20.
+- Screenshot saved under `outputs/rest-rename-reward-check.png`.
+
+Open questions:
+- None.
+
+## 2026-06-02 13:49 - Art/UI
+
+Changed:
+- Removed unused project asset files from `assets/`: old icon variants, source PNGs, unused background arts, an unused player token, and `.DS_Store`.
+- Kept every asset currently referenced by `index.html`, `styles.css`, `src/`, and `cards-google-sheet.csv`.
+
+Files:
+- `assets/.DS_Store`
+- `assets/backgrounds/adventure_gap_1254.png`
+- `assets/backgrounds/adventure_gap_2_1254.png`
+- `assets/backgrounds/sky_gap_1254.png`
+- `assets/backgrounds/soft_forest_gap_1254.png`
+- `assets/icons/bad_512.png`
+- `assets/icons/big_rest_1254.png`
+- `assets/icons/big_rest_512.png`
+- `assets/icons/big_rest_fire_1254.png`
+- `assets/icons/big_rest_fire_source.png`
+- `assets/icons/big_rest_source.png`
+- `assets/icons/black_market_1254.png`
+- `assets/icons/black_market_1254_cleantry.png`
+- `assets/icons/black_market_512.png`
+- `assets/icons/black_market_simple_1254.png`
+- `assets/icons/black_market_simple_source.png`
+- `assets/icons/black_market_source.png`
+- `assets/icons/black_market_ultra_simple_1254.png`
+- `assets/icons/black_market_ultra_simple_source.png`
+- `assets/icons/chaos_portal_1024.png`
+- `assets/icons/chaos_portal_512.png`
+- `assets/icons/chaos_portal_source.png`
+- `assets/icons/joe_auction_1254.png`
+- `assets/icons/joe_auction_simple_1254.png`
+- `assets/icons/joe_auction_simple_512.png`
+- `assets/icons/joe_auction_simple_source.png`
+- `assets/icons/joe_auction_source.png`
+- `assets/player-tokens/squirrel.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- No game code, UI code, rules, card config, field layout, or Dev inbox tasks were changed.
+- `outputs/` was left untouched; this cleanup only removed unused `assets/` files.
+- Asset reference audit now reports 34 remaining asset files, 0 unused assets, and 0 missing referenced assets.
+- Browser reload on `localhost:5173` reported 84 loaded images, no broken images, and confirmed key event icons still load from the remaining files.
+
+Open questions:
+- None.
+
+## 2026-06-02 13:45 - Dev 2
+
+Changed:
+- Replaced the `Аукцион Лавки Джо` tile icon source with the dedicated `assets/icons/joe_auction_512.png` asset.
+- Bumped the game script cache key to `20260602-0307`.
+- Updated project memory to include the active `Dev 2`, `Dev 3`, and `Art / UI` roles.
+- Removed completed/stale Joe Auction and Big Rest icon tasks from `project-memory/inbox/for-dev.md`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- No `joe-auction` rules, placement, bid options, bot scoring, History, Chronicle, or tooltip text changed.
+- Current field2 has the Joe Auction tile at `14-0`; the older inbox verification coordinate `6-7` is currently an ordinary `Лавка Джо` tile.
+- Current field2 Big Rest cells are `0-3`, `14-4`, and `11-9`; all already load `assets/icons/big_rest_fire_512.png`.
+- `node --check src/game.js` and `git diff --check` pass.
+- Browser check on `localhost:5173` confirmed `./src/game.js?v=20260602-0307`, `assets/icons/joe_auction_512.png?v=20260602-0307` loading at 512x512 on field2 `14-0`, no broken images, and no console/page errors.
+- Screenshot saved under `outputs/joe-auction-dedicated-icon-check.png`.
+
+Open questions:
+- None.
+
 ## 2026-06-02 00:46 - Dev
 
 Changed:

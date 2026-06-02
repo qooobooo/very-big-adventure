@@ -32,8 +32,9 @@ If you need older context, inspect local Codex records read-only:
 Known roles:
 
 - Important = project memory, status, summaries, coordination.
-- Dev = "Очень Большая Бродилка" in `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure`.
+- Dev / Dev 2 / Dev 3 = "Очень Большая Бродилка" implementation in `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure`.
 - GD = game design, contracts, rules, balance, core loop, and implementation-ready specs for Dev.
+- Art / UI = visual assets and UI direction for the prototype.
 
 Current project folder:
 

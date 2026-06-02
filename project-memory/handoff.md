@@ -10,7 +10,10 @@ Active chats:
 
 - `Important`: project memory, summaries, status, and coordination.
 - `Dev`: main implementation chat.
+- `Dev 2`: additional implementation chat.
+- `Dev 3`: additional implementation chat.
 - `GD`: game design, contracts, rules, balance, and implementation-ready specs for Dev.
+- `Art / UI`: visual assets and UI direction.
 
 Current shape: a local web prototype of a board-game race with players, dice, seals, route cells, good/bad cards, green/red fields, TADAM cards, and Joe's Shop.
 
@@ -44,8 +47,11 @@ Current important state:
 Only these chats are active in this project memory right now:
 
 - `Dev`
+- `Dev 2`
+- `Dev 3`
 - `GD`
 - `Important`
+- `Art / UI`
 
 If more context is needed, local Codex records may be inspected read-only:
 

@@ -918,6 +918,7 @@ h2 {
   overflow: hidden;
   display: grid;
   align-content: center;
+  grid-template-rows: auto minmax(0, auto);
   gap: 4px;
   padding: 8px 10px;
   border: 1px solid rgba(255, 247, 232, 0.12);
@@ -947,6 +948,8 @@ h2 {
 
 .action-chip {
   min-width: 0;
+  max-width: 100%;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -955,7 +958,26 @@ h2 {
   line-height: 1.1;
 }
 
-.action-chip b {
+.action-chip-list {
+  min-width: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.action-chip-list::-webkit-scrollbar {
+  display: none;
+}
+
+.action-chip > b,
+.action-chip-cost {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
   padding: 3px 7px;
   border: 1px solid rgba(255, 215, 125, 0.28);
   border-radius: 999px;
@@ -963,24 +985,43 @@ h2 {
   white-space: nowrap;
 }
 
-.action-chip span {
+.action-chip > span {
   min-width: 0;
+  max-width: 13ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.action-chip-count,
+.pre-roll-count {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 5px;
+  border: 1px solid rgba(101, 189, 194, 0.34);
+  border-radius: 999px;
+  color: var(--cyan);
+  background: rgba(101, 189, 194, 0.1);
+  font-size: 0.58rem;
+  font-style: normal;
+  font-weight: 950;
+  line-height: 1;
 }
 
 .action-chip.disabled {
   opacity: 0.5;
 }
 
-.rage-action-chip b {
+.rage-action-chip > b {
   border-color: rgba(205, 114, 255, 0.48);
   color: #ffe9ff;
   background: rgba(80, 35, 124, 0.42);
 }
 
-.rage-action-chip span {
+.rage-action-chip > span {
   color: #efd5ff;
 }
 
@@ -1001,25 +1042,40 @@ h2 {
   font-size: 0.62rem;
   font-weight: 700;
   line-height: 1.12;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  display: grid;
+  gap: 2px;
 }
 
 .pre-roll-action b {
-  display: block;
-  overflow: hidden;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
   color: var(--gold-2);
   font-size: 0.62rem;
   letter-spacing: 0.05em;
-  text-overflow: ellipsis;
   text-transform: uppercase;
+}
+
+.pre-roll-action b > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pre-roll-copy {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .pre-roll-action > div {
+  min-width: 0;
   display: flex;
   flex-wrap: nowrap;
+  justify-content: flex-end;
   gap: 5px;
 }
 
@@ -4006,7 +4062,8 @@ button.shop-card-decline:focus-visible {
     rgba(30, 38, 35, 0.95);
 }
 
-.choice-button.portal-map-preview {
+.choice-button.portal-map-preview,
+.choice-button.field-map-preview {
   grid-column: 1 / -1;
   min-height: 54px;
   border-color: rgba(89, 218, 255, 0.44);
@@ -4017,7 +4074,9 @@ button.shop-card-decline:focus-visible {
 }
 
 .choice-button.portal-map-preview:hover:not(:disabled),
-.choice-button.portal-map-preview:focus-visible {
+.choice-button.portal-map-preview:focus-visible,
+.choice-button.field-map-preview:hover:not(:disabled),
+.choice-button.field-map-preview:focus-visible {
   border-color: rgba(120, 226, 255, 0.72);
   box-shadow:
     0 0 0 3px rgba(77, 202, 255, 0.14),
@@ -5564,6 +5623,27 @@ body[data-ui-style="tabletop"] .winner-card {
     font-size: 0.56rem;
   }
 
+  .pre-roll-action {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+    gap: 3px;
+  }
+
+  .pre-roll-action > span {
+    gap: 1px;
+  }
+
+  .pre-roll-action > div {
+    justify-content: flex-start;
+    gap: 4px;
+  }
+
+  .pre-roll-action button {
+    min-height: 18px;
+    padding: 0 7px;
+    font-size: 0.52rem;
+  }
+
   .field-effect span,
   .action-label,
   .action-empty {
@@ -5586,7 +5666,8 @@ body[data-ui-style="tabletop"] .winner-card {
     font-size: 0.68rem;
   }
 
-  .action-chip b {
+  .action-chip > b,
+  .action-chip-cost {
     padding: 2px 5px;
   }
 
@@ -5797,16 +5878,6 @@ body[data-ui-style="tabletop"] .winner-card {
   }
 
   .settings-toggle {
-    font-size: 0.58rem;
-    line-height: 1.05;
-  }
-
-  .settings-toggle {
-    font-size: 0;
-  }
-
-  .settings-toggle::after {
-    content: "Настр.";
     font-size: 0.82rem;
     line-height: 1.05;
   }

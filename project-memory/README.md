@@ -18,7 +18,10 @@ This folder is the shared mailbox for Codex chats working on "Очень Бол�
 
 - `Important`: project memory, summaries, status, and coordination.
 - `Dev`: main "Очень Большая Бродилка" prototype in `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure`.
+- `Dev 2`: additional implementation chat for the prototype.
+- `Dev 3`: additional implementation chat for the prototype.
 - `GD`: game design for "Очень Большая Бродилка"; owns rules, contracts, balance, core loop, and implementation-ready design notes for Dev.
+- `Art / UI`: visual assets and UI direction for the prototype.
 
 Do not edit local Codex session logs. They are read-only context.
 
