@@ -4,6 +4,166 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-06-05 00:03 - Art/UI handback for GD: primary Big Button height
+  - Status: complete; ready for real-phone visual check.
+  - Single primary `Большая кнопка` actions (`Далее`, `Бросить`) are now taller:
+    - base `.controller-big-button` min-height changed to `clamp(380px, 62dvh, 680px)`;
+    - narrow-phone override changed to `clamp(340px, 62dvh, 560px)`.
+  - The button remains bottom-anchored through the existing lower action area; this only increases the button's upward reach toward the visual midpoint.
+  - Previous split-zone and Rest lower-half layout improvements were preserved.
+  - Cache keys:
+    - host/controller CSS bumped to `20260604-0352`;
+    - controller JS key unchanged because no JS logic was edited.
+  - Files changed by Art/UI:
+    - `styles.css`
+    - `index.html`
+    - `controller.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `git diff --check`
+  - JS note:
+    - `src/controller.js` was not touched in this pass; `node --check src/controller.js` was not necessary.
+  - Constraints preserved:
+    - no action id/payload/protocol/server/rules/price/dice/card/bot/route/balance changes.
+  - Verification limitation:
+    - browser/mobile screenshot could not be captured in this environment; please smoke `Далее` and `Бросить` on real phone at 390x844.
+
+- 2026-06-05 00:00 - Art/UI handback for GD: Big Button lower-half zones
+  - Status: visual refinement complete; ready for real-phone check.
+  - Implemented the clarified layout direction:
+    - phone `Большая кнопка` action area now reserves a taller lower zone (`clamp(360px, 60dvh, 640px)`);
+    - split choice stage now fills the lower half (`clamp(330px, 52dvh, 560px)`) instead of compacting near the top;
+    - left/right buttons fill that stage, so `Заплатить` / `Не платить` and Joe Shop choices read as tall bottom-anchored halves;
+    - Rest three-choice stage uses the same lower-half height and three equal rows once functional actions are exposed.
+  - Text fitting preserved:
+    - existing responsive font sizing, normal word breaking, no hyphenation, and no one-letter/orphan wrapping rules remain in place for split, cancel, primary, and Rest buttons.
+  - Cache keys:
+    - host/controller CSS bumped to `20260604-0351`;
+    - controller JS key unchanged because no controller logic was edited.
+  - Files changed by Art/UI:
+    - `styles.css`
+    - `index.html`
+    - `controller.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/controller.js`
+    - `git diff --check`
+  - Constraints preserved:
+    - no action id/payload/protocol/server/rules/price/dice/card/bot/route/balance changes;
+    - Joe Shop Big Button labels remain `Левая карта` / `Правая карта`.
+  - Verification limitation:
+    - browser/mobile screenshots could not be captured in this environment; please smoke on real phone at 390x844 and 360x760 to confirm the lower-half feel matches the screenshot target.
+
+- 2026-06-04 23:49 - Art/UI handback for GD: `Привал` UI + Big Button bottom action polish
+  - Status: visual pass complete; ready for Dev 3 functional wiring/real-phone QA.
+  - Host `Привал` prompt:
+    - `big-rest-buttons` now uses a cleaner one-column button interior, with option title above and reward text below.
+    - Long labels such as `Восстановиться`, `Потренироваться`, `Ускориться` get normal word wrapping only; no forced letter-level breaking or hyphenation.
+    - Mobile/touch overrides keep Rest buttons readable and avoid the previous cramped tiny-label look.
+  - Phone `Большая кнопка`:
+    - Existing bottom-anchored action area is preserved for primary/cancel/split choices.
+    - Split labels have responsive sizing and no single-letter/orphan wrapping.
+    - Added CSS fallback for future three-zone Big Button choice layouts so Rest choices can stack in the lower action area once Dev 3 exposes the three original actions.
+  - Cache keys:
+    - host/controller CSS bumped to `20260604-0350`;
+    - controller JS cache key left unchanged because this pass did not edit controller logic.
+  - Files changed by Art/UI:
+    - `styles.css`
+    - `index.html`
+    - `controller.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/controller.js`
+    - `git diff --check`
+  - Constraints preserved:
+    - no gameplay/rules/action id/payload/protocol/server/prices/dice/cards/bots/routes/balance changes;
+    - Joe Shop Big Button labels remain `Левая карта` / `Правая карта`.
+  - Verification limitation:
+    - browser/mobile screenshots could not be captured in this environment due browser automation restrictions; recommend real-phone smoke at 390x844 and 360x760 after Dev 3 wires Rest choices.
+
+- 2026-06-04 12:44 - Dev 2 final combined QA for GD
+  - Verdict: PASS with environment-limited browser coverage; no blocking regression found and no code files changed.
+  - Real browser smoke: host-created `Большая кнопка + Шейк` room worked at 360px; player claim worked; `Телефон игрока` was hidden; `Бросить` rendered without overflow and sent the action.
+  - Host layout smoke: phone room status showed `Большая кнопка, шейк`; TADAM/settings order is correct by CSS order.
+  - Static/model QA: full mode path still renders normal action list; Big Button primary handles `Бросить` and `Далее`; safe two-option choices become left/right zones; cancel/decline appears as the upper button; 3 meaningful options fall back to host-screen choice.
+  - Text/readability QA: measured no overflow in the live 360px Big Button roll state; CSS uses wrapping/min-width guards for `Применить`, `Бросить`, `Далее`, and cancel labels.
+  - Safety QA: wrong-player server rejection path is unchanged; shake is guarded to safe `Бросить`, includes motion threshold 14, rotation/acceleration support, and HTTPS/secure-context fallback copy.
+  - Checks passed: `node --check src/controller.js`, `node --check src/game.js`, `node --check server.js`, `git diff --check`.
+  - Limitation: could not complete the full synthetic browser matrix because shell access to the existing `5173` process became intermittently unable to connect after POST, the sandbox blocks starting a second server, and the in-app browser evaluate bridge has no `fetch`/XHR constructors.
+  - Remaining real-phone notes: retest iPhone/Safari permission UX and Android/Chrome shake sensitivity on actual LAN/secure context.
+
+- 2026-06-04 12:40 - Art/UI handback for GD: mobile controllers polish/layout batch
+  - Art/UI-owned items are complete.
+  - Big Button colors:
+    - roll actions now get an energetic orange/magic dice style;
+    - non-roll primary actions now get a calmer green action style;
+    - idle/waiting Big Button states are muted.
+  - Big Button header:
+    - `Телефон игрока` is hidden in `Большая кнопка` mode.
+  - Big Button overflow/readability:
+    - reduced huge-label responsive sizing;
+    - removed letter-level wrapping from Big Button labels, cancel button labels, split left/right choice labels, and regular controller action labels;
+    - target issue `Применить` wrapping with orphan `ь` should be addressed by `overflow-wrap: break-word`, normal word breaking, and no hyphenation.
+  - Host layout:
+    - swapped side-panel visual order so TADAM cards appear before Settings;
+    - existing mobile order remains sane.
+  - Cache keys:
+    - host/controller CSS `20260604-0340`;
+    - controller JS `20260604-0341`;
+    - host game JS left at existing `20260604-0335`.
+  - Files changed by Art/UI:
+    - `controller.html`
+    - `index.html`
+    - `src/controller.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/controller.js`
+    - `node --check src/game.js`
+    - `node --check server.js`
+    - `git diff --check`
+  - Verification limitation:
+    - Browser screenshots could not be captured in this session because Chromium launch is blocked by macOS MachPort permissions and approvals are disabled.
+  - Ready for:
+    - Dev 2 combined QA over Dev 3 + Art/UI changes;
+    - real-device pass at 360-430px.
+
+- 2026-06-04 12:03 - Dev 2 QA/reconcile for GD: `Большая кнопка` + `Шейк`
+  - Dev 3's latest implementation is now treated as source of truth; Dev 2 did not duplicate or expand shake implementation further.
+  - Current controller code already has Cyrillic-safe `startsWith("бросить")` detection for safe shake roll.
+  - Static checks pass: `node --check src/controller.js`, `node --check src/game.js`, `node --check server.js`, `git diff --check`.
+  - CSS/feel inspection at the 360-430px target found no obvious Big Button/shake overflow issue.
+  - Browser screenshots/motion simulation remain pending in Dev 2's environment because Chromium launch is blocked by macOS permissions.
+  - Recommended next QA: real phone pass on iPhone/Safari for permission copy and Android/Chrome for shake threshold feel.
+
+- 2026-06-04 00:31 - Dev 2 handoff for GD: `Шейк`
+  - Phone controller shake-to-roll safety is implemented/hardened as input-only polish.
+  - Shake sends the same `Бросить` roll action as the normal button and does not generate dice results on the phone.
+  - Shake only arms when `Шейк` is enabled, the claimed player is active, and the available action is the safe primary `Бросить` roll.
+  - Shake is blocked for waiting/wrong-player/closed states, `Далее`, and meaningful choice or prompt states.
+  - Normal button remains available; tapping it consumes the current shake key so tap+shake cannot double-roll.
+  - Big Button compatibility: current files already include `big-button`; its huge button stays tappable and uses the same safe shake/duplicate-roll guard.
+  - Checks passed: `node --check src/controller.js`, `node --check src/game.js`, `node --check server.js`, `git diff --check`.
+  - Browser screenshots/motion simulation are pending: headless Chromium is blocked in this environment by macOS MachPort permissions and approvals are disabled.
+  - Real-phone retest recommended: iPhone/Safari permission prompt, Android/Chrome sensor feel, full mode and Big Button mode, active roll, normal button fallback, waiting/wrong-player, `Далее`, and 2+ choice states.
+
+- 2026-06-03 23:23 - Dev 2 update for GD:
+  - Mobile controller UI polish for the Jackbox-style phone controller MVP is done.
+  - Scope stayed UI-only: no server message shapes, action contracts, room logic, gameplay rules, cards, dice math, bot logic, or board routes changed.
+  - Controller now reads more like a dark fantasy player dashboard: clear player identity, larger avatar, active/waiting badge, stat plaques, Joe Shop card chips, large touch-friendly action/choice buttons, and calmer waiting state.
+  - Verified states/screenshots:
+    - waiting: `outputs/controller-waiting-polish.png`;
+    - active roll/continue: `outputs/controller-active-polish.png`;
+    - choice state: `outputs/controller-choice-polish.png`;
+    - 360px choice state: `outputs/controller-choice-360-polish.png`;
+    - host with phone mode off: `outputs/controller-host-phone-off-check.png`.
+  - Checks passed: `node --check src/controller.js`, `node --check src/game.js`, `node --check server.js`, `git diff --check`.
+  - No open UI/design questions from Dev 2 right now; next GD decision can stay focused on whether QR code or real-phone LAN testing is the next highest-value slice after Dev QA.
+
 - Own game-design direction: rules, contracts, balance, core loop, and implementation-ready design notes.
 - Put implementation-ready tasks for Dev in `project-memory/inbox/for-dev.md`.
 - Keep design notes concise enough for Dev to implement without rereading all chat history.

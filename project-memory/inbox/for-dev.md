@@ -4,6 +4,518 @@ For tasks related to "Очень Большая Бродилка" in `/Users/qoo
 
 ## Open Items
 
+- ACTIVE UI/RUNTIME FOLLOW-UP - Return Settings in fullscreen / big-screen mode:
+  - User correction 2026-06-05: `Верни настройки`.
+  - Current fullscreen implementation hides `Настройки`, `Хроника`, and `История`.
+  - New behavior contract:
+    - In `На весь экран` / `Большой экран`, `Настройки` should remain visible/available.
+    - `Хроника` and `История` can remain hidden/collapsed in fullscreen.
+    - Normal non-fullscreen layout should remain unchanged.
+    - Exiting fullscreen via `Esc` should still restore the usual layout.
+  - Constraints:
+    - UI/layout only.
+    - Do not change settings behavior, rules, dice math, cards, bots, routes, saves, phone controller protocol, balances, or history/chronicle data collection.
+  - Verification:
+    - Enter fullscreen: `Настройки` is visible/usable; `Хроника` and `История` are hidden/collapsed.
+    - Exit fullscreen with `Esc`: normal layout returns.
+    - `node --check src/game.js` if touched, `git diff --check`.
+
+- ACTIVE UI/RUNTIME - Hide auxiliary panels in fullscreen / big-screen mode:
+  - User request 2026-06-05:
+    - In `На весь экран` / `Большой экран` mode, hide these blocks:
+      - `Настройки`;
+      - `Хроника`;
+      - `История`.
+  - Behavior contract:
+    - This applies only while browser fullscreen is active.
+    - In normal/non-fullscreen mode, these blocks should remain available as before.
+    - When fullscreen starts, hide/collapse the auxiliary settings/history/chronicle panels so the screen focuses on the game board and active gameplay UI.
+    - When fullscreen exits via `Esc` or button/state change, restore the normal layout.
+    - The top fullscreen button/control itself should remain usable if it is part of the top control strip.
+  - Clarification:
+    - User may call fullscreen mode `На весь экран` or `Большой экран`; treat both as the same state.
+    - Do not delete the blocks; only hide them in fullscreen layout.
+  - Constraints:
+    - UI/layout only.
+    - Do not change rules, dice math, board routes, cards, bots, saves, phone controller protocol, balances, or history data collection.
+    - Hiding `История` / `Хроника` in fullscreen must not stop history/chronicle events from being recorded.
+  - Verification:
+    - Enter fullscreen: `Настройки`, `Хроника`, `История` blocks are hidden/collapsed.
+    - Exit fullscreen with `Esc`: blocks return.
+    - Game remains playable in fullscreen.
+    - `node --check src/game.js` if touched, `git diff --check`.
+
+- ACTIVE UI/RUNTIME - Fullscreen button in top game controls:
+  - User request 2026-06-05:
+    - Add a button `На весь экран` to the top game controls block with players/bots/dice/settings/new-game controls.
+    - User may later call this mode either `На весь экран` or `Большой экран`; treat both as the same fullscreen mode.
+  - Behavior contract:
+    - Clicking `На весь экран` should expand the game to browser fullscreen using the Fullscreen API.
+    - Pressing `Esc` should exit fullscreen via the browser's normal fullscreen behavior.
+    - If fullscreen is active, the UI should remain usable and the game should fill the available screen.
+    - If Fullscreen API is unavailable or request is denied, fail gracefully without breaking the game.
+    - Optional but preferred: reflect active state in the button text/title, e.g. `Выйти из экрана` or active styling, while still allowing `Esc` to exit.
+  - Placement:
+    - Put the button in the same top control block shown by the user, near `Настройки` / `Новая игра`.
+    - Reuse existing button styling so it visually belongs to that block.
+  - Constraints:
+    - UI/runtime only.
+    - Do not change game rules, board layout logic, dice math, cards, bots, routes, saves, phone controller protocol, or balances.
+    - Keep GitHub Pages-safe relative paths/cache-key behavior.
+  - Verification:
+    - Clicking `На весь экран` enters fullscreen.
+    - Pressing `Esc` exits fullscreen and UI state updates cleanly.
+    - Button remains accessible/clickable in normal and fullscreen mode.
+    - `node --check src/game.js` if touched, `git diff --check`.
+
+- ACTIVE FLOW FIX - Declining pre-roll extra die skips remaining Joe Shop prompts:
+  - User request 2026-06-04:
+    - If a player presses `Не платить` for the extra die before a roll at least once, the roll should start immediately.
+    - The player should not need to click through all available Joe Shop cards/prompts.
+  - Design contract:
+    - In the pre-roll extra-die flow, `Не платить` means "do not buy/use an extra die for this roll".
+    - Once declined, close the whole pre-roll extra-die opportunity window for that roll and proceed to the normal roll immediately.
+    - Do not continue asking about other eligible Joe Shop cards for the same pre-roll timing.
+    - `Заплатить` / accept should still apply the selected extra-die effect normally and then follow the existing intended roll flow.
+    - This should work from host UI, full phone controller, and phone `Большая кнопка`.
+  - Constraints:
+    - Do not change extra-die price, dice math, card inventory rules, random roll result, bots, routes, balances, or unrelated Joe Shop effects.
+    - This is a prompt-chain/UX fix only.
+  - Verification:
+    - With multiple eligible pre-roll extra-die Joe Shop cards, pressing `Не платить` once starts the roll immediately.
+    - No further pre-roll extra-die prompts appear for that same roll.
+    - Pressing `Заплатить` still works as before.
+    - Host UI, full controller, and Big Button action paths behave consistently.
+    - `node --check src/game.js`, `node --check src/controller.js` if touched, `git diff --check`.
+
+- ACTIVE UX/FLOW - Rest prompt UI + Big Button support + default phone mode:
+  - User request 2026-06-04:
+    - `Привал` choice UI on the host/big screen should be visually cleaner and text should fit neatly.
+    - `Привал` choices should also be selectable from phone controller mode `Большая кнопка`.
+    - Phone room mode should default to `Большая кнопка`.
+  - Rest (`Привал`) design contract:
+    - Host/big-screen prompt should present the three options cleanly:
+      - `Восстановиться` with reward `+15 монет` (or current implemented value if code still says another value; confirm against current design before changing rules).
+      - `Потренироваться` with reward `Сила +1 навсегда`.
+      - `Ускориться` with reward `Шаги +2 навсегда`.
+    - Avoid awkward word breaking like `Потр / енир / овать / ся` or `Уско / рить / ся`.
+    - Text should fit within cards/buttons on desktop and mobile host layout.
+    - Keep the Rest event applying only to the player who stepped on it.
+  - Big Button contract:
+    - When active player is choosing `Привал`, phone mode `Большая кнопка` should expose a usable choice instead of forcing all choice to host.
+    - Because `Привал` has three meaningful options, do not use left/right-only if that cannot represent all choices clearly.
+    - Acceptable MVP: show three large stacked/bottom-anchored action buttons in the Big Button lower action area, with short labels:
+      - `Восстановиться`
+      - `Потренироваться`
+      - `Ускориться`
+    - Each button must send the original rest action.
+    - Text must fit neatly on real phone sizes.
+  - Default phone mode:
+    - In the host `Телефоны` room block, default selected controller mode should be `Большая кнопка`.
+    - Full controller mode should remain available as an option.
+    - Existing rooms/mode selector behavior should stay opt-in behind `Играть с телефонами`; classic/no-phone game remains unchanged.
+  - Constraints:
+    - Do not change unrelated rules, dice math, cards, bots, routes, balances, server relay contract, or full-controller behavior except where needed to support default selection.
+    - Coordinate with active Art/UI Big Button bottom-zone task; avoid overwriting their styles.
+  - Verification:
+    - Host `Привал` prompt looks clean; no text overflow or ugly word splitting.
+    - Big Button phone can choose each Rest option and sends correct original action.
+    - Big Button remains default mode when creating a new phone room; full controller remains selectable.
+    - `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js` if touched, `git diff --check`.
+
+- ACTIVE UI FIX - Big Button bottom action zone and text fitting:
+  - User request 2026-06-04 with real-phone screenshot: in `Большая кнопка`, current left/right action buttons appear too high, leaving a huge empty area below.
+  - Design contract:
+    - In phone controller mode `Большая кнопка`, all main action buttons/zones should sit in the lower part of the screen for comfortable thumb tapping.
+    - User clarification 2026-06-04: buttons should be at the bottom of the screen/panel and stretched upward from the bottom to about the middle of the screen.
+    - User clarification 2026-06-05: the single primary Big Button (`Далее` / `Бросить`) also must be larger; its top edge should reach about the middle of the controller panel/screen while staying bottom-anchored.
+    - For a two-option split, each half should be tall: its bottom edge near the bottom action area and its top edge around the visual midpoint, rather than compact cards floating in the upper half.
+    - The top part should remain primarily player identity/status/stats.
+    - For split left/right choices, the two zones should be anchored near the bottom action area, not immediately under stats with empty space below.
+    - For primary actions and cancel/skip + choices, apply the same bottom-action principle.
+    - Text must be neatly fitted inside every button/zone at real phone widths/heights.
+    - No text should overflow outside button edges.
+    - Avoid single-letter/orphan wrapping; prefer shorter labels, responsive font sizing, line-height, max-width, and balanced wrapping.
+  - Screenshot example:
+    - Pre-roll choice shows `Заплатить` / `Не платить` zones too high, with large unused black space below.
+    - These should move down toward the lower touch area.
+  - Constraints:
+    - UI/layout only.
+    - Do not change controller action ids/payloads, phone protocol, server behavior, rules, prices, dice math, cards, bots, routes, or balances.
+    - Do not regress Joe Shop labels: shop zones must still show only `Левая карта` / `Правая карта`.
+  - Verification:
+    - Real/mobile viewport around 390x844 and 360x760: buttons are visually in the lower part of the controller panel/screen.
+    - `Заплатить`, `Не платить`, `Левая карта`, `Правая карта`, `Бросить`, `Далее`, cancel/skip labels fit within their button edges.
+    - No horizontal overflow and no clipped text.
+    - `node --check src/controller.js` if touched, `git diff --check`.
+
+- ACTIVE SMALL UX - Big Button Joe Shop labels:
+  - User correction 2026-06-04: in `Большая кнопка`, Joe Shop card choices must not show card text/effect descriptions.
+  - Show only simple zone labels: `Левая карта` and `Правая карта`.
+  - Scope:
+    - This is phone-controller display text only for `Большая кнопка` left/right zones.
+    - Keep the underlying Joe Shop action ids/payloads unchanged.
+    - Do not change full controller mode, host/big-screen shop UI, card reveal logic, prices, rules, bots, dice, or balances.
+    - Do not show card descriptions/effect text in the big left/right zones.
+    - Do not show supporting note text like `выбрать карту` if it makes the zones look like card text; the no-look labels should be clean.
+  - Verification:
+    - Joe Shop two-card choice in `Большая кнопка` shows left/right zones as `Левая карта` and `Правая карта`.
+    - Long card texts like `Перед броском кубиков...` and `Когда получаешь монеты...` are not visible on the phone.
+    - Tapping each zone still sends the correct original shop action.
+    - Non-shop binary choices still use their real labels.
+    - `node --check src/controller.js`, `git diff --check`.
+
+- Coordination rule for GD-originated tasks:
+  - If GD explicitly assigned or coordinated a task, send the completion/status handback to GD after finishing.
+  - This applies only to tasks GD assigned or coordinated; do not route every Dev update through GD by default.
+  - Handback should include:
+    - what was implemented or verified;
+    - files changed;
+    - checks/tests run;
+    - what still needs GD decision, if anything;
+    - whether the task is ready for player testing or needs another Dev/UI pass.
+  - Still append the normal project-memory update in `project-memory/updates.md`.
+
+- ACTIVE BATCH - Mobile controllers polish/fix pass from user list:
+  - GD split user task list on 2026-06-04 12:33.
+  - Overall goal:
+    - Improve `Большая кнопка` mode from "one primary button only" into a no-look/two-zone controller that can resolve common binary/card choices.
+    - Fix reported real-device issue: `Шейк не работает`.
+    - Polish Big Button UI readability/colors and host layout order.
+  - Dev 3 ownership:
+    - In `Большая кнопка`, add choice support through left/right screen zones:
+      - common binary prompts like `заплатить 5 монет за доп кубик` yes/no;
+      - Joe Shop purchase/choice where two selectable options can be mapped to left/right;
+      - any simple two-option prompt that already has safe action ids/labels.
+    - If a prompt has a cancel/skip/decline style action (`Отмена`, `Пропустить`, `Не покупать`, `Нет`, or similar), show it as an additional smaller button in the upper part of the big-button action area.
+    - Keep no-look ergonomics: left and right zones should be large enough to hit without precise aiming.
+    - For prompts with more than two meaningful non-cancel options, keep fallback `Выбор на большом экране`.
+    - Fix reported issue: `Шейк не работает`.
+      - Investigate on current implementation, especially real-device permission/HTTPS constraints, motion event arming, action detection, and LAN/http behavior.
+      - Keep normal button fallback.
+      - Preserve one shake gesture = max one roll.
+    - Do not change game rules/dice math/cards/bots/routes.
+  - Art/UI ownership:
+    - In `Большая кнопка`, use clearly different colors for dice roll vs other actions.
+      - Example direction: roll = energetic dice/magic color; continue/confirm = calmer action color; inactive/waiting = muted.
+    - Remove the text `Телефон игрока` in `Большая кнопка` mode.
+    - Audit and fix Big Button UI text overflow/wrapping, including reported issue where `Применить` splits with `ь` on a new line.
+      - No single-letter orphan wrapping in buttons.
+      - Prefer responsive font sizing, min-width, or short labels where needed.
+    - Swap the host page order of settings and TADAM cards: TADAM cards should trade places with settings as requested by user.
+      - Keep mobile layout sane and do not break existing phone-room/settings controls.
+      - Do not change TADAM rules or cards.
+  - Dev 2 ownership after Dev 3 + Art/UI handbacks:
+    - QA/regression pass over the combined changes.
+    - Verify full controller mode still works.
+    - Verify `Большая кнопка`:
+      - roll/continue;
+      - left/right two-option choice;
+      - cancel/skip upper button;
+      - fallback to host for 3+ meaningful options;
+      - no text overflow at 360-430px;
+      - wrong-player rejected.
+    - Verify `Шейк` on the best available setup; if real device cannot be tested, document exact limitation and manual test checklist.
+    - Verify host layout after swapping settings/TADAM.
+  - Coordination:
+    - Dev 3 and Art/UI should read latest `updates.md` before editing.
+    - Avoid overwriting each other's active local changes; if the same file is touched, reconcile carefully.
+    - After completion, each role should hand back to GD because this batch was assigned by GD.
+
+- ACTIVE FEATURE - Dev 2: phone room setting `Шейк` for shake-to-roll:
+  - Ownership update 2026-06-04 00:25 - GD:
+    - User noted Dev 3 is busy, so GD redirects this task to Dev 2.
+    - Dev 3 remains owner of room architecture / `Большая кнопка` unless otherwise coordinated.
+    - Dev 2 should check latest `updates.md` before editing and avoid conflicting with any in-progress Dev 3 changes.
+  - User wants an additional room setting available for both phone controller modes: `Шейк`.
+  - If `Шейк` is active, the active player can shake the phone to roll the dice.
+  - While the player is shaking, dice on the phone should visually spin/roll.
+  - When shaking stops, dice should quickly stop and the actual roll action should be sent/applied.
+  - Design contract:
+    - This is an input/juice layer only. It must not change dice math, random rules, bonuses, cards, or turn flow.
+    - Host remains authoritative for the actual roll result. The controller should request the same roll action the button would send; do not generate final dice results on the phone.
+    - The normal button remains available as fallback even when `Шейк` is enabled.
+  - Host room behavior:
+    - Add a `Шейк` setting in the `Телефоны` room block, near the room mode selector if present.
+    - Setting should apply to both `Полный контроллер` and `Большая кнопка`.
+    - Default should be off unless user explicitly enables it for the room.
+    - Recreating the room should use the current `Шейк` setting.
+    - Include the setting in snapshot/room state so controllers know whether to enable shake input.
+  - Controller behavior:
+    - Only enable shake-to-roll when:
+      - room has `Шейк` enabled;
+      - this controller is claimed as the active player;
+      - current available action is a safe primary roll action.
+    - Do not trigger shake actions during `Далее`, waiting/not-your-turn, closed room, or meaningful choice states unless Dev has a very safe reason. For MVP, focus shake on `Бросить` only.
+    - Detect shaking through motion sensors where available.
+    - On iOS/Safari, request motion permission from a user gesture if needed; show a compact button/message like `Разрешить шейк` if permission is required.
+    - If motion sensors are unavailable or permission is denied, show a calm fallback state and keep the normal roll button usable.
+    - Prevent accidental double rolls:
+      - one shake gesture should trigger at most one roll;
+      - add cooldown/debounce until the host state changes away from the roll action and back.
+  - Visual behavior:
+    - While shake is above threshold, show dice spinning/rolling on the phone.
+    - When motion falls below threshold for a short settle window, quickly stop the dice animation and send the roll action.
+    - In `Большая кнопка` mode, the huge button area can become the shake/roll stage, but should still be tappable.
+    - In full controller mode, add the shake visuals without breaking existing stats/actions/choices layout.
+  - Constraints:
+    - Do not change gameplay rules, dice math, cards, bots, routes, balances, room lifecycle, or server-as-relay architecture.
+    - Do not affect classic play when `Играть с телефонами` is off.
+    - Avoid dependencies.
+  - Verification:
+    - With `Шейк` off, both controller modes behave as before.
+    - With `Шейк` on in full mode, active player's shake triggers one roll; normal button still works.
+    - With `Шейк` on in `Большая кнопка` mode, shake triggers one roll and the huge button still works.
+    - Wrong-player / waiting controllers cannot trigger rolls by shaking.
+    - Shake does not trigger during 2+ option choice states; host-screen choices still work.
+    - Simulate/mimic motion events in browser tests if real device automation is unavailable.
+    - Real-phone retest should include at least one iPhone/Safari or Android/Chrome attempt if available.
+    - Confirm no layout overflow at 360-430px mobile widths.
+    - Run `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, and `git diff --check`.
+  - Hand completion/status back to GD because this task was assigned from a user request through GD.
+
+- ACTIVE FEATURE - Dev 3: phone room controller mode `Большая кнопка`:
+  - User wants a second phone-controller room mode chosen when creating/recreating a room.
+  - Existing mode remains as-is: phone shows full player dashboard and available choices/actions.
+  - New mode name: `Большая кнопка`.
+  - Design goal:
+    - Make the phone usable without looking at it during party play.
+    - The top part of the phone shows compact player stats.
+    - From roughly the middle of the phone screen to the bottom, show one huge primary action button.
+    - All meaningful choices happen on the big host screen, not on the phone.
+  - Host room behavior:
+    - Add a room-mode selector in the `Телефоны` room block before/at room creation.
+    - Suggested labels:
+      - `Полный контроллер` for current behavior.
+      - `Большая кнопка` for the new behavior.
+    - Default should be the current/full controller mode to preserve existing MVP behavior.
+    - Room mode should be included in host snapshots or room/controller state so controllers render consistently.
+    - Recreating the room should use the currently selected mode.
+  - Controller behavior in `Большая кнопка` mode:
+    - Show compact identity/stats at the top:
+      - player name/avatar;
+      - coins;
+      - dice count;
+      - strength;
+      - steps/speed bonus if available.
+    - The lower half of the screen is dominated by a huge touch target.
+    - Huge button sends only safe/current primary actions:
+      - `Бросить`;
+      - `Далее`;
+      - simple confirmation if the host prompt has exactly one safe continue/confirm action.
+    - If the current game state requires a meaningful choice with 2+ options, do not show those choices on the phone.
+      - Instead show disabled/waiting state like `Выбор на большом экране`.
+      - The host screen remains responsible for resolving the choice.
+    - Do not expose shop/auction/rest/market/card/portal option lists on the phone in this mode.
+    - Waiting/not-your-turn state should keep the giant area visually inactive and clearly say whose turn or `Ждите хода`.
+  - Controller behavior in existing full mode:
+    - Preserve current functionality and UI as much as possible.
+    - Full mode can still show choice buttons on the phone as it does now.
+  - Constraints:
+    - Do not change gameplay rules, dice math, cards, bots, routes, balances, or server-as-relay architecture.
+    - Do not make phone mode affect classic play when `Играть с телефонами` is off.
+    - Avoid dependencies.
+    - Keep the room lifecycle hardening compatible: one active room per host if that task is already implemented.
+  - Verification:
+    - Create room in default/full mode and confirm current controller behavior still works.
+    - Create/recreate room in `Большая кнопка` mode and confirm controller renders compact stats + huge action button.
+    - Confirm huge button can roll/continue for the active player.
+    - Confirm when a 2+ option choice appears, phone does not show the choices and instead instructs to choose on the big screen.
+    - Confirm host-screen choice still works while phone is in `Большая кнопка` mode.
+    - Confirm wrong-player actions remain rejected/ignored.
+    - Confirm desktop and 360-430px mobile controller layouts have no overflow.
+    - Run `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, and `git diff --check`.
+  - Hand completion/status back to GD because this task was assigned from a user request through GD.
+
+- ACTIVE HARDENING - Dev 3: one active phone room per host / close old room:
+  - User asked whether creating many phone rooms is a problem. GD decision: for MVP player testing, avoid room clutter by keeping one active phone room per host session.
+  - Goal:
+    - When the host recreates a phone room, the previous room for that host/session should be closed/invalidated so old links stop working.
+    - This reduces confusion for players and prevents stale rooms/controllers from lingering during repeated tests.
+  - Required behavior:
+    - Host should have only one active phone room at a time.
+    - Clicking `Пересоздать комнату` should close/invalidate the previous room before or while creating the new one.
+    - Controllers connected to the old room should receive a clear inactive/closed/lost-room state and should not keep usable action buttons.
+    - Old room links should stop accepting claims/actions after closure.
+    - The new room should work normally: LAN URL, copy button, player claims, snapshots/actions.
+  - Optional if low-risk:
+    - Add a small `Закрыть комнату` control for the host, but only if it fits the current Art/UI block and does not complicate MVP. If not, just implement close-on-recreate.
+    - Server cleanup can keep TTL as backup, but manual invalidation should handle the common repeated-room test case.
+  - Constraints:
+    - Do not change gameplay rules, dice math, cards, bots, routes, controller protocol shape unless a minimal `room-closed` event/status is needed.
+    - Phone mode remains opt-in/off by default; classic game should not change when `Играть с телефонами` is off.
+    - Avoid adding dependencies.
+  - Verification:
+    - Create room A, connect/open controller to room A.
+    - Click `Пересоздать комнату` and create room B.
+    - Confirm room A controller shows a closed/lost-room state and no usable action buttons.
+    - Confirm room A link cannot claim/send actions.
+    - Confirm room B works normally and its copy button copies the new LAN URL.
+    - Confirm `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, and `git diff --check` pass.
+  - Hand completion/status back to GD because this task was assigned from a user request through GD.
+
+- ACTIVE UI/FUNCTIONAL - Mobile phone room: copy join link button:
+  - User wants a dedicated button to copy the phone controller link from the `Телефоны` room block.
+  - Context:
+    - Art/UI is already assigned to polish the visual design of this block.
+    - This task is only the copy-link affordance and supporting behavior; coordinate visually with Art/UI's block polish if their changes are already present.
+  - Required behavior:
+    - Add a clear button next to or under the main phone join URL field.
+    - Suggested label: `Скопировать ссылку`; icon-only is acceptable only if it has an accessible label/title.
+    - The copied value must be the player-facing LAN join URL, not the secondary local/debug URL.
+    - After copy succeeds, show short feedback like `Скопировано` and then return to the normal label/state.
+    - If Clipboard API is unavailable, gracefully fall back to selecting the URL field so the user can copy manually.
+    - Keep the room code visible; do not remove the existing URL field.
+  - Constraints:
+    - Do not change gameplay rules, dice math, cards, bots, routes, controller protocol, or room server behavior.
+    - Phone mode remains opt-in/off by default; classic game should not change when `Играть с телефонами` is off.
+    - Avoid fighting Art/UI's visual polish; keep this as a small functional addition if UI work is in progress.
+  - Verification:
+    - Create a phone room from host opened at `localhost:5173` / `127.0.0.1:5173`.
+    - Confirm the copied text is the LAN controller URL, e.g. `http://192.168.x.x:5173/controller.html?room=...`.
+    - Paste it somewhere or inspect clipboard result if possible.
+    - Confirm fallback selection works if Clipboard API is unavailable/mocked.
+    - Confirm no layout overflow in the phone room block at desktop and mobile widths.
+    - Run `node --check src/game.js`, `node --check src/controller.js` if touched, `node --check server.js` if touched, and `git diff --check`.
+  - Hand completion/status back to GD because this task was assigned from a user request through GD.
+
+- ACTIVE URGENT - Dev 3: show phone-connectable LAN join URL, not localhost/127.0.0.1:
+  - User tested phone connection: direct LAN URL opens from phone, but the URLs shown in the game do not.
+  - Current bad examples shown by the game:
+    - `http://127.0.0.1:5173`
+    - `http://127.0.0.1:5173/controller.html?room=7RN6`
+  - Working LAN address in this session:
+    - `http://192.168.31.41:5173/`
+    - `http://192.168.31.41:5173/controller.html`
+  - Problem diagnosis:
+    - `127.0.0.1` / `localhost` only points to the device that opens it, so it works on the host computer but never on a phone.
+    - `server.js` already exposes `lanUrls`; host UI should prefer a phone-connectable LAN controller URL when available.
+  - Required behavior:
+    - When `Играть с телефонами` is enabled and a room is created, the displayed/copyable phone join URL must prefer `room.lanUrls[0]` or another valid non-local LAN URL.
+    - Do not show `127.0.0.1` or `localhost` as the primary phone join URL if a LAN URL exists.
+    - It is acceptable to additionally show the local host URL as a secondary/debug line, but the player-facing phone URL must be LAN.
+    - Preserve the opt-in constraint: with `Играть с телефонами` off, classic game behavior remains unchanged.
+  - Suggested implementation:
+    - In host phone-room rendering/state sync, choose `room.lanUrls?.[0] || room.joinUrl || fallback`.
+    - If multiple LAN URLs exist, prefer the private Wi-Fi-looking address if possible, e.g. `192.168.x.x`, `10.x.x.x`, `172.16-31.x.x`, and avoid unusual/tunnel-looking addresses when a normal LAN address is present.
+    - Optional nice UI: show a small note like `Откройте на телефоне в той же Wi-Fi сети`.
+  - Verification:
+    - Start server and create phone room from host opened at `localhost:5173` or `127.0.0.1:5173`.
+    - Confirm the game's displayed/copyable controller URL uses the LAN IP, not localhost/127.
+    - Confirm phone can open that displayed URL.
+    - Confirm `node --check src/game.js`, `node --check server.js`, `node --check src/controller.js`, and `git diff --check` pass.
+  - Hand completion/status back to GD because this task was assigned from a GD/user test finding.
+
+- ACTIVE PRIORITY - Mobile phone controllers MVP / Jackbox-style local room:
+  - User wants to start MVP where players can connect from mobile phones, see their own info/cards/bonuses, roll dice, and make choices.
+  - User correction / hard constraint:
+    - The current/classic game must keep working unchanged.
+    - Phone-controller changes must not affect the current version's normal host-screen play.
+    - If implementation needs to touch behavior that could affect normal play, add a Settings checkbox/toggle to choose classic play vs phone-controller mode.
+    - Suggested label: `Играть с телефонами`.
+    - Default must preserve the current classic behavior/off state.
+  - Recommended coordination:
+    - Dev 3 = implementation lead for the first vertical slice.
+    - Dev 2 = join after the protocol works to polish mobile controller UI.
+    - Dev = join after the vertical slice for QA/regression and expanding supported choice types.
+  - MVP target:
+    - Local network only for now, not public internet.
+    - Big screen remains the host board.
+    - Phones connect as controllers via a room code/join URL.
+    - Host browser remains authoritative for game rules/state in MVP; server acts as relay, not full rules engine.
+    - Preserve the current/classic game path: mobile controllers must be opt-in via a settings checkbox, off by default. If the checkbox is off, no phone room, snapshots, or phone actions should affect the game.
+  - Architecture preference:
+    - Avoid adding npm dependencies unless necessary.
+    - Prefer extending `server.js` with simple HTTP endpoints plus SSE/EventSource or polling+POST relay.
+    - If Dev chooses WebSockets, explain dependency/implementation choice in update notes.
+    - Server should bind in a phone-connectable way, e.g. `0.0.0.0`, and print localhost plus LAN join hints.
+  - Suggested files:
+    - `server.js` for room/message relay.
+    - New `controller.html` and maybe `src/controller.js` for phone UI.
+    - `index.html`, `src/game.js`, `styles.css` for host room UI and action bridge.
+  - Host room flow:
+    - Add a small host control in the game UI: `Телефоны` / `Создать комнату`.
+    - Create a short room code and show join URL. QR code is nice but optional for MVP; plain URL/code is acceptable first.
+    - Host can see connected controllers and assigned player slots.
+  - Controller flow:
+    - Phone opens join page, enters room code if not in URL, chooses/claims a player slot.
+    - Controller shows at minimum:
+      - player name/avatar;
+      - coins;
+      - dice count/bonus;
+      - strength and step/speed bonuses;
+      - Joe Shop cards;
+      - active turn / waiting state;
+      - available action buttons.
+  - Action bridge:
+    - Host sends controller snapshots containing player info and currently available actions for each player.
+    - Controller sends selected action messages back to host.
+    - Host validates that the action belongs to that player/current prompt before applying it.
+    - First MVP should support:
+      - main roll/action button (`Бросить` / `Далее`);
+      - action prompt confirmation;
+      - pre-roll extra die yes/no;
+      - generic choice panels where choices already have ids/labels;
+      - shop/card/auction/rest/market choices if they can be represented through the same generic choice contract.
+    - If a choice type is too hard for MVP, keep host-screen fallback and log it clearly.
+  - Game-rule constraints:
+    - Do not rewrite all rules into the server for MVP.
+    - Do not change game balance, cards, dice math, event rules, bot logic, or board route while adding controller support.
+    - Bots should continue to work.
+    - Human players should still be playable from the host screen if no phone is connected.
+  - Verification:
+    - `node --check src/game.js` and any new JS files.
+    - `git diff --check`.
+    - Start server and verify the host still loads at `localhost:5173`.
+    - Browser smoke with one host tab and at least two controller tabs:
+      - create room;
+      - join as two player slots;
+      - roll from controller;
+      - advance a `Далее` prompt from controller;
+      - make at least one simple choice from controller;
+      - confirm wrong-player actions are ignored/rejected.
+    - If possible, test with phone on same Wi-Fi; if not, document exact local URL to try.
+
+- ACTIVE NEXT - Mobile controllers QA/regression for Dev:
+  - Dev 3 has delivered the first opt-in vertical slice. Next Dev task is QA/regression and harder flow coverage.
+  - Preserve the hard constraint: with `Играть с телефонами` off, classic host-screen play must behave exactly as before.
+  - Focus:
+    - Re-run syntax checks: `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, `git diff --check`.
+    - Verify phone mode is off by default and does not create a room/send snapshots/accept phone actions.
+    - Verify normal no-phone play still works: roll, `Далее`, card reveal/apply, shop purchase/decline, exact move if relevant, bots.
+    - Verify phone mode with host + at least two controller tabs:
+      - room creation;
+      - join/claim player slots;
+      - wrong-player action rejected;
+      - disconnected/reloaded controller can rejoin or at least does not break the host.
+    - Expand harder choice coverage:
+      - long pre-roll extra-die chain with multiple cards;
+      - Joe Shop reveal/selection/decline;
+      - `Привал`;
+      - `Черный рынок`;
+      - `Аукцион Лавки Джо`, including all-pass, clear winner, tie/roll-off if feasible;
+      - portal/chaos portal choice if feasible.
+  - Only fix clear bugs discovered during QA. Do not redesign the protocol or controller UI; leave UI polish to Dev 2.
+  - After QA, document supported/fallback choice flows and add a concise update to `project-memory/updates.md`.
+
+- ACTIVE NEXT - Mobile controller UI polish for Dev 2:
+  - Dev 3 has delivered a working first controller slice. Dev 2 should polish the phone controller UI/UX without changing the protocol or game rules.
+  - Preserve the hard constraint: phone mode remains opt-in via `Играть с телефонами`, off by default; classic game flow must not be affected.
+  - Scope:
+    - Improve `controller.html` / `src/controller.js` / CSS presentation for mobile readability.
+    - Make the controller feel like a fantasy player dashboard, consistent with the dark tabletop UI.
+    - Prioritize clear player identity, turn state, action buttons, cards, bonuses, coins, dice, and waiting state.
+    - Make action buttons large and touch-friendly.
+    - Make disabled/waiting/wrong-player states obvious but not scary.
+    - Keep controller layout robust at mobile widths around 360-430px.
+    - Keep host board UI layout stable.
+  - Do not change action contracts, server message shapes, room logic, gameplay rules, dice math, cards, bot logic, or board routes.
+  - Verification:
+    - `node --check src/controller.js`; `node --check src/game.js` if touched.
+    - `git diff --check`.
+    - Browser screenshots of controller waiting state, active turn with roll/continue, and a choice state at mobile width.
+    - Confirm classic game with phone mode off still loads and plays normally.
+
 - Art/UI prompt for Dev: refine the dark tabletop UI with a fantasy roll/action button as the main focus:
   - Current diagnosis from browser review: the dark fantasy tabletop skin is working overall, but `#rollBtn` still reads too much like a bright modern web CTA. It is visible, but it does not fully belong to the dark board-game/fantasy table.
   - Goal: make the roll/action button bright, attractive, and clearly primary, while making it feel like a fantasy board-game artifact: a raised enchanted dice button, rune plaque, or small magical relic on the action strip.

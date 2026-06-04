@@ -1,4 +1,4 @@
-import { cardConfig } from "./cards.config.js?v=20260601-0281";
+import { cardConfig } from "./cards.config.js?v=20260603-0320";
 import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260531-0271";
 
 const boardEl = document.querySelector("#board");
@@ -15,6 +15,8 @@ const savedGamesStorageKey = "very-big-adventure.saved-games";
 const googleSheetsSaveUrl = "https://script.google.com/macros/s/AKfycbxNXmGjR9w3U0vmUd9xS5Rc2KHwR8Q7ViB5Pcl70qIOEhwIJp_M_1faO7RvpDtuPLqkdQ/exec";
 const defaultUiStyle = "classic";
 const uiStyleValues = new Set(["tabletop", "classic"]);
+const defaultPhoneRoomMode = "full";
+const phoneRoomModeValues = new Set([defaultPhoneRoomMode, "big-button"]);
 
 const ui = {
   activePlayerName: document.querySelector("#activePlayerName"),
@@ -24,6 +26,8 @@ const ui = {
   botSpeed: document.querySelector("#botSpeed"),
   boardSelect: document.querySelector("#boardSelect"),
   choicePanel: document.querySelector("#choicePanel"),
+  copyPhoneRoomUrlBtn: document.querySelector("#copyPhoneRoomUrlBtn"),
+  createPhoneRoomBtn: document.querySelector("#createPhoneRoomBtn"),
   diceCount: document.querySelector("#diceCount"),
   diceValue: document.querySelector("#diceValue"),
   eventToast: document.querySelector("#eventToast"),
@@ -31,10 +35,19 @@ const ui = {
   exactMoveBtn: document.querySelector("#exactMoveBtn"),
   finalBattleHud: document.querySelector("#finalBattleHud"),
   fieldEffect: document.querySelector("#fieldEffect"),
+  fullscreenBtn: document.querySelector("#fullscreenBtn"),
   logToggle: document.querySelector("#logToggle"),
   modifierPlayerStatus: document.querySelector("#modifierPlayerStatus"),
   passThroughMode: document.querySelector("#passThroughMode"),
   newGameBtn: document.querySelector("#newGameBtn"),
+  phoneRoomCode: document.querySelector("#phoneRoomCode"),
+  phoneRoomControllers: document.querySelector("#phoneRoomControllers"),
+  phoneRoomDetails: document.querySelector("#phoneRoomDetails"),
+  phoneRoomMode: document.querySelector("#phoneRoomMode"),
+  phoneRoomShake: document.querySelector("#phoneRoomShake"),
+  phoneRoomStatus: document.querySelector("#phoneRoomStatus"),
+  phoneRoomUrl: document.querySelector("#phoneRoomUrl"),
+  phoneRoomUrlHint: document.querySelector("#phoneRoomUrlHint"),
   playerCount: document.querySelector("#playerCount"),
   rollBtn: document.querySelector("#rollBtn"),
   roundTitle: document.querySelector("#roundTitle"),
@@ -44,6 +57,7 @@ const ui = {
   showWalkPath: document.querySelector("#showWalkPath"),
   turnActions: document.querySelector("#turnActions"),
   uiStyle: document.querySelector("#uiStyle"),
+  usePhoneControllers: document.querySelector("#usePhoneControllers"),
   winnerPopup: document.querySelector("#winnerPopup"),
 };
 
@@ -360,9 +374,25 @@ const historyFieldLabels = {
 };
 
 let state;
+const phoneRoom = {
+  code: null,
+  controllers: [],
+  eventSource: null,
+  hostId: null,
+  inFlight: false,
+  joinUrl: "",
+  lanUrls: [],
+  localJoinUrl: "",
+  lastSnapshotJson: "",
+  mode: defaultPhoneRoomMode,
+  shakeEnabled: false,
+  snapshotTimer: null,
+};
 let actionPromptResolver = null;
 let actionPromptButtonLabel = "Далее";
 let actionPromptAutoPlayerId = null;
+let actionPromptChoiceOptions = [];
+let actionPromptChoiceResolver = null;
 let botActionTimer = null;
 const botShopOfferChoices = new WeakMap();
 let eventToastFadeTimer = null;
@@ -370,6 +400,7 @@ let eventToastHideTimer = null;
 let logExpanded = false;
 let movementActionInProgress = false;
 let humanRollCooldownUntil = 0;
+let phoneRoomCopyTimer = null;
 
 function applyBoardConfig(boardId) {
   const config = boardConfigs[boardId] || boardConfigs.field2;
@@ -395,6 +426,19 @@ function selectedUiStyle() {
   return uiStyleValues.has(value) ? value : defaultUiStyle;
 }
 
+function selectedPhoneRoomMode() {
+  const value = ui.phoneRoomMode?.value || phoneRoom.mode || defaultPhoneRoomMode;
+  return normalizePhoneRoomMode(value);
+}
+
+function normalizePhoneRoomMode(value) {
+  return phoneRoomModeValues.has(value) ? value : defaultPhoneRoomMode;
+}
+
+function phoneRoomShakeEnabled() {
+  return Boolean(ui.phoneRoomShake?.checked);
+}
+
 function applyUiStyle() {
   if (document.body) document.body.dataset.uiStyle = selectedUiStyle();
   syncSettingsToggleLabel();
@@ -407,12 +451,62 @@ function syncSettingsToggleLabel() {
   ui.settingsToggle.setAttribute("aria-label", "Настройки");
 }
 
+function fullscreenElement() {
+  return document.fullscreenElement || document.webkitFullscreenElement || null;
+}
+
+function fullscreenTarget() {
+  return appShellEl || document.documentElement;
+}
+
+function fullscreenSupported() {
+  const target = fullscreenTarget();
+  return Boolean(target?.requestFullscreen || target?.webkitRequestFullscreen);
+}
+
+function syncFullscreenButton() {
+  const active = Boolean(fullscreenElement());
+  document.body?.classList.toggle("is-game-fullscreen", active);
+  if (!ui.fullscreenBtn) return;
+  ui.fullscreenBtn.disabled = !fullscreenSupported();
+  ui.fullscreenBtn.title = active ? "Выйти из полноэкранного режима" : "Открыть игру на весь экран";
+  ui.fullscreenBtn.setAttribute("aria-label", active ? "Выйти из полноэкранного режима" : "На весь экран");
+  ui.fullscreenBtn.classList.toggle("active", active);
+  ui.fullscreenBtn.setAttribute("aria-pressed", String(active));
+}
+
+async function toggleFullscreen() {
+  if (!fullscreenSupported()) {
+    log("Браузер не поддерживает полноэкранный режим.", { toast: true });
+    syncFullscreenButton();
+    return;
+  }
+
+  try {
+    if (fullscreenElement()) {
+      const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
+      await exitFullscreen?.call(document);
+    } else {
+      const target = fullscreenTarget();
+      const requestFullscreen = target.requestFullscreen || target.webkitRequestFullscreen;
+      await requestFullscreen.call(target);
+    }
+  } catch {
+    log("Не удалось включить полноэкранный режим.", { toast: true });
+  } finally {
+    syncFullscreenButton();
+  }
+}
+
 function newGame() {
   applyUiStyle();
+  syncFullscreenButton();
   syncBotCountOptions();
   actionPromptResolver = null;
   actionPromptButtonLabel = "Далее";
   actionPromptAutoPlayerId = null;
+  actionPromptChoiceOptions = [];
+  actionPromptChoiceResolver = null;
   window.clearTimeout(botActionTimer);
   botActionTimer = null;
   movementActionInProgress = false;
@@ -1527,6 +1621,8 @@ function render() {
   renderHistory();
   renderWinnerPopup();
   renderTadams();
+  renderPhoneRoomPanel();
+  schedulePhoneSnapshot();
   scheduleBotAction();
 }
 
@@ -1774,6 +1870,457 @@ function renderScores() {
     `;
     scoreStripEl.append(card);
   }
+}
+
+function phoneControllersEnabled() {
+  return Boolean(ui.usePhoneControllers?.checked);
+}
+
+function phonePlayerSnapshot(player) {
+  return {
+    battleBonus: playerBattleBonus(player),
+    bot: Boolean(player.bot),
+    coins: player.coins,
+    color: player.color,
+    diceBonus: playerDiceBonus(player),
+    id: player.id,
+    isActive: player.id === currentPlayer()?.id && !state.finished,
+    items: groupedShopItems(player.items).map(({ count, item }) => ({
+      count,
+      id: item.id,
+      shortTitle: item.shortTitle || item.title,
+      title: item.title,
+    })),
+    name: player.name,
+    nextMonsterBattleBonus: nextMonsterBattleBonus(player),
+    position: player.position,
+    positionLabel: cellLabel(player.position),
+    stepBonus: playerStepBonus(player),
+    tileTitle: tileTitle(player.position),
+    token: player.token,
+    totalDice: totalDiceForPlayer(player),
+  };
+}
+
+function phoneGameSnapshot() {
+  if (!state?.players?.length) return null;
+  return {
+    activePlayerId: currentPlayer()?.id ?? null,
+    availableActions: Object.fromEntries(state.players.map((player) => [player.id, phoneActionsForPlayer(player)])),
+    board: activeBoardConfig?.id || null,
+    controllerMode: phoneRoom.mode,
+    finished: Boolean(state.finished),
+    players: state.players.map(phonePlayerSnapshot),
+    round: state.round,
+    shakeEnabled: phoneRoom.shakeEnabled,
+    turnLabel: actionPromptResolver ? actionPromptButtonLabel : ui.rollBtn?.textContent?.trim() || "Бросить",
+    updatedAt: Date.now(),
+  };
+}
+
+function phoneActionsForPlayer(player) {
+  if (!player || isBot(player) || state.finished) return [];
+  if (state.pendingPreRoll?.playerId === player.id) {
+    return [
+      {
+        id: "yes",
+        kind: "preroll",
+        label: "Заплатить",
+        note: state.pendingPreRoll.card?.shortTitle || state.pendingPreRoll.card?.title || "+1 кубик",
+      },
+      {
+        id: "no",
+        kind: "preroll",
+        label: "Не платить",
+        note: "оставить бросок как есть",
+      },
+    ];
+  }
+
+  if (state.pendingShop?.playerId === player.id) {
+    return [
+      ...state.pendingShop.offer.map((card) => ({
+        id: card.id,
+        kind: "shop",
+        label: cardDisplayText(card),
+        note: "5 монет",
+      })),
+      {
+        id: "decline",
+        kind: "shop",
+        label: "Отказаться",
+        note: "0 монет",
+      },
+    ];
+  }
+
+  if (state.pendingCardChoice?.playerId === player.id && !state.pendingCardChoice.previewField) {
+    return state.pendingCardChoice.choices.map((choice) => ({
+      contextKicker: plainText(state.pendingCardChoice.kicker || ""),
+      contextSummary: plainText(state.pendingCardChoice.summary || ""),
+      contextTitle: plainText(state.pendingCardChoice.title || ""),
+      displayKind: phoneCardChoiceDisplayKind(state.pendingCardChoice, choice),
+      id: choice.id,
+      kind: "card-choice",
+      label: plainText(choice.label),
+      note: plainText(choice.note || ""),
+      noteClass: choice.noteClass || "",
+      ownerColor: choice.ownerColor || "",
+      ownerName: choice.ownerName || "",
+      ownerToken: choice.ownerToken || "",
+      price: choice.price ?? null,
+    }));
+  }
+
+  if (state.pendingChoice?.playerId === player.id && !state.pendingChoice.previewField) {
+    return state.pendingChoice.choices.map((choice) => ({
+      id: choice.cell,
+      kind: "board-choice",
+      label: plainText(choice.label),
+      note: plainText(choice.note || `клетка ${cellLabel(choice.cell)}`),
+    }));
+  }
+
+  if (actionPromptChoiceOptions.length > 0 && actionPromptAutoPlayerId === player.id) {
+    return actionPromptChoiceOptions.map((choice) => ({
+      displayKind: choice.displayKind || "",
+      id: choice.id,
+      kind: "prompt-choice",
+      label: plainText(choice.label),
+      note: plainText(choice.note || ""),
+    }));
+  }
+
+  if (actionPromptResolver && (actionPromptAutoPlayerId === player.id || (actionPromptAutoPlayerId === null && player.id === currentPlayer()?.id))) {
+    return [
+      {
+        id: "continue",
+        kind: "roll",
+        label: actionPromptButtonLabel,
+        note: "подтвердить на большом экране",
+      },
+    ];
+  }
+
+  if (player.id === currentPlayer()?.id && !ui.rollBtn?.disabled) {
+    return [
+      {
+        id: "roll",
+        kind: "roll",
+        label: ui.rollBtn?.textContent?.trim() || "Бросить",
+        note: "основное действие",
+      },
+    ];
+  }
+
+  return [];
+}
+
+function phoneCardChoiceDisplayKind(pending, choice) {
+  if (choice?.displayKind) return choice.displayKind;
+  if (pending?.displayKind) return pending.displayKind;
+  if (String(choice?.id || "") === "decline") return "";
+  const kind = String(pending?.kind || "");
+  const buttonsClass = String(pending?.buttonsClass || "");
+  const title = plainText(pending?.title || "");
+  if (choice?.noteClass === "choice-player-note" && title.includes("Лавка Джо")) {
+    return "shop-card-owner";
+  }
+  if (
+    kind === "joe-auction-prize" ||
+    buttonsClass.includes("auction-prize-buttons") ||
+    buttonsClass.includes("shop-buttons") ||
+    title.includes("Лавка Джо")
+  ) {
+    return "shop-card";
+  }
+  return "";
+}
+
+function plainText(html) {
+  const container = document.createElement("span");
+  container.innerHTML = String(html || "");
+  return container.textContent.trim();
+}
+
+function renderPhoneRoomPanel() {
+  const panel = document.querySelector(".phone-room-panel");
+  if (!panel) return;
+
+  const enabled = phoneControllersEnabled();
+  panel.hidden = !enabled;
+  if (!enabled) {
+    if (ui.phoneRoomStatus) ui.phoneRoomStatus.textContent = "Телефонный режим выключен";
+    return;
+  }
+
+  if (ui.createPhoneRoomBtn) {
+    ui.createPhoneRoomBtn.disabled = phoneRoom.inFlight;
+    ui.createPhoneRoomBtn.textContent = phoneRoom.code ? "Пересоздать комнату" : "Создать комнату";
+  }
+  if (ui.phoneRoomMode && !phoneRoom.code) ui.phoneRoomMode.value = selectedPhoneRoomMode();
+
+  if (!phoneRoom.code) {
+    if (ui.phoneRoomStatus) ui.phoneRoomStatus.textContent = "Комната не создана";
+    if (ui.phoneRoomDetails) ui.phoneRoomDetails.hidden = true;
+    return;
+  }
+
+  const modeLabel = phoneRoom.mode === "big-button" ? "Большая кнопка" : "Полный контроллер";
+  const shakeLabel = phoneRoom.shakeEnabled ? ", шейк" : "";
+  if (ui.phoneRoomStatus) {
+    ui.phoneRoomStatus.textContent = `Комната ${phoneRoom.code}: телефонов ${phoneRoom.controllers.length}, ${modeLabel}${shakeLabel}`;
+  }
+  if (ui.phoneRoomDetails) ui.phoneRoomDetails.hidden = false;
+  if (ui.phoneRoomCode) ui.phoneRoomCode.textContent = phoneRoom.code;
+  const fallbackJoinUrl = `${window.location.origin}/controller.html?room=${phoneRoom.code}`;
+  const phoneJoinUrl = phoneRoom.joinUrl || fallbackJoinUrl;
+  if (ui.phoneRoomUrl) ui.phoneRoomUrl.value = phoneJoinUrl;
+  if (ui.copyPhoneRoomUrlBtn) ui.copyPhoneRoomUrlBtn.disabled = !phoneJoinUrl;
+  if (ui.phoneRoomUrlHint) {
+    const localUrl = phoneRoom.localJoinUrl || fallbackJoinUrl;
+    const showLocalDebug = isLocalJoinUrl(localUrl) && localUrl !== phoneJoinUrl;
+    ui.phoneRoomUrlHint.innerHTML = showLocalDebug
+      ? `Откройте на телефоне в той же Wi-Fi сети. Локально: <code>${escapeHtml(localUrl)}</code>`
+      : "Откройте на телефоне в той же Wi-Fi сети.";
+  }
+  if (ui.phoneRoomControllers) {
+    const controllerNames = phoneRoom.controllers
+      .map((controller) => controller.playerName || `Игрок ${controller.playerId + 1}`)
+      .join(", ");
+    ui.phoneRoomControllers.textContent = controllerNames ? `Подключены: ${controllerNames}` : "Телефоны пока не подключены";
+  }
+}
+
+async function createPhoneRoom() {
+  if (!phoneControllersEnabled()) {
+    if (ui.usePhoneControllers) ui.usePhoneControllers.checked = true;
+  }
+  phoneRoom.inFlight = true;
+  renderPhoneRoomPanel();
+  try {
+    await closeCurrentPhoneRoom({ silent: true });
+    const response = await fetchJson("/api/rooms", {
+      body: JSON.stringify({
+        mode: selectedPhoneRoomMode(),
+        shakeEnabled: phoneRoomShakeEnabled(),
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+    if (!response.ok) throw new Error(response.error || "room-create-failed");
+    applyPhoneRoom(response.room, response.hostId);
+    connectPhoneHostEvents();
+    publishPhoneSnapshot({ force: true });
+    log(`Создана комната для телефонов: <strong>${phoneRoom.code}</strong>.`, { toast: true });
+  } catch {
+    if (ui.phoneRoomStatus) ui.phoneRoomStatus.textContent = "Не удалось создать комнату. Проверь сервер.";
+  } finally {
+    phoneRoom.inFlight = false;
+    renderPhoneRoomPanel();
+  }
+}
+
+async function closeCurrentPhoneRoom({ silent = false } = {}) {
+  if (!phoneRoom.code || !phoneRoom.hostId) return;
+  const code = phoneRoom.code;
+  const hostId = phoneRoom.hostId;
+  stopPhoneRoomEvents();
+  resetPhoneRoomState();
+  if (!silent) renderPhoneRoomPanel();
+  await fetchJson(`/api/rooms/${encodeURIComponent(code)}/close`, {
+    body: JSON.stringify({ hostId }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+}
+
+function resetPhoneRoomState() {
+  phoneRoom.code = null;
+  phoneRoom.controllers = [];
+  phoneRoom.hostId = null;
+  phoneRoom.inFlight = false;
+  phoneRoom.joinUrl = "";
+  phoneRoom.lanUrls = [];
+  phoneRoom.localJoinUrl = "";
+  phoneRoom.lastSnapshotJson = "";
+  phoneRoom.mode = selectedPhoneRoomMode();
+  phoneRoom.shakeEnabled = phoneRoomShakeEnabled();
+  if (ui.phoneRoomUrl) ui.phoneRoomUrl.value = "";
+  if (ui.phoneRoomCode) ui.phoneRoomCode.textContent = "-";
+  if (ui.phoneRoomUrlHint) ui.phoneRoomUrlHint.textContent = "";
+  if (ui.copyPhoneRoomUrlBtn) {
+    ui.copyPhoneRoomUrlBtn.disabled = true;
+    ui.copyPhoneRoomUrlBtn.textContent = "Скопировать ссылку";
+  }
+}
+
+function applyPhoneRoom(room, hostId = null) {
+  if (!room) return;
+  phoneRoom.code = room.code;
+  phoneRoom.controllers = room.controllers || [];
+  phoneRoom.hostId = hostId || phoneRoom.hostId;
+  phoneRoom.lanUrls = Array.isArray(room.lanUrls) ? room.lanUrls : [];
+  phoneRoom.localJoinUrl = room.joinUrl || `${window.location.origin}/controller.html?room=${room.code}`;
+  phoneRoom.joinUrl = pickBestPhoneJoinUrl(phoneRoom.lanUrls, phoneRoom.localJoinUrl, room.code);
+  phoneRoom.mode = normalizePhoneRoomMode(room.mode);
+  phoneRoom.shakeEnabled = Boolean(room.shakeEnabled);
+}
+
+function pickBestPhoneJoinUrl(lanUrls = [], localJoinUrl = "", code = "") {
+  const candidates = [...new Set(lanUrls.filter(Boolean))];
+  const privateLan = candidates.find(isPrivateLanJoinUrl);
+  if (privateLan) return privateLan;
+
+  const nonLocalLan = candidates.find((url) => !isLocalJoinUrl(url));
+  if (nonLocalLan) return nonLocalLan;
+
+  return localJoinUrl || `${window.location.origin}/controller.html?room=${code}`;
+}
+
+function isPrivateLanJoinUrl(url) {
+  try {
+    const host = new URL(url, window.location.origin).hostname;
+    return (
+      /^192\.168\.\d{1,3}\.\d{1,3}$/.test(host) ||
+      /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host) ||
+      /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isLocalJoinUrl(url) {
+  try {
+    const host = new URL(url, window.location.origin).hostname;
+    return host === "localhost" || host === "127.0.0.1" || host === "::1";
+  } catch {
+    return false;
+  }
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function connectPhoneHostEvents() {
+  if (!phoneRoom.code) return;
+  phoneRoom.eventSource?.close();
+  phoneRoom.eventSource = new EventSource(`/api/rooms/${encodeURIComponent(phoneRoom.code)}/events?role=host`);
+  phoneRoom.eventSource.addEventListener("room", (event) => {
+    applyPhoneRoom(parseSseData(event));
+    renderPhoneRoomPanel();
+  });
+  phoneRoom.eventSource.addEventListener("controller-action", (event) => {
+    if (!phoneControllersEnabled()) return;
+    handlePhoneControllerAction(parseSseData(event));
+  });
+  phoneRoom.eventSource.onerror = () => {
+    if (ui.phoneRoomStatus && phoneControllersEnabled()) ui.phoneRoomStatus.textContent = "Связь с телефонной комнатой потерялась";
+  };
+}
+
+function parseSseData(event) {
+  try {
+    return JSON.parse(event.data || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function schedulePhoneSnapshot() {
+  if (!phoneControllersEnabled() || !phoneRoom.code || !phoneRoom.hostId) return;
+  window.clearTimeout(phoneRoom.snapshotTimer);
+  phoneRoom.snapshotTimer = window.setTimeout(() => publishPhoneSnapshot(), 80);
+}
+
+async function publishPhoneSnapshot({ force = false } = {}) {
+  if (!phoneControllersEnabled() || !phoneRoom.code || !phoneRoom.hostId) return;
+  const snapshot = phoneGameSnapshot();
+  if (!snapshot) return;
+  const json = JSON.stringify(snapshot);
+  if (!force && json === phoneRoom.lastSnapshotJson) return;
+  phoneRoom.lastSnapshotJson = json;
+  await fetchJson(`/api/rooms/${encodeURIComponent(phoneRoom.code)}/snapshot`, {
+    body: JSON.stringify({ hostId: phoneRoom.hostId, snapshot }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+}
+
+async function fetchJson(url, options = {}) {
+  const response = await fetch(url, options);
+  const data = await response.json().catch(() => ({}));
+  return { ...data, ok: response.ok };
+}
+
+function handlePhoneControllerAction(message) {
+  const player = state.players.find((item) => item.id === Number(message.playerId));
+  const action = message.action || {};
+  if (!player) return;
+
+  const allowed = phoneActionsForPlayer(player).find((item) => String(item.kind) === String(action.kind) && String(item.id) === String(action.id));
+  if (!allowed) {
+    log(`Телефон ${playerName(player)} отправил недоступное действие. Оно отклонено.`);
+    publishPhoneSnapshot({ force: true });
+    return;
+  }
+
+  if (action.kind === "roll") {
+    triggerRollButtonAction();
+  } else if (action.kind === "preroll") {
+    resolvePreRollChoice(action.id === "yes");
+  } else if (action.kind === "shop") {
+    resolveShopChoice(action.id === "decline" ? null : action.id);
+  } else if (action.kind === "card-choice") {
+    resolveCardChoice(action.id);
+  } else if (action.kind === "board-choice") {
+    resolveChoice(action.id);
+  } else if (action.kind === "prompt-choice") {
+    actionPromptChoiceResolver?.(action.id);
+  }
+}
+
+function stopPhoneRoomEvents() {
+  phoneRoom.eventSource?.close();
+  phoneRoom.eventSource = null;
+  window.clearTimeout(phoneRoom.snapshotTimer);
+}
+
+async function copyPhoneRoomUrl() {
+  const url = ui.phoneRoomUrl?.value || phoneRoom.joinUrl || "";
+  if (!url) return;
+
+  try {
+    if (!navigator.clipboard?.writeText) throw new Error("clipboard-unavailable");
+    await navigator.clipboard.writeText(url);
+    setPhoneRoomCopyFeedback("Скопировано");
+  } catch {
+    selectPhoneRoomUrl();
+    setPhoneRoomCopyFeedback("Выделено");
+  }
+}
+
+function selectPhoneRoomUrl() {
+  if (!ui.phoneRoomUrl) return;
+  ui.phoneRoomUrl.focus();
+  ui.phoneRoomUrl.select();
+  ui.phoneRoomUrl.setSelectionRange?.(0, ui.phoneRoomUrl.value.length);
+}
+
+function setPhoneRoomCopyFeedback(label) {
+  if (!ui.copyPhoneRoomUrlBtn) return;
+  window.clearTimeout(phoneRoomCopyTimer);
+  ui.copyPhoneRoomUrlBtn.textContent = label;
+  phoneRoomCopyTimer = window.setTimeout(() => {
+    if (ui.copyPhoneRoomUrlBtn) ui.copyPhoneRoomUrlBtn.textContent = "Скопировать ссылку";
+  }, 1300);
 }
 
 function renderHistory() {
@@ -3589,6 +4136,20 @@ function chooseShopCardFromFace(offer, player = null) {
   void ui.eventToast.offsetWidth;
   ui.eventToast.classList.add("visible");
   actionPromptButtonLabel = "Далее";
+  actionPromptAutoPlayerId = player?.id ?? null;
+  actionPromptChoiceOptions = [
+    ...offer.map((card) => ({
+      displayKind: "shop-card",
+      id: card.id,
+      label: cardDisplayText(card),
+      note: "выбрать карту",
+    })),
+    {
+      id: "decline",
+      label: "Далее",
+      note: "не выбирать сейчас",
+    },
+  ];
 
   return new Promise((resolve) => {
     let completed = false;
@@ -3601,6 +4162,8 @@ function chooseShopCardFromFace(offer, player = null) {
         actionPromptResolver = null;
         actionPromptButtonLabel = "Далее";
         actionPromptAutoPlayerId = null;
+        actionPromptChoiceOptions = [];
+        actionPromptChoiceResolver = null;
         hideEventToast({ quick: true });
         render();
         resolve(card);
@@ -3608,6 +4171,7 @@ function chooseShopCardFromFace(offer, player = null) {
     };
 
     actionPromptResolver = () => finish(null);
+    actionPromptChoiceResolver = (cardId) => finish(cardId === "decline" ? null : cardId);
     ui.eventToast.querySelectorAll("[data-shop-card-id]").forEach((button) => {
       button.addEventListener("click", () => finish(button.dataset.shopCardId, { selectedButton: button }));
     });
@@ -3637,6 +4201,20 @@ function chooseRevealedShopCard(offer, player = null) {
   void ui.eventToast.offsetWidth;
   ui.eventToast.classList.add("visible");
   actionPromptButtonLabel = "Отказаться";
+  actionPromptAutoPlayerId = player?.id ?? null;
+  actionPromptChoiceOptions = [
+    ...offer.map((card) => ({
+      displayKind: "shop-card",
+      id: card.id,
+      label: cardDisplayText(card),
+      note: "купить карту",
+    })),
+    {
+      id: "decline",
+      label: "Отказаться",
+      note: "не покупать",
+    },
+  ];
 
   return new Promise((resolve) => {
     let completed = false;
@@ -3649,6 +4227,8 @@ function chooseRevealedShopCard(offer, player = null) {
         actionPromptResolver = null;
         actionPromptButtonLabel = "Далее";
         actionPromptAutoPlayerId = null;
+        actionPromptChoiceOptions = [];
+        actionPromptChoiceResolver = null;
         hideEventToast({ quick: true });
         render();
         resolve(card);
@@ -3656,6 +4236,7 @@ function chooseRevealedShopCard(offer, player = null) {
     };
 
     actionPromptResolver = () => finish(null);
+    actionPromptChoiceResolver = (cardId) => finish(cardId === "decline" ? null : cardId);
     ui.eventToast.querySelectorAll("[data-shop-card-id]").forEach((button) => {
       button.addEventListener("click", () => finish(button.dataset.shopCardId, { selectedButton: button }));
     });
@@ -3817,10 +4398,15 @@ async function resolveBuyShopCardFromPlayer(player, cost) {
     .filter((target) => target.id !== player.id && target.items.length > 0)
     .flatMap((target) =>
       target.items.map((card) => ({
+        displayKind: "shop-card-owner",
         id: `${target.id}:${card.id}`,
         label: cardDisplayText(card),
         note: playerChoiceBadge(target),
         noteClass: "choice-player-note",
+        ownerColor: target.color,
+        ownerName: target.name,
+        ownerToken: target.token,
+        price: cost,
       })),
     );
 
@@ -4846,7 +5432,7 @@ async function chooseExtraDie(player, animate) {
     if (player.coins < effect.cost) continue;
 
     const useExtraDie = await chooseSingleExtraDie(player, card, index, cards.length);
-    if (!useExtraDie) continue;
+    if (!useExtraDie) break;
 
     addCoins(player, -effect.cost);
     totalDice += effect.dice;
@@ -5044,12 +5630,16 @@ function showActionPrompt(message, { buttonLabel = "Далее", autoFor = null 
   syncRollEventPromptViewport();
   actionPromptButtonLabel = buttonLabel;
   actionPromptAutoPlayerId = autoFor?.id ?? null;
+  actionPromptChoiceOptions = [];
+  actionPromptChoiceResolver = null;
 
   return new Promise((resolve) => {
     actionPromptResolver = () => {
       actionPromptResolver = null;
       actionPromptButtonLabel = "Далее";
       actionPromptAutoPlayerId = null;
+      actionPromptChoiceOptions = [];
+      actionPromptChoiceResolver = null;
       hideEventToast({ quick: true });
       render();
       resolve();
@@ -5349,12 +5939,30 @@ ui.settingsToggle?.addEventListener("click", () => {
   ui.settingsPanel.hidden = nextHidden;
   ui.settingsToggle.setAttribute("aria-expanded", String(!nextHidden));
 });
+ui.fullscreenBtn?.addEventListener("click", () => {
+  void toggleFullscreen();
+});
+document.addEventListener("fullscreenchange", syncFullscreenButton);
+document.addEventListener("webkitfullscreenchange", syncFullscreenButton);
 ui.logToggle?.addEventListener("click", () => {
   logExpanded = !logExpanded;
   updateLogLimit();
 });
 ui.saveHistoryBtn?.addEventListener("click", () => {
   void saveCurrentGameHistory();
+});
+ui.usePhoneControllers?.addEventListener("change", () => {
+  if (!phoneControllersEnabled()) {
+    void closeCurrentPhoneRoom({ silent: true });
+  }
+  renderPhoneRoomPanel();
+  schedulePhoneSnapshot();
+});
+ui.createPhoneRoomBtn?.addEventListener("click", () => {
+  void createPhoneRoom();
+});
+ui.copyPhoneRoomUrlBtn?.addEventListener("click", () => {
+  void copyPhoneRoomUrl();
 });
 ui.rollBtn.addEventListener("click", () => {
   triggerRollButtonAction();

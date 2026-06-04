@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Очень Большая Бродилка — веб-прототип</title>
-    <link rel="stylesheet" href="./styles.css?v=20260602-0318" />
+    <link rel="stylesheet" href="./styles.css?v=20260605-0362" />
   </head>
   <body data-ui-style="classic">
     <main class="app-shell">
@@ -60,6 +60,9 @@
                 </select>
               </label>
               <button id="settingsToggle" class="secondary settings-toggle" type="button" aria-expanded="false">Настройки</button>
+              <button id="fullscreenBtn" class="secondary fullscreen-toggle" type="button" title="Открыть игру на весь экран" aria-label="На весь экран">
+                <img class="fullscreen-icon" src="./assets/icons/fullscreen_button.svg?v=20260605-0358" alt="" aria-hidden="true">
+              </button>
               <button id="newGameBtn" class="secondary">Новая игра</button>
             </div>
             <div id="settingsPanel" class="settings-panel" hidden>
@@ -118,6 +121,41 @@
                 <input id="showWalkPath" type="checkbox" />
                 <span>Показывать контур хода</span>
               </label>
+              <label class="cheat-toggle phone-mode-toggle">
+                <input id="usePhoneControllers" type="checkbox" />
+                <span>Играть с телефонами</span>
+              </label>
+              <section class="phone-room-panel" aria-label="Мобильные контроллеры" hidden>
+                <div class="phone-room-header">
+                  <strong>Телефоны</strong>
+                  <button id="createPhoneRoomBtn" class="secondary" type="button">Создать комнату</button>
+                </div>
+                <div id="phoneRoomStatus" class="phone-room-status">Комната не создана</div>
+                <label class="phone-room-mode">
+                  <span>Режим</span>
+                  <select id="phoneRoomMode">
+                    <option value="big-button" selected>Большая кнопка</option>
+                    <option value="full">Полный контроллер</option>
+                  </select>
+                </label>
+                <label class="cheat-toggle phone-shake-toggle">
+                  <input id="phoneRoomShake" type="checkbox" />
+                  <span>Шейк</span>
+                </label>
+                <div id="phoneRoomDetails" class="phone-room-details" hidden>
+                  <div>
+                    <span>Код</span>
+                    <b id="phoneRoomCode">-</b>
+                  </div>
+                  <label>
+                    <span>Ссылка</span>
+                    <input id="phoneRoomUrl" type="text" readonly value="" />
+                  </label>
+                  <button id="copyPhoneRoomUrlBtn" class="secondary phone-room-copy" type="button">Скопировать ссылку</button>
+                  <div id="phoneRoomUrlHint" class="phone-room-url-hint"></div>
+                  <div id="phoneRoomControllers" class="phone-room-controllers"></div>
+                </div>
+              </section>
             </div>
           </section>
           <section class="tadam-card">
@@ -149,6 +187,6 @@
 
     </main>
 
-    <script type="module" src="./src/game.js?v=20260602-0318"></script>
+    <script type="module" src="./src/game.js?v=20260605-0358"></script>
   </body>
 </html>

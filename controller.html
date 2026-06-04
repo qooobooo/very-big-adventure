@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Контроллер — Очень Большая Бродилка</title>
+    <link rel="stylesheet" href="./styles.css?v=20260605-0362" />
+  </head>
+  <body class="controller-body">
+    <main class="controller-shell">
+      <header class="controller-top">
+        <span class="controller-eyebrow">Очень Большая Бродилка</span>
+        <h1>Телефон игрока</h1>
+        <p id="controllerStatus">Подключись к комнате на большом экране.</p>
+      </header>
+
+      <section id="joinPanel" class="controller-panel">
+        <label class="controller-input">
+          <span>Код комнаты</span>
+          <input id="roomCodeInput" autocomplete="off" inputmode="latin" maxlength="6" placeholder="ABCD" />
+        </label>
+        <button id="joinRoomBtn" type="button">Подключиться</button>
+      </section>
+
+      <section id="claimPanel" class="controller-panel" hidden>
+        <h2>Выбери игрока</h2>
+        <div id="playerClaimList" class="player-claim-list"></div>
+      </section>
+
+      <section id="playerPanel" class="controller-panel controller-player-panel" hidden>
+        <div id="controllerPlayerCard" class="controller-player-card"></div>
+        <div id="controllerActions" class="controller-actions"></div>
+      </section>
+    </main>
+
+    <script type="module" src="./src/controller.js?v=20260605-0357"></script>
+  </body>
+</html>

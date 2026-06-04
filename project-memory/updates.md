@@ -20,6 +20,1332 @@ Open questions:
 - ...
 ```
 
+## 2026-06-05 01:07 - Art/UI
+
+Changed:
+- Fixed Big Button split choices without a cancel button so they occupy the full large action area instead of the old compact `auto` row.
+- Choices like `Заплатить` / `Не платить` should now render as two tall halves of the big button area.
+- Kept split choices with a cancel button as `cancel` row plus tall lower choice area.
+- Bumped host/controller stylesheet cache key to `20260605-0362`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- CSS/layout only; action ids, payloads, controller protocol, rules, prices, dice, cards, bots, and balances were not changed.
+- Root cause was `controller-big-choice-stage` using `auto minmax(0, 1fr)` even when no cancel button existed.
+- `git diff --check` passed.
+
+Open questions:
+- Needs real-phone refresh/check for the pay/not-pay pre-roll choice.
+
+## 2026-06-05 01:00 - Art/UI
+
+Changed:
+- Made Big Button split choices use the same action height as the single big action button.
+- Two-option choices now fill the lower Big Button action area as two tall halves instead of compact cards.
+- Bumped host/controller stylesheet cache key to `20260605-0361`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- CSS/layout only; action ids, payloads, controller protocol, rules, prices, dice, cards, bots, and balances were not changed.
+- Intended for choices like `Заплатить` / `Не платить` in phone controller mode `Большая кнопка`.
+- `git diff --check` passed.
+
+Open questions:
+- Needs quick real-phone/browser check that the two halves now visually match the large single button height.
+
+## 2026-06-05 00:48 - Art/UI
+
+Changed:
+- Matched the fullscreen icon button's visual height to neighboring top controls.
+- `.fullscreen-toggle` now uses the normal button min-height (`40px`) instead of the previous smaller `34px`.
+- Enlarged the fullscreen SVG inside the button from `1.45rem` to `1.78rem`.
+- Host/controller stylesheet cache key is `20260605-0360`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- CSS/layout only; fullscreen behavior and JS were not changed.
+- Dev 3's mobile rule hiding fullscreen was preserved; this pass targets desktop/tablet top controls.
+- `git diff --check` passed.
+
+Open questions:
+- Needs quick browser visual check that `Настройки`, fullscreen icon, and `Новая игра` now look equal in size.
+
+## 2026-06-05 00:46 - Dev 3
+
+Changed:
+- Hid the fullscreen / `На весь экран` control on mobile widths.
+- Reformatted the mobile top controls block to 5 visible columns: 3 compact setup selects, `Настр.`, and `Новая игра`.
+- Tightened mobile select/button sizing so the row fits visually at ~390px without text overflow.
+- Bumped host/controller stylesheet cache key to `20260605-0360`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- CSS/layout only; fullscreen behavior, settings behavior, rules, dice, cards, bots, routes, saves, phone controller protocol, balances, and history/chronicle data collection unchanged.
+- Verification passed:
+  - `git diff --check`;
+  - static assertion confirmed mobile fullscreen hiding rule and cache keys;
+  - browser DOM check at 390x844 confirmed 5 visible controls, fullscreen button hidden, and no visible control text overflow.
+
+Open questions:
+- None.
+
+## 2026-06-05 00:45 - Art/UI
+
+Changed:
+- Added a standalone SVG gear icon for future `Настройки` button use.
+- Icon is not connected anywhere yet, per user request.
+
+Files:
+- `assets/icons/settings_gear.svg`
+- `project-memory/updates.md`
+
+Notes for others:
+- Asset is vector, 512x512 viewBox, golden fantasy-board UI style matching the fullscreen icon direction.
+- `git diff --check` passed.
+
+Open questions:
+- Waiting for approval/request before applying it to the actual settings button.
+
+## 2026-06-05 00:40 - Art/UI
+
+Changed:
+- Matched the icon-only fullscreen button size to the neighboring `Настройки` and `Новая игра` buttons in the top controls row.
+- The last three controls now use equal grid columns.
+- Kept the fullscreen icon centered and preserved the icon-only button behavior.
+- Bumped/kept host and controller stylesheet cache key at `20260605-0359`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- CSS/layout only; fullscreen behavior and JS were not changed in this pass.
+- `git diff --check` passed.
+
+Open questions:
+- Needs quick browser visual smoke to confirm the three buttons read as equal width.
+
+## 2026-06-05 00:39 - Dev 3
+
+Changed:
+- Returned `Настройки` in fullscreen / big-screen mode.
+- Removed `#settingsPanel` from the fullscreen hide rule.
+- Kept `Хроника` and `История` collapsed in fullscreen via `.log-panel`, `.history-panel`, and `.lower-grid`.
+- Synced controller stylesheet cache key to `20260605-0359`.
+
+Files:
+- `styles.css`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI/layout only; no settings behavior, rules, dice, cards, bots, routes, saves, phone controller protocol, balances, or history/chronicle data collection changed.
+- Verification passed:
+  - `git diff --check`;
+  - static assertion confirmed settings are no longer hidden by fullscreen CSS, while chronicle/history remain hidden and CSS cache keys are current.
+
+Open questions:
+- Manual fullscreen smoke still recommended: enter fullscreen, open/use `Настройки`, confirm `Хроника`/`История` are hidden, exit with `Esc`.
+
+## 2026-06-05 00:38 - GD
+
+Changed:
+- Added user correction for fullscreen/big-screen layout: return `Настройки` in fullscreen mode.
+- New fullscreen layout should keep `Настройки` visible/usable while `Хроника` and `История` remain hidden.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a follow-up to Dev 3's fullscreen panel-hiding task.
+- UI/layout only; do not change settings behavior, rules, saves, phones, balance, or history/chronicle data collection.
+
+Open questions:
+- Waiting for Dev 3 follow-up/handback.
+
+## 2026-06-05 00:37 - Art/UI
+
+Changed:
+- Added a new SVG fullscreen icon for the top `На весь экран` control.
+- Replaced visible fullscreen button text with the icon while preserving `title`, `aria-label`, and `aria-pressed`.
+- Updated fullscreen sync logic so it no longer overwrites the icon with text when entering/exiting fullscreen.
+- Added compact icon-button styling and active-state highlight.
+- Bumped controller stylesheet cache key to `20260605-0358`; host CSS/JS keys already use `20260605-0358`.
+
+Files:
+- `assets/icons/fullscreen_button.svg`
+- `index.html`
+- `controller.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI/icon-only change; fullscreen behavior remains the same.
+- Checks passed: `node --check src/game.js`, `git diff --check`.
+
+Open questions:
+- Needs browser visual smoke to confirm the icon reads well in the top controls row.
+
+## 2026-06-05 00:36 - Dev 3
+
+Changed:
+- Added fullscreen/big-screen layout state on `body` via `is-game-fullscreen`.
+- While browser fullscreen is active, the expanded `Настройки` panel, `Хроника`, and `История` are visually hidden/collapsed.
+- The top controls strip, including `На весь экран`, stays visible and usable.
+- Exiting fullscreen via `Esc` / `fullscreenchange` removes the layout state and restores the normal panels.
+- Bumped host CSS/JS cache keys to `20260605-0358`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI/layout only; no rules, dice, board routes, cards, bots, saves, phone controller protocol, balances, or history/chronicle data collection changed.
+- Verification passed:
+  - `node --check src/game.js`;
+  - `git diff --check`;
+  - static assertion confirmed fullscreen body state, panel hiding CSS, `fullscreenchange` wiring, and cache keys.
+- Browser automation click did not enter real fullscreen in this environment (`document.fullscreenElement` stayed false), so manual click/Esc smoke is still recommended.
+
+Open questions:
+- None.
+
+## 2026-06-05 00:34 - Art/UI
+
+Changed:
+- Added a dedicated detailed Big Button layout for Joe Shop cards owned by other players.
+- In phone controller mode `Большая кнопка`, `Купить карту Лавка Джо у игрока` now shows:
+  - the choice title/summary from the host popup;
+  - full text of every available Joe Shop card;
+  - the owning player's name, token, and color badge;
+  - a separate `Отказаться` action.
+- Kept the simpler no-look behavior for ordinary two-card Joe Shop choices: those still show only `Левая карта` / `Правая карта`.
+- Detail-list choices use an internal scroll area so more cards can fit on phone screens.
+- Bumped host/controller CSS, host game JS, and controller JS cache keys to `20260605-0357`.
+
+Files:
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Display/routing metadata only; selected card ids and phone action payloads are unchanged.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+
+Open questions:
+- Needs real-phone visual smoke on the `Купить карту Лавка Джо у игрока` prompt, especially with 3+ available cards.
+
+## 2026-06-05 00:33 - GD
+
+Changed:
+- Added fullscreen/big-screen layout task:
+  - hide `Настройки`, `Хроника`, and `История` blocks while browser fullscreen is active;
+  - restore them after exiting fullscreen via `Esc` or fullscreen state change.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is layout-only; do not delete data or stop chronicle/history recording.
+- `На весь экран` and `Большой экран` refer to the same fullscreen state.
+- Normal non-fullscreen layout should remain unchanged.
+
+Open questions:
+- Waiting for Dev 3 implementation/handback.
+
+## 2026-06-05 00:28 - Dev 3
+
+Changed:
+- Kept the top game controls block on one row after the fullscreen button was added.
+- Updated `.season-controls` to a 6-column layout with compact select columns and wider button columns.
+- Prevented top-control button text wrapping and reduced only that block's button font size enough to avoid overflow.
+- Bumped CSS cache key to `20260605-0357`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI layout only; no game rules, dice, cards, bots, routes, saves, phone controller protocol, or balances changed.
+- Verification passed:
+  - browser DOM check on `localhost:5173` confirmed `Настройки`, `На весь экран`, and `Новая игра` are on one line with no button text overflow;
+  - `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-05 00:25 - Dev 3
+
+Changed:
+- Added `На весь экран` button to the top game controls block near `Настройки` / `Новая игра`.
+- Button uses the browser Fullscreen API to enter fullscreen.
+- `fullscreenchange` / `webkitfullscreenchange` sync button label/state after entering or exiting fullscreen, including normal `Esc` exit.
+- Active button state changes text to `Выйти из экрана`, sets title, and updates `aria-pressed`.
+- Fullscreen API unavailable/denied paths fail gracefully with a toast log and no game breakage.
+- Bumped host game script cache key to `20260605-0355`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI/runtime only; no game rules, board layout logic, dice math, cards, bots, routes, saves, phone controller protocol, or balances changed.
+- Verification passed:
+  - `node --check src/game.js`;
+  - `git diff --check`;
+  - static assertion confirmed button markup, label, Fullscreen API wiring, `fullscreenchange` sync, and cache key.
+- In-app browser smoke was not completed because the Browser plugin runtime path changed in this session; real click/Esc should be checked manually or by Dev 2 QA.
+
+Open questions:
+- Ready for QA/browser smoke: click `На весь экран`, press `Esc`, verify label returns.
+
+## 2026-06-05 00:24 - Art/UI
+
+Changed:
+- Slightly reduced the unified phone `Большая кнопка` action block so the full player panel should fit above mobile browser chrome.
+- Kept one shared size source for all primary/idle Big Button states, avoiding the previous "sometimes small, sometimes large" behavior.
+- New Big Button action height:
+  - base: `clamp(380px, 64dvh, 660px)`;
+  - narrow phones: `clamp(360px, 62dvh, 560px)`.
+- Bumped host/controller stylesheet cache key to `20260605-0356`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- CSS/layout only; no JS, action ids, payloads, rules, or balance changed.
+- `git diff --check` passed.
+- Dev 3's fullscreen JS/cache-key changes were preserved.
+
+Open questions:
+- Needs real-phone visual confirmation that the panel now fully fits on the shown Safari viewport.
+
+## 2026-06-05 00:20 - GD
+
+Changed:
+- Added Dev task for fullscreen mode:
+  - add `На весь экран` button to the top game controls block;
+  - clicking it should enter browser fullscreen;
+  - pressing `Esc` exits fullscreen normally;
+  - user may call this mode `На весь экран` or `Большой экран`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is UI/runtime only.
+- Reuse existing top-control button styling.
+- Do not change rules, dice, cards, bots, routes, saves, phone controller protocol, or balances.
+
+Open questions:
+- Waiting for Dev implementation/handback.
+
+## 2026-06-05 00:15 - Art/UI
+
+Changed:
+- Fixed Joe Shop card choice display in phone controller mode `Большая кнопка`.
+- Big Button split zones now hide Joe Shop card effect text and notes for shop-like choices, showing only `Левая карта` / `Правая карта`.
+- Added `displayKind: "shop-card"` to Joe Shop prompt-choice snapshots so action-prompt shop choices are recognized even when their action kind stays `prompt-choice`.
+- Removed the `Лево` / `Право` badge for shop-like Big Button zones so the visible card choice text is only the requested left/right card label.
+- Bumped host game JS cache key to `20260605-0354` and controller JS cache key to `20260605-0354`.
+
+Files:
+- `src/game.js`
+- `src/controller.js`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Display-only change: phone still sends the same action id/kind, so selected cards and payload routing are unchanged.
+- Covered both direct `shop` actions and Joe Shop action-prompt choices such as `выбрать карту` / `купить карту`.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+
+Open questions:
+- Needs real-phone smoke on the shown Joe Shop purchase screen to confirm only `Левая карта` / `Правая карта` are visible.
+
+## 2026-06-05 00:11 - Art/UI
+
+Changed:
+- Fixed phone `Большая кнопка` primary/idle size inconsistency from user screenshots.
+- Big Button mode now uses one shared `--controller-big-action-height` for the lower action area, the big shake stage, and the primary/idle button itself.
+- `Ждите хода`, `Ждите решения`, `Далее`, and `Бросить` should now stay equally large instead of sometimes rendering as a shorter card.
+- Bumped host/controller stylesheet cache key to `20260605-0353`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- CSS/layout only; no controller JS, action ids, payloads, protocol, rules, or balance changed.
+- `git diff --check` passed.
+
+Open questions:
+- Needs real-phone visual confirmation that all primary/idle states now keep the same large height.
+
+## 2026-06-05 00:03 - Art/UI
+
+Changed:
+- Increased single primary `Большая кнопка` height for actions like `Далее` / `Бросить` so the button remains bottom-anchored and reaches upward toward the visual middle of the phone controller panel.
+- Preserved previous split-zone and Rest lower-half layout improvements.
+- Bumped host/controller stylesheet cache key to `20260604-0352`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- CSS/layout only; no controller logic, action ids, payloads, protocol, rules, or balance changed.
+- `git diff --check` passed.
+- `src/controller.js` was not touched in this pass, so no JS syntax check was needed.
+
+Open questions:
+- Needs real-phone visual confirmation for `Далее` / `Бросить` at 390x844.
+
+## 2026-06-05 00:02 - GD
+
+Changed:
+- Clarified Big Button layout again from user screenshot: single primary action buttons like `Далее` / `Бросить` should be slightly larger and reach up to about the middle of the controller panel/screen while remaining bottom-anchored.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Previous Art/UI pass improved bottom anchoring, but the latest screenshot shows the primary action button still too short.
+- Apply this to primary Big Button action, not only split/two-option zones.
+- Keep text fitting and no gameplay/protocol changes.
+
+Open questions:
+- Waiting for Art/UI follow-up.
+
+## 2026-06-05 00:00 - Art/UI
+
+Changed:
+- Refined phone `Большая кнопка` layout per user clarification: action zones are anchored at the bottom and stretch upward toward the visual middle of the controller panel.
+- Two-option split choices now use a tall lower-half stage instead of compact cards floating too high.
+- Rest three-choice Big Button stage now shares the lower-half/tall-button behavior once those actions are exposed by controller logic.
+- Primary big action keeps the same large lower action treatment.
+- Bumped host/controller stylesheet cache key to `20260604-0351`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- CSS/layout only; no action ids, payloads, protocol, server behavior, rules, prices, dice math, cards, bots, routes, or balances changed.
+- Joe Shop display labels remain controlled by existing controller logic: `Левая карта` / `Правая карта`.
+- Checks passed: `node --check src/controller.js`, `git diff --check`.
+- Browser/mobile screenshots were not captured in this environment; real-phone 390x844 and 360x760 smoke is still recommended.
+
+Open questions:
+- Waiting for real-phone visual confirmation that the bottom edge/top edge feel matches the user's screenshot target.
+
+## 2026-06-04 23:52 - GD
+
+Changed:
+- Clarified Big Button layout requirement from user screenshot: action buttons/zones should sit at the bottom of the phone screen/controller panel and stretch upward from the bottom to about the middle of the screen.
+- For two-option split choices, avoid compact cards floating in the upper half; make tall bottom-anchored left/right zones.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This refines the active Big Button bottom-zone UI task.
+- Keep text fitting requirements and Joe Shop `Левая карта` / `Правая карта` behavior.
+
+Open questions:
+- Waiting for Art/UI implementation/handback.
+
+## 2026-06-04 23:51 - Dev 3
+
+Changed:
+- Fixed pre-roll optional extra-die prompt chain.
+- Pressing `Не платить` now declines the remaining pre-roll extra-die opportunity window for that roll and starts the normal roll flow instead of prompting through additional eligible Joe Shop extra-die cards.
+- `Заплатить` still applies the selected extra-die card normally and preserves the existing accepted-card flow.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a shared flow fix for host UI, full phone controller, and phone `Большая кнопка`, because all paths use `resolvePreRollChoice(false)`.
+- No price, dice math, random result, inventory rules, bots, routes, balances, or unrelated Joe Shop effects changed.
+- Verification passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+
+Open questions:
+- Ready for QA/real-phone retest with a player holding multiple eligible `+1 кубик за 5` cards.
+
+## 2026-06-04 23:50 - GD
+
+Changed:
+- Added flow-fix task: in the pre-roll extra-die flow, pressing `Не платить` once should skip all remaining eligible Joe Shop pre-roll prompts and start the roll immediately.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Design meaning: `Не платить` means the player declines buying/using an extra die for this roll, not just declining one specific card prompt.
+- Applies to host UI, full phone controller, and phone `Большая кнопка`.
+- Do not change price, dice math, card inventory rules, roll randomness, bots, routes, or balances.
+
+Open questions:
+- Waiting for Dev 3 implementation/handback.
+
+## 2026-06-04 13:12 - Dev 3
+
+Changed:
+- Phone room mode now defaults to `Большая кнопка` in the host `Телефоны` selector.
+- `Полный контроллер` remains available/selectable.
+- Added special Big Button support for `Привал` / Rest choices:
+  - three large stacked buttons: `Восстановиться`, `Потренироваться`, `Ускориться`;
+  - each button sends the original `card-choice` action object/id (`recover`, `train`, `speed`);
+  - buttons are bottom-aligned within the Big Button action area and use compact labels.
+- Preserved Joe Shop Big Button labels: `Левая карта` / `Правая карта`.
+- Bumped controller script cache key to `20260604-0349`.
+
+Files:
+- `index.html`
+- `controller.html`
+- `src/controller.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- No rules, dice math, cards, bots, routes, balances, server relay contract, full-controller behavior, or classic/no-phone play changed.
+- Current Rest recover reward in code is still `+10 монет`; Dev 3 did not change it to `+15` because the task explicitly said not to silently change balance.
+- Verification passed:
+  - `node --check src/controller.js`;
+  - `node --check src/game.js`;
+  - `node --check server.js`;
+  - `git diff --check`;
+  - static assertion confirmed Big Button is default, Full controller option remains, Rest labels exist, and Joe Shop labels remain.
+
+Open questions:
+- GD should confirm whether Rest recover reward should later change from current `+10 монет` to intended `+15 монет`.
+
+## 2026-06-04 23:49 - Art/UI
+
+Changed:
+- Polished the host/big-screen `Привал` choice UI so the three options have a cleaner button layout: title first, reward chip below.
+- Added text-fitting guards for `Привал` choices to avoid awkward word splits like `Потр / енир / овать / ся` and clipped labels.
+- Continued `Большая кнопка` visual/layout polish:
+  - main action area remains bottom-anchored for thumb reach;
+  - split choice labels keep responsive sizing and no single-letter/orphan wrapping;
+  - added CSS support for future three-zone Big Button choices so `Привал` can stack cleanly once Dev 3 wires the functional actions.
+- Bumped host/controller stylesheet cache key to `20260604-0350`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Visual/layout only in this pass; no rules, action ids, payloads, controller protocol, prices, dice math, cards, bots, routes, or balances changed.
+- Joe Shop Big Button wording remains owned by existing controller logic: `Левая карта` / `Правая карта`.
+- Checks passed: `node --check src/controller.js`, `git diff --check`.
+- Browser/mobile screenshots were not captured in this environment because the available browser automation remains blocked; real-phone 360-430px smoke is still recommended.
+
+Open questions:
+- Waiting for Dev 3 functional support for three Rest choices in `Большая кнопка` and default phone mode changes.
+
+## 2026-06-04 13:07 - GD
+
+Changed:
+- Added user request for `Привал` UX and phone flow:
+  - clean host/big-screen Rest prompt UI with neatly fitting text;
+  - Rest choices selectable from phone mode `Большая кнопка`;
+  - `Большая кнопка` should be the default phone room mode, while full controller remains available.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Rest design intent remains: stepped-on player chooses one of three outcomes: recover coins, permanent strength, permanent speed.
+- Phone Big Button may need a special three-option layout for Rest, since left/right alone cannot represent all three choices.
+- Coordinate with active Art/UI task for bottom-anchored Big Button actions and text fitting.
+- Keep phone mode opt-in; classic/no-phone game must remain unchanged.
+
+Open questions:
+- Waiting for Dev 3 and Art/UI handbacks.
+
+## 2026-06-04 13:03 - GD
+
+Changed:
+- Added UI/layout fix task from user screenshot: in `Большая кнопка`, all main action buttons/zones should be anchored in the lower part of the phone screen/controller panel for easier tapping.
+- Added text-fitting requirement for all Big Button buttons/zones: no overflow, no clipped text, no awkward single-letter/orphan wrapping.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is UI/layout only.
+- Keep existing action ids/payloads, protocol, server behavior, rules, prices, dice math, cards, bots, routes, and balances unchanged.
+- Do not regress Joe Shop wording: shop split zones still show only `Левая карта` / `Правая карта`.
+
+Open questions:
+- Waiting for Art/UI implementation/handback; Dev 3 can assist only if behavior contract needs adjustment.
+
+## 2026-06-04 13:00 - Dev 3
+
+Changed:
+- Superseded the previous `Карта 1` / `Карта 2` Big Button Joe Shop labels.
+- In `Большая кнопка`, Joe Shop left/right zones now show only `Левая карта` and `Правая карта`.
+- Joe Shop zone supporting text is hidden, so card effect/description text and price notes do not appear inside the large zones.
+- Underlying original shop action objects are still used for taps; only display label/note is changed.
+- Bumped controller script cache key to `20260604-0348`.
+
+Files:
+- `controller.html`
+- `src/controller.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Full controller mode, host shop UI, reveal logic, prices, rules, bots, dice, routes, and balances are unchanged.
+- Non-shop binary choices still use real labels/notes.
+- Verification passed:
+  - `node --check src/controller.js`;
+  - `git diff --check`;
+  - static assertion confirmed `Левая карта` / `Правая карта`, blank shop note, and original `sendControllerAction(action, player)` use.
+- Browser smoke was not rerun because the previous `/private/tmp` smoke script had been cleaned up and approval policy is currently `never`; no escalated browser launch is available in this turn.
+
+Open questions:
+- Ready for QA/real-phone retest.
+
+## 2026-06-04 12:58 - GD
+
+Changed:
+- Clarified user correction for Big Button Joe Shop labels: phone left/right zones should show only `Левая карта` and `Правая карта`.
+- Card effect/description text should not appear in the Big Button zones.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This supersedes the earlier `Карта 1` / `Карта 2` wording.
+- Keep original shop actions/payloads unchanged; only the phone Big Button display text changes.
+- Full controller, host shop UI, reveal logic, rules, prices, bots, dice, and balances stay unchanged.
+
+Open questions:
+- Waiting for Dev 3 follow-up patch/handback.
+
+## 2026-06-04 12:55 - Dev 3
+
+Changed:
+- In `Большая кнопка`, Joe Shop split-zone options now display main labels as `Карта 1` and `Карта 2`.
+- This is display-only for phone Big Button left/right zones; underlying shop action ids/payloads are unchanged.
+- Non-shop binary choices keep their original labels.
+- Bumped controller script cache key to `20260604-0347`.
+
+Files:
+- `controller.html`
+- `src/controller.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- No full-controller UI, host shop UI, reveal logic, prices, rules, bots, dice, routes, or balances changed.
+- Verification passed:
+  - `node --check src/controller.js`;
+  - `git diff --check`;
+  - room/snapshot smoke shows shop zones as `Карта 1` / `Карта 2`, while non-shop binary remains `Заплатить` / `Не платить`.
+
+Open questions:
+- Ready for QA/real-phone retest.
+
+## 2026-06-04 12:52 - GD
+
+Changed:
+- Added a small Dev task from user request: in `Большая кнопка`, Joe Shop two-card choices should display main labels as `Карта 1` and `Карта 2`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is display text only for phone Big Button left/right zones.
+- Underlying Joe Shop actions/payloads, full controller mode, host shop UI, card rules, prices, bots, dice, and balances should stay unchanged.
+
+Open questions:
+- Waiting for Dev 3 implementation/handback.
+
+## 2026-06-04 12:45 - Dev 3
+
+Changed:
+- Extended `Большая кнопка` controller behavior with large left/right choice zones for safe two-option prompts.
+- Two-option choices now work for binary prompts such as pre-roll extra die yes/no and simple two-option shop/card/prompt actions.
+- Prompts with exactly two meaningful options plus a cancel/skip/decline action now show cancel as a smaller top button and keep the two meaningful choices as large left/right zones.
+- Prompts with more than two meaningful non-cancel options still fall back to `Выбор на большом экране`.
+- Fixed cancel detection bug where substring `нет` matched inside `монет`, causing shop actions to be misclassified.
+- Removed production `window.__vbaControllerDebug` motion hook.
+- Improved shake fallback/diagnostics:
+  - shake threshold reduced from 18 to 14;
+  - rotationRate now contributes to shake amount;
+  - UI warns that shake may require HTTPS/secure context on LAN `http://...` while keeping the normal button fallback.
+- Bumped controller script cache key to `20260604-0346`.
+
+Files:
+- `controller.html`
+- `src/controller.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `outputs/phone-big-choice-zones.png`
+
+Notes for others:
+- No gameplay rules, dice math, cards, bots, routes, balances, or classic/non-phone play changed.
+- Art/UI tone classes for Big Button were preserved; Dev 3 only added behavior zones and supporting CSS.
+- Browser smoke via real room/snapshot API passed:
+  - binary pre-roll style actions render 2 large zones;
+  - shop-style 2 options + `Отказаться` renders cancel top button + 2 large zones;
+  - 3 meaningful shop options render fallback `Выбор на большом экране`;
+  - mobile 390px overflow false.
+- Checks pass: `node --check src/controller.js`, `node --check src/game.js`, `node --check server.js`, `git diff --check`.
+- Shake real-device limitation: current LAN URL is `http://192.168.31.41:5173/...`; per current DeviceMotion API docs, `devicemotion`/permission can require a secure context, so Safari/Chrome may block motion sensors on plain LAN HTTP. Button fallback remains available. Real-phone retest should verify whether target devices emit motion on LAN HTTP; if not, next technical step is HTTPS/local cert or another trusted-origin strategy.
+
+Open questions:
+- Ready for Dev 2 combined QA and real-phone retest, especially shake behavior on iPhone/Safari and Android/Chrome.
+
+## 2026-06-04 12:44 - Dev 2
+
+Changed:
+- Ran final combined QA/regression pass for the current mobile-controller batch.
+- No gameplay/protocol/UI code changes were made.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- PASS, with environment limits: no blocking regression found in current files.
+- Real browser smoke completed for host-created `Большая кнопка + Шейк` room at 360px: controller claimed player, `Телефон игрока` was hidden in Big Button mode, roll button rendered as `is-roll` with no measured overflow, shake hint was visible, and tapping `Бросить` produced `Действие отправлено. Ждем большой экран.`
+- Host UI smoke confirmed phone room creation status `Большая кнопка, шейк`; CSS order has TADAM before settings (`tadam-card` order 1, `game-settings` order 2).
+- Static/model QA confirmed Big Button action modeling: single `Бросить`/`Далее` => primary, two safe choices => left/right split, two meaningful choices + cancel/decline => split with upper cancel, 3 meaningful options => host fallback.
+- Static QA confirmed wrong-player remains server-rejected (`403 wrong-player` path unchanged), shake safe-roll guard uses `id=roll`, roll kind, and Cyrillic-safe `startsWith("бросить")`, with HTTPS/secure-context fallback copy.
+- Checks passed: `node --check src/controller.js`, `node --check src/game.js`, `node --check server.js`, `git diff --check`.
+- Could not complete the full synthetic browser matrix for split/cancel/fallback because shell access to the existing `5173` process became intermittently unable to connect after POST, the sandbox blocks starting a second local server, and the in-app browser evaluate bridge lacks `fetch`/XHR constructors. The in-app browser itself can load the host/controller pages.
+
+Open questions:
+- Real-phone retest remains recommended for iPhone/Safari motion permission and Android/Chrome shake sensitivity on LAN/HTTPS context.
+
+## 2026-06-04 12:40 - Art/UI
+
+Changed:
+- Finished Art/UI part of the mobile controllers batch from GD.
+- Big Button now has visual tone classes: roll actions get an energetic orange/magic dice style, non-roll actions get a calmer green action style, and idle/waiting states are muted.
+- Removed `Телефон игрока` from the visible controller header while in `Большая кнопка` mode.
+- Reduced Big Button label sizing and removed letter-level wrapping from Big Button, cancel, split-choice, and normal controller action labels so words like `Применить` do not orphan a final letter.
+- Swapped host side-panel visual order so TADAM cards appear before Settings; mobile keeps the same sane order.
+- Bumped host/controller CSS cache keys to `20260604-0340` and controller JS cache key to `20260604-0341`.
+
+Files:
+- `controller.html`
+- `index.html`
+- `src/controller.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- UI-only pass except for adding CSS tone classes in `src/controller.js`; no gameplay rules, dice math, card logic, room protocol, server behavior, or action payload contracts changed.
+- Checks pass: `node --check src/controller.js`, `node --check src/game.js`, `node --check server.js`, `git diff --check`.
+- Browser screenshots could not be captured in this session because Chromium launch is blocked by macOS MachPort permissions and approval is disabled.
+
+Open questions:
+- None from Art/UI; ready for Dev 2 combined QA / real-device pass.
+
+## 2026-06-04 12:33 - GD
+
+Changed:
+- Split the user's mobile-controller polish/fix list across Dev 3, Art/UI, and Dev 2 QA.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Dev 3 owns Big Button behavior changes and the reported `Шейк не работает` bug.
+- Art/UI owns Big Button colors/readability/removing `Телефон игрока` and swapping settings with TADAM cards.
+- Dev 2 should do combined QA after Dev 3 and Art/UI hand back.
+
+Open questions:
+- None.
+
+## 2026-06-04 12:03 - Dev 2
+
+Changed:
+- Reconciled against Dev 3's latest `Большая кнопка` + `Шейк` handback and did not duplicate implementation.
+- Performed a QA/feel review pass over the current mobile controller stack.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Current `src/controller.js` already uses Cyrillic-safe `startsWith("бросить")` detection for shake, matching Dev 3's note about avoiding JS `\b`.
+- Static checks still pass: `node --check src/controller.js`, `node --check src/game.js`, `node --check server.js`, `git diff --check`.
+- CSS review for 360-430px found no obvious overflow risk in Big Button/shake layout: stats use `minmax(0, 1fr)`, long labels can wrap, and the huge button keeps stable height.
+- Local browser screenshots/motion simulation remain unavailable in this Dev 2 environment due the same macOS Chromium permission block.
+
+Open questions:
+- Real-phone retest remains the next useful validation step for iPhone/Safari permission UX and Android/Chrome shake sensitivity.
+
+## 2026-06-04 00:35 - Dev 3
+
+Changed:
+- Added second mobile controller room mode `Большая кнопка`.
+- Host `Телефоны` block now has room mode selector: `Полный контроллер` (default/current behavior) and `Большая кнопка`.
+- Recreated rooms use the currently selected mode; server stores `room.mode`, exposes it in room state, and host snapshots include `controllerMode`.
+- `Большая кнопка` controller mode shows compact player stats at the top and one huge lower-half action button.
+- In `Большая кнопка`, phone sends only safe single primary actions (`Бросить` / `Далее`); meaningful 2+ choice states show `Выбор на большом экране` and expose no phone choice list.
+- Added `Шейк` room setting for both controller modes.
+- Server stores `shakeEnabled`, host includes it in snapshots, and controllers enable shake only for the active claimed player with current safe `Бросить`.
+- Shake shows dice motion feedback, requests iOS motion permission when required, falls back to the normal button if sensors are unavailable/denied, and debounces one shake gesture to one roll.
+- Fixed Cyrillic roll label detection for shake by avoiding JS `\b` word boundary with `Бросить`.
+- Bumped host/controller cache keys to `20260604-0335` / `20260604-0338`.
+
+Files:
+- `index.html`
+- `controller.html`
+- `server.js`
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `outputs/phone-big-button-host.png`
+- `outputs/phone-big-button-controller.png`
+- `outputs/phone-shake-full-controller.png`
+
+Notes for others:
+- No gameplay rules, dice math, cards, bots, routes, balance, or board logic changed.
+- Phone mode remains opt-in/off by default; classic play is unchanged while `Играть с телефонами` is off.
+- Browser smoke passed with host + multiple controller contexts:
+  - default/full mode still renders normal controller actions;
+  - `Большая кнопка + Шейк` renders compact stats + huge button, no overflow at 390px/360px;
+  - huge button can send primary roll and continue;
+  - 2+ choice state does not show options on phone and host-screen choice still works;
+  - simulated motion event in full mode triggers host roll state (`turnLabel: крутится`);
+  - wrong-player action returns `403 wrong-player`;
+  - LAN URL shown as `http://192.168.31.41:5173/controller.html?room=...`.
+- `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, and `git diff --check` pass.
+
+Open questions:
+- Ready for real-phone retest, especially iPhone/Safari motion permission and Android/Chrome shake sensitivity.
+
+## 2026-06-04 00:31 - Dev 2
+
+Changed:
+- Hardened the phone controller `Шейк` input layer for shake-to-roll.
+- Shake now arms only for the safe primary roll action: `kind/type=roll`, `id=roll`, and label starting with `Бросить`.
+- Shake is blocked for waiting/not-active states, closed/error states, `Далее`, and meaningful choice/prompt states.
+- Normal roll button and Big Button taps now consume the current shake action key, preventing a tap plus motion from sending a duplicate roll.
+- Shake debounce key now includes room, player, round, position, action kind/id, and label, so the same roll state cannot fire twice but a later real roll state can re-arm.
+- Removed the controller debug motion hook from production code.
+
+Files:
+- `src/controller.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Host/server room setting plumbing for `Шейк` (`index.html`, `src/game.js`, `server.js`) was already present in the current worktree; Dev 2 preserved it and did not change gameplay rules, dice math, cards, bots, routes, balance, room lifecycle, or server message contracts.
+- Checks passed: `node --check src/controller.js`, `node --check src/game.js`, `node --check server.js`, `git diff --check`.
+- Browser screenshot/motion simulation could not be completed in this session because headless Chromium launch is blocked by macOS MachPort permissions while approvals are disabled.
+
+Open questions:
+- Ready for real-phone retest, especially iPhone/Safari motion permission and Android/Chrome shake feel.
+
+## 2026-06-04 00:25 - GD
+
+Changed:
+- Redirected the `Шейк` shake-to-roll phone room task from Dev 3 to Dev 2 because Dev 3 is busy.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Dev 2 should implement `Шейк` as controller input/juice and check latest updates before editing.
+- Dev 3 remains owner of room architecture / `Большая кнопка` unless separately coordinated.
+- Avoid duplicate work or conflicts in `src/game.js`, `src/controller.js`, `index.html`, `controller.html`, and `styles.css`.
+
+Open questions:
+- None.
+
+## 2026-06-04 00:24 - GD
+
+Changed:
+- Added a Dev 3 feature task for phone room setting `Шейк`, enabling shake-to-roll in both controller modes.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Шейк` is an input/juice layer only: host remains authoritative for roll results, and dice math/rules must not change.
+- Normal button remains available as fallback.
+- MVP scope should focus shake on the safe `Бросить` action, not on choices or `Далее`.
+
+Open questions:
+- None.
+
+## 2026-06-04 00:22 - Dev 3
+
+Changed:
+- Hardened mobile phone room lifecycle so a host/session keeps one active phone room at a time.
+- `Пересоздать комнату` now closes the previous room before creating the next room.
+- Server now supports explicit room close via host-authenticated `/api/rooms/:code/close`.
+- Closed room codes are remembered for the room TTL window and old links return `410 { error: "room-closed" }` for GET, claim, and action requests.
+- Controllers connected to a closed room receive `room-closed`, show `Комната закрыта на большом экране. Подключись по новой ссылке.`, and clear old player/action UI.
+- Turning `Играть с телефонами` off also closes the active phone room.
+- Bumped host/controller script cache keys to `20260604-0328`.
+
+Files:
+- `server.js`
+- `src/game.js`
+- `src/controller.js`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+- `outputs/phone-room-recreate-host.png`
+- `outputs/phone-room-old-controller-closed.png`
+- `outputs/phone-room-new-controller.png`
+
+Notes for others:
+- No gameplay rules, dice math, cards, bots, routes, balance, or board logic changed.
+- Phone mode remains opt-in/off by default; classic play is unchanged while `Играть с телефонами` is off.
+- Verification passed: created room A, joined controller, clicked `Пересоздать комнату`, created room B, old controller showed closed state with zero action buttons, old room GET/claim/action all returned `410 room-closed`, new room accepted controller claim, and copy button copied the new LAN URL.
+- `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, and `git diff --check` pass.
+
+Open questions:
+- Ready for real-phone retest with repeated room recreation.
+
+## 2026-06-04 00:21 - GD
+
+Changed:
+- Added a Dev 3 feature task for a second phone-controller room mode: `Большая кнопка`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Existing/full phone controller mode should remain default and preserve current behavior.
+- New `Большая кнопка` mode is for no-look party play: compact stats at top, huge primary action button from mid-screen to bottom.
+- In `Большая кнопка` mode, meaningful 2+ option choices stay on the host screen; the phone should show a waiting/disabled state like `Выбор на большом экране`.
+
+Open questions:
+- None.
+
+## 2026-06-04 00:17 - GD
+
+Changed:
+- Added a Dev 3 hardening task for mobile phone rooms: keep one active room per host session and close/invalidate the previous room when recreating.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a lifecycle/cleanup task for repeated real-phone testing.
+- Main desired behavior: old room links stop working after `Пересоздать комнату`, old controllers show closed/lost state, and the new room works normally.
+- Optional `Закрыть комнату` host control is allowed only if low-risk and compatible with current Art/UI polish.
+
+Open questions:
+- None.
+
+## 2026-06-04 00:17 - Art/UI
+
+Changed:
+- Aligned the host settings phone toggle card with the adjacent `Телефоны` room panel by removing the extra top offset on `.phone-mode-toggle`.
+- Bumped the host page CSS cache key to `20260604-0327`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI-only alignment fix; phone room behavior, copy-link behavior, controller protocol, and gameplay were not changed.
+- `git diff --check` passes.
+
+Open questions:
+- None.
+
+## 2026-06-04 00:08 - Dev 3
+
+Changed:
+- Added a `Скопировать ссылку` button to the host `Телефоны` room block.
+- The button copies the player-facing LAN controller URL from the main URL field, not the secondary local/debug URL.
+- Successful Clipboard API copy shows `Скопировано` briefly, then restores the normal label.
+- If Clipboard API is unavailable, the URL field is focused and selected for manual copy, and the button briefly shows `Выделено`.
+- Bumped host JS/CSS cache keys to `20260604-0326`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `outputs/phone-copy-link-desktop.png`
+- `outputs/phone-copy-link-mobile.png`
+
+Notes for others:
+- Functional affordance only; no gameplay rules, dice math, cards, bots, routes, controller protocol, or server behavior changed.
+- Phone mode remains opt-in/off by default, so classic host-screen play remains unchanged when `Играть с телефонами` is off.
+- Verified copied text was `http://192.168.31.41:5173/controller.html?room=...`, matching the displayed LAN URL and not `localhost` / `127.0.0.1`.
+- Verified fallback selection by mocking Clipboard API unavailable.
+- Verified no phone-room block overflow at desktop 1440px and mobile 390px.
+- `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, and `git diff --check` pass.
+
+Open questions:
+- Ready for real-phone retest.
+
+## 2026-06-04 00:05 - Art/UI
+
+Changed:
+- Restyled the host settings `Телефоны` / phone room panel so it matches the dark settings UI instead of rendering as a pale grey block.
+- Added dark card background, warm thin borders, compact header button, readable muted status text, dark URL input, and styled room detail rows.
+- Added tabletop-specific overrides for phone room panel rows, hint code, and URL input.
+- Bumped the host page CSS cache key to `20260604-0325`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI-only host settings fix; phone controller protocol, room creation, server logic, gameplay rules, and balance were not changed.
+- `git diff --check` passes.
+- Browser screenshot verification could not run in this sandbox because Chromium launch is blocked by macOS MachPort permissions and approval is disabled in this session.
+
+Open questions:
+- None.
+
+## 2026-06-04 00:02 - Dev
+
+Changed:
+- Fixed sticky iPhone hover/highlight on mobile controller buttons after tapping.
+- Touch/coarse-pointer controller buttons now keep their normal background on `:hover`; pressed feedback stays limited to `:active`.
+- Removed non-keyboard focus outline on controller buttons while keeping `:focus-visible` available for keyboard accessibility.
+- Bumped controller page stylesheet cache key to `20260603-0323`.
+
+Files:
+- `styles.css`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is controller CSS only; no protocol, gameplay, dice, cards, board, bots, or host UI layout changed.
+- Checks pass: `node --check src/controller.js`, `node --check server.js`, `git diff --check`.
+- Mobile-style Playwright smoke loaded `styles.css?v=20260603-0323` and confirmed touch hover no longer changes the controller button background to the gold hover state.
+
+Open questions:
+- Retest on real iPhone Safari/Chrome: tap `Открыть`/`Бросить`, then confirm the button does not stay highlighted after the tap ends.
+
+## 2026-06-04 00:01 - GD
+
+Changed:
+- Added a Dev task for a copy-link button in the `Телефоны` room block.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Art/UI is already assigned to polish this block visually; this task is the functional copy affordance.
+- The button must copy the player-facing LAN controller URL, not the secondary local/debug URL.
+- Phone mode remains opt-in/off by default and classic play should not change.
+
+Open questions:
+- None.
+
+## 2026-06-03 23:55 - Dev
+
+Changed:
+- Fixed mobile controller reconnect behavior after the phone browser is backgrounded / reopened.
+- Controller now probes the room before opening SSE, reconnects on `pageshow`, focus, `online`, and visible-tab return, and retries one action after reconnect for transient network/room errors.
+- Lost-room states no longer leave stale active action buttons enabled on the controller.
+- Hardened the server SSE relay: dead controller/host streams are removed and failed SSE writes no longer risk crashing the server.
+- Bumped the controller script cache key to `20260603-0322`.
+
+Files:
+- `server.js`
+- `controller.html`
+- `src/controller.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Phone mode remains opt-in/off by default; no gameplay rules, card effects, dice math, board route, bot logic, or controller visual polish changed.
+- Required checks pass: `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, `git diff --check`.
+- Focused Playwright smoke passed: controller reload kept the claimed player, action after reconnect reached host, missing room disabled actions, and server stayed alive after controller disconnect/reload.
+- If the Node server process itself is restarted, in-memory rooms are still lost; the controller now reports that clearly instead of showing stale usable controls. Durable room recovery would be a separate future task.
+
+Open questions:
+- Retest on the real phone by switching to another app and returning to Safari/Chrome.
+
+## 2026-06-03 23:41 - Dev 3
+
+Changed:
+- Fixed the player-facing phone controller join URL so host UI prefers a phone-connectable LAN URL over `localhost` / `127.0.0.1`.
+- Added LAN URL selection in `src/game.js`: prefer private LAN candidates (`192.168.*`, `10.*`, `172.16-31.*`), then any non-local LAN URL, then local fallback.
+- Added a small host hint under the phone URL: `Откройте на телефоне в той же Wi-Fi сети`; local debug URL is shown only as secondary text when it differs from the phone URL.
+- Bumped host JS/CSS cache keys to `20260603-0322`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `outputs/phone-lan-url-host-check.png`
+- `outputs/phone-lan-url-controller-check.png`
+
+Notes for others:
+- Phone mode remains opt-in/off by default; classic play is unchanged when `Играть с телефонами` is off.
+- Verified from host opened at `http://127.0.0.1:5173`: the displayed/copyable phone URL was `http://192.168.31.41:5173/controller.html?room=...`, not localhost/127.
+- Verified the controller page opened from that displayed LAN URL and showed player claim buttons.
+- `node --check src/game.js`, `node --check server.js`, `node --check src/controller.js`, and `git diff --check` pass.
+
+Open questions:
+- Ready for real-phone retest on the same Wi-Fi network.
+
+## 2026-06-03 23:35 - GD
+
+Changed:
+- Added an urgent Dev 3 task for the phone-controller MVP: the game must display a phone-connectable LAN join URL instead of `localhost` / `127.0.0.1`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- User confirmed `http://192.168.31.41:5173/` opens from the phone, while the URLs currently shown by the game (`http://127.0.0.1:5173` and `http://127.0.0.1:5173/controller.html?room=7RN6`) do not.
+- Diagnosis: server exposes LAN URLs, but host UI appears to present the origin-based local URL as the primary phone URL.
+- Dev 3 should prefer `room.lanUrls` for the player-facing phone join link and keep phone mode opt-in/off by default.
+
+Open questions:
+- None.
+
+## 2026-06-03 23:24 - GD
+
+Changed:
+- Added a Dev coordination rule for GD-originated tasks: if GD assigned/coordinated a task, Dev should hand completion/status back to GD after finishing.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This applies only to tasks GD explicitly assigned or coordinated.
+- Dev should still write the normal project-memory update.
+- Handback to GD should include implementation/verification summary, changed files, tests/checks, remaining GD decisions, and readiness for playtest or next Dev/UI pass.
+
+Open questions:
+- None.
+
+## 2026-06-03 23:22 - Dev 2
+
+Changed:
+- Polished the mobile phone controller UI as a fantasy player dashboard without changing server message shapes or action contracts.
+- Added controller body state markers for join/waiting/claim/active UI styling.
+- Improved player identity presentation with larger avatar, active/waiting badge, player-color glow, compact stat plaques, and readable Joe Shop card chips.
+- Made controller action/choice buttons larger and touch-friendly, with clearer disabled/waiting styling.
+- Bumped controller CSS/JS cache keys to `20260603-0321`.
+
+Files:
+- `controller.html`
+- `src/controller.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI-only controller polish: no protocol, room logic, gameplay rules, cards, dice math, bot logic, board routes, or host action validation changed.
+- `node --check src/controller.js`, `node --check src/game.js`, `node --check server.js`, and `git diff --check` pass.
+- Browser checks used real room API snapshots and passed at 390px for waiting, active roll/continue, and choice states; 360px choice state also had no horizontal overflow.
+- Host page with phone mode off still loads with `.phone-room-panel` hidden, roll button visible, no broken images, and no horizontal overflow at 1440px.
+- Screenshots: `outputs/controller-waiting-polish.png`, `outputs/controller-active-polish.png`, `outputs/controller-choice-polish.png`, `outputs/controller-choice-360-polish.png`, `outputs/controller-host-phone-off-check.png`.
+
+Open questions:
+- None.
+
+## 2026-06-03 23:15 - GD
+
+Changed:
+- Chose the next mobile-controller MVP step after Dev 3's first vertical slice.
+- Added two parallel follow-up tasks: Dev for QA/regression/harder choice flows, Dev 2 for mobile controller UI polish.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Do both next steps in parallel, but keep ownership separate:
+  - Dev checks stability, classic-flow isolation, and harder controller flows.
+  - Dev 2 polishes controller UI only, without changing protocol or rules.
+- Dev 3 remains owner of the first protocol architecture unless a protocol bug is discovered.
+- The hard constraint remains: `Играть с телефонами` is opt-in/off by default and must not affect classic play.
+
+Open questions:
+- After QA/UI polish, decide whether QR code or real-phone LAN testing is the next highest-value slice.
+
+## 2026-06-03 23:11 - Dev 3
+
+Changed:
+- Added the first MVP slice for Jackbox-style local mobile phone controllers.
+- Extended `server.js` into a no-dependency HTTP + SSE relay with room creation, room code/join URL, controller slot claims, host snapshots, and controller action forwarding.
+- Added `controller.html` and `src/controller.js` for phone joining, player claiming, player stats/cards display, and action buttons.
+- Added an opt-in `Играть с телефонами` settings checkbox, off by default, plus a hidden `Телефоны` room panel with room code, join URL, and connected controller names.
+- Added host-side controller snapshots and validation for roll/continue, pre-roll extra die yes/no, pending board/card choices, shop choices, and selectable Joe Shop card prompts.
+- Kept the host browser authoritative for all rules; the server only relays messages.
+- Bumped JS/CSS cache keys to `20260603-0320`.
+
+Files:
+- `server.js`
+- `controller.html`
+- `src/controller.js`
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+- `outputs/phone-controllers-host-smoke.png`
+- `outputs/phone-controller-c1-smoke.png`
+
+Notes for others:
+- Phone controllers are strictly opt-in. With `Играть с телефонами` off, no room is created, no snapshots are sent, and phone actions do not affect the game.
+- Verified `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, and `git diff --check`.
+- Browser smoke on `localhost:5173` passed for: phone mode off by default, create room, join two controller tabs as `Пес` and `Кот`, roll from controller, make a `Привал` choice from controller, advance `Далее` from controller, and wrong-player POST rejected with `403 wrong-player`.
+- `server.js` now binds `0.0.0.0` and printed LAN controller hints including `http://192.168.31.41:5173/controller.html`.
+
+Open questions:
+- Dev 2 should polish the mobile controller UI after this protocol slice.
+- Dev should expand QA/regression coverage and help cover harder choice flows such as long Joe Shop/pre-roll chains and auction variants.
+
+## 2026-06-03 22:47 - GD
+
+Changed:
+- Added the user's correction to the mobile phone controllers MVP task.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Phone-controller work must not affect the current/classic game flow.
+- If any implementation change could affect normal host-screen play, it must be gated behind a Settings checkbox/toggle such as `Играть с телефонами`.
+- Default behavior must preserve the current game.
+
+Open questions:
+- None.
+
+## 2026-06-03 22:41 - GD
+
+Changed:
+- Planned the MVP for Jackbox-style mobile phone controllers.
+- Added an active high-priority Dev task for local-network phone controllers: host board + room code/join URL + controller page + action relay.
+- Coordination decision: start with Dev 3 as implementation lead for the vertical slice; bring Dev 2 in for controller UI polish after the protocol works; bring Dev in for QA/regression and expanded choice support.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- MVP should be local network only for now.
+- Host browser remains authoritative for game rules/state; `server.js` should act as a relay.
+- Prefer no npm dependencies if possible; SSE/EventSource or polling+POST is acceptable for MVP.
+- First supported actions should include roll/action prompt, pre-roll extra die yes/no, and generic choices where possible.
+
+Open questions:
+- Whether QR generation is needed in the first slice or whether join URL + room code is enough for MVP.
+
+## 2026-06-03 01:09 - Dev 3
+
+Changed:
+- Updated the Joe Shop `extra-die` card description to say `Перед броском кубиков можешь заплатить 5 монет и кинуть на 1 кубик больше.`
+- Kept the card title, short title, cost, dice amount, and mechanics unchanged.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/updates.md`
+
+Notes for others:
+- Google Sheet `Cards Config`, tab `shop`, already had the same `extra-die` description; no sheet write was needed.
+
+Open questions:
+- None.
+
+## 2026-06-03 00:53 - Art/UI
+
+Changed:
+- Compactified the VS-battle HUD so it fits inside the field area during VS fights and no longer covers the dice throw zone.
+- Desktop/tablet VS cards now use a lower panel, smaller header/emblem, compact participant cards, and bounded result text.
+- Mobile touch VS layout switches to four compact participant cards in one row, with the result visible below and no internal scroll.
+- Let VS dice render above the board stacking layer by removing the board z-index only while `.vs-battle-hud` is active.
+- Bumped the CSS cache key to `20260602-0319`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+- `outputs/vs-hud-fit-desktop.png`
+- `outputs/vs-hud-fit-mobile.png`
+- `outputs/vs-panel-element-mobile.png`
+
+Notes for others:
+- UI-only fix; no VS battle rules, dice logic, rewards, or balance changed.
+- Verified with headless Chromium stress states: desktop panel fits with 4 participants in one row; mobile panel has no internal scroll and dice rects do not overlap the panel.
+- `git diff --check` passes.
+
+Open questions:
+- None.
+
 ## 2026-06-02 16:55 - Art/UI
 
 Changed:
