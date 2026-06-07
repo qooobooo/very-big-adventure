@@ -22,7 +22,7 @@ Then read the inbox that matches your role:
 - Important: `project-memory/inbox/for-important.md`
 - Dev 1 / Dev 2 / Dev 3: `project-memory/inbox/for-dev.md`
 - GD: `project-memory/inbox/for-gd.md`
-- Art / UI: `project-memory/inbox/for-ui.md`
+- Art / UI 1 / Art / UI 2: `project-memory/inbox/for-ui.md`
 - QA 1 / QA 2: `project-memory/inbox/for-qa.md`
 
 If you need older context, inspect local Codex records read-only:
@@ -36,7 +36,7 @@ Known roles:
 - Important = project memory, status, summaries, coordination.
 - Dev 1 / Dev 2 / Dev 3 = "Очень Большая Бродилка" implementation in `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure`.
 - GD = game design, contracts, rules, balance, core loop, and implementation-ready specs for Dev roles.
-- Art / UI = visual assets and UI direction for the prototype.
+- Art / UI 1 / Art / UI 2 = visual assets and UI direction for the prototype.
 - QA 1 / QA 2 = testing, smoke checks, regression checks, and bug reports for Dev roles.
 
 Required task lifecycle:
@@ -55,7 +55,7 @@ After meaningful work, append a short entry to:
 
 `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/updates.md`
 
-If Dev 1, Dev 2, Dev 3, Important, GD, Art / UI, QA 1, or QA 2 needs to do something, write it in the matching inbox under:
+If Dev 1, Dev 2, Dev 3, Important, GD, Art / UI 1, Art / UI 2, QA 1, or QA 2 needs to do something, write it in the matching inbox under:
 
 `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/inbox/`
 

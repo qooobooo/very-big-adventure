@@ -812,6 +812,15 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   font-weight: 900;
 }
 
+.controller-curse {
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 114, 129, 0.38);
+  border-radius: 8px;
+  background: rgba(113, 30, 45, 0.24);
+  color: #ffe1e4;
+  font-weight: 900;
+}
+
 .controller-shop-cards {
   display: grid;
   gap: 7px;
@@ -2252,6 +2261,28 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   white-space: nowrap;
 }
 
+.score-curse-bonus {
+  flex: 0 0 auto;
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 2px 7px;
+  border: 1px solid rgba(255, 114, 129, 0.5);
+  border-radius: 999px;
+  color: #ffe3e5;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.16), transparent 32%),
+    linear-gradient(135deg, rgba(113, 30, 45, 0.82), rgba(48, 18, 28, 0.88));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 10px rgba(210, 55, 76, 0.22);
+  font-size: 0.64rem;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .score-artifact-badge {
   flex: 0 0 auto;
   min-height: 20px;
@@ -2615,6 +2646,16 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   color: #efd5ff;
 }
 
+.curse-action-chip > b {
+  border-color: rgba(255, 114, 129, 0.5);
+  color: #ffe3e5;
+  background: rgba(113, 30, 45, 0.44);
+}
+
+.curse-action-chip > span {
+  color: #ffd6d9;
+}
+
 .pre-roll-action {
   min-width: 0;
   height: 100%;
@@ -2710,35 +2751,37 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 }
 
 .monster-rage-indicator {
-  position: absolute;
-  left: 28px;
-  top: 28px;
-  z-index: 6;
-  min-height: 28px;
-  display: inline-flex;
+  width: 100%;
+  min-height: 38px;
+  display: flex;
   align-items: center;
-  max-width: min(320px, calc(100% - 56px));
-  padding: 5px 11px;
+  justify-content: center;
+  margin: 0 0 10px;
+  padding: 9px 12px;
   border: 1px solid rgba(255, 95, 81, 0.62);
-  border-radius: 999px;
+  border-radius: 8px;
   color: #ffe9dd;
   background:
-    radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.18), transparent 34%),
-    linear-gradient(135deg, rgba(113, 32, 28, 0.92), rgba(41, 20, 19, 0.94));
+    radial-gradient(circle at 12% 14%, rgba(255, 255, 255, 0.16), transparent 30%),
+    linear-gradient(135deg, rgba(113, 32, 28, 0.86), rgba(41, 20, 19, 0.9)),
+    rgba(23, 16, 15, 0.74);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.13),
-    0 10px 22px rgba(0, 0, 0, 0.32),
-    0 0 18px rgba(255, 78, 65, 0.22);
+    0 10px 22px rgba(0, 0, 0, 0.24);
   font-size: 0.78rem;
   font-weight: 950;
   letter-spacing: 0.02em;
-  line-height: 1;
-  pointer-events: none;
+  line-height: 1.15;
+  text-align: center;
   text-transform: uppercase;
 }
 
 .monster-rage-indicator[hidden] {
   display: none;
+}
+
+.side-panel > .monster-rage-indicator {
+  margin: 0;
 }
 
 .map-wrap:has(.enemy-battle-hud) .board::after {
@@ -5125,6 +5168,68 @@ body.is-game-fullscreen .app-shell > * {
   transform: translateY(-8px);
 }
 
+.event-toast.roll-context-status {
+  top: auto;
+  right: auto;
+  bottom: 18px;
+  left: 50%;
+  z-index: 24;
+  width: min(420px, calc(100% - 36px));
+  box-sizing: border-box;
+  max-height: 92px;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
+  transform: translate(-50%, 8px);
+}
+
+.event-toast.roll-context-status.visible {
+  transform: translate(-50%, 0);
+}
+
+.event-toast.roll-context-status.fading {
+  transform: translate(-50%, 8px);
+}
+
+.event-toast.roll-context-status .roll-context-card {
+  gap: 6px;
+  padding: 9px 11px;
+  border-color: rgba(255, 215, 125, 0.42);
+  background:
+    linear-gradient(135deg, rgba(22, 29, 27, 0.9), rgba(28, 22, 30, 0.84)),
+    rgba(18, 24, 22, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 22px rgba(0, 0, 0, 0.34);
+}
+
+.event-toast.roll-context-status .roll-context-kicker {
+  font-size: 0.62rem;
+}
+
+.event-toast.roll-context-status .roll-context-card h3 {
+  font-size: 0.92rem;
+}
+
+.event-toast.roll-context-status .roll-context-detail,
+.event-toast.roll-context-status .roll-context-outcomes,
+.event-toast.roll-context-status .roll-context-participants {
+  display: none;
+}
+
+.event-toast.roll-context-status .roll-context-result {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 247, 218, 0.9);
+  font-size: 0.76rem;
+  line-height: 1.2;
+}
+
 .roll-event-card {
   display: grid;
   gap: 8px;
@@ -5141,6 +5246,119 @@ body.is-game-fullscreen .app-shell > * {
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 18px 38px rgba(0, 0, 0, 0.42),
     0 0 0 1px rgba(0, 0, 0, 0.38);
+}
+
+.roll-context-card {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 215, 125, 0.56);
+  border-radius: 8px;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 12% 10%, rgba(101, 189, 194, 0.24), transparent 32%),
+    linear-gradient(135deg, rgba(255, 215, 125, 0.15), rgba(180, 97, 214, 0.08)),
+    rgba(18, 24, 22, 0.97);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 18px 38px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(0, 0, 0, 0.38);
+}
+
+.roll-context-kicker,
+.roll-context-card h3,
+.roll-context-detail,
+.roll-context-result {
+  margin: 0;
+}
+
+.roll-context-kicker {
+  color: var(--gold-2);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.roll-context-card h3 {
+  color: #fff7d6;
+  font-size: clamp(1rem, 1.34vw, 1.16rem);
+  line-height: 1.08;
+}
+
+.roll-context-detail,
+.roll-context-result,
+.roll-context-message {
+  color: rgba(255, 247, 218, 0.88);
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.roll-context-result {
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 215, 125, 0.24);
+  border-radius: 7px;
+  color: #fff1b8;
+  background: rgba(255, 215, 125, 0.08);
+}
+
+.roll-context-participants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.roll-context-participants > span {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  border: 1px solid rgba(255, 215, 125, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 247, 218, 0.92);
+  font-size: 0.8rem;
+  font-weight: 850;
+  line-height: 1.1;
+}
+
+.roll-context-participants .choice-player-badge {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.roll-context-outcomes {
+  display: grid;
+  gap: 5px;
+}
+
+.roll-context-outcomes span {
+  display: grid;
+  grid-template-columns: minmax(42px, auto) minmax(0, 1fr);
+  gap: 7px;
+  align-items: center;
+  padding: 5px 7px;
+  border: 1px solid rgba(255, 215, 125, 0.18);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.roll-context-outcomes b {
+  color: #fff3ba;
+  text-align: center;
+}
+
+.roll-context-outcomes em {
+  min-width: 0;
+  color: rgba(255, 247, 218, 0.9);
+  font-style: normal;
+  font-weight: 760;
+  line-height: 1.18;
 }
 
 .roll-event-kicker,
@@ -7721,16 +7939,53 @@ body[data-ui-style="tabletop"] .winner-card {
     transform: translate(-50%, -8px);
   }
 
-  .roll-event-card {
+  .event-toast.roll-context-status {
+    position: fixed;
+    top: calc(100dvh - 88px);
+    bottom: auto;
+    left: 30vw;
+    width: min(240px, calc(100vw - 24px));
+    max-height: 72px;
+    overflow: hidden;
+    transform: translateY(8px);
+  }
+
+  .event-toast.roll-context-status.visible {
+    transform: translateY(0);
+  }
+
+  .event-toast.roll-context-status.fading {
+    transform: translateY(8px);
+  }
+
+  .event-toast.roll-context-status .roll-context-card {
+    gap: 4px;
+    padding: 8px 10px;
+  }
+
+  .event-toast.roll-context-status .roll-context-card h3 {
+    font-size: 0.82rem;
+  }
+
+  .event-toast.roll-context-status .roll-context-result {
+    font-size: 0.68rem;
+  }
+
+  .roll-event-card,
+  .roll-context-card {
     gap: 8px;
     padding: 12px;
   }
 
-  .roll-event-card h3 {
+  .roll-event-card h3,
+  .roll-context-card h3 {
     font-size: 1rem;
   }
 
-  .roll-event-intro {
+  .roll-event-intro,
+  .roll-context-detail,
+  .roll-context-result,
+  .roll-context-message {
     gap: 5px;
     font-size: 0.78rem;
   }
@@ -7954,11 +8209,8 @@ body[data-ui-style="tabletop"] .winner-card {
   }
 
   .monster-rage-indicator {
-    left: 8px;
-    top: 8px;
-    max-width: calc(100% - 16px);
-    min-height: 24px;
-    padding: 4px 9px;
+    min-height: 32px;
+    padding: 7px 10px;
     font-size: 0.66rem;
   }
 

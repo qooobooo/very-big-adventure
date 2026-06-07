@@ -381,6 +381,7 @@ function renderBigButtonPlayerCard(player, activeText) {
       ${artifacts}
       ${controllerCardPreviewMarkup(controller.snapshot?.cardPreview, player.id)}
       ${player.nextMonsterBattleBonus ? `<div class="controller-rage controller-big-rage">Зелье ярости +${player.nextMonsterBattleBonus}</div>` : ""}
+      ${controllerNextBattlePenaltyMarkup(player.nextBattlePenalty)}
     </div>
   `;
 }
@@ -405,10 +406,17 @@ function renderPlayerCard(player, activeText) {
       <span class="controller-stat stat-strength"><b>${signed(player.battleBonus)}</b><small>сила</small></span>
     </div>
     ${player.nextMonsterBattleBonus ? `<div class="controller-rage">Зелье ярости +${player.nextMonsterBattleBonus}</div>` : ""}
+    ${controllerNextBattlePenaltyMarkup(player.nextBattlePenalty)}
     ${artifacts}
     <div class="controller-shop-cards"><small>Лавка Джо</small><div>${cards}</div></div>
     ${controllerCardPreviewMarkup(controller.snapshot?.cardPreview, player.id)}
   `;
+}
+
+function controllerNextBattlePenaltyMarkup(status) {
+  if (!status?.count) return "";
+  const count = status.count > 1 ? ` x${status.count}` : "";
+  return `<div class="controller-curse">Сглаз ${signed(status.penalty)}${count} к след. бою</div>`;
 }
 
 function controllerArtifactsMarkup(artifacts = []) {

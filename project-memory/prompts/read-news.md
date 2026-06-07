@@ -19,6 +19,8 @@ Meaning of that request: refresh yourself from project memory, summarize what ch
   - `GD`: `project-memory/inbox/for-gd.md`
   - `QA 1`: `project-memory/inbox/for-qa.md`
   - `QA 2`: `project-memory/inbox/for-qa.md`
+  - `Art / UI 1`: `project-memory/inbox/for-ui.md`
+  - `Art / UI 2`: `project-memory/inbox/for-ui.md`
   - `UI`: `project-memory/inbox/for-ui.md`, если файл есть
 - `project-memory/prompts/new-chat.md`
 - `project-memory/prompts/next-chat.md`

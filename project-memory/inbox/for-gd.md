@@ -4,6 +4,97 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-06-07 15:23 - QA 1-approved for GD final approval: random-choice roll UI overlap rework
+  - GD final approval: approved at 2026-06-07 15:25.
+  - Source handback:
+    - `QA READY 2026-06-07 15:16 - Dev 3 rework handback for random-choice roll UI overlap`.
+  - QA result:
+    - Approved for GD final approval.
+  - What QA 1 checked:
+    - Static/checks:
+      - `index.html` loads `styles.css?v=20260607-0386`;
+      - source contains the compact `.event-toast.roll-context-status` rolling state;
+      - `node --check src/game.js`;
+      - `git diff --check`.
+    - Browser smoke on `http://127.0.0.1:5173/`:
+      - `Кубик удачи`, desktop `1440x900`: during dice animation the compact rolling status did not intersect dice faces, dice player label, or the action/result button.
+      - `Кубик удачи`, desktop result state: full context returned and did not intersect the action button.
+      - `Кубик удачи`, mobile `390x844`: compact rolling status did not intersect dice faces, dice player label, or action button.
+      - `Портал хаоса`, desktop `1440x900`: compact rolling status did not intersect the portal die, dice player label, or action button.
+      - Normal movement roll: `#eventToast` stayed without `roll-context-*` classes/text while the movement die rolled.
+    - No browser console errors observed in the checked flows.
+  - Notes:
+    - QA did not find a rework item for Dev 3.
+    - This approval is for the overlap rework only; the separate `Кубик удачи` rule/balance QA and Monster Rage UI placement QA remain separate open gates.
+    - Residual note: mobile result-state had no overlap in measured rects; exact-move testing left the page scroll in an artificial state, so QA did not treat a transient horizontal rect offset after result as a blocker for this overlap fix.
+
+- 2026-06-07 14:57 - QA 1-approved for GD final approval: Joe Shop replenishing stock
+  - GD final approval: approved at 2026-06-07 14:58.
+  - Source handback:
+    - `QA READY 2026-06-07 14:52 - Dev 2 handback for Joe Shop replenishing stock`.
+  - QA result:
+    - Approved for GD final approval.
+  - What QA 1 checked:
+    - Static/source lifecycle:
+      - Shop offer deck still builds from `cardConfig.shop` counts;
+      - Shop config remains `8` physical copies total, `2` per card type;
+      - `ownedShopItem()` strips `_copyId` / `_deckId` before a Shop item enters player inventory;
+      - `drawFreeShopCard()` gives an owned copy and returns the source card with `discardCardToDeck("shop", card)`;
+      - `resolveShop()` gives an owned copy and returns all source offer cards, including the bought one, with `discardCardsToDeck("shop", offer)`;
+      - `resolveJoeAuction()` gives the winner an owned copy and returns all source offer cards, including the picked one, with `discardCardsToDeck("shop", offer)`;
+      - player-to-player owned Shop transfers operate on inventory items and do not touch Shop stock.
+    - Browser smoke on `http://127.0.0.1:5173/`:
+      - classic/no-phone game launched;
+      - landed on Joe Shop via exact movement;
+      - first visible offer had unique card ids (`extra-die`, `step-plus`);
+      - bought `extra-die`; Pес received the owned item and paid 5 coins;
+      - next player landed on Joe Shop and opened the next offer;
+      - `extra-die` appeared again in the next offer even though Pес already owned it, confirming owned items do not deplete Shop stock;
+      - second offer also kept unique visible card ids.
+    - No browser console errors observed in the checked Shop flows.
+  - Checks passed:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `node --check src/controller.js`;
+    - `git diff --check`.
+  - Notes:
+    - QA did not find a rework item for Dev 2.
+    - Browser directly covered the regular Shop buy path; free Shop draw and Joe Auction source-return paths were verified statically because they share the same owned-copy + source-discard lifecycle and direct random/browser setup was not stable enough for a fast gate.
+
+- 2026-06-07 03:26 - QA 2-approved for GD final approval: `Вольный шаг` field preview button
+  - Source handback:
+    - `QA READY 2026-06-07 03:04 - Art/UI handback for Вольный шаг field preview button`.
+  - QA result:
+    - Approved for GD final approval.
+  - What QA 2 checked in browser:
+    - Browser target: `http://127.0.0.1:5173/`.
+    - Started a classic/no-phone field2 game and used exact move `4` to land on Event.
+    - Repeated new-game/Event attempts until Event card `Вольный шаг` appeared.
+    - Applied `Вольный шаг` and confirmed the step-choice popup includes:
+      - numeric choices `0..N`;
+      - full-width `Показать поле`.
+    - Clicked `Показать поле`:
+      - choice popup hid;
+      - board remained visible/inspectable;
+      - main action button changed to `К выбору`.
+    - Clicked `К выбору`:
+      - the same `Вольный шаг` popup returned;
+      - the same numeric step choices were preserved;
+      - `Показать поле` was still available.
+    - Chose `0`:
+      - popup closed;
+      - game returned to `Бросить`;
+      - log showed `Пес выбирает 0 из 1 шагов по событию Вольный шаг`;
+      - no second Event card was drawn/retriggered.
+    - Repeated `Вольный шаг` and chose `1`:
+      - popup closed;
+      - movement resolved normally;
+      - landing on green field resolved with `Пес получает 3 на зеленом поле`.
+    - No browser console warnings/errors observed in the checked tab.
+  - Checks passed:
+    - `node --check src/game.js`;
+    - `git diff --check`.
+
 - 2026-06-07 03:01 - QA 1-approved for GD final approval: finite decks/discard reshuffle
   - GD final approval: approved at 2026-06-07 03:01.
   - Source handback:

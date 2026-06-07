@@ -1,4 +1,4 @@
-# Inbox For UI
+# Inbox For Art / UI 1 / Art / UI 2
 
 For UI/UX and art-asset tasks related to "Очень Большая Бродилка" in `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure`.
 

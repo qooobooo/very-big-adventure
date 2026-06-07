@@ -13,7 +13,8 @@ Active chats:
 - `Dev 2`: additional implementation chat.
 - `Dev 3`: additional implementation chat.
 - `GD`: game design, contracts, rules, balance, and implementation-ready specs for Dev roles.
-- `Art / UI`: visual assets and UI direction.
+- `Art / UI 1`: visual assets and UI direction.
+- `Art / UI 2`: additional visual assets and UI direction.
 - `QA 1`: testing, smoke checks, regression checks, and bug reports for Dev roles.
 - `QA 2`: additional testing chat for smoke checks, regression checks, and bug reports.
 
@@ -59,7 +60,8 @@ Only these chats are active in this project memory right now:
 - `Dev 3`
 - `GD`
 - `Important`
-- `Art / UI`
+- `Art / UI 1`
+- `Art / UI 2`
 - `QA 1`
 - `QA 2`
 

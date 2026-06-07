@@ -17,9 +17,11 @@ Meaning of that request: prepare a ready copy-paste onboarding prompt for the ne
 - если ты `QA 1`, пиши промт для следующего `QA 1`;
 - если ты `QA 2`, пиши промт для следующего `QA 2`;
 - если ты `Important`, пиши промт для следующего Important;
-- если ты `UI`, пиши промт для следующего UI, без номера;
+- если ты `Art / UI 1`, пиши промт для следующего `Art / UI 1`;
+- если ты `Art / UI 2`, пиши промт для следующего `Art / UI 2`;
+- если ты `UI`, уточни актуальную официальную роль в project-memory: сейчас активны `Art / UI 1` и `Art / UI 2`.
 - если роль другая, сохрани эту же роль и явно назови ее в промте.
-- Сохраняй официальный номер роли, если он есть: `Dev 1` заменяет `Dev 1`, `Dev 2` заменяет `Dev 2`, `Dev 3` заменяет `Dev 3`, `QA 1` заменяет `QA 1`, `QA 2` заменяет `QA 2`, `UI` заменяет `UI`, `GD` заменяет `GD`.
+- Сохраняй официальный номер роли, если он есть: `Dev 1` заменяет `Dev 1`, `Dev 2` заменяет `Dev 2`, `Dev 3` заменяет `Dev 3`, `QA 1` заменяет `QA 1`, `QA 2` заменяет `QA 2`, `Art / UI 1` заменяет `Art / UI 1`, `Art / UI 2` заменяет `Art / UI 2`, `GD` заменяет `GD`.
 
 Контекст проекта:
 - Проект: "Очень Большая Бродилка".
@@ -42,6 +44,8 @@ Meaning of that request: prepare a ready copy-paste onboarding prompt for the ne
    - `GD`: `project-memory/inbox/for-gd.md`
    - `QA 1`: `project-memory/inbox/for-qa.md`
    - `QA 2`: `project-memory/inbox/for-qa.md`
+   - `Art / UI 1`: `project-memory/inbox/for-ui.md`
+   - `Art / UI 2`: `project-memory/inbox/for-ui.md`
    - для другой роли найди соответствующий inbox, если он существует.
 3. Если ты Dev 1, Dev 2, Dev 3 или другой чат, который мог менять файлы, проверь:
    - `pwd`
@@ -65,6 +69,8 @@ Meaning of that request: prepare a ready copy-paste onboarding prompt for the ne
   - `Dev 2`: дополнительная разработка и UI/QA-проходы по назначению.
   - `Dev 3`: дополнительная разработка и отдельные вертикальные slice-задачи по назначению.
   - `GD`: геймдизайн, правила, баланс, core loop, постановки для Dev roles.
+  - `Art / UI 1`: визуальные ассеты и UI direction.
+  - `Art / UI 2`: дополнительный чат для визуальных ассетов и UI direction.
   - `QA 1`: тестирование, smoke-проверки, регрессии, баг-репорты.
   - `QA 2`: дополнительное тестирование, smoke-проверки, регрессии, баг-репорты.
   - добавь другие активные роли, если они появились в `project-memory`.
@@ -98,7 +104,7 @@ Meaning of that request: prepare a ready copy-paste onboarding prompt for the ne
 После промта для следующего чата отдельно добавь строку для переименования архивируемого чата:
 - Формат: `<роль/имя чата> - <текущая дата DD.MM>`.
 - Пример: `GD - 07.06`.
-- Используй свою официальную роль/имя чата: `Dev 1`, `Dev 2`, `Dev 3`, `GD`, `Important`, `Art / UI`, `QA 1`, `QA 2` или другую активную роль из project-memory.
+- Используй свою официальную роль/имя чата: `Dev 1`, `Dev 2`, `Dev 3`, `GD`, `Important`, `Art / UI 1`, `Art / UI 2`, `QA 1`, `QA 2` или другую активную роль из project-memory.
 - Пользователь переименует текущий чат перед архивацией в этот текст.
 
 Выведи только готовый copy-paste промт для следующего чата в одном блоке `text`.

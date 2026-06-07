@@ -20,6 +20,423 @@ Open questions:
 - ...
 ```
 
+## 2026-06-07 15:25 - GD
+
+Changed:
+- Gave final GD approval for Dev 3 / QA 1 fix `Random-choice roll UI overlaps dice animation`.
+- Closed the specific UI overlap gate for random-choice dice rolls.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Approval covers only the overlap rework: compact rolling status no longer covers dice/action UI in checked `Кубик удачи` and `Портал хаоса` flows.
+- Separate gates remain open for `Кубик удачи` rule/balance QA and `Ярость монстров` indicator placement QA.
+
+Open questions:
+- None for this overlap task.
+
+## 2026-06-07 15:23 - QA 1
+
+Changed:
+- QA-approved Dev 3 rework `Random-choice roll UI overlaps dice animation` and forwarded it to GD for final approval per Task Lifecycle.
+- Browser-smoked `Кубик удачи` rolling context on desktop `1440x900` and mobile `390x844`.
+- Browser-smoked additional random-choice flow `Портал хаоса` on desktop `1440x900`.
+- Verified normal movement roll remains uncluttered and does not get random-choice context classes.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `git diff --check`.
+- `Кубик удачи` desktop: compact rolling status did not intersect dice faces, dice player label, result/action button; result context also did not intersect action button.
+- `Кубик удачи` mobile: compact rolling status did not intersect dice faces, dice player label, or action button; no console errors.
+- `Портал хаоса` desktop: compact rolling status did not intersect the portal die, dice player label, or action button; no console errors.
+- Residual note: mobile result-state was checked for no overlap; exact-move testing left the page scroll in an artificial state, so QA did not treat a transient horizontal rect offset after result as a blocking rework item for this overlap bug.
+
+Open questions:
+- Waiting for GD final approval.
+
+## 2026-06-07 15:16 - Dev 3
+
+Changed:
+- Reworked random-choice rolling-context layout so it no longer covers animated dice.
+- Kept full explanatory context before the roll and after the result; during dice animation it collapses to a compact rolling status.
+- Desktop status now sits at the bottom of the board area; mobile status uses a constrained compact safe column.
+- Sent rework handback to QA first per Task Lifecycle.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI/layout only; no dice math, random generation, `Кубик удачи` amounts, movement, cards, decks, or normal movement roll behavior changed.
+- Stylesheet cache key is now `styles.css?v=20260607-0386`.
+- Checks passed: `node --check src/game.js`, `git diff --check`.
+- Browser smoke passed:
+  - `Кубик удачи` desktop `1440x900`: rolling context did not intersect dice/player label; no console errors.
+  - `Кубик удачи` mobile `390x844`: rolling context did not intersect dice/player label or action button; no console errors.
+  - `Портал хаоса` desktop `1440x900`: rolling context did not intersect dice/player label; no console errors.
+
+Open questions:
+- Waiting for QA approval before GD final approval.
+
+## 2026-06-07 15:03 - Dev 1
+
+Changed:
+- Moved persistent `Ярость монстров +N` indicator out of the board/map area.
+- `#monsterRageIndicator` now starts after `#scoreStrip` in `index.html` and is moved by layout sync into `.side-panel` between player cards and `.tadam-card` on wide layouts.
+- Restyled `.monster-rage-indicator` as a normal info/status strip instead of an absolute board overlay.
+- Kept Monster Rage rules, stacking, strength math, labels/tooltips, Event card data, and decks unchanged.
+- Sent handback to QA first per Task Lifecycle.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `git diff --check`.
+- Static check passed: `#monsterRageIndicator` is no longer inside `.map-wrap`.
+- Browser smoke on `http://localhost:5173/`: indicator exists, hidden at `+0`, parent is `.side-panel`, `#scoreStrip` and `.tadam-card` are also in `.side-panel`, no console errors.
+
+Open questions:
+- QA still needs to apply/stack `Ярость монстров` and verify visible `+1/+2` placement.
+
+## 2026-06-07 14:58 - GD
+
+Changed:
+- Gave GD final approval to the QA-approved `Joe Shop replenishing stock` task from `Dev 2`.
+- Added and dispatched a UI placement task for the persistent `Ярость монстров +N` indicator.
+- Assigned the Monster Rage UI task to `Dev 1`.
+- Added and dispatched a Dev 3 rework item for random-choice roll UI overlapping dice, reported by the user during `Кубик удачи`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Approved Joe Shop scope: owned Shop items no longer deplete the Shop's 2-copy stock while the Shop card pool is small; source offer copies return to Shop discard/stock while players receive separate owned inventory copies.
+- New Monster Rage UI request: show `Ярость монстров +N` between player cards and the TADAM block, and remove the chip from the field/board area.
+- Monster Rage UI task is placement-only; do not change Monster Rage rules, stacking, or monster strength math.
+- Random-choice roll context must stay useful but must not cover animated dice or result captions on desktop/mobile.
+
+Open questions:
+- Waiting for Dev 1 handback to QA on Monster Rage UI placement.
+- Waiting for Dev 3 rework handback to QA on random-choice dice UI overlap.
+
+## 2026-06-07 14:57 - Dev 3
+
+Changed:
+- Tuned field `Кубик удачи` to the final requested rule: 6 dice, each `6` gives `20` coins, each `1` moves `10` steps backward.
+- Updated `resolveDiceFortuneField(...)` behavior plus prompt, roll context/status, result context, field-effect text, and tile tooltip.
+- Added local constants for the `Кубик удачи` dice count/reward/penalty.
+- Sent handback to QA first per Task Lifecycle.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Did not change board placement, dice random generation, other fields/cards, Event/Good/Joe Shop active tasks, or deck lifecycle.
+- Host game cache key is now `src/game.js?v=20260607-0379`.
+- Checks passed: `node --check src/game.js`, `git diff --check`, static old-text search, static formula check.
+- Browser reload at `http://localhost:5173/` loaded `src/game.js?v=20260607-0379`; tooltip shows `6 = +20 монет, 1 = -10 шагов`; no console errors observed.
+
+Open questions:
+- Waiting for QA approval before GD final approval.
+
+## 2026-06-07 14:57 - QA 1
+
+Changed:
+- QA-approved Dev 2 handback `Joe Shop replenishing stock` and forwarded it to GD for final approval per Task Lifecycle.
+- Verified source lifecycle: regular Shop buy, free Shop draw, and Joe Auction winner all return source Shop offer copies to Shop discard/stock while inventory receives separate owned copies without `_copyId` / `_deckId`.
+- Browser-smoked regular Joe Shop at `http://127.0.0.1:5173/`: bought `extra-die`, then the next Shop offer could show `extra-die` again despite the player owning it; visible offer cards stayed unique.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Static config check: Shop remains `8` physical configured copies (`2` each for `step-plus`, `battle-plus`, `coin-plus`, `extra-die`).
+- Browser console errors: none observed in checked Shop flows.
+- Good/Bad/TADAM/Event finite lifecycle was not changed by this task; QA checked the changed Shop paths and did not find a Dev 2 rework item.
+
+Open questions:
+- Waiting for GD final approval.
+
+## 2026-06-07 14:55 - Dev 1
+
+Changed:
+- Updated Event card `Щедрый дождь` / `event/generous-rain` text and behavior.
+- New behavior: if any players have 0 coins, only those players receive 20; if all players have coins, everyone receives 5.
+- Synced local `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `event`.
+- Sent handback to QA first per Task Lifecycle.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Google Sheet readback confirmed `event!N7` description matches the requested text and `event!M7` count remains `2`.
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `git diff --check`.
+- Static local config check passed: `event/generous-rain` keeps id/title/count/effect and has the updated description.
+
+Open questions:
+- None.
+
+## 2026-06-07 14:54 - GD
+
+Changed:
+- Added and dispatched a `Кубик удачи` tuning task.
+- Assigned implementation to `Dev 3`.
+- Added QA follow-up for updated reward/penalty amounts and prompt/context text.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- User requested final rule: roll 6 dice; each `6` gives `20` coins; each `1` moves `10` steps backward.
+- Current code appears to have an older `+10` per `6` tune; this task should align implementation and UI to the user's final text.
+- Do not change dice count, board placement, other field events/cards, or deck lifecycle.
+
+Open questions:
+- Waiting for Dev 3 handback to QA.
+
+## 2026-06-07 14:52 - GD
+
+Changed:
+- Added and dispatched an Event-card tuning task for `Щедрый дождь`.
+- Assigned implementation to `Dev 1`.
+- Added QA follow-up for both payout branches and updated card text.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- New requested text: `Все игроки без монет получают 20 монет. Если монеты есть у всех, все получают 5 монет`.
+- Behavior: if any player has 0 coins, only 0-coin players get 20; if all players have coins, everyone gets 5.
+- Keep `event/generous-rain` id/title/count unchanged.
+
+Open questions:
+- Waiting for Dev 1 handback to QA.
+
+## 2026-06-07 14:52 - Dev 2
+
+Changed:
+- Implemented the temporary replenishing Joe Shop stock rule.
+- Shop offer source copies now return to Shop discard/stock even when bought, taken for free, or won in Joe Auction.
+- Players receive separate owned Shop item copies without `_copyId` / `_deckId`, so owned inventory no longer depletes the Shop's 2-copy offer stock.
+- Player-to-player Shop card transfer remains an owned-item transfer and does not touch Shop stock.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Did not change Shop card data/counts/text/effects or non-Shop finite deck lifecycle.
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Static check passed: Shop configured copies remain `8`; owned item copies strip deck-copy metadata; free draw, regular Shop buy, and Joe Auction all return source offer copies to Shop discard.
+- Direct QA dispatch sent to `QA 1` (`019e9ef2-389c-78a3-bc66-9f38f69988f9`).
+
+Open questions:
+- Sent to QA first per Task Lifecycle; waiting for QA approval or reproducible rework.
+
+## 2026-06-07 14:49 - GD
+
+Changed:
+- Added and dispatched a new temporary Joe Shop stock rule: while the Shop card pool is small, player-owned Shop items do not deplete the Shop's 2-copy stock.
+- Assigned the implementation to `Dev 2`, since this touches the finite deck lifecycle he recently implemented.
+- Added QA follow-up for Shop replenishing stock and non-Shop finite deck regression.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This supersedes only the Shop-owned-card part of the finite deck lifecycle.
+- Good/Bad/TADAM/Event remain physical decks with out-of-deck active/owned cards where applicable.
+- Shop offers still use configured `count = 2`, but bought/free/auction-won source offer copies return to Shop discard/stock while the player receives a separate owned item.
+- Multiple players may own more than 2 total copies of the same Shop item during this temporary small-card-pool phase.
+
+Open questions:
+- Waiting for Dev 2 handback to QA.
+
+## 2026-06-07 03:28 - Dev 2
+
+Changed:
+- Implemented the new Good-card package: `Сглаз`, `Монетка из фонтана`, and `Путевой знак`.
+- Added local card data for all three cards with `count: 2` and synced the Google Sheet `Cards Config` / `good` tab.
+- Added `Сглаз` as a physical next-battle penalty card that stays out of the Good discard while held, stacks on one player, applies in the next personal battle, then discards to Good.
+- Added host and phone compact `Сглаз` status chips.
+- Added `Монетка из фонтана` strict-poorest payout logic (`15`, otherwise `8`) and `Путевой знак` forward/backward choice with backward landing resolution.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Google Sheet readback confirmed rows for `next-battle-minus3`, `fountain-coin`, and `path-sign` in tab `good`.
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Static config check passed: each new Good card has `count: 2`; Good expanded count is now `20`.
+- Did not touch unrelated Event/Shop source drift.
+- Direct QA dispatch sent to `QA 1` (`019e9ef2-389c-78a3-bc66-9f38f69988f9`).
+
+Open questions:
+- Sent to QA first per Task Lifecycle; waiting for QA approval or reproducible rework.
+
+## 2026-06-07 03:27 - Dev 3
+
+Changed:
+- Implemented contextual UI for non-movement/random-choice dice rolls.
+- Added reusable roll-context markup/state around action prompts and a rolling status card near the active dice prompt.
+- Covered `resolveOnePlayerTieByDie(...)`, Joe Auction tie rolls, `Портал хаоса`, and `Кубик удачи` with reason/participants/outcomes/result context.
+- Sent handback to QA first per Task Lifecycle.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Normal movement rolls were intentionally left uncluttered.
+- Browser reload at `http://localhost:5173/` loaded `styles.css?v=20260607-0378` and `src/game.js?v=20260607-0378`; no console errors observed.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+- Parallel uncommitted card/Good-card changes are present in the worktree and were not reverted or claimed by Dev 3.
+
+Open questions:
+- Waiting for QA approval before GD final approval.
+
+## 2026-06-07 03:26 - QA 2
+
+Changed:
+- Browser-smoked the Art/UI handback for `Событие / Вольный шаг` field preview button.
+- QA-approved the handback and sent it to GD for final approval per Task Lifecycle.
+
+Files:
+- `project-memory/inbox/for-qa.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser target: `http://127.0.0.1:5173/`.
+- Flow passed: `Вольный шаг` step-choice popup shows `0..N` plus `Показать поле`; `Показать поле` hides the popup and shows the board; main button becomes `К выбору`; `К выбору` restores the same popup/options.
+- Regression passed: choosing `0` logs the zero-step choice and does not draw/trigger another Event; choosing `1` moves forward and resolves the green landing field (`+3`).
+- No browser console warnings/errors observed in the checked tab.
+- Checks passed: `node --check src/game.js`, `git diff --check`.
+
+Open questions:
+- Waiting for GD final approval of the QA-approved `Вольный шаг` field-preview handback.
+
+## 2026-06-07 03:23 - Important
+
+Changed:
+- Renamed the active `Art / UI` role to `Art / UI 1`.
+- Added `Art / UI 2` as an active additional visual/UI chat.
+- Updated shared onboarding, read-news, next-chat, handoff, and UI inbox wording for `Art / UI 1` / `Art / UI 2`.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/prompts/read-news.md`
+- `project-memory/prompts/next-chat.md`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Art / UI 1` and `Art / UI 2` share `project-memory/inbox/for-ui.md`.
+- Direct cross-thread messaging tools were unavailable in this session, so this notice is published through `updates.md` and onboarding docs.
+
+Open questions:
+- None.
+
+## 2026-06-07 03:19 - GD
+
+Changed:
+- Added and dispatched a new Good-card task: `Сглаз`, a temporary next-battle `-3` status given to any player.
+- Added two more Good cards to the same Dev 2 task: `Монетка из фонтана` and `Путевой знак`.
+- Assigned implementation to `Dev 2`.
+- Added QA follow-up for all three new Good cards, card data sync, status UI, battle consumption, movement choice, and finite deck lifecycle.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Card text requested by user: `Отдай эту карту любому игроку, в следующем бою он получает -3 к силе, затем сбрасывает эту карту`.
+- GD working title/id: `Сглаз` / `next-battle-minus3`.
+- Additional requested cards:
+  - `Монетка из фонтана`: `Получи 8 монет. Если у тебя меньше всех монет, получи 15.`
+  - `Путевой знак`: `Выбери: идти вперед на 5 или назад на 5. После перемещения назад сработает поле.`
+- Count should be `2` for each new card; all three are non-artifact Good cards.
+- The physical card stays out of the Good deck/discard while held and only goes to Good discard after the target's next battle consumes it.
+- Multiple copies stack for the next battle.
+- Do not fix unrelated card source drift in this task.
+
+Open questions:
+- Waiting for Dev 2 handback to QA.
+
+## 2026-06-07 03:15 - GD
+
+Changed:
+- Added and dispatched a new UX task: show nearby explanatory context for dice rolls that randomly choose an action/player/outcome.
+- Assigned the task to `Dev 3`.
+- Added QA follow-up for random-choice dice context and desktop/mobile layout checks.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is not about the normal movement roll.
+- Priority coverage: `resolveOnePlayerTieByDie(...)`, Joe Auction tie rolls, and random outcome rolls such as `Портал хаоса` / `Кубик удачи`.
+- Requirement: explain reason, participants/options, selection criterion/outcomes, and result near the dice/action prompt.
+- Do not change rules, dice math, card effects, deck behavior, or board placement.
+
+Open questions:
+- Waiting for Dev 3 handback to QA.
+
 ## 2026-06-07 03:04 - Art/UI
 
 Changed:

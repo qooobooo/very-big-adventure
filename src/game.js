@@ -1,4 +1,4 @@
-import { cardConfig } from "./cards.config.js?v=20260607-0373";
+import { cardConfig } from "./cards.config.js?v=20260607-0378";
 import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260531-0271";
 
 const boardEl = document.querySelector("#board");
@@ -309,6 +309,9 @@ const blackMarketShopCost = 5;
 const blackMarketTrainingCost = 10;
 const blackMarketRageCost = 15;
 const blackMarketRageBonus = 10;
+const diceFortuneDiceCount = 6;
+const diceFortuneCoinReward = 20;
+const diceFortuneBackwardStepPenalty = 10;
 const coinIconSrc = "./assets/icons/coin.png?v=20260524-0155";
 const diceIconSrc = "./assets/icons/dice.png?v=20260524-0305";
 const enemyIconSrc = "./assets/icons/enemy_512.png";
@@ -398,6 +401,7 @@ let actionPromptButtonLabel = "Далее";
 let actionPromptAutoPlayerId = null;
 let actionPromptChoiceOptions = [];
 let actionPromptChoiceResolver = null;
+let actionPromptRollContext = null;
 let botActionTimer = null;
 const botShopOfferChoices = new WeakMap();
 let eventToastFadeTimer = null;
@@ -517,6 +521,7 @@ function newGame() {
   actionPromptAutoPlayerId = null;
   actionPromptChoiceOptions = [];
   actionPromptChoiceResolver = null;
+  actionPromptRollContext = null;
   window.clearTimeout(botActionTimer);
   botActionTimer = null;
   movementActionInProgress = false;
@@ -565,6 +570,7 @@ function newGame() {
       id: index,
       items: [],
       nextMonsterBattleBonus: 0,
+      nextBattlePenaltyCards: [],
       position: startCell,
       stepBonus: 0,
     })),
@@ -1317,6 +1323,7 @@ function chooseBotCardAction(player, pending) {
 function scoreCardChoice(player, pending, choice) {
   if (pending?.kind === "big-rest") return scoreBigRestChoice(player, choice.id);
   if (pending?.kind === "black-market") return scoreBlackMarketChoice(player, choice.id);
+  if (Number.isFinite(choice.score)) return choice.score;
 
   const personality = botPersonality(player);
   if (choice.id === "decline") {
@@ -2012,6 +2019,7 @@ function renderScores() {
   for (const player of state.players) {
     const battleBonus = playerBattleBonus(player);
     const rageBonus = nextMonsterBattleBonus(player);
+    const curseStatus = nextBattlePenaltyStatus(player);
     const stepBonus = playerStepBonus(player);
     const card = document.createElement("article");
     card.className = `score-card ${player.id === state.activePlayer ? "active" : ""}`;
@@ -2027,6 +2035,7 @@ function renderScores() {
           ${stepBonus ? `<span class="score-bonus score-step-bonus" title="Шаги">${stepBonusText(stepBonus, compactBonusLabels)}</span>` : ""}
           ${battleBonus ? `<span class="score-battle-bonus" title="Сила">${battleForceText(battleBonus, compactBonusLabels)}</span>` : ""}
           ${rageBonus ? `<span class="score-rage-bonus" title="Зелье ярости: +${rageBonus} в следующей битве с монстром">Зелье +${rageBonus}</span>` : ""}
+          ${curseStatus ? `<span class="score-curse-bonus" title="Сглаз сработает в следующем бою">${nextBattlePenaltyText(curseStatus, true)}</span>` : ""}
           ${playerArtifactBadges(player)}
         </span>
       </div>
@@ -2066,6 +2075,7 @@ function phonePlayerSnapshot(player) {
     artifacts: playerArtifacts(player),
     name: player.name,
     nextMonsterBattleBonus: nextMonsterBattleBonus(player),
+    nextBattlePenalty: nextBattlePenaltyStatus(player),
     position: player.position,
     positionLabel: cellLabel(player.position),
     stepBonus: playerStepBonus(player),
@@ -2088,10 +2098,25 @@ function phoneGameSnapshot() {
     eventMonsterRage: monsterRageBonus(),
     finished: Boolean(state.finished),
     players: state.players.map(phonePlayerSnapshot),
+    rollContext: actionPromptRollContextSnapshot(),
     round: state.round,
     shakeEnabled: phoneRoom.shakeEnabled,
     turnLabel: actionPromptResolver ? actionPromptButtonLabel : ui.rollBtn?.textContent?.trim() || "Бросить",
     updatedAt: Date.now(),
+  };
+}
+
+function actionPromptRollContextSnapshot() {
+  if (!actionPromptRollContext) return null;
+  const context = normalizeRollContext(actionPromptRollContext);
+  if (!context) return null;
+  return {
+    criterion: plainText(context.criterion || ""),
+    kicker: plainText(context.kicker || ""),
+    participants: context.participants.map(plainText),
+    reason: plainText(context.reason || ""),
+    result: plainText(context.result || ""),
+    title: plainText(context.title || ""),
   };
 }
 
@@ -2240,12 +2265,13 @@ function phoneActionsForPlayer(player) {
   }
 
   if (actionPromptResolver && (actionPromptAutoPlayerId === player.id || (actionPromptAutoPlayerId === null && player.id === currentPlayer()?.id))) {
+    const rollContextNote = phoneRollContextNote();
     return [
       {
         id: "continue",
         kind: "roll",
         label: actionPromptButtonLabel,
-        note: "подтвердить на большом экране",
+        note: rollContextNote || "подтвердить на большом экране",
       },
     ];
   }
@@ -2262,6 +2288,12 @@ function phoneActionsForPlayer(player) {
   }
 
   return [];
+}
+
+function phoneRollContextNote() {
+  const context = actionPromptRollContextSnapshot();
+  if (!context) return "";
+  return context.result || context.criterion || context.reason || context.title || "";
 }
 
 function phoneCardChoiceDisplayKind(pending, choice) {
@@ -2746,6 +2778,7 @@ function buildGameHistorySnapshot() {
       items: player.items.map((item) => ({ id: item.id, title: item.title })),
       name: player.name,
       nextMonsterBattleBonus: nextMonsterBattleBonus(player),
+      nextBattlePenalty: nextBattlePenaltyStatus(player),
       position: player.position,
       stepBonus: playerStepBonus(player),
     })),
@@ -2924,10 +2957,12 @@ function renderTurn() {
   }
   const itemText = player.items.length ? ` Лавка: ${player.items.map((item) => item.title).join(", ")}.` : "";
   const rageText = nextMonsterBattleBonus(player) ? ` Зелье ярости: +${nextMonsterBattleBonus(player)} к следующему монстру.` : "";
+  const curseStatus = nextBattlePenaltyStatus(player);
+  const curseText = curseStatus ? ` ${nextBattlePenaltyText(curseStatus)}.` : "";
   const artifactText = playerArtifacts(player).length ? ` Артефакты: ${playerArtifacts(player).map((artifact) => artifact.title).join(", ")}.` : "";
   const monsterRageText = monsterRageBonus() ? ` Ярость монстров: +${monsterRageBonus()}.` : "";
   if (ui.activePlayerRole) {
-    ui.activePlayerRole.innerHTML = iconizeHtml(`Клетка ${cellLabel(player.position)}. ${player.coins} монет.${itemText}${rageText}${artifactText}${monsterRageText}`);
+    ui.activePlayerRole.innerHTML = iconizeHtml(`Клетка ${cellLabel(player.position)}. ${player.coins} монет.${itemText}${rageText}${curseText}${artifactText}${monsterRageText}`);
   }
   ui.fieldEffect.innerHTML = fieldEffectText(player.position);
   ui.turnActions.className = `turn-actions ${state.pendingPreRoll ? "pending-action" : ""}`.trim();
@@ -3618,9 +3653,15 @@ async function resolveEnemyBattle(player) {
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const baseBonus = playerCombatBonus(player);
   const rageBonus = consumeNextMonsterBattleBonus(player);
-  const bonus = baseBonus + rageBonus;
+  const curse = consumeNextBattlePenalty(player);
+  const bonus = baseBonus + rageBonus + curse.penalty;
   if (rageBonus > 0) {
     log(`${playerName(player)} использует <strong>Зелье ярости</strong>: <strong>+${rageBonus}</strong> к этой битве с монстром. Зелье сгорает.`);
+  }
+  if (curse.penalty < 0) {
+    log(`${playerName(player)} сбрасывает <strong>Сглаз</strong> (${curse.cards.length}): <strong>${curse.penalty}</strong> к этой битве.`, {
+      toast: true,
+    });
   }
   state.isAnimating = true;
   state.dice = null;
@@ -3632,12 +3673,12 @@ async function resolveEnemyBattle(player) {
   render();
   await animateDice(rolls, { bonus, player, isEnemyBattle: true });
 
-  const damage = rolled + bonus;
+  const damage = Math.max(0, rolled + bonus);
   recordMonsterBattle(player, door, damage, damage >= requiredStrength);
   state.dice = damage;
   state.isAnimating = false;
 
-  const bonusText = monsterBattleBonusFormulaText(baseBonus, rageBonus, damage);
+  const bonusText = monsterBattleBonusFormulaText(baseBonus, rageBonus, curse.penalty, damage);
   if (damage >= requiredStrength) {
     state.enemyBattleProgress = {
       bonus,
@@ -3717,6 +3758,20 @@ async function resolveChaosPortal(player) {
   state.isAnimating = true;
   state.dice = null;
   render();
+  showRollContextStatus({
+    criterion: "Кубик выбирает один из исходов.",
+    kicker: "Портал хаоса",
+    outcomes: [
+      { label: "1-2", effect: "назад к монстру" },
+      { label: "3-4", effect: "к Лавке Джо" },
+      { label: "5", effect: "к Хорошо" },
+      { label: "6", effect: "выбор игрока" },
+    ],
+    participants: [playerChoiceBadge(player)],
+    reason: "Кубик решает, куда портал отправит игрока.",
+    result: `${playerName(player)} бросает кубик портала.`,
+    title: "Портал выбирает путь",
+  });
   await animateDice(rolls, { label: "Портал хаоса", player });
   state.isAnimating = false;
 
@@ -3738,6 +3793,23 @@ async function resolveChaosPortal(player) {
   log(`${playerName(player)} бросает <strong>Портал хаоса</strong>: <strong>${roll}</strong>.`);
   log(`${playerName(player)} исчезает в портале: ${chaosPortalRollLabel(roll)} → <strong>${destination.label}</strong> (${cellTitleWithLabel(destination.cell)}).`, {
     toast: true,
+  });
+  await showActionPrompt("", {
+    autoFor: player,
+    rollContext: {
+      criterion: "Кубик выбирает один из исходов.",
+      kicker: "Портал хаоса",
+      outcomes: [
+        { label: "1-2", effect: "назад к монстру" },
+        { label: "3-4", effect: "к Лавке Джо" },
+        { label: "5", effect: "к Хорошо" },
+        { label: "6", effect: "выбор игрока" },
+      ],
+      participants: [playerChoiceBadge(player)],
+      reason: "Кубик решает, куда портал отправит игрока.",
+      result: `Выпало ${roll}: ${chaosPortalRollLabel(roll)} → <strong>${destination.label}</strong> (${cellTitleWithLabel(destination.cell)}).`,
+      title: "Результат портала",
+    },
   });
 
   await teleportFromChaosPortal(player, destination);
@@ -3888,15 +3960,28 @@ async function resolveDiceFortuneField(player) {
     autoFor: player,
   });
 
-  const rolls = rollDice(6);
-  recordDiceThrown(player, 6);
+  const rolls = rollDice(diceFortuneDiceCount);
+  recordDiceThrown(player, diceFortuneDiceCount);
   const sixes = rolls.filter((value) => value === 6).length;
   const ones = rolls.filter((value) => value === 1).length;
-  const coins = sixes * 10;
-  const backwardSteps = ones * 5;
+  const coins = sixes * diceFortuneCoinReward;
+  const backwardSteps = ones * diceFortuneBackwardStepPenalty;
 
   state.dice = null;
   render();
+  showRollContextStatus({
+    criterion: "Кубики считают награды и откаты.",
+    kicker: "Кубик удачи",
+    outcomes: [
+      { label: "6", effect: `+${diceFortuneCoinReward} монет за каждую шестерку` },
+      { label: "1", effect: `-${diceFortuneBackwardStepPenalty} шагов за каждую единицу` },
+      { label: "2-5", effect: "без эффекта" },
+    ],
+    participants: [playerChoiceBadge(player)],
+    reason: "Шесть кубиков одновременно считают награды и откаты.",
+    result: `${playerName(player)} бросает ${diceFortuneDiceCount} кубиков удачи.`,
+    title: "Удача выбирает исход",
+  });
   await animateDice(rolls, { player });
 
   if (coins > 0) addCoins(player, coins);
@@ -3908,7 +3993,22 @@ async function resolveDiceFortuneField(player) {
   const resultText = resultParts.length ? resultParts.join(" и ") : "ничего не происходит";
   const message = `${playerName(player)} бросает кубик удачи: ${formatRoll(rolls)}. Результат: ${resultText}.`;
   log(message, { toast: !backwardSteps });
-  await showActionPrompt(message, { autoFor: player });
+  await showActionPrompt("", {
+    autoFor: player,
+    rollContext: {
+      criterion: "Кубики считают награды и откаты.",
+      kicker: "Кубик удачи",
+      outcomes: [
+        { label: "6", effect: `+${diceFortuneCoinReward} монет за каждую шестерку` },
+        { label: "1", effect: `-${diceFortuneBackwardStepPenalty} шагов за каждую единицу` },
+        { label: "2-5", effect: "без эффекта" },
+      ],
+      participants: [playerChoiceBadge(player)],
+      reason: "Шесть кубиков одновременно считают награды и откаты.",
+      result: `${formatRoll(rolls)} → ${resultText}.`,
+      title: "Результат удачи",
+    },
+  });
 
   if (backwardSteps > 0) {
     await movePlayerSteps(player, -backwardSteps);
@@ -3921,15 +4021,15 @@ function diceFortunePromptMarkup(player) {
   return rollEventPromptMarkup({
     kicker: "Кубик удачи",
     title: "Испытай удачу",
-    intro: `${playerChoiceBadge(player)} бросает 6 кубиков. Каждый кубик может дать награду или откат.`,
+    intro: `${playerChoiceBadge(player)} бросает ${diceFortuneDiceCount} кубиков. Каждый кубик может дать награду или откат.`,
     rules: [
       {
         roll: "6",
-        effect: `<strong>${coinAmount(10)}</strong> за каждую шестерку`,
+        effect: `<strong>${coinAmount(diceFortuneCoinReward)}</strong> за каждую шестерку`,
       },
       {
         roll: "1",
-        effect: "<strong>5 шагов назад</strong> за каждую единицу",
+        effect: `<strong>${diceFortuneBackwardStepPenalty} шагов назад</strong> за каждую единицу`,
       },
       {
         roll: "2-5",
@@ -3957,6 +4057,58 @@ function rollEventPromptMarkup({ kicker, title, intro, rules, footer = "" }) {
       <p class="roll-event-intro">${intro}</p>
       <div class="roll-event-rules">${rows}</div>
       ${footer ? `<p class="roll-event-footer">${footer}</p>` : ""}
+    </section>
+  `;
+}
+
+function normalizeRollContext(context) {
+  if (!context) return null;
+  const participants = (context.participants || []).filter(Boolean);
+  const outcomes = (context.outcomes || []).filter((item) => item?.label || item?.effect);
+  return {
+    criterion: context.criterion || "",
+    kicker: context.kicker || "Жребий",
+    outcomes,
+    participants,
+    reason: context.reason || "",
+    result: context.result || "",
+    title: context.title || "Случайный бросок",
+  };
+}
+
+function rollContextPromptMarkup(message, contextInput) {
+  const context = normalizeRollContext(contextInput);
+  if (!context) return message;
+  const participants = context.participants.length
+    ? `
+      <div class="roll-context-participants">
+        ${context.participants.map((item) => `<span>${item}</span>`).join("")}
+      </div>
+    `
+    : "";
+  const outcomes = context.outcomes.length
+    ? `
+      <div class="roll-context-outcomes">
+        ${context.outcomes.map((item) => `
+          <span>
+            ${item.label ? `<b>${item.label}</b>` : ""}
+            ${item.effect ? `<em>${item.effect}</em>` : ""}
+          </span>
+        `).join("")}
+      </div>
+    `
+    : "";
+  const result = context.result ? `<p class="roll-context-result">${context.result}</p>` : "";
+  const detail = [context.reason, context.criterion].filter(Boolean).join(" ");
+  return `
+    <section class="roll-context-card">
+      <p class="roll-context-kicker">${context.kicker}</p>
+      <h3>${context.title}</h3>
+      ${detail ? `<p class="roll-context-detail">${detail}</p>` : ""}
+      ${participants}
+      ${outcomes}
+      ${result}
+      ${message ? `<div class="roll-context-message">${message}</div>` : ""}
     </section>
   `;
 }
@@ -4048,7 +4200,7 @@ async function resolveVsField(player) {
         rollingPlayerId: null,
       };
       render();
-      log(`${playerName(contender)} в VS-битве: ${formatRoll(result.rolls)}${bonusFormulaText(result.bonus, result.total)}. Сила: <strong>${result.total}</strong>.`);
+      log(`${playerName(contender)} в VS-битве: ${formatRoll(result.rolls)}${combatBonusFormulaText(result.baseBonus, result.cursePenalty, result.total)}. Сила: <strong>${result.total}</strong>.`);
     }
 
     const bestForce = Math.max(...roundResults.map((result) => result.total));
@@ -4139,7 +4291,7 @@ async function resolveFinalBattle(boss, animate = true) {
     state.finalBattleProgress.playersForce += result.total;
     render();
     log(
-      `${playerName(challenger)} атакует босса: ${formatRoll(result.rolls)}${finalBonusText(result.bonus, result.total)}. Сила: <strong>${result.total}</strong>.`,
+      `${playerName(challenger)} атакует босса: ${formatRoll(result.rolls)}${finalBonusText(result.baseBonus, result.cursePenalty, result.total)}. Сила: <strong>${result.total}</strong>.`,
     );
   }
 
@@ -4180,18 +4332,21 @@ async function resolveFinalBattle(boss, animate = true) {
     const result = await rollFinalBattlePower(boss, animate, { label: `Босс - ${boss.name}` });
     bossRollResults.push(result);
     state.finalBattleProgress.bossRollsStarted = true;
-    state.finalBattleProgress.bossForce += result.rolled;
+    state.finalBattleProgress.bossForce = Math.max(0, state.finalBattleProgress.bossForce + result.rolled + (result.cursePenalty || 0));
     render();
+    const curseText = result.cursePenalty ? `, Сглаз <strong>${result.cursePenalty}</strong>` : "";
     log(
-      `${playerName(boss)} бросает как босс ${index + 1}/${challengers.length}: ${formatRoll(result.rolls)}. Кубики: <strong>${result.rolled}</strong>.`,
+      `${playerName(boss)} бросает как босс ${index + 1}/${challengers.length}: ${formatRoll(result.rolls)}. Кубики: <strong>${result.rolled}</strong>${curseText}.`,
     );
   }
 
   const bossRolled = bossRollResults.reduce((sum, result) => sum + result.rolled, 0);
-  const bossForce = bossRolled + bossBonus + bossOpponentBonus;
+  const bossCursePenalty = bossRollResults.reduce((sum, result) => sum + (result.cursePenalty || 0), 0);
+  const bossForce = Math.max(0, bossRolled + bossBonus + bossOpponentBonus + bossCursePenalty);
   state.finalBattleProgress.bossForce = bossForce;
+  const bossCurseText = bossCursePenalty ? ` + Сглаз ${bossCursePenalty}` : "";
   log(
-    `Сила босса: <strong>${bossForce}</strong> (${bossRolled} кубики${bossBonusText.length ? ` + ${bossBonusText.join(" + ")}` : ""}).`,
+    `Сила босса: <strong>${bossForce}</strong> (${bossRolled} кубики${bossBonusText.length ? ` + ${bossBonusText.join(" + ")}` : ""}${bossCurseText}).`,
   );
 
   const bossWon = bossForce >= playersForce;
@@ -4204,6 +4359,7 @@ async function resolveFinalBattle(boss, animate = true) {
   const finalSummary = buildFinalBattleSummary({
     boss,
     bossBonus,
+    bossCursePenalty,
     bossForce,
     bossOpponentBonus,
     bossRollResults,
@@ -4260,6 +4416,7 @@ async function resolveFinalBattle(boss, animate = true) {
 function buildFinalBattleSummary({
   boss,
   bossBonus,
+  bossCursePenalty = 0,
   bossForce,
   bossOpponentBonus,
   bossRollResults,
@@ -4286,7 +4443,7 @@ function buildFinalBattleSummary({
         color: player.color,
         force: isBoss
           ? {
-              bonus: bossBonus,
+              bonus: bossBonus + bossCursePenalty,
               opponentBonus: bossOpponentBonus,
               rolled: bossRolled,
               rolls: bossRollResults.map((result) => result.rolls),
@@ -4330,16 +4487,23 @@ async function rollPlayerBattlePower(player, animate, { label = "", isFinalBattl
   const rolls = rollDice(diceCount);
   recordDiceThrown(player, diceCount);
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
-  const bonus = playerCombatBonus(player);
+  const baseBonus = playerCombatBonus(player);
+  const curse = consumeNextBattlePenalty(player);
+  const bonus = baseBonus + curse.penalty;
+  if (curse.penalty < 0) {
+    log(`${playerName(player)} сбрасывает <strong>Сглаз</strong> (${curse.cards.length}): <strong>${curse.penalty}</strong> к этой битве.`, {
+      toast: true,
+    });
+  }
   if (animate) {
     state.dice = null;
     render();
     await animateDice(rolls, { bonus, label, player, isFinalBattle });
   }
-  const total = rolled + bonus;
+  const total = Math.max(0, rolled + bonus);
   state.dice = total;
   render();
-  return { bonus, player, rolled, rolls, total };
+  return { baseBonus, bonus, cursePenalty: curse.penalty, player, rolled, rolls, total };
 }
 
 async function rollPlayerMonsterBattlePower(player, animate, { label = "" } = {}) {
@@ -4349,23 +4513,29 @@ async function rollPlayerMonsterBattlePower(player, animate, { label = "" } = {}
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const baseBonus = playerCombatBonus(player);
   const rageBonus = consumeNextMonsterBattleBonus(player);
-  const bonus = baseBonus + rageBonus;
+  const curse = consumeNextBattlePenalty(player);
+  const bonus = baseBonus + rageBonus + curse.penalty;
   if (rageBonus > 0) {
     log(`${playerName(player)} использует <strong>Зелье ярости</strong> в событии <strong>Сплочение</strong>: <strong>+${rageBonus}</strong>. Зелье сгорает.`);
+  }
+  if (curse.penalty < 0) {
+    log(`${playerName(player)} сбрасывает <strong>Сглаз</strong> в событии <strong>Сплочение</strong> (${curse.cards.length}): <strong>${curse.penalty}</strong>.`, {
+      toast: true,
+    });
   }
   if (animate) {
     state.dice = null;
     render();
     await animateDice(rolls, { bonus, label, player, isEnemyBattle: true });
   }
-  const total = rolled + bonus;
+  const total = Math.max(0, rolled + bonus);
   state.dice = total;
   render();
-  return { baseBonus, bonus, player, rageBonus, rolled, rolls, total };
+  return { baseBonus, bonus, cursePenalty: curse.penalty, player, rageBonus, rolled, rolls, total };
 }
 
-function finalBonusText(bonus, total) {
-  return bonusFormulaText(bonus, total);
+function finalBonusText(baseBonus, cursePenalty, total) {
+  return combatBonusFormulaText(baseBonus, cursePenalty, total);
 }
 
 function finalBattleScore(player, damageToBoss, position = 1) {
@@ -4461,10 +4631,12 @@ async function drawAndApplyCard(player, deckId, deckName = deckLabel(deckId)) {
   } else {
     log(`${playerName(player)} тянет карту <strong>${deckName}</strong>: ${card.title}`, { toast: true });
   }
+  let shouldDiscard = true;
   try {
-    await applyCardEffect(player, card.effect, { title: card.title });
+    const result = await applyCardEffect(player, card.effect, { card, deckId, title: card.title });
+    shouldDiscard = result?.discard !== false;
   } finally {
-    discardResolvedCard(deckId, card);
+    if (shouldDiscard) discardResolvedCard(deckId, card);
   }
 }
 
@@ -4695,6 +4867,7 @@ function chooseShopCardFromFace(offer, player = null) {
   window.clearTimeout(eventToastFadeTimer);
   window.clearTimeout(eventToastHideTimer);
 
+  actionPromptRollContext = null;
   ui.eventToast.hidden = false;
   ui.eventToast.innerHTML = `<div class="event-toast-copy">${shopCardsMarkup(offer, {
     revealed: true,
@@ -4905,6 +5078,12 @@ async function applyCardEffect(player, effect, source = {}) {
     await resolveBuyShopCardFromPlayer(player, effect.cost);
   } else if (effect.type === "choose-player-back-roll") {
     await resolveChoosePlayerBackRoll(player);
+  } else if (effect.type === "give-next-battle-penalty") {
+    return resolveGiveNextBattlePenalty(player, source.card, effect.amount ?? -3);
+  } else if (effect.type === "coins-if-poorest") {
+    resolveCoinsIfPoorest(player, effect.amount ?? 8, effect.poorestAmount ?? 15);
+  } else if (effect.type === "choose-forward-or-back") {
+    await resolveChooseForwardOrBack(player, effect.steps ?? 5);
   } else if (effect.type === "event-race") {
     await resolveEventRace(player);
   } else if (effect.type === "event-generous-rain") {
@@ -4947,13 +5126,19 @@ async function resolveEventRace(player) {
 function resolveEventGenerousRain(amount = 20) {
   const targets = state.players.filter((player) => player.coins === 0);
   if (!targets.length) {
-    log(`<strong>Щедрый дождь</strong>: игроков с 0 монет нет.`, { toast: true });
+    const fallbackAmount = 5;
+    for (const player of state.players) {
+      addCoins(player, fallbackAmount);
+    }
+    log(`<strong>Щедрый дождь</strong>: монеты есть у всех, поэтому все получают <strong>${coinAmount(fallbackAmount)}</strong>.`, {
+      toast: true,
+    });
     return;
   }
   for (const target of targets) {
     addCoins(target, amount);
   }
-  log(`<strong>Щедрый дождь</strong>: ${targets.map(playerName).join(", ")} получают <strong>${coinAmount(amount)}</strong>.`, {
+  log(`<strong>Щедрый дождь</strong>: без монет ${targets.map(playerName).join(", ")} получают <strong>${coinAmount(amount)}</strong>.`, {
     toast: true,
   });
 }
@@ -5059,7 +5244,7 @@ async function resolveEventUnity(player) {
   for (const contender of state.players) {
     const result = await rollPlayerMonsterBattlePower(contender, true, { label: `Сплочение - ${contender.name}` });
     results.push(result);
-    log(`${playerName(contender)} в событии <strong>Сплочение</strong>: ${formatRoll(result.rolls)}${monsterBattleBonusFormulaText(result.baseBonus, result.rageBonus, result.total)}. Сила: <strong>${result.total}</strong>.`);
+    log(`${playerName(contender)} в событии <strong>Сплочение</strong>: ${formatRoll(result.rolls)}${monsterBattleBonusFormulaText(result.baseBonus, result.rageBonus, result.cursePenalty, result.total)}. Сила: <strong>${result.total}</strong>.`);
   }
   const teamTotal = results.reduce((sum, result) => sum + result.total, 0);
   if (teamTotal >= monsterStrength) {
@@ -5140,10 +5325,19 @@ async function drawFreeShopCard(player, reason = "бесплатно получ�
     return;
   }
   await revealShopCards([card], player);
-  player.items.push(card);
+  player.items.push(ownedShopItem(card));
+  discardCardToDeck("shop", card);
   recordShopCards(player);
   render();
   log(`${playerName(player)} ${reason}: <strong>${card.title}</strong>`, { toast: true });
+}
+
+function ownedShopItem(card) {
+  if (!card) return null;
+  const item = { ...card };
+  delete item._copyId;
+  delete item._deckId;
+  return item;
 }
 
 async function resolveBuyShopCardFromPlayer(player, cost) {
@@ -5250,6 +5444,131 @@ async function resolveChoosePlayerBackRoll(player) {
   await movePlayerSteps(target, -total);
 }
 
+async function resolveGiveNextBattlePenalty(player, card, amount = -3) {
+  if (!card) return { discard: true };
+
+  const choices = state.players.map((target) => ({
+    id: String(target.id),
+    label: playerChoiceBadge(target),
+    note: nextBattlePenaltyChoiceNote(target),
+    noteClass: "choice-player-note",
+    score: scoreNextBattlePenaltyTarget(player, target),
+  }));
+
+  const choice = await chooseCardAction({
+    choices,
+    kicker: "Хорошо",
+    kind: "next-battle-penalty",
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} передает сглаз. Цель получит ${amount} к силе в следующем бою.`,
+    title: "Сглаз. Кого проклясть?",
+  });
+  const target = state.players.find((item) => item.id === Number(choice));
+  if (!target) return { discard: true };
+
+  giveNextBattlePenaltyCard(target, card, amount);
+  recordEffectReceived(target, player);
+  render();
+  log(`${playerName(player)} отдает <strong>Сглаз</strong> игроку ${playerName(target)}. В следующем бою: <strong>${amount}</strong> к силе.`, {
+    toast: true,
+  });
+  return { discard: false };
+}
+
+function nextBattlePenaltyChoiceNote(target) {
+  const penalty = nextBattlePenaltyAmount(target);
+  const active = penalty ? `, уже ${penalty}` : "";
+  return `${battleForceText(playerBattleBonus(target), true)}${active}`;
+}
+
+function scoreNextBattlePenaltyTarget(actor, target) {
+  const personality = botPersonality(actor);
+  if (!target) return -100;
+  if (target.id === actor.id && state.players.length > 1) return -24 / personality.chaos;
+
+  const gate = monsterGatePressure(target);
+  const leader = leaderPressureScore(target);
+  const heldPenalty = Math.abs(nextBattlePenaltyAmount(target));
+  let score = leader * (0.9 + personality.steal * 0.28);
+  if (gate) {
+    score += (gate.nearby ? 18 : 6) * gate.weight;
+    score += Math.max(0, 24 - gate.distance) * 0.8 * gate.weight;
+    if (gate.chance >= 0.35 && gate.chance <= 0.82) score += 10 * gate.weight;
+  }
+  score -= heldPenalty * 3.5;
+  if (target.bot) score -= 3;
+  return score;
+}
+
+function giveNextBattlePenaltyCard(target, card, amount = -3) {
+  if (!target) return;
+  if (!Array.isArray(target.nextBattlePenaltyCards)) target.nextBattlePenaltyCards = [];
+  target.nextBattlePenaltyCards.push({
+    ...card,
+    effect: { ...(card.effect || {}), amount },
+  });
+}
+
+function resolveCoinsIfPoorest(player, amount = 8, poorestAmount = 15) {
+  const isStrictPoorest = state.players
+    .filter((target) => target.id !== player.id)
+    .every((target) => player.coins < target.coins);
+  const reward = isStrictPoorest ? poorestAmount : amount;
+  addCoins(player, reward);
+  log(
+    `${playerName(player)} бросает <strong>Монетку из фонтана</strong>: ${isStrictPoorest ? "меньше всех монет" : "не единственный самый бедный"}. Награда: <strong>${coinAmount(reward)}</strong>.`,
+    { toast: true },
+  );
+}
+
+async function resolveChooseForwardOrBack(player, steps = 5) {
+  const amount = Math.max(1, Math.abs(Number(steps) || 5));
+  const forwardCell = projectedRouteCell(player, amount);
+  const backwardCell = projectedRouteCell(player, -amount);
+  const choices = [
+    {
+      id: "forward",
+      label: `Вперед на ${amount}`,
+      note: cellTitleWithLabel(forwardCell),
+      score: scorePathSignDestination(player, forwardCell, amount),
+    },
+    {
+      id: "backward",
+      label: `Назад на ${amount}`,
+      note: cellTitleWithLabel(backwardCell),
+      score: scorePathSignDestination(player, backwardCell, -amount),
+    },
+  ];
+  const choice = await chooseCardAction({
+    choices,
+    kicker: "Хорошо",
+    kind: "path-sign",
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} выбирает направление. Если пойдет назад, поле на финише сработает.`,
+    title: "Путевой знак",
+  });
+  const direction = choice === "backward" ? -amount : amount;
+  const directionText = direction > 0 ? "вперед" : "назад";
+  log(`${playerName(player)} выбирает <strong>Путевой знак</strong>: ${Math.abs(direction)} клеток ${directionText}.`, { toast: true });
+  await movePlayerSteps(player, direction, { resolveBackwardLanding: direction < 0 });
+}
+
+function projectedRouteCell(player, steps) {
+  const currentIndex = Math.max(0, (routeIndex.get(player?.position) || 1) - 1);
+  const targetIndex = clamp(currentIndex + steps, 0, Math.max(0, routeCells.length - 1));
+  const target = routeCells[targetIndex];
+  return target ? cellKey(target.col, target.row) : player?.position || startCell;
+}
+
+function scorePathSignDestination(player, cell, steps) {
+  const personality = botPersonality(player);
+  const progressDelta = (routeIndex.get(cell) || routeProgress(player)) - routeProgress(player);
+  let score = scoreCellForBot(player, cell, { cardMove: true });
+  score += progressDelta * (steps > 0 ? 0.9 : 0.55) * personality.progress;
+  if (steps < 0) score -= 5 * personality.progress;
+  return score;
+}
+
 function moveBonusText(bonus) {
   return bonus ? `+${bonus} бонус` : "";
 }
@@ -5314,8 +5633,8 @@ async function resolveShop(player) {
   }
 
   addCoins(player, -5);
-  player.items.push(bought);
-  discardCardsToDeck("shop", offer.filter((card) => card !== bought));
+  player.items.push(ownedShopItem(bought));
+  discardCardsToDeck("shop", offer);
   recordShopCards(player);
   log(`${playerName(player)} покупает в Лавке Джо: <strong>${bought.title}</strong>`, { toast: true });
 }
@@ -5363,8 +5682,8 @@ async function resolveJoeAuction(player) {
   }
 
   addCoins(winner, -highestBid);
-  winner.items.push(picked);
-  discardCardsToDeck("shop", offer.filter((card) => card !== picked));
+  winner.items.push(ownedShopItem(picked));
+  discardCardsToDeck("shop", offer);
   recordShopCards(winner);
   log(
     `${playerName(winner)} выигрывает <strong>Аукцион Лавки Джо</strong>, платит в банк <strong>${coinAmount(highestBid)}</strong> и забирает карту <strong>${picked.title}</strong>.`,
@@ -5398,14 +5717,27 @@ async function resolveJoeAuctionTie(players, bid) {
   while (tied.length > 1) {
     log(`Ничья в аукционе за <strong>${coinAmount(bid)}</strong>: ${tied.map(playerName).join(", ")} бросают 1 кубик.`);
     const rolls = [];
+    const participants = tied.map(playerChoiceBadge);
     for (const player of tied) {
+      const rollContext = {
+        criterion: "Больший бросок выигрывает право выбрать карту. При равенстве игроки перебрасывают.",
+        kicker: "Жребий аукциона",
+        participants,
+        reason: `Ничья по ставке ${coinAmount(bid)}.`,
+        title: round > 1 ? `Аукцион: переброс ${round}` : "Аукцион: ничья ставок",
+      };
       await showActionPrompt(`${playerName(player)} бросает кубик за победу в аукционе.`, {
         autoFor: player,
         buttonLabel: "Бросить кубик",
+        rollContext,
       });
       const roll = d6();
       state.dice = null;
       render();
+      showRollContextStatus({
+        ...rollContext,
+        result: `${playerName(player)} бросает кубик аукциона.`,
+      });
       await animateDice([roll], { label: `Аукцион Лавки Джо ${round}`, player });
       state.dice = roll;
       rolls.push({ player, roll });
@@ -5413,7 +5745,21 @@ async function resolveJoeAuctionTie(players, bid) {
     log(`Переигровка аукциона: ${rolls.map(({ player, roll }) => `${playerName(player)} - <strong>${roll}</strong>`).join(", ")}.`);
     const best = Math.max(...rolls.map((item) => item.roll));
     tied = rolls.filter((item) => item.roll === best).map((item) => item.player);
+    const resultText = tied.length === 1
+      ? `${playerName(tied[0])} выигрывает жребий по броску ${best}.`
+      : `Снова ничья на ${best}: ${tied.map(playerName).join(", ")} переигрывают.`;
     if (tied.length > 1) log(`Снова ничья: ${tied.map(playerName).join(", ")} переигрывают.`);
+    await showActionPrompt("", {
+      autoFor: tied[0],
+      rollContext: {
+        criterion: "Больший бросок выигрывает право выбрать карту.",
+        kicker: "Жребий аукциона",
+        participants: rolls.map(({ player, roll }) => `${playerChoiceBadge(player)} <strong>${roll}</strong>`),
+        reason: `Ставка ${coinAmount(bid)}.`,
+        result: resultText,
+        title: "Результат жребия",
+      },
+    });
     round += 1;
   }
   return tied;
@@ -5489,8 +5835,8 @@ function chooseCardAction(config) {
   });
 }
 
-async function movePlayerSteps(player, steps) {
-  let shouldResolveLanding = steps > 0;
+async function movePlayerSteps(player, steps, { resolveBackwardLanding = false } = {}) {
+  let shouldResolveLanding = steps > 0 || (steps < 0 && resolveBackwardLanding);
 
   if (steps > 0) {
     for (let step = 0; step < steps && player.position !== finishCell; step += 1) {
@@ -5670,7 +6016,7 @@ function tileTitle(cell) {
     "big-rest": "Привал — выбери: +10 монет, +1 сила навсегда или +2 скорость навсегда",
     "black-market": "Черный рынок — сделки: 5 за Лавку, 10 за +1 силу навсегда, 15 за +10 в следующей битве с монстром",
     "chaos-portal": "Портал хаоса — 1-2: назад к монстру, 3-4: к Лавке Джо, 5: к Хорошо, 6: выбор",
-    "dice-fortune": "Кубик удачи",
+    "dice-fortune": `Кубик удачи — ${diceFortuneDiceCount} бросков: 6 = +${diceFortuneCoinReward} монет, 1 = -${diceFortuneBackwardStepPenalty} шагов`,
     enemy: "Враг",
     event: "Событие",
     good: "Хорошо",
@@ -5695,7 +6041,7 @@ function fieldEffectText(cell) {
     "big-rest": ["Привал", "выбери: +10 монет, +1 сила навсегда или +2 скорость навсегда"],
     "black-market": ["Черный рынок", "5 за Лавку, 10 за +1 силу, 15 за +10 к следующему монстру"],
     "chaos-portal": ["Портал хаоса", "1-2: назад к монстру, 3-4: к Лавке Джо, 5: к Хорошо, 6: выбор"],
-    "dice-fortune": ["Кубик удачи", "6 бросков: 6 = +10 монет, 1 = -5 шагов"],
+    "dice-fortune": ["Кубик удачи", `${diceFortuneDiceCount} бросков: 6 = +${diceFortuneCoinReward} монет, 1 = -${diceFortuneBackwardStepPenalty} шагов`],
     enemy: ["Враг", "битва с монстром"],
     event: ["Событие", "тяни карту Событие"],
     good: ["Хорошо", "тяни карту Хорошо"],
@@ -5735,11 +6081,20 @@ function turnActionsText(player) {
 
   const actions = [];
   const rageBonus = nextMonsterBattleBonus(player);
+  const curseStatus = nextBattlePenaltyStatus(player);
   if (rageBonus > 0) {
     actions.push(`
       <span class="action-chip rage-action-chip" title="Зелье ярости сработает в следующей битве с монстром">
         <b>+${rageBonus}</b>
         <span>зелье ярости</span>
+      </span>
+    `);
+  }
+  if (curseStatus) {
+    actions.push(`
+      <span class="action-chip curse-action-chip" title="Сглаз сработает в следующем бою">
+        <b>${curseStatus.penalty}</b>
+        <span>сглаз</span>
       </span>
     `);
   }
@@ -6044,6 +6399,39 @@ function playerCombatBonus(player) {
   return playerBattleBonus(player);
 }
 
+function nextBattlePenaltyCards(player) {
+  return Array.isArray(player?.nextBattlePenaltyCards) ? player.nextBattlePenaltyCards : [];
+}
+
+function nextBattlePenaltyAmount(player) {
+  return nextBattlePenaltyCards(player)
+    .reduce((sum, card) => sum + (Number(card.effect?.amount) || -3), 0);
+}
+
+function nextBattlePenaltyStatus(player) {
+  const cards = nextBattlePenaltyCards(player);
+  if (!cards.length) return null;
+  return {
+    count: cards.length,
+    penalty: nextBattlePenaltyAmount(player),
+  };
+}
+
+function consumeNextBattlePenalty(player) {
+  const cards = nextBattlePenaltyCards(player);
+  if (!cards.length) return { cards: [], penalty: 0 };
+  player.nextBattlePenaltyCards = [];
+  const penalty = cards.reduce((sum, card) => sum + (Number(card.effect?.amount) || -3), 0);
+  discardCardsToDeck("good", cards);
+  return { cards, penalty };
+}
+
+function nextBattlePenaltyText(status, compact = false) {
+  if (!status?.count) return "";
+  const countText = status.count > 1 ? ` x${status.count}` : "";
+  return compact ? `Сглаз ${status.penalty}${countText}` : `Сглаз ${status.penalty} к след. бою${countText}`;
+}
+
 function nextMonsterBattleBonus(player) {
   return Math.max(0, Number(player?.nextMonsterBattleBonus) || 0);
 }
@@ -6076,10 +6464,20 @@ function bonusFormulaText(bonus, total) {
   return ` ${bonus > 0 ? "+" : "-"} ${Math.abs(bonus)} бонус = <strong>${total}</strong>`;
 }
 
-function monsterBattleBonusFormulaText(baseBonus, rageBonus, total) {
+function combatBonusFormulaText(baseBonus, cursePenalty, total) {
+  const parts = [];
+  if (baseBonus) parts.push(`${baseBonus > 0 ? "+" : "-"} ${Math.abs(baseBonus)} бонус`);
+  if (cursePenalty) parts.push(`Сглаз ${cursePenalty}`);
+  return parts.length ? ` ${parts.join(" ")} = <strong>${total}</strong>` : "";
+}
+
+function monsterBattleBonusFormulaText(baseBonus, rageBonus, cursePenaltyOrTotal, maybeTotal) {
+  const cursePenalty = maybeTotal === undefined ? 0 : cursePenaltyOrTotal;
+  const total = maybeTotal === undefined ? cursePenaltyOrTotal : maybeTotal;
   const parts = [];
   if (baseBonus) parts.push(`${baseBonus > 0 ? "+" : "-"} ${Math.abs(baseBonus)} бонус`);
   if (rageBonus) parts.push(`+ ${rageBonus} зелье ярости`);
+  if (cursePenalty) parts.push(`Сглаз ${cursePenalty}`);
   return parts.length ? ` ${parts.join(" ")} = <strong>${total}</strong>` : "";
 }
 
@@ -6441,10 +6839,32 @@ async function resolveOnePlayerTieByDie(candidates, { reason = "спор за ц
 
   let round = 1;
   while (tied.length > 1) {
-    const results = tied.map((player) => ({
-      player,
-      roll: rollDice(1)[0],
-    }));
+    const participants = tied.map(playerChoiceBadge);
+    const results = [];
+    for (const player of tied) {
+      const rollContext = {
+        criterion: "Больший бросок выбирает игрока. При равенстве игроки перебрасывают.",
+        kicker: "Жребий",
+        participants,
+        reason,
+        title: round > 1 ? `Переброс ${round}` : "Ничья за цель",
+      };
+      await showActionPrompt(`${playerName(player)} бросает кубик для жребия.`, {
+        autoFor: autoFor || player,
+        buttonLabel: "Бросить кубик",
+        rollContext,
+      });
+      const roll = rollDice(1)[0];
+      state.dice = null;
+      render();
+      showRollContextStatus({
+        ...rollContext,
+        result: `${playerName(player)} бросает кубик жребия.`,
+      });
+      await animateDice([roll], { label: reason || "Жребий", player });
+      state.dice = roll;
+      results.push({ player, roll });
+    }
     const maxRoll = Math.max(...results.map((result) => result.roll));
     const winners = results.filter((result) => result.roll === maxRoll).map((result) => result.player);
     const resultText = results.map((result) => `${playerName(result.player)}: <strong>${result.roll}</strong>`).join(", ");
@@ -6452,10 +6872,32 @@ async function resolveOnePlayerTieByDie(candidates, { reason = "спор за ц
     const roundText = round > 1 ? `, переброс ${round}` : "";
     if (winners.length === 1) {
       log(`Спор за цель${reasonText}${roundText}: ${resultText}. Выбран ${playerName(winners[0])}.`, { toast: true });
+      await showActionPrompt("", {
+        autoFor: autoFor || winners[0],
+        rollContext: {
+          criterion: "Больший бросок выбирает игрока.",
+          kicker: "Жребий",
+          participants: results.map((result) => `${playerChoiceBadge(result.player)} <strong>${result.roll}</strong>`),
+          reason,
+          result: `${playerName(winners[0])} выбран по броску ${maxRoll}.`,
+          title: "Результат жребия",
+        },
+      });
       return winners[0];
     }
     log(`Спор за цель${reasonText}${roundText}: ${resultText}. Ничья, перебрасывают ${winners.map(playerName).join(", ")}.`, {
       toast: true,
+    });
+    await showActionPrompt("", {
+      autoFor: autoFor || winners[0],
+      rollContext: {
+        criterion: "Больший бросок выбирает игрока.",
+        kicker: "Жребий",
+        participants: results.map((result) => `${playerChoiceBadge(result.player)} <strong>${result.roll}</strong>`),
+        reason,
+        result: `Ничья на ${maxRoll}: ${winners.map(playerName).join(", ")} перебрасывают.`,
+        title: "Нужен переброс",
+      },
     });
     tied = winners;
     round += 1;
@@ -6569,7 +7011,7 @@ function showEventToast(message) {
 
   ui.eventToast.hidden = false;
   ui.eventToast.innerHTML = `<div class="event-toast-copy">${iconizeHtml(message)}</div>`;
-  ui.eventToast.classList.remove("action-prompt", "roll-event-prompt", "fading", "quick-fading", "visible");
+  ui.eventToast.classList.remove("action-prompt", "roll-event-prompt", "roll-context-prompt", "roll-context-status", "fading", "quick-fading", "visible");
   ui.eventToast.style.removeProperty("top");
   void ui.eventToast.offsetWidth;
   ui.eventToast.classList.add("visible");
@@ -6579,16 +7021,35 @@ function showEventToast(message) {
   }, eventToastVisibleMs);
 }
 
-function showActionPrompt(message, { buttonLabel = "Далее", autoFor = null } = {}) {
+function showRollContextStatus(contextInput) {
+  const context = normalizeRollContext(contextInput);
+  if (!ui.eventToast || !context) return;
+
+  window.clearTimeout(eventToastFadeTimer);
+  window.clearTimeout(eventToastHideTimer);
+  actionPromptRollContext = null;
+
+  ui.eventToast.hidden = false;
+  ui.eventToast.innerHTML = `<div class="event-toast-copy">${iconizeHtml(rollContextPromptMarkup("", context))}</div>`;
+  ui.eventToast.classList.remove("action-prompt", "fading", "quick-fading", "visible");
+  ui.eventToast.classList.add("roll-event-prompt", "roll-context-prompt", "roll-context-status");
+  void ui.eventToast.offsetWidth;
+  ui.eventToast.classList.add("visible");
+  syncRollEventPromptViewport();
+}
+
+function showActionPrompt(message, { buttonLabel = "Далее", autoFor = null, rollContext = null } = {}) {
   if (!ui.eventToast) return Promise.resolve();
 
   window.clearTimeout(eventToastFadeTimer);
   window.clearTimeout(eventToastHideTimer);
 
+  actionPromptRollContext = normalizeRollContext(rollContext);
   ui.eventToast.hidden = false;
-  ui.eventToast.innerHTML = `<div class="event-toast-copy">${iconizeHtml(message)}</div>`;
-  ui.eventToast.classList.toggle("roll-event-prompt", Boolean(ui.eventToast.querySelector(".roll-event-card")));
-  ui.eventToast.classList.remove("fading", "quick-fading", "visible");
+  ui.eventToast.innerHTML = `<div class="event-toast-copy">${iconizeHtml(rollContextPromptMarkup(message, actionPromptRollContext))}</div>`;
+  ui.eventToast.classList.toggle("roll-event-prompt", Boolean(ui.eventToast.querySelector(".roll-event-card, .roll-context-card")));
+  ui.eventToast.classList.toggle("roll-context-prompt", Boolean(actionPromptRollContext));
+  ui.eventToast.classList.remove("roll-context-status", "fading", "quick-fading", "visible");
   ui.eventToast.classList.add("action-prompt");
   void ui.eventToast.offsetWidth;
   ui.eventToast.classList.add("visible");
@@ -6605,6 +7066,7 @@ function showActionPrompt(message, { buttonLabel = "Далее", autoFor = null 
       actionPromptAutoPlayerId = null;
       actionPromptChoiceOptions = [];
       actionPromptChoiceResolver = null;
+      actionPromptRollContext = null;
       hideEventToast({ quick: true });
       render();
       resolve();
@@ -6633,7 +7095,7 @@ function hideEventToast({ quick = false } = {}) {
 
   eventToastHideTimer = window.setTimeout(() => {
     ui.eventToast.hidden = true;
-    ui.eventToast.classList.remove("action-prompt", "roll-event-prompt", "visible", "fading", "quick-fading");
+    ui.eventToast.classList.remove("action-prompt", "roll-event-prompt", "roll-context-prompt", "roll-context-status", "visible", "fading", "quick-fading");
     ui.eventToast.innerHTML = "";
     ui.eventToast.style.removeProperty("top");
   }, quick ? eventToastQuickFadeMs : eventToastFadeMs);
@@ -6866,13 +7328,21 @@ function shouldIgnoreEnterShortcut(event) {
 
 function syncWideScoreStripPlacement() {
   if (!scoreStripEl || !sidePanelEl || !appShellEl || !playAreaEl) return;
+  const rageIndicator = ui.monsterRageIndicator;
+  const tadamSection = sidePanelEl.querySelector(".tadam-card");
 
   if (wideLayoutQuery.matches) {
     if (scoreStripEl.parentElement !== sidePanelEl) sidePanelEl.prepend(scoreStripEl);
+    if (rageIndicator && rageIndicator.nextElementSibling !== tadamSection) {
+      sidePanelEl.insertBefore(rageIndicator, tadamSection || null);
+    }
     return;
   }
 
   if (scoreStripEl.parentElement !== appShellEl) appShellEl.insertBefore(scoreStripEl, playAreaEl);
+  if (rageIndicator && rageIndicator.nextElementSibling !== playAreaEl) {
+    appShellEl.insertBefore(rageIndicator, playAreaEl);
+  }
 }
 
 ui.newGameBtn.addEventListener("click", newGame);

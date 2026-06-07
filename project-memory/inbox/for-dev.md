@@ -4,6 +4,348 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- USER REWORK 2026-06-07 15:00 - Random-choice roll UI overlaps dice animation:
+  - Owner: `Dev 3`.
+  - Status: complete; QA-approved by `QA 1` at 2026-06-07 15:23 and GD-approved at 2026-06-07 15:25.
+  - User report:
+    - During a dice roll that determines random action outcome, for example `Кубик удачи`, UI overlays the dice.
+    - Need to make it clean/accurate.
+  - Related tasks:
+    - `ACTIVE UX 2026-06-07 03:15 - Show context near random-choice dice rolls`.
+    - `ACTIVE FIELD TUNE 2026-06-07 14:54 - Tune Кубик удачи`.
+  - Expected UX:
+    - The explanatory random-choice context remains visible/understandable, but never covers the animated dice, dice faces, or dice result caption.
+    - During the dice animation, the dice should have a clear visual zone.
+    - The context can sit above, below, beside, or collapse into a compact status line while dice are rolling, depending on viewport.
+    - On mobile, prioritize no overlap with dice, board, action button, and card/prompt controls.
+  - Required coverage:
+    - Primary repro: `Кубик удачи`.
+    - Also check one other random-choice roll flow if practical:
+      - `Портал хаоса`;
+      - tie-break via `resolveOnePlayerTieByDie`;
+      - Joe Auction tie roll.
+    - Normal movement dice roll should remain unchanged and uncluttered.
+  - Implementation constraints:
+    - UI/layout fix only.
+    - Do not change `Кубик удачи` amounts, dice count, random generation, movement, Event/Good/Joe Shop card behavior, or deck lifecycle.
+    - Preserve the useful explanatory context; do not solve overlap by removing context entirely.
+  - Verification:
+    - `node --check src/game.js`;
+    - `git diff --check`;
+    - Browser smoke `Кубик удачи` on desktop: context and dice do not overlap while rolling or after result.
+    - Browser smoke `Кубик удачи` on mobile width: no overlap with dice/action/button/board.
+    - Browser smoke one additional random-choice roll flow if practical.
+    - No browser console errors.
+  - Task lifecycle:
+    - After rework, send handback to QA first, not directly to GD.
+
+- ACTIVE UI 2026-06-07 14:58 - Move `Ярость монстров` indicator out of the board:
+  - Owner: `Dev 1`.
+  - Dispatch status: implemented by `Dev 1` at 2026-06-07 15:03 and sent to QA first; waiting for QA approval/rework.
+  - User request:
+    - `Ярость монстров` отображать между карточками игроков и блоком ТАДАМ.
+    - Убрать чип `Ярость монстров` с поля.
+  - Current source context:
+    - `index.html` currently has `#monsterRageIndicator` inside `.map-wrap`, before `#board`.
+    - `src/game.js` uses `ui.monsterRageIndicator` and `renderMonsterRageIndicator()` to set text `Ярость монстров +N`.
+    - `styles.css` has `.monster-rage-indicator` styles, including mobile rules.
+  - Required change:
+    - Move the persistent global Monster Rage indicator out of the board/map overlay area.
+    - It should visually live in the info/status layout between player score cards (`#scoreStrip`) and the TADAM block (`.tadam-card`).
+    - Suggested implementation:
+      - create/reposition a dedicated status section/container after `#scoreStrip` and before the TADAM section, or inside the side/info layout immediately above `.tadam-card` if that better matches the existing responsive layout;
+      - keep the same `id="monsterRageIndicator"` so existing JS can continue to update it, unless there is a clear reason to update the selector.
+    - The indicator must not be inside `.map-wrap`, not overlay `#board`, and not look like a field chip.
+    - At `+0`, it remains hidden as before.
+    - At `+1/+N`, show compact text like `Ярость монстров +1` / `+N`.
+  - Constraints:
+    - Do not change `Ярость монстров` rules, stacking, monster strength math, labels/tooltips, Event card data, deck lifecycle, or other Event behavior.
+    - Do not alter current active card/field/shop tasks except for preserving their uncommitted changes.
+    - Keep desktop and mobile layouts clean; no overlap with player cards, board, settings, or TADAM.
+  - Verification:
+    - `node --check src/game.js`;
+    - `git diff --check`;
+    - Static check: `#monsterRageIndicator` is no longer inside `.map-wrap`.
+    - Apply `Ярость монстров`: indicator appears between player cards and TADAM, not on the board/field.
+    - Apply it again: indicator updates to `+2` in the same place.
+    - At new game / `eventMonsterRage = 0`, indicator is hidden.
+    - Browser smoke desktop and mobile: no overlap, board remains unobscured, TADAM block still readable.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
+- ACTIVE FIELD TUNE 2026-06-07 14:54 - Tune `Кубик удачи`: `6 = +20`, `1 = -10 шагов`:
+  - Owner: `Dev 3`.
+  - Dispatch status: implemented by `Dev 3` at 2026-06-07 14:57 and sent to QA first; waiting for QA approval/rework.
+  - User request:
+    - Change text/rule from `Кинь кубик 6 раз, получи 20 монет за каждую 6, походи на 5 шагов назад за каждую 1` to `Кинь кубик 6 раз, получи 20 монет за каждую 6, походи на 10 шагов назад за каждую 1`.
+  - Source note:
+    - In current code this appears to be field/event `dice-fortune` / `Кубик удачи`, not a `Cards Config` card row.
+    - Current implementation may still show/apply `+10` coins for each `6` from an earlier tune. The final requested rule now is exactly:
+      - each `6`: `+20` coins;
+      - each `1`: move `10` steps backward;
+      - dice count remains `6`.
+  - Scope:
+    - Update `resolveDiceFortuneField(...)` behavior.
+    - Update all nearby UI/rule text for `Кубик удачи`, including:
+      - pre-roll prompt;
+      - roll context/result context;
+      - field-effect text/tooltip;
+      - logs/toasts if they spell out the amounts.
+  - Gameplay behavior:
+    - Roll 6 dice as before.
+    - Count sixes and ones as before.
+    - Award `20 * sixes` coins.
+    - Move backward `10 * ones` steps after resolving the coin reward.
+    - Other die values `2-5` remain no effect.
+    - Preserve current landing/backward movement behavior after the backward move.
+  - Constraints:
+    - Do not change board placement, dice random generation, normal movement rolls, other field events, card configs, Event cards, Good-card work, Joe Shop stock rule, or deck lifecycle.
+    - Preserve current uncommitted changes by Dev 1/Dev 2/Dev 3/Art/UI.
+  - Verification:
+    - `node --check src/game.js`;
+    - `git diff --check`;
+    - Static search: no remaining `Кубик удачи` UI/rule text says `+10` or `-5 шагов`.
+    - Forced/simulated result with one `6` and one `1` gives `+20` coins and `10` backward steps.
+    - Forced/simulated result with six `6`s gives `+120` coins.
+    - Forced/simulated result with six `1`s moves `60` steps backward safely.
+    - Browser smoke: landing on `Кубик удачи` still opens the prompt, rolls, displays updated rules/result, and has no console errors.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
+- ACTIVE CARD TUNE 2026-06-07 14:52 - Update Event `Щедрый дождь` fallback payout:
+  - Owner: `Dev 1`.
+  - Dispatch status: implemented by `Dev 1` at 2026-06-07 14:55 and sent to QA first; waiting for QA approval/rework.
+  - User request:
+    - Change Event card text from `Все игроки без монет получают 20 монет` to `Все игроки без монет получают 20 монет. Если монеты есть у всех, все получают 5 монет`.
+  - Card scope:
+    - Deck: `event`.
+    - Card id: `generous-rain`.
+    - Title: `Щедрый дождь`.
+    - Keep `count = 2`.
+    - Keep it as a normal Event card, not an artifact.
+  - Source sync:
+    - Update canonical Google Sheet `Cards Config`, tab `event`, if connector/access is available.
+    - Sync local sources:
+      - `src/cards.config.js`;
+      - `cards-google-sheet.csv`.
+    - Update only this Event row unless a tiny implementation field is required locally.
+  - Gameplay behavior:
+    - Check all players' coin counts before payout.
+    - If at least one player has `0` coins:
+      - every player with `0` coins receives `20` coins;
+      - players with more than `0` coins receive nothing.
+    - If every player has at least `1` coin:
+      - every player receives `5` coins.
+    - Use the existing coin helper/path and log which branch happened.
+    - Event card should still discard normally after resolving under the finite Event deck lifecycle.
+  - Constraints:
+    - Do not change Event card id/title/count, other Event cards, Good-card work, Joe Shop stock rule, board placement, route order, dice math, or deck lifecycle.
+    - Preserve current uncommitted changes by Dev 2/Dev 3/Art/UI.
+  - Verification:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `git diff --check`;
+    - Static check: `event/generous-rain` description matches the requested text.
+    - Smoke branch A: at least one 0-coin player gets `20`; non-zero players do not get coins.
+    - Smoke branch B: all players have coins; every player gets `5`.
+    - Confirm Event reveal/card face still shows the updated text.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
+- ACTIVE RULE 2026-06-07 14:49 - Joe Shop has replenishing 2-copy stock while card pool is small:
+  - Owner: `Dev 2`.
+  - Status: complete; QA-approved by `QA 1` and GD-approved at 2026-06-07 14:58.
+  - User request:
+    - `Пока мало карт, в лавке Джо всегда остается 2 копии одной карты, даже если какой-то игрок забирает карту`.
+  - Design contract:
+    - This temporarily changes only the Joe Shop deck lifecycle.
+    - `good`, `bad`, `tadam`, and `event` keep the approved physical draw/discard/out-of-deck rules.
+    - Joe Shop is a replenishing market while the Shop card pool is small.
+    - The Shop offer deck should still be built from `cardConfig.shop` counts, currently `2` copies per Shop card.
+    - Player-owned Shop items do not reduce the Shop's available stock.
+    - A player can own a Shop card even though the Shop still has its normal 2 stock copies available for future offers.
+  - Implementation behavior:
+    - When a Shop offer is generated, draw offer cards from the Shop draw/discard pile as now.
+    - When the offer resolves:
+      - unchosen offer cards go to Shop discard;
+      - chosen/bought/free/auction-won offer cards also return their source offer copy to Shop discard;
+      - the player receives a separate owned copy/item for inventory.
+    - Owned Shop items must not be tracked as out-of-deck Shop copies.
+    - Shop discard still reshuffles into draw when draw is empty.
+    - Multiple players may eventually own more than 2 total copies of the same Shop item; this is acceptable for the temporary small-card-pool rule.
+    - Existing player-to-player transfer/buy/steal of owned Shop cards should move the owned item between players and should not affect Shop stock.
+  - Offer UX:
+    - Keep current offer UX and uniqueness behavior if possible:
+      - avoid showing duplicate card ids in the same offer while enough unique Shop card ids exist;
+      - if implementation currently allows duplicate physical copies but unique card ids are easy to preserve, preserve unique visible choices.
+    - Do not change Shop prices/effects/card text.
+  - Constraints:
+    - Do not change Shop card counts, titles, descriptions, effects, or Google Sheet data unless needed to document this rule.
+    - Do not alter the newly requested Good cards except if sharing helper code is unavoidable.
+    - Do not change non-Shop finite deck behavior.
+  - Verification:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js` if touched;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - buy/take a Shop card, then verify the same Shop card type can still appear in future offers from the replenished Shop stock;
+    - free Shop draw and Joe Auction won card also do not deplete Shop stock;
+    - unchosen offers still discard/reshuffle normally;
+    - player-to-player Shop card transfer does not change Shop stock;
+    - existing finite deck behavior for Good/Bad/TADAM/Event still passes a light smoke.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
+- ACTIVE CARD 2026-06-07 03:19 - Add new Good cards (`Сглаз`, `Монетка из фонтана`, `Путевой знак`):
+  - Owner: `Dev 2`.
+  - Dispatch status: implemented by `Dev 2` at 2026-06-07 03:28 and sent to QA first; waiting for QA approval/rework.
+  - User request:
+    - Add a Good card with text: `Отдай эту карту любому игроку, в следующем бою он получает -3 к силе, затем сбрасывает эту карту`.
+    - Add two more Good cards:
+      - `Монетка из фонтана`: `Получи 8 монет. Если у тебя меньше всех монет, получи 15.`
+      - `Путевой знак`: `Выбери: идти вперед на 5 или назад на 5. После перемещения назад сработает поле.`
+  - Shared card-data contract:
+    - Deck: `good` / `Хорошо`.
+    - Count for each new card: `2`, because they are non-artifact Good cards.
+    - These cards are not Joe Shop items and not artifacts.
+  - Card 1 contract - `Сглаз`:
+    - Deck: `good` / `Хорошо`.
+    - Working title: `Сглаз`.
+    - Suggested id: `next-battle-minus3`.
+    - Suggested effect type: `give-next-battle-penalty`.
+    - Description/card face text: `Отдай эту карту любому игроку. В следующем бою он получает -3 к силе, затем сбрасывает эту карту.`
+  - Card 1 behavior - `Сглаз`:
+    - When drawn, the active player chooses any player as the target.
+    - Human player should get a choice popup with all players; allow self-target because the text says any player.
+    - Bot should choose a sensible target:
+      - prefer a leading/opponent player who is likely to fight soon;
+      - acceptable fallback is the current route leader who is not the bot, or any opponent if scoring is too risky.
+    - The chosen target receives this physical card as a temporary negative status.
+    - The card must stay out of the Good deck/discard while held by the target.
+    - On the target's next battle, apply `-3` to that player's force, then discard this physical card into the Good discard pile.
+    - "Battle" means the next personal combat force roll/check by that player:
+      - normal board monster battle;
+      - final monster gate battle;
+      - VS battle;
+      - final players-vs-boss battle;
+      - Event `Сплочение` individual force if the target participates.
+    - Do not apply to normal movement rolls, random-choice/tie-break rolls, portal rolls, Joe Auction rolls, or card-choice rolls.
+    - If the player holds multiple copies, they stack for that next battle (`-3` each), and all applied copies discard after that battle.
+    - Battle force display/log should show the penalty clearly, for example `Сглаз -3`; final force should not display below `0` if the existing force UI supports clamping cleanly.
+  - Card 1 UI requirements:
+    - Show a compact status/chip on the target in the host player/status area while the card is held:
+      - text can be `Сглаз -3` / `след. бой`;
+      - if multiple copies are held, show count or combined penalty clearly.
+    - Phone controller player card should show a concise version if player status chips are already mirrored there; host UI is required.
+    - When consumed in battle, remove the chip and log the discard.
+  - Card 2 contract - `Монетка из фонтана`:
+    - Suggested id: `fountain-coin`.
+    - Suggested effect type: `coins-if-poorest`.
+    - Description/card face text: `Получи 8 монет. Если у тебя меньше всех монет, получи 15.`
+  - Card 2 behavior - `Монетка из фонтана`:
+    - Check the active player's coins before payout.
+    - If the active player has strictly fewer coins than every other player, they receive `15` coins.
+    - If the active player is tied for lowest coins, they receive the normal `8` coins.
+    - Use the existing coin helper/path and log which amount was awarded.
+  - Card 3 contract - `Путевой знак`:
+    - Suggested id: `path-sign`.
+    - Suggested effect type: `choose-forward-or-back`.
+    - Description/card face text: `Выбери: идти вперед на 5 или назад на 5. После перемещения назад сработает поле.`
+  - Card 3 behavior - `Путевой знак`:
+    - Human player chooses one of two options:
+      - go forward `5`;
+      - go backward `5`.
+    - Bot should choose a sensible option by scoring the resulting cells; acceptable fallback is forward `5` if scoring is too risky.
+    - Forward movement should use the existing normal card movement behavior.
+    - Backward movement must resolve the landing cell after the move, even if backward movement normally would not.
+    - If moving backward reaches/clamps to start or another special cell, resolve the actual landing cell according to existing safe movement rules.
+  - Source sync:
+    - Add the new cards to canonical Google Sheet `Cards Config`, tab `good`, if connector/access is available.
+    - Sync local sources:
+      - `src/cards.config.js`;
+      - `cards-google-sheet.csv`.
+    - Do not resolve unrelated existing source-sync drift in Event/Shop rows as part of this task; only add/sync these new Good cards and avoid touching unrelated card rows.
+  - Constraints:
+    - Do not change existing Good card behavior, Event Phase 2 behavior, finite deck/discard rules, board placement, route order, dice random generation, or unrelated UI.
+    - Preserve current uncommitted Art/UI work for `Вольный шаг` field preview and Dev 3's random-choice dice UX task if present locally.
+  - Verification:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - static check that `good` deck now includes `next-battle-minus3`, `fountain-coin`, and `path-sign` with `count: 2`;
+    - `Сглаз`: draw/reveal Good card and choose target;
+    - `Сглаз`: target chip/status appears;
+    - `Сглаз`: next monster battle consumes the card and applies `-3`;
+    - `Сглаз`: next VS or final/event battle path applies the same penalty where practical to smoke;
+    - `Сглаз`: card enters Good discard only after consumption, not immediately on assignment;
+    - `Сглаз`: multiple held copies stack if testable;
+    - `Монетка из фонтана`: normal case gives `8`;
+    - `Монетка из фонтана`: strict poorest case gives `15`;
+    - `Монетка из фонтана`: tied-lowest case gives `8`;
+    - `Путевой знак`: forward `5` option works;
+    - `Путевой знак`: backward `5` option resolves the landing cell after movement;
+    - normal movement/random-choice rolls are unaffected.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
+- ACTIVE UX 2026-06-07 03:15 - Show context near random-choice dice rolls:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to `Dev 3` thread at 2026-06-07 03:15; waiting for executor handback to QA.
+  - User request:
+    - When a die is rolled for a random choice of some action, show information about what is happening somewhere nearby.
+  - Design goal:
+    - A player should not see a bare `Бросить кубик` button for a non-movement/random-choice roll.
+    - Before the roll, the UI near the dice/action prompt should explain:
+      - why this roll is happening;
+      - who/what participates;
+      - what the die decides or which outcomes are possible;
+      - how ties/rerolls are handled, if relevant.
+    - After the roll, the same nearby context should show the result and the selected player/action/outcome.
+    - Chronicle/log can keep detailed history, but it is not enough by itself.
+  - Covered examples:
+    - `resolveOnePlayerTieByDie(...)` tie-break rolls:
+      - richest/poorest/first/last/player-target ties;
+      - Event effects such as `Равновесие`, `Справедливость`, `Волшебный кошель`, `Сплочение` top-force tie;
+      - any Good/Bad card target tie using the helper.
+    - Joe Auction tie rolls.
+    - Random event rolls such as `Портал хаоса` and `Кубик удачи`, where a die determines an outcome.
+    - Any other `showActionPrompt(..., buttonLabel: "Бросить кубик")` flow where the roll is not the normal movement roll and not already fully explained by a battle panel.
+  - Scope boundary:
+    - Normal turn movement roll does not need extra explanatory UI.
+    - Monster/VS/final battle panels already have their own detailed context; only add this pattern there if a small missing random-choice prompt is found.
+  - UI requirements:
+    - Add a reusable "roll context" block/panel, not one-off text hardcoded per flow.
+    - Desktop: place it adjacent to the dice/action area or inside the active prompt/card area where the player's eye already is.
+    - Mobile: place it close to the action button/dice prompt, without covering the board or overflowing.
+    - Keep text compact and gameplay-facing:
+      - example title: `Жребий: Волшебный кошель`;
+      - example body: `Ничья за последнее место: Алиса, Боб. Больший бросок получает артефакт.`;
+      - result line: `Боб выбрался по броску 5.`
+    - Include participant names and the selection criterion; include outcome table only for small 1d6 outcome rolls where it fits.
+    - Avoid long tutorial copy and avoid duplicating large Chronicle text.
+  - Implementation notes:
+    - Prefer extending existing prompt plumbing around `showActionPrompt` and tie/random roll helpers.
+    - `resolveOnePlayerTieByDie(candidates, { reason })` is the key helper to cover first; make `reason` visible to the player and add optional richer context if useful.
+    - Check direct random-choice roll flows around portal/fortune/auction prompts too.
+    - If a phone controller shows the same non-movement dice prompt, mirror a concise version of the context there if feasible; host UI is required.
+  - Constraints:
+    - Do not change rules, random generation, dice math, tie-break winner logic, card effects, deck behavior, board placement, or card config data.
+    - Do not interfere with the current `Вольный шаг` field-preview QA item.
+    - Keep classic/no-phone and phone-room flows working.
+  - Verification:
+    - `node --check src/game.js`;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - Browser-smoke at least:
+      - one `resolveOnePlayerTieByDie` flow with two tied players;
+      - Joe Auction tie roll, if practical;
+      - one random outcome roll such as `Портал хаоса` or `Кубик удачи`;
+      - normal movement roll still looks/works as before;
+      - no text overflow on desktop and mobile widths.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
 - QA FOUND 2026-06-07 02:59 - Card source sync drift between live Google Sheet and local mirror/config:
   - Owner: `Dev 1` / `Dev 3` to pick up after GD/source-of-truth confirmation if needed.
   - QA context:

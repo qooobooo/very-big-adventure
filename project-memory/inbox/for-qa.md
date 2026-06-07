@@ -4,7 +4,419 @@ For testing tasks related to "Очень Большая Бродилка" in `/U
 
 ## Open Items
 
+- QA READY 2026-06-07 15:16 - Dev 3 rework handback for random-choice roll UI overlap
+  - Status: QA-approved by `QA 1` at 2026-06-07 15:23 and GD-approved at 2026-06-07 15:25.
+  - QA 1 result at 2026-06-07 15:23:
+    - QA-approved and forwarded to GD for final approval.
+    - Checks passed: `node --check src/game.js`, `git diff --check`.
+    - Browser-smoked `Кубик удачи` desktop `1440x900` and mobile `390x844`: compact rolling status did not overlap dice faces, dice player label, or action button.
+    - Browser-smoked `Портал хаоса` desktop `1440x900`: compact rolling status did not overlap the portal die, dice player label, or action button.
+    - Normal movement roll stayed uncluttered without `roll-context-*` classes/text.
+    - No browser console errors observed in checked flows.
+  - Task:
+    - `USER REWORK 2026-06-07 15:00 - Random-choice roll UI overlaps dice animation`.
+  - Changed:
+    - Kept the full explanatory random-choice context before the roll and after the result.
+    - Reworked only the temporary rolling status layout for `.event-toast.roll-context-status`.
+    - During dice animation the context now collapses into a compact status card instead of the full rule card.
+    - Desktop rolling status is placed at the bottom of the board area.
+    - Mobile rolling status is constrained to a compact safe column with max height, so it does not cover dice/action controls in the tested narrow viewport.
+    - Bumped stylesheet cache key to `styles.css?v=20260607-0386`.
+  - Files changed by Dev 3 for this rework:
+    - `styles.css`
+    - `index.html`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-qa.md`
+    - `project-memory/updates.md`
+  - Checks passed by Dev 3:
+    - `node --check src/game.js`
+    - `git diff --check`
+    - Browser smoke `Кубик удачи` desktop `1440x900`: rolling context did not intersect dice/player label; no console errors.
+    - Browser smoke `Кубик удачи` mobile `390x844`: rolling context did not intersect dice/player label or action button; status stayed inside viewport; no console errors.
+    - Browser smoke `Портал хаоса` desktop `1440x900`: rolling context did not intersect dice/player label; no console errors.
+  - Scope notes:
+    - UI/layout only.
+    - Did not change `Кубик удачи` dice count, amounts, random generation, movement, cards, decks, or normal movement rolls.
+  - Final status:
+    - QA check completed and GD final approval received.
+
+- QA REWORK CHECK 2026-06-07 15:00 - Random-choice roll UI must not overlap dice:
+  - Status: complete; QA-approved by `QA 1` at 2026-06-07 15:23 and GD-approved at 2026-06-07 15:25.
+  - Dev 3 rework handback received via `QA READY 2026-06-07 15:16 - Dev 3 rework handback for random-choice roll UI overlap`.
+  - User report:
+    - During random-action dice rolls, for example `Кубик удачи`, UI overlaps the dice.
+  - Do not QA-approve the related random-choice/dice-tune UI until this overlap is checked.
+  - Expected:
+    - Explanatory roll context is still present and understandable.
+    - Animated dice, dice faces, and dice result caption are not covered by context/prompt UI.
+    - Desktop and mobile layouts both look clean.
+  - Required smoke:
+    - `Кубик удачи` while dice are rolling: no overlap.
+    - `Кубик удачи` result state: no overlap.
+    - One additional random-choice roll flow if practical (`Портал хаоса`, tie-break, or Joe Auction tie).
+    - Normal movement roll remains uncluttered.
+  - Checks:
+    - `node --check src/game.js`;
+    - `git diff --check`;
+    - no browser console errors.
+  - Final status:
+    - QA-approved and GD-approved; no Dev 3 rework item remains for this overlap task.
+
+- QA AFTER DEV 2026-06-07 14:58 - Verify `Ярость монстров` indicator placement:
+  - Status: ready for QA from `Dev 1` at 2026-06-07 15:03.
+  - Dev handback:
+    - Moved `#monsterRageIndicator` out of `.map-wrap`; it now starts after `#scoreStrip` in `index.html`.
+    - Updated `syncWideScoreStripPlacement()` so wide layout moves the indicator into `.side-panel` directly before `.tadam-card`, after player score cards.
+    - Restyled `.monster-rage-indicator` as a normal info/status strip instead of an absolute board overlay.
+    - Did not change Monster Rage rules, stacking, strength math, labels/tooltips, Event card data, or decks.
+  - Dev files:
+    - `index.html`
+    - `src/game.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-qa.md`
+  - Dev checks passed:
+    - `node --check src/game.js`;
+    - `git diff --check`;
+    - static check: `#monsterRageIndicator` is present and no longer inside `.map-wrap`.
+  - Dev browser smoke:
+    - `http://localhost:5173/` loaded without console errors;
+    - indicator exists and is hidden at `+0`;
+    - indicator parent is `.side-panel`;
+    - `#scoreStrip` and `.tadam-card` are also in `.side-panel`.
+  - User request:
+    - `Ярость монстров` should display between player cards and the TADAM block.
+    - Remove the `Ярость монстров` chip from the field/board.
+  - Expected:
+    - Persistent `Ярость монстров +N` indicator is not inside `.map-wrap` and does not overlay `#board`.
+    - Indicator appears in the info/status area visually between `#scoreStrip` player cards and `.tadam-card`.
+    - At `+0` / new game, indicator is hidden.
+    - At `+1`, indicator shows `Ярость монстров +1`.
+    - At `+2`, the same indicator updates to `Ярость монстров +2`.
+  - Regression smoke:
+    - Monster strength labels/tooltips still include the rage bonus.
+    - Event `Ярость монстров` still applies/stacks as before.
+    - TADAM block remains readable.
+    - Board remains unobscured.
+    - No browser console errors.
+  - Layout smoke:
+    - Desktop: indicator sits cleanly between player cards and TADAM/info area.
+    - Mobile: no overlap with player cards, board, settings, action button, or TADAM.
+  - Checks:
+    - `node --check src/game.js`;
+    - `git diff --check`.
+  - If QA approves, send the approved result to GD for final approval per Task Lifecycle.
+
+- QA READY 2026-06-07 14:57 - Dev 3 handback for `Кубик удачи` tune
+  - Task:
+    - `ACTIVE FIELD TUNE 2026-06-07 14:54 - Tune Кубик удачи: 6 = +20, 1 = -10 шагов`.
+  - Changed:
+    - Updated `resolveDiceFortuneField(...)` to roll the same 6 dice but now award `20` coins per rolled `6`.
+    - Updated backward movement to `10` steps per rolled `1`.
+    - Added local constants for dice count, coin reward, and backward-step penalty so rule text and behavior stay aligned.
+    - Updated `Кубик удачи` pre-roll prompt, roll context/status, result context, field-effect text, and tile tooltip.
+    - Bumped host game cache key to `src/game.js?v=20260607-0379`.
+  - Files changed by Dev 3 for this task:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-qa.md`
+    - `project-memory/updates.md`
+  - Checks passed by Dev 3:
+    - `node --check src/game.js`
+    - `git diff --check`
+    - Static search: no `Кубик удачи` / `dice-fortune` UI-rule text still says `+10`, `-5`, or `5 шагов назад`.
+    - Static formula check from current constants:
+      - one `6` and one `1` => `+20` coins and `10` backward steps;
+      - six `6`s => `+120` coins;
+      - six `1`s => `60` backward steps.
+    - Browser reload at `http://localhost:5173/`: loaded `src/game.js?v=20260607-0379`, tile tooltip shows `Кубик удачи — 6 бросков: 6 = +20 монет, 1 = -10 шагов`, no console errors observed.
+  - QA request:
+    - Run the checklist in `QA AFTER DEV 2026-06-07 14:54 - Verify Кубик удачи balance text/rule`.
+    - If approved, forward to GD for final approval per Task Lifecycle.
+
+- QA AFTER DEV 2026-06-07 14:54 - Verify `Кубик удачи` balance text/rule:
+  - Wait for Dev handback for `ACTIVE FIELD TUNE 2026-06-07 14:54 - Tune Кубик удачи`.
+  - User request:
+    - `Кинь кубик 6 раз, получи 20 монет за каждую 6, походи на 10 шагов назад за каждую 1`.
+  - Expected:
+    - `Кубик удачи` rolls exactly 6 dice.
+    - Each rolled `6` gives `20` coins.
+    - Each rolled `1` moves the player `10` steps backward.
+    - Rolls `2-5` have no effect.
+    - Coin reward applies before backward movement, as before.
+  - UI/text checks:
+    - Prompt/rule text says `+20` for each `6`.
+    - Prompt/rule text says `10 шагов назад` for each `1`.
+    - Roll context/result context and field-effect text/tooltip do not still say `+10` or `-5`.
+    - Logs/toasts are coherent with the new amounts.
+  - Required smoke:
+    - Simulated or forced one `6` and one `1`: `+20` coins and `10` backward steps.
+    - Simulated or forced six `6`s: `+120` coins.
+    - Simulated or forced six `1`s: `60` backward steps handled safely.
+    - Browser smoke: landing on `Кубик удачи` opens prompt, resolves, and has no console errors.
+  - Regression smoke:
+    - Normal movement roll is unchanged.
+    - Other field events/cards are unchanged.
+  - Checks:
+    - `node --check src/game.js`;
+    - `git diff --check`.
+  - If QA approves, send the approved result to GD for final approval per Task Lifecycle.
+
+- QA AFTER DEV 2026-06-07 14:52 - Verify Event `Щедрый дождь` fallback payout:
+  - Status: ready for QA from `Dev 1` at 2026-06-07 14:55.
+  - Dev handback:
+    - Updated `event/generous-rain` / `Щедрый дождь` description to `Все игроки без монет получают 20 монет. Если монеты есть у всех, все получают 5 монет`.
+    - Kept card id/title/effect/count unchanged; count remains `2`.
+    - Updated behavior:
+      - if at least one player has `0` coins before payout, only zero-coin players get `20`;
+      - if all players have at least `1` coin before payout, every player gets `5`.
+    - Uses existing `addCoins()` helper and logs the selected branch.
+    - Synced local `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `event`.
+  - Dev files:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-qa.md`
+  - Google Sheet:
+    - Spreadsheet: `Cards Config`, `1dv8cOcoY9P1WZOw2UQ-prUccte2BprZMp0DFCSL0pME`.
+    - Updated tab `event`, row `7`, cells `L7` notes and `N7` description.
+    - Readback confirmed `N7` matches requested text and `M7` count remains `2`.
+  - Dev checks passed:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `git diff --check`;
+    - static local config check: `event/generous-rain` has count `2`, effect `event-generous-rain`, amount `20`, and updated description.
+  - User request:
+    - `Все игроки без монет получают 20 монет. Если монеты есть у всех, все получают 5 монет`.
+  - Expected card data:
+    - Deck `event`, id `generous-rain`, title `Щедрый дождь`.
+    - Description/card face text matches the requested text.
+    - Count remains `2`.
+    - Local `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `event` are synced if Dev had access.
+  - Expected behavior:
+    - Branch A: if at least one player has `0` coins before payout, only zero-coin players receive `20`; players with coins receive nothing.
+    - Branch B: if all players have at least `1` coin before payout, every player receives `5`.
+    - Logs/history clearly identify the branch.
+    - Event card still discards after resolving under finite Event deck lifecycle.
+  - Regression smoke:
+    - Event reveal/card face still works.
+    - Other Event cards are unchanged.
+    - Good-card package and Joe Shop stock changes, if present, are not broken.
+  - Checks:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `git diff --check`;
+    - no browser console errors in tested Event flow.
+  - If QA approves, send the approved result to GD for final approval per Task Lifecycle.
+
+- QA READY 2026-06-07 14:52 - Dev 2 handback for Joe Shop replenishing stock
+  - Status: QA-approved by `QA 1` at 2026-06-07 14:57 and GD-approved at 2026-06-07 14:58.
+  - QA 1 result at 2026-06-07 14:57:
+    - QA-approved and forwarded to GD for final approval.
+    - Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+    - Browser-smoked regular Joe Shop buy path: bought `extra-die`, then confirmed `extra-die` could appear again in a later offer while already owned by a player.
+    - No browser console errors observed in checked Shop flows.
+  - Task:
+    - `ACTIVE RULE 2026-06-07 14:49 - Joe Shop has replenishing 2-copy stock while card pool is small`.
+  - Changed:
+    - Regular Joe Shop purchases now give the player a separate owned item copy and return all source offer cards, including the bought card, to Shop discard/stock.
+    - Free Shop draws now give the player a separate owned item copy and return the source drawn Shop copy to Shop discard/stock.
+    - Joe Auction wins now give the winner a separate owned item copy and return all source offer cards, including the picked card, to Shop discard/stock.
+    - Player-to-player Shop card buy/transfer still moves the existing owned item between players and does not touch Shop stock.
+  - Files changed by Dev 2:
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-qa.md`
+  - Checks passed by Dev 2:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static check: Shop configured copies remain `8`; owned Shop item copies strip `_copyId` / `_deckId`; free draw, regular Shop buy, and Joe Auction return source offer copies to Shop discard.
+  - Scope notes:
+    - No Shop card data/counts/text/effects changed.
+    - No Good/Bad/TADAM/Event finite-deck lifecycle changes intended.
+  - QA request:
+    - Run the checklist in `QA AFTER DEV 2026-06-07 14:49 - Verify Joe Shop replenishing 2-copy stock`.
+    - If approved, forward to GD for final approval per Task Lifecycle.
+
+- QA AFTER DEV 2026-06-07 14:49 - Verify Joe Shop replenishing 2-copy stock:
+  - Status: QA-approved by `QA 1` at 2026-06-07 14:57 and GD-approved at 2026-06-07 14:58.
+  - Wait for Dev handback for `ACTIVE RULE 2026-06-07 14:49 - Joe Shop has replenishing 2-copy stock while card pool is small`.
+  - User request:
+    - While there are few cards, Joe Shop always keeps 2 copies of each card available, even if a player takes one.
+  - Expected:
+    - Joe Shop offers are built from the configured Shop counts, currently 2 copies per Shop card.
+    - Owned player Shop items do not reduce Shop stock.
+    - When a player buys/takes/wins a Shop offer card, the player receives an owned item, but the source Shop offer copy returns to Shop discard/stock for future reshuffle.
+    - Unchosen offer cards still return to Shop discard.
+    - Shop discard reshuffles into draw when draw is empty.
+    - It is acceptable for players collectively to own more than 2 copies of the same Shop item over a long game.
+  - Required smoke:
+    - Buy/take one Shop card, then verify the same Shop card type can still appear in future offers.
+    - Good `free-shop-card` flow, if available, also does not deplete Shop stock.
+    - Joe Auction won card, if practical, also does not deplete Shop stock.
+    - Player-to-player transfer/buy/steal of owned Shop cards does not change Shop stock.
+  - Regression smoke:
+    - Good/Bad/TADAM/Event finite deck lifecycle still behaves as before.
+    - Shop offer UI still works and avoids duplicate visible card ids in the same offer while enough unique Shop cards exist, if that was already true.
+    - No browser console errors.
+  - Checks:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js` if touched;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`.
+  - If QA approves, send the approved result to GD for final approval per Task Lifecycle.
+
+- QA READY 2026-06-07 03:28 - Dev 2 handback for new Good cards (`Сглаз`, `Монетка из фонтана`, `Путевой знак`)
+  - Task:
+    - `ACTIVE CARD 2026-06-07 03:19 - Add new Good cards`.
+  - Changed:
+    - Added Good cards `next-battle-minus3` / `Сглаз`, `fountain-coin` / `Монетка из фонтана`, and `path-sign` / `Путевой знак`.
+    - Synced local card sources and Google Sheet `Cards Config`, tab `good`.
+    - `Сглаз` now lets the active player choose any target, stores the physical Good card on that target, shows compact host/phone status, stacks multiple copies, applies all held copies on the target's next personal battle, and then discards those physical copies to Good discard.
+    - `Монетка из фонтана` checks coins before payout and gives `15` only when the active player is strictly poorer than every other player; otherwise gives `8`.
+    - `Путевой знак` lets the active player choose forward `5` or backward `5`; backward movement resolves the landing cell after moving.
+  - Files changed by Dev 2:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `src/controller.js`
+    - `styles.css`
+    - `index.html`
+    - `controller.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-qa.md`
+  - Google Sheet:
+    - Spreadsheet: `Cards Config`, tab `good`.
+    - Readback confirmed rows for `next-battle-minus3`, `fountain-coin`, and `path-sign`, each with `count = 2`.
+  - Checks passed by Dev 2:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static config check: all three new Good cards have `count: 2`; expanded Good deck count is `20`.
+  - QA request:
+    - Run the checklist in `QA AFTER DEV 2026-06-07 03:19 - Verify new Good cards`.
+    - If approved, forward to GD for final approval per Task Lifecycle.
+
+- QA READY 2026-06-07 03:27 - Dev 3 handback for random-choice dice context
+  - Task:
+    - `ACTIVE UX 2026-06-07 03:15 - Show context near random-choice dice rolls`.
+  - Changed:
+    - Added reusable roll-context markup/state around `showActionPrompt(...)` for non-movement random-choice dice prompts.
+    - Added a persistent nearby context/status card during the actual random-choice dice animation.
+    - Added context/result prompts for:
+      - `resolveOnePlayerTieByDie(...)` tie-breaks;
+      - Joe Auction tie rolls;
+      - `Портал хаоса`;
+      - `Кубик удачи`.
+    - Added concise phone snapshot/action-note support for active roll context, without changing controller actions.
+    - Added desktop/mobile CSS for `.roll-context-card` and rolling status placement.
+    - Bumped host cache keys to `20260607-0378`.
+  - Files changed by Dev 3 for this task:
+    - `src/game.js`
+    - `styles.css`
+    - `index.html`
+    - `project-memory/inbox/for-qa.md`
+    - `project-memory/updates.md`
+  - Checks passed by Dev 3:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Browser reload at `http://localhost:5173/`: loaded `styles.css?v=20260607-0378` and `src/game.js?v=20260607-0378`; no console errors observed.
+  - QA request:
+    - Run the checklist in `QA AFTER DEV 2026-06-07 03:15 - Verify context near random-choice dice rolls`.
+    - Pay special attention to desktop/mobile overflow and that normal movement rolls are not cluttered.
+    - If approved, forward to GD for final approval per Task Lifecycle.
+
+- QA AFTER DEV 2026-06-07 03:19 - Verify new Good cards (`Сглаз`, `Монетка из фонтана`, `Путевой знак`):
+  - Wait for Dev handback for `ACTIVE CARD 2026-06-07 03:19 - Add new Good cards`.
+  - User request:
+    - Add a Good card: `Отдай эту карту любому игроку, в следующем бою он получает -3 к силе, затем сбрасывает эту карту`.
+    - Add `Монетка из фонтана`: `Получи 8 монет. Если у тебя меньше всех монет, получи 15.`
+    - Add `Путевой знак`: `Выбери: идти вперед на 5 или назад на 5. После перемещения назад сработает поле.`
+  - Expected card data:
+    - Deck `good`.
+    - New cards are present:
+      - `Сглаз` / suggested id `next-battle-minus3`;
+      - `Монетка из фонтана` / suggested id `fountain-coin`;
+      - `Путевой знак` / suggested id `path-sign`.
+    - Each new card has `count = 2`.
+    - Descriptions match the requested text with clean punctuation.
+    - Cards are present in `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `good` if Dev had access.
+  - Expected behavior - `Сглаз`:
+    - Drawing the card lets the active player choose any player, including self.
+    - Target receives a visible temporary status/chip.
+    - The physical card stays out of Good discard while held.
+    - On the target's next battle, their force gets `-3`, the penalty is visible/logged, and the card is discarded afterward.
+    - Multiple held copies stack and all consumed copies discard after that battle.
+    - The card does not apply to normal movement rolls, tie-break/random-choice rolls, portal rolls, or Joe Auction rolls.
+  - Battle smoke - `Сглаз`:
+    - Required: normal monster battle applies/consumes `Сглаз`.
+    - If practical: VS, final monster/final boss, or Event `Сплочение` also uses the penalty as the next battle.
+  - Expected behavior - `Монетка из фонтана`:
+    - If the active player is not strictly poorest, they get `8` coins.
+    - If the active player has strictly fewer coins than every other player before payout, they get `15` coins.
+    - If the active player is tied for lowest coins, they get `8` coins.
+  - Expected behavior - `Путевой знак`:
+    - Player chooses forward `5` or backward `5`.
+    - Forward option moves correctly.
+    - Backward option moves back and then resolves the landing cell.
+    - If backward movement clamps to a legal cell, the actual landing cell is resolved safely.
+  - Regression smoke:
+    - Existing Good cards still reveal and resolve.
+    - Finite Good deck/discard lifecycle still works.
+    - Current `Вольный шаг` field-preview flow still works if present.
+    - Random-choice dice context task changes, if present, are not broken.
+  - Checks:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - no browser console errors in tested flows.
+  - If QA approves, send the approved result to GD for final approval per Task Lifecycle.
+
+- QA AFTER DEV 2026-06-07 03:15 - Verify context near random-choice dice rolls:
+  - Wait for Dev handback for `ACTIVE UX 2026-06-07 03:15 - Show context near random-choice dice rolls`.
+  - User request:
+    - When a die is rolled for a random choice of some action, show information about what is happening somewhere nearby.
+  - Expected:
+    - Non-movement/random-choice `Бросить кубик` prompts show nearby context before the roll.
+    - Context explains the reason for the roll, participants/options, and selection criterion/outcomes.
+    - After the roll, the same area or directly adjacent UI shows the selected result.
+    - Chronicle/log remains useful but is not the only place where the player can understand the roll.
+  - Required smoke:
+    - A `resolveOnePlayerTieByDie` tie-break with two tied players shows context and result.
+    - Joe Auction tie roll shows context and result, if practical to trigger.
+    - A random outcome roll such as `Портал хаоса` or `Кубик удачи` shows context/outcomes.
+    - Normal movement roll is unchanged and not cluttered.
+    - Browser console has no new errors.
+  - Layout smoke:
+    - Desktop: context is visually near the active dice/action prompt.
+    - Mobile: context does not cover the board/action button and text does not overflow.
+  - Regression smoke:
+    - `Вольный шаг` field-preview flow still works if current Art/UI change is present.
+    - Event, Good/Bad, Joe Shop, and battle prompts still open/resolve normally.
+  - If QA approves, send the approved result to GD for final approval per Task Lifecycle.
+
 - QA READY 2026-06-07 03:04 - Art/UI handback for `Вольный шаг` field preview button
+  - QA 2 result at 2026-06-07 03:26:
+    - QA-approved and sent to GD for final approval.
+    - Browser target: `http://127.0.0.1:5173/`.
+    - Verified `Вольный шаг` popup shows numeric choices `0..N` plus `Показать поле`.
+    - Verified `Показать поле` hides popup and leaves board visible/inspectable.
+    - Verified main action button becomes `К выбору`.
+    - Verified `К выбору` returns the same `Вольный шаг` popup with the same numeric choices and `Показать поле`.
+    - Verified choosing `0` closes popup, returns to `Бросить`, logs the zero-step choice, and does not draw/trigger another Event card.
+    - Verified choosing `1` moves forward and resolves the green landing field (`Пес получает 3 на зеленом поле`).
+    - No browser console warnings/errors observed in the checked tab.
+    - Checks passed: `node --check src/game.js`, `git diff --check`.
   - Task source:
     - User reported that the `Событие / Вольный шаг` choice popup needs a field-view button.
   - Changed by Art/UI:

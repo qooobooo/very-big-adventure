@@ -49,6 +49,27 @@ export const cardConfig = {
       description: "Выбери игрока, он делает ход назад используя все свои кубики и бонусы передвижения.",
       effect: { type: "choose-player-back-roll" },
     },
+    {
+      id: "next-battle-minus3",
+      count: 2,
+      title: "Сглаз",
+      description: "Отдай эту карту любому игроку. В следующем бою он получает -3 к силе, затем сбрасывает эту карту.",
+      effect: { type: "give-next-battle-penalty", amount: -3 },
+    },
+    {
+      id: "fountain-coin",
+      count: 2,
+      title: "Монетка из фонтана",
+      description: "Получи 8 монет. Если у тебя меньше всех монет, получи 15.",
+      effect: { type: "coins-if-poorest", amount: 8, poorestAmount: 15 },
+    },
+    {
+      id: "path-sign",
+      count: 2,
+      title: "Путевой знак",
+      description: "Выбери: идти вперед на 5 или назад на 5. После перемещения назад сработает поле.",
+      effect: { type: "choose-forward-or-back", steps: 5 },
+    },
   ],
   bad: [
     {
@@ -164,7 +185,7 @@ export const cardConfig = {
       id: "generous-rain",
       count: 2,
       title: "Щедрый дождь",
-      description: "Все игроки с 0 монет получают 20 монет.",
+      description: "Все игроки без монет получают 20 монет. Если монеты есть у всех, все получают 5 монет",
       effect: { type: "event-generous-rain", amount: 20 },
     },
     {
