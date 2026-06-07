@@ -3379,6 +3379,44 @@ body[data-controller-mode="big-button"] .controller-top h1 {
     inset 0 1px 0 rgba(255, 255, 255, 0.13);
 }
 
+.unity-battle-panel {
+  width: min(820px, 100%);
+}
+
+.unity-battle-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+}
+
+.enemy-battle-hud .unity-battle-card.is-complete {
+  border-color: color-mix(in srgb, var(--player-color) 70%, rgba(173, 255, 117, 0.82) 30%);
+}
+
+.unity-battle-hud .vs-battle-emblem {
+  border-color: rgba(173, 255, 117, 0.72);
+  color: #e9ffd2;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.34),
+    0 0 0 3px rgba(173, 255, 117, 0.12);
+}
+
+.unity-battle-hud.is-victory .enemy-battle-panel {
+  border-color: rgba(173, 255, 117, 0.82);
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.42),
+    0 0 0 2px rgba(173, 255, 117, 0.2),
+    0 0 24px rgba(173, 255, 117, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.13);
+}
+
+.unity-battle-hud.is-defeat .enemy-battle-panel {
+  border-color: rgba(255, 139, 112, 0.78);
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.42),
+    0 0 0 2px rgba(255, 112, 76, 0.18),
+    0 0 24px rgba(255, 87, 64, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
 @keyframes vs-battle-card-pulse {
   0%,
   100% {
@@ -3577,6 +3615,10 @@ body[data-controller-mode="big-button"] .controller-top h1 {
     min-height: 26px;
     max-height: 50px;
     padding: 4px 6px;
+  }
+
+  .unity-battle-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
 }
@@ -4238,28 +4280,47 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 }
 
 .enemy-victory-marks {
+  --enemy-mark-size: clamp(7px, 1vw, 11px);
   position: absolute;
-  right: 4px;
-  bottom: 4px;
-  z-index: 6;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 3px;
-  max-width: 70%;
+  right: 3px;
+  bottom: 3px;
+  z-index: 7;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: var(--enemy-mark-size);
+  justify-content: end;
+  align-content: end;
+  gap: 2px;
+  max-width: calc(100% - 8px);
+  max-height: calc(100% - 18px);
   pointer-events: none;
 }
 
+.enemy-victory-marks[data-count="3"],
+.enemy-victory-marks[data-count="4"] {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(2, var(--enemy-mark-size));
+}
+
 .enemy-victory-marks i {
-  width: clamp(8px, 1.2vw, 12px);
+  width: var(--enemy-mark-size);
   aspect-ratio: 1;
   display: block;
-  border: 2px solid rgba(255, 248, 226, 0.95);
+  box-sizing: border-box;
+  border: 1.5px solid rgba(255, 248, 226, 0.95);
   border-radius: 999px;
   background: var(--player-color);
   box-shadow:
     0 2px 5px rgba(0, 0, 0, 0.42),
     0 0 0 1px rgba(43, 24, 12, 0.42);
+}
+
+.board[data-board-id="field2"] .enemy-victory-marks {
+  --enemy-mark-size: clamp(6px, 0.72vw, 8px);
+  right: 2px;
+  bottom: 2px;
+  gap: 1px;
+  max-height: calc(100% - 14px);
 }
 
 .tile-landing .tile-icon {
@@ -8278,6 +8339,10 @@ body[data-ui-style="tabletop"] .winner-card {
   .vs-battle-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 2px;
+  }
+
+  .unity-battle-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .enemy-battle-hud .vs-battle-card {

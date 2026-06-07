@@ -47,3 +47,10 @@ GitHub link for `next-chat.md`, useful for browser ChatGPT chats without local f
 `https://github.com/qooobooo/very-big-adventure/blob/main/project-memory/prompts/next-chat.md`
 
 Use `prompts/read-news.md` when the user says "прочти новости".
+
+## Card Text Style
+
+- Player-facing card text never ends with a final period.
+- If a card has several sentences, periods may stay between sentences, but the final sentence must have no trailing period.
+- Apply this to `Cards Config` player-facing fields such as `title`, `shortTitle`, and `description`, and keep Google Sheet, `src/cards.config.js`, and `cards-google-sheet.csv` aligned.
+- Internal config notes may keep normal punctuation unless they are displayed on a card.

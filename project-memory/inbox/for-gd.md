@@ -4,6 +4,75 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-06-07 16:35 - QA 1-approved for GD final approval: card text final-period cleanup
+  - GD final approval: approved at 2026-06-07 16:37.
+  - Source handback:
+    - `QA READY 2026-06-07 16:30 - Dev 2 handback for card text final-period cleanup`.
+  - QA result:
+    - Approved for GD final approval.
+  - What QA 1 checked:
+    - Static/local checks:
+      - `src/cards.config.js`: no player-facing `title`, `shortTitle`, or `description` ends with `.`;
+      - `cards-google-sheet.csv`: no player-facing `title`, `shortTitle`, or `description` ends with `.`;
+      - multi-sentence text kept internal periods, for example `Сглаз`, `Монетка из фонтана`, `Путевой знак`;
+      - Dev 1's plural TADAM text remains `Перепрыгивая игроков, забери у каждого по 3 монеты`.
+    - Google Sheet readback:
+      - tabs checked: `good`, `bad`, `tadam`, `event`, `shop`;
+      - no checked `title`, `shortTitle`, or `description` ended with a final period;
+      - internal periods were still present in multi-sentence Event/Good text.
+    - Browser smoke on `http://127.0.0.1:5173/`:
+      - Good reveal face: `Сделай еще один ход`;
+      - Event reveal face: `Волшебный кошель ... артефакт переходит к нему`, with internal periods preserved and no final period;
+      - TADAM reveal face: `Красные поля дают карту Плохо`;
+      - Shop reveal face: `Перед броском можешь заплатить 5 и кинуть на 1 больше` and `+1 к силе только в битвах`;
+      - Bad reveal face: `Потеряй 10`;
+      - no browser console errors observed in checked reveal flows.
+  - Checks passed:
+    - `node --check src/cards.config.js`;
+    - `node --check src/game.js`;
+    - `node --check src/controller.js`;
+    - `git diff --check`.
+  - Notes:
+    - QA did not find a rework item for Dev 2.
+    - This approval is text-style scope only; separate QA gates remain open for TADAM `jump-steal` behavior, Event `Сплочение` HUD, and monster-clear markers.
+
+- 2026-06-07 15:43 - QA 1-approved for GD final approval: Good `steal5` chosen-target steal
+  - GD final approval: approved at 2026-06-07 15:45.
+  - Source handback:
+    - `QA READY 2026-06-07 15:38 - Dev 2 handback for Good steal5 chosen-target steal`.
+  - QA result:
+    - Approved for GD final approval.
+  - What QA 1 checked:
+    - Static/source checks:
+      - `good/steal5` keeps id `steal5`;
+      - `count` remains `2`;
+      - title is `Выбери игрока, забери у него 5 монет`;
+      - description is `Выбери игрока, забери у него 5 монет.`;
+      - effect is `steal-chosen-player`, amount `5`;
+      - local CSV row matches the updated text/effect/count;
+      - `index.html` loads `src/game.js?v=20260607-0387`;
+      - `stealFromChosenPlayer()` builds choices from all other players and excludes the active player;
+      - `stealCoins()` caps the transfer with `Math.min(amount, fromPlayer.coins)`.
+    - Browser smoke on `http://127.0.0.1:5173/`:
+      - classic/no-phone game with 3 human players;
+      - exact-landed on Good and drew/revealed `steal5`;
+      - card face showed `Выбери игрока, забери у него 5`;
+      - after applying, target popup showed `Кот 10` and `Выдра 10`, and did not show active `Пес`;
+      - chose `Выдра`;
+      - result: `Пес` coins changed `10 -> 15`, `Выдра` changed `10 -> 5`, `Кот` stayed `10`;
+      - log/toast said `Пес выбирает Выдра и забирает 5`.
+    - Edge proof:
+      - isolated `stealCoins()` behavior showed a target with `3` coins gives exactly `3`, and self-transfer returns `0`.
+    - No browser console errors observed in the checked flow.
+  - Checks passed:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `node --check src/controller.js`;
+    - `git diff --check`.
+  - Notes:
+    - QA did not find a rework item for Dev 2.
+    - Browser covered active-player target exclusion and selected-target transfer. Non-richest targeting is covered by the source path because all opponents are offered; the old `richestOpponent()` resolver is no longer used by `steal5`.
+
 - 2026-06-07 15:23 - QA 1-approved for GD final approval: random-choice roll UI overlap rework
   - GD final approval: approved at 2026-06-07 15:25.
   - Source handback:

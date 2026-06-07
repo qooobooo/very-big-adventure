@@ -20,6 +20,407 @@ Open questions:
 - ...
 ```
 
+## 2026-06-07 17:42 - Dev 3
+
+Changed:
+- Implemented `ACTIVE UI 2026-06-07 16:16 - Add battle HUD for Event Сплочение`.
+- Added `state.unityBattleProgress` and a `renderUnityBattleHud(...)` path on existing `#finalBattleHud`.
+- `Сплочение` now shows target force, team total, all participating players, per-player `?` / rolling / final force states, player strength badges, and final win/loss outcome.
+- Kept Event rules/rewards/dice flow unchanged; only added HUD progress and a final `Далее` prompt so the result remains visible.
+- Bumped host cache keys to `styles.css?v=20260607-0389` and `src/game.js?v=20260607-0389`.
+- Sent handback to QA first per Task Lifecycle.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Browser desktop smoke on `http://127.0.0.1:5173/`, 3 players: found `Сплочение`, applied it, HUD showed target `18`, all 3 players, rolling highlight, completed player forces, updating team total, final defeat `8 / 18`, and cleared after `Далее`; no console errors.
+- Browser mobile smoke at `390x844`, 3 players: found `Сплочение`, HUD stayed visible/readable, did not overlap measured dice/action button rects, showed final defeat `4 / 18`; no console errors.
+- Regression spot-check: existing asset cache keys loaded as expected; enemy/VS/final battle code paths were not intentionally changed beyond adding Unity as a separate HUD branch.
+
+Open questions:
+- Waiting for QA approval/rework before GD final approval.
+
+## 2026-06-07 17:03 - QA 1
+
+Changed:
+- Reviewed `QA BLOCKED 2026-06-07 17:01 - Dev 2 partial handback for final History summary save`.
+- QA gate result: not approved / blocked.
+- Confirmed the remaining blocker is outside the current client-side handback: the deployed Apps Script mapping still writes only old/basic columns and leaves new final columns blank.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/inbox/for-dev.md`
+
+Notes for others:
+- Do not forward this task to GD approval yet.
+- Required next implementation: update/deploy the Apps Script save mapping for the new final History fields in `Games!O:X` and `Players!T:AG`.
+- QA approval requires a real browser `Сохранить` flow from a finished game and Google Sheet readback with non-empty final columns matching the visible `История -> Итог партии` UI.
+- QA did not change game code.
+
+Open questions:
+- Who has access to the live Apps Script source/deployment?
+
+## 2026-06-07 17:01 - Dev 2
+
+Changed:
+- Partially implemented `ACTIVE HISTORY SHEET 2026-06-07 16:51 - Save final History summary to Games Log`.
+- Extended `buildGameHistorySnapshot()` to `version: 2` and added flattened final History fields for Google Sheets:
+  - game-level `finalOutcome`, `finalOutcomeText`, winner fields, force fields, boss-won flag, and `finalSummaryJson`;
+  - player-level final role/winner/score parts/force/breakdown/JSON fields.
+- Added `sheetExport` to the payload while preserving existing `game`, `players`, `history`, and old analytics fields.
+- Updated `Games Log` headers:
+  - `Games!O:X` final summary columns;
+  - `Players!T:AG` per-player final columns.
+- Bumped host cache key to `src/game.js?v=20260607-0388`.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser smoke loaded `http://localhost:5173/`, picked up `src/game.js?v=20260607-0388`, and had no console errors.
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Live Apps Script source/deployment is not available in repo, Drive search, or local `clasp`; `clasp` is not installed.
+- Endpoint smoke with a finished-like v2 payload wrote old `Games`/`Players` columns only and left the new final columns blank, proving the live Apps Script mapping still needs an update.
+- Smoke test rows `DEV2_HISTORY_SHEET_SMOKE_*` were removed from `Games Log` after verification.
+
+Open questions:
+- Blocked on Apps Script source/deployment access. Required next edit: update the web app mapping to write `payload.game.final*` and `payload.players[].final*` / `payload.sheetExport` into the new headers.
+
+## 2026-06-07 16:51 - GD
+
+Changed:
+- Checked the provided Google Sheet `Games Log` for the in-game `История` save path.
+- Confirmed the table already has basic saved rows in `Games` and per-player rows in `Players`.
+- Identified a gap: the new final `Итог партии` protocol shown in the History UI is not persisted as readable Sheet columns yet.
+- Added and dispatched a Dev 2 task to extend the Sheet/Apps Script save mapping for final History summaries.
+- Added QA coverage requiring Sheet readback after pressing `Сохранить`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Target Sheet: `Games Log`, id `1uC1xUk52IbpHfm9tNtHT2_cmFSNQIKCkct88TsqmmV8`.
+- Local snapshot already includes final summary through `state.history.finalSummary` / `state.finalBattle.finalSummary`; the missing piece is readable Google Sheet persistence.
+- `mode: "no-cors"` send success is not enough for approval; QA must verify an actual new row and matching final fields in the Sheet.
+
+Open questions:
+- Waiting for Dev 2 handback to QA.
+
+## 2026-06-07 16:37 - Dev 1
+
+Changed:
+- Implemented `ACTIVE UI BUG 2026-06-07 16:31 - Show all monster-clear player markers`.
+- Kept monster clear state/rules unchanged and adjusted marker rendering/layout only.
+- Added marker count metadata and container aria/title text in `renderEnemyLocks()`.
+- Reworked `.enemy-victory-marks` into compact grid layout, including explicit 3/4-marker 2x2 support and smaller field2 sizing.
+- Sent handback to QA first per Task Lifecycle.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Static checks confirm render still appends one dot per victorious player and CSS has explicit 3/4 marker selectors.
+- Browser app smoke loaded `http://localhost:5173/` with no console errors; forced synthetic 1/2/3/4 browser layout via `data:` URL was blocked by browser policy, so QA should cover the full visual matrix in-app.
+
+Open questions:
+- Waiting for QA approval/rework before GD final approval.
+
+## 2026-06-07 16:37 - GD
+
+Changed:
+- Gave final GD approval for Dev 2 / QA 1 task `card text final-period cleanup`.
+- Closed the card text style cleanup gate.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Approved scope: player-facing `title`, `shortTitle`, and `description` fields no longer end with final `.` in local config, CSV mirror, and Google Sheet `Cards Config`.
+- Internal sentence periods, `!`, and `?` are preserved.
+- Dev 1's plural `tadam/jump-steal` text remains `Перепрыгивая игроков, забери у каждого по 3 монеты`.
+- Separate QA gates remain open for TADAM `jump-steal` behavior, Event `Сплочение` HUD, and monster-clear markers.
+
+Open questions:
+- None for this card text style task.
+
+## 2026-06-07 16:35 - QA 1
+
+Changed:
+- QA-approved Dev 2 handback `card text final-period cleanup` and forwarded it to GD for final approval per Task Lifecycle.
+- Verified local `src/cards.config.js` and `cards-google-sheet.csv`: no player-facing `title`, `shortTitle`, or `description` ends with a final period.
+- Verified Google Sheet `Cards Config` tabs `good`, `bad`, `tadam`, `event`, and `shop`: readback of player-facing fields showed no final trailing period.
+- Browser-smoked card face reveal for Good, Event, TADAM, Shop, and Bad.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Checks passed: `node --check src/cards.config.js`, `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+- Browser face samples had no final period:
+  - Good: `Сделай еще один ход`;
+  - Event: `Волшебный кошель ... артефакт переходит к нему`;
+  - TADAM: `Красные поля дают карту Плохо`;
+  - Shop: `Перед броском можешь заплатить 5 и кинуть на 1 больше` / `+1 к силе только в битвах`;
+  - Bad: `Потеряй 10`.
+- Internal punctuation stayed readable; Event `Волшебный кошель` kept internal sentence periods while dropping the final trailing period.
+- Dev 1's fresh plural `tadam/jump-steal` text remains `Перепрыгивая игроков, забери у каждого по 3 монеты`.
+- Browser console errors: none observed in the checked reveal flows.
+- QA did not find a rework item for Dev 2.
+
+Open questions:
+- Waiting for GD final approval.
+
+## 2026-06-07 16:31 - GD
+
+Changed:
+- Added and dispatched a UI bug task for monster-clear player markers.
+- Assigned implementation to `Dev 1`.
+- Added QA follow-up to verify 1/2/3/4 cleared-player marker states and opened-portal regression.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- User reported: three players cleared a monster, but only two victory markers were visible.
+- Contract: visible marker count must match `door.openedBy.length` for non-final monsters until the monster becomes a fully opened portal.
+- Likely area: `renderEnemyLocks()` and `.enemy-victory-marks` layout.
+- Do not change monster battle/opening rules, rewards, dice math, card effects, or portal rules.
+
+Open questions:
+- Waiting for Dev 1 handback to QA.
+
+## 2026-06-07 16:30 - Dev 2
+
+Changed:
+- Implemented `ACTIVE CARD STYLE 2026-06-07 16:22 - Remove final periods from all card text`.
+- Removed final trailing periods from player-facing card descriptions in local `cardConfig`, CSV mirror, and Google Sheet `Cards Config` tabs `good`, `bad`, `tadam`, `event`, and `shop`.
+- Preserved internal sentence periods and existing `!` / `?` punctuation.
+- Preserved Dev 1's fresh `tadam/jump-steal` plural text from the Sheet/local mirror: `Перепрыгивая игроков, забери у каждого по 3 монеты`.
+- Sent handback to QA first per Task Lifecycle.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Google Sheet readback confirmed no `title`, `shortTitle`, or `description` in the checked tabs ends with a final `.`.
+- Only text cleanup was intended; no card ids/counts/effects/amounts/rules/deck lifecycle/UI were changed by this task.
+- Browser reveal smoke is left for QA card-face verification.
+
+Open questions:
+- Waiting for QA approval before GD final approval.
+
+## 2026-06-07 16:29 - Dev 1
+
+Changed:
+- Updated TADAM `jump-steal` so it steals from every other player on the jumped-over cell.
+- Removed the one-target 1d6 tie-break from `resolveJumpSteal(...)` only.
+- Kept `land-steal` singular and still using the existing one-target 1d6 tie-break.
+- Updated `tadam/jump-steal` player-facing text to `Перепрыгивая игроков, забери у каждого по 3 монеты`.
+- Synced local `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `tadam`.
+- Sent handback to QA first per Task Lifecycle.
+
+Files:
+- `src/game.js`
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Google Sheet readback confirmed `tadam!A6:N6`: id/effect `jump-steal`, amount `3`, count `2`, plural title/description with no final period.
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `git diff --check`.
+- Static check passed: `resolveJumpSteal(...)` no longer references `resolveOnePlayerTieByDie(...)`; `resolveLandSteal(...)` still does.
+
+Open questions:
+- QA browser smoke still needed for multi-target same-cell jump and low-coin target cap.
+
+## 2026-06-07 16:25 - GD
+
+Changed:
+- Added and dispatched a TADAM rule update for `jump-steal`.
+- Assigned implementation to `Dev 1`.
+- Added QA follow-up for multi-target jumped-over-cell behavior and `land-steal` regression.
+- Marked the older one-player tie-break instruction for `jump-steal` as superseded.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- New rule: when active TADAM `jump-steal` triggers on a jumped-over cell with multiple other players, it applies to all those players, not one chosen by tie-break.
+- Suggested player-facing text: `Перепрыгивая игроков, забери у каждого по 3 монеты`.
+- Keep id/effect/count/amount unchanged: `jump-steal`, effect `jump-steal`, count `2`, amount `3`.
+- This supersedes the older 2026-06-06 tie-break rule for `jump-steal` only; `land-steal` stays singular with one-target tie-break.
+- Dev 1 should coordinate with Dev 2's active card-style cleanup so no-final-period text is preserved.
+
+Open questions:
+- Waiting for Dev 1 handback to QA.
+
+## 2026-06-07 16:22 - GD
+
+Changed:
+- Added card text style rule: player-facing card text must not end with a final period.
+- Added and dispatched a bulk card text cleanup task.
+- Assigned implementation to `Dev 2`.
+- Added QA follow-up for Google Sheet/local config sync and reveal smoke.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Rule applies to `Cards Config` player-facing fields `title`, `shortTitle`, and `description`.
+- Internal periods between sentences stay; only a trailing final `.` is removed.
+- Do not strip `!` or `?`, and do not rewrite internal `notes` unless they are displayed on cards.
+- Dev must sync canonical Google Sheet `Cards Config` tabs `good`, `bad`, `tadam`, `event`, `shop`, plus `src/cards.config.js` and `cards-google-sheet.csv`.
+
+Open questions:
+- Waiting for Dev 2 handback to QA.
+
+## 2026-06-07 16:16 - GD
+
+Changed:
+- Added and dispatched a UI task for Event `Сплочение` battle HUD.
+- Assigned implementation to `Dev 3`.
+- Added QA follow-up for desktop/mobile battle HUD readability and battle regression smoke.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- User wants `Сплочение` to show battle UI with target and current player results, like other battles.
+- Contract: show `Сплочение`, target `6 * playerCount`, current team total, all players, rolling state, per-player force results, and final win/loss.
+- Do not change `Сплочение` rules/rewards, Event card data, dice math, deck lifecycle, `Зелье ярости`, or `Сглаз` behavior.
+
+Open questions:
+- Waiting for Dev 3 handback to QA.
+
+## 2026-06-07 15:45 - GD
+
+Changed:
+- Gave final GD approval for Dev 2 / QA 1 task `Good steal5 chosen-target steal`.
+- Closed the card-tune gate for `good/steal5`.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Approved contract: `steal5` keeps id `steal5` and count `2`; title/description are `Выбери игрока, забери у него 5 монет`; active player chooses another player and steals up to 5 coins.
+- QA confirmed chosen-target transfer, active-player exclusion, low-coin cap, local/CSV/Google Sheet sync, and no console errors.
+
+Open questions:
+- None for this `steal5` task.
+
+## 2026-06-07 15:43 - QA 1
+
+Changed:
+- QA-approved Dev 2 handback `Good steal5 chosen-target steal` and forwarded it to GD for final approval per Task Lifecycle.
+- Verified card data for `good/steal5`: id unchanged, count `2`, title/description `Выбери игрока, забери у него 5 монет`, effect `steal-chosen-player`, amount `5`.
+- Browser-smoked 3-player classic/no-phone flow: drew/revealed `steal5`, applied it, confirmed choice popup shows only other players (`Кот`, `Выдра`) and excludes active `Пес`, chose `Выдра`, and verified `Пес` gained 5 while `Выдра` lost 5.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Static source check: `stealFromChosenPlayer()` builds choices from all opponents, not richest-only, and `stealCoins()` caps the transfer at the target's available coins.
+- Isolated edge proof: a target with 3 coins gives exactly 3; self-transfer returns 0.
+- Browser console errors: none observed in the checked `steal5` flow.
+- QA did not find a rework item for Dev 2.
+
+Open questions:
+- Waiting for GD final approval.
+
+## 2026-06-07 15:38 - Dev 2
+
+Changed:
+- Tuned Good card `steal5` from automatic richest-player steal to chosen-target steal.
+- Updated `steal5` title/description to `Выбери игрока, забери у него 5 монет`.
+- Added `steal-chosen-player` resolution: active player chooses another player, steals up to 5 coins, and logs the chosen target plus actual amount.
+- Synced local card config, local CSV mirror, and Google Sheet `Cards Config` / `good`.
+- Bumped host game cache key to `src/game.js?v=20260607-0387`.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Card id remains `steal5`; count remains `2`.
+- Google Sheet readback confirmed `good!A4:N4` has `steal-chosen-player`, amount `5`, count `2`, and the new text.
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `git diff --check`.
+- Did not touch unrelated cards, Joe Shop stock, finite decks, dice UI, Monster Rage indicator, or `outputs/`.
+- Direct QA dispatch sent to `QA 1` (`019e9ef2-389c-78a3-bc66-9f38f69988f9`).
+
+Open questions:
+- Sent to QA first per Task Lifecycle; waiting for QA approval or reproducible rework.
+
+## 2026-06-07 15:35 - GD
+
+Changed:
+- Added and dispatched a Good-card tuning task for `good/steal5`.
+- Assigned implementation to `Dev 2`.
+- Added QA follow-up for chosen-target steal behavior and card-data sync.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- User requested text: `Выбери игрока, забери у него 5 монет`.
+- Design interpretation: the active player chooses another player, not themselves.
+- If the chosen target has fewer than 5 coins, steal the available amount through the existing coin transfer path.
+- Keep card id `steal5` and count `2`; sync Google Sheet `Cards Config` / `good` if available.
+
+Open questions:
+- Waiting for Dev 2 handback to QA.
+
 ## 2026-06-07 15:25 - GD
 
 Changed:

@@ -4,6 +4,507 @@ For testing tasks related to "Очень Большая Бродилка" in `/U
 
 ## Open Items
 
+- QA READY 2026-06-07 17:42 - Dev 3 handback for Event `Сплочение` battle HUD:
+  - Task:
+    - `ACTIVE UI 2026-06-07 16:16 - Add battle HUD for Event Сплочение`.
+  - Status:
+    - Ready for QA from `Dev 3`.
+    - Do not send to GD final approval until QA approves.
+  - Dev 3 changed:
+    - Added `state.unityBattleProgress`.
+    - Added `renderUnityBattleHud(...)` using existing `#finalBattleHud`.
+    - Updated `renderFinalBattleHud()` to render Unity HUD as a separate branch from enemy/VS/final battle HUDs.
+    - Updated `resolveEventUnity(...)` to maintain progress before each player roll, during rolling, after each result, and after final outcome.
+    - Added compact `unity-battle-*` CSS on top of existing enemy/VS battle HUD styling.
+    - Bumped cache keys:
+      - `styles.css?v=20260607-0389`;
+      - `src/game.js?v=20260607-0389`.
+  - Files changed by Dev 3:
+    - `src/game.js`;
+    - `styles.css`;
+    - `index.html`;
+    - `project-memory/updates.md`;
+    - `project-memory/inbox/for-dev.md`;
+    - `project-memory/inbox/for-qa.md`.
+  - Gameplay scope:
+    - Target remains `6 * state.players.length`.
+    - Each player still rolls through `rollPlayerMonsterBattlePower(...)`.
+    - Win branch remains: all players get `10`; best hit gets extra `10` with existing tie handling.
+    - Loss branch remains: all players lose `5`.
+    - No card data/count/text/deck lifecycle/dice math/bot logic changes intended.
+  - Dev checks passed:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `node --check src/controller.js`;
+    - `git diff --check`.
+  - Dev browser smoke:
+    - Desktop `http://127.0.0.1:5173/`, 3 players:
+      - found and applied `Сплочение`;
+      - HUD appeared on `#finalBattleHud`;
+      - target `18` was visible;
+      - all 3 players were listed;
+      - current rolling player was highlighted;
+      - completed player force values stayed visible;
+      - team total updated after player rolls;
+      - final defeat `8 / 18` was visible;
+      - HUD cleared after `Далее`;
+      - no console errors.
+    - Mobile viewport `390x844`, 3 players:
+      - found and applied `Сплочение`;
+      - HUD appeared/readable;
+      - HUD did not overlap measured dice/action button rects;
+      - final defeat `4 / 18` was visible;
+      - no console errors.
+  - Requested QA:
+    - Verify `Сплочение` with 3+ players:
+      - HUD appears at Event start;
+      - target force is visible and equals `6 * playerCount`;
+      - all players are listed;
+      - current rolling player is highlighted;
+      - completed players keep visible force results;
+      - team total updates after each player roll;
+      - final win/loss outcome remains visible until `Далее`;
+      - HUD clears after `Далее`;
+      - no console errors.
+    - Verify mobile/narrow width readability and no incoherent overlap with dice/action controls.
+    - Regression spot-check existing monster battle HUD, VS battle HUD, and final battle HUD if practical.
+  - If QA approves, send the approved result to GD for final approval per Task Lifecycle.
+
+- QA BLOCKED 2026-06-07 17:01 - Dev 2 partial handback for final History summary save:
+  - Task:
+    - `ACTIVE HISTORY SHEET 2026-06-07 16:51 - Save final History summary to Games Log`.
+  - Status:
+    - Not approval-ready.
+    - Client payload and Sheet headers are prepared, but live Apps Script mapping is still old and needs source/deployment access.
+  - Dev 2 changed:
+    - `buildGameHistorySnapshot()` now emits `version: 2`.
+    - Payload now includes flattened game-level final fields under `game` and `sheetExport.game`:
+      - `finalOutcome`;
+      - `finalOutcomeText`;
+      - `finalWinnerName`;
+      - `finalWinnerRole`;
+      - `finalWinnerRoleId`;
+      - `finalWinnerScore`;
+      - `finalPlayersForce`;
+      - `finalBossForce`;
+      - `finalBossWon`;
+      - `finalSummaryJson`.
+    - Payload now includes flattened per-player final fields under every `players[]` item and `sheetExport.players[]`:
+      - `finalRole`;
+      - `finalRoleId`;
+      - `finalWinner`;
+      - `finalScoreTotal`;
+      - `finalScoreCoins`;
+      - `finalScoreShop`;
+      - `finalScoreDamage`;
+      - `finalScoreDamageToBoss`;
+      - `finalScorePosition`;
+      - `finalBattleForce`;
+      - `finalForceBreakdown`;
+      - `finalScoreBreakdown`;
+      - `finalScoreJson`;
+      - `finalForceJson`.
+    - `Games Log` Sheet headers were extended:
+      - `Games!O:X`;
+      - `Players!T:AG`.
+    - Host cache key bumped to `src/game.js?v=20260607-0388`.
+  - Files changed by Dev 2:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-qa.md`
+  - Checks passed by Dev 2:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Browser smoke: `http://localhost:5173/` loaded, board ready, save button present, script cache key `20260607-0388`, no console errors.
+    - Sheet header readback confirmed new headers in `Games` and `Players`.
+  - Blocker evidence:
+    - Apps Script source is not present in repo.
+    - Google Drive search found the target spreadsheet but no accessible Apps Script project.
+    - Local `clasp` is not installed and no `.clasprc.json` was available.
+    - Direct endpoint smoke with a finished-like v2 payload wrote a `Games` row and two `Players` rows with old/basic fields, but all new final columns remained blank.
+    - Smoke test rows with id prefix `DEV2_HISTORY_SHEET_SMOKE_` were deleted afterward; readback confirmed no smoke rows remain.
+  - Required next implementation outside Dev 2's current access:
+    - Update the deployed Apps Script web app to map the new fields into existing new headers.
+    - Existing old columns must remain populated.
+    - Suggested mapping:
+      - `Games` old fields unchanged, then `payload.game.finalOutcome`, `payload.game.finalOutcomeText`, `payload.game.finalWinnerName`, `payload.game.finalWinnerRole`, `payload.game.finalWinnerRoleId`, `payload.game.finalWinnerScore`, `payload.game.finalPlayersForce`, `payload.game.finalBossForce`, `payload.game.finalBossWon`, `payload.game.finalSummaryJson`.
+      - `Players` old fields unchanged, then each `payload.players[]` row's `finalRole`, `finalRoleId`, `finalWinner`, `finalScoreTotal`, `finalScoreCoins`, `finalScoreShop`, `finalScoreDamage`, `finalScoreDamageToBoss`, `finalScorePosition`, `finalBattleForce`, `finalForceBreakdown`, `finalScoreBreakdown`, `finalScoreJson`, `finalForceJson`.
+  - Requested QA:
+    - Do not approve as complete until the live Apps Script mapping is updated and Sheet readback after pressing `Сохранить` shows non-empty final columns.
+    - QA may verify the prepared client payload/static headers, but final save behavior remains blocked.
+  - QA 1 gate result at 2026-06-07 17:03:
+    - Not approved / blocked.
+    - Confirmed this handback must not go to GD final approval yet.
+    - Required before re-QA: deployed Apps Script mapping updated, then a real browser `Сохранить` flow from a finished game with Google Sheet readback showing non-empty final columns matching the visible `История -> Итог партии` UI.
+
+- QA AFTER DEV 2026-06-07 16:51 - Verify final History summary saves to `Games Log`:
+  - Status: waiting for Dev 2 implementation handback.
+  - Task:
+    - `ACTIVE HISTORY SHEET 2026-06-07 16:51 - Save final History summary to Games Log`.
+  - Target Google Sheet:
+    - `Games Log`;
+    - `https://docs.google.com/spreadsheets/d/1uC1xUk52IbpHfm9tNtHT2_cmFSNQIKCkct88TsqmmV8/edit?gid=0#gid=0`.
+  - Expected:
+    - Pressing `Сохранить` from the finished-game `История` screen writes a new game record to tab `Games`.
+    - The saved game record includes final summary fields from the visible `Итог партии` UI:
+      - outcome/result;
+      - winner name;
+      - winner role;
+      - winner score;
+      - players total force;
+      - boss force;
+      - boss won flag;
+      - optional raw final summary JSON.
+    - Tab `Players` gets one matching row per player for that game id.
+    - Each player row includes final protocol fields:
+      - role;
+      - winner flag;
+      - final score total;
+      - coins score part;
+      - Joe Shop/card score part;
+      - boss damage/attack score part;
+      - position score part;
+      - final battle force;
+      - dice/bonus breakdown text or JSON.
+    - Existing older `Games` / `Players` columns still populate as before.
+  - Required checks:
+    - `node --check src/game.js` if touched;
+    - `node --check src/cards.config.js` if touched;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`.
+  - Browser + Sheet smoke:
+    - Start/force a game into a finished final-battle state with visible `История -> Итог партии`.
+    - Record visible values from the UI:
+      - time;
+      - TADAM count;
+      - result/outcome;
+      - winner;
+      - winner score;
+      - players total force;
+      - boss force;
+      - every player's final score and parts.
+    - Click `Сохранить`.
+    - Read back the Google Sheet after save:
+      - find the new `Games` row by id/savedAt;
+      - confirm final summary fields match visible UI values;
+      - find all matching `Players` rows by gameId;
+      - confirm player count and final score parts match visible UI values.
+    - Confirm no browser console errors.
+  - Regression:
+    - Existing basic history fields still save:
+      - elapsedMs;
+      - finished;
+      - board;
+      - playerCount/botCount;
+      - tadamPlayed;
+      - round;
+      - turns.
+    - Save failure still gives the current user-facing graceful fallback.
+  - If QA approves, send the approved result to GD for final approval per Task Lifecycle.
+
+- QA AFTER DEV 2026-06-07 16:31 - Verify all monster-clear player markers:
+  - Status: ready for QA from `Dev 1` at 2026-06-07 16:37.
+  - Dev handback:
+    - Kept monster clear state/rules unchanged.
+    - `renderEnemyLocks()` still creates one marker dot per `victoriousPlayers` entry, and now writes `data-count`, `title`, and `aria-label` on the marker container.
+    - `.enemy-victory-marks` now uses a compact grid instead of a wrapping flex row.
+    - Explicit `data-count="3"` and `data-count="4"` selectors switch the marker group to a 2x2 grid.
+    - Field2 has a smaller marker size/gap so 3-4 markers stay inside small 15x15-board tiles and below the monster power badge.
+  - Dev files:
+    - `src/game.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-qa.md`
+  - Dev checks passed:
+    - `node --check src/game.js`;
+    - `git diff --check`;
+    - static check: render sets `marks.dataset.count = String(victoriousPlayers.length)`;
+    - static check: render appends one `<i>` per victorious player;
+    - static check: CSS has explicit 3/4 marker grid selectors and field2 compact sizing;
+    - browser app smoke: `http://localhost:5173/` loaded, board ready, no browser console errors.
+  - Dev smoke limitation:
+    - Attempted forced synthetic 1/2/3/4 visual layout in Browser, but `data:` test page navigation was blocked by browser policy.
+    - Please cover the full forced in-app visual matrix during QA.
+  - User report:
+    - Three players cleared a monster, but only two victory markers/tokens were visible on the monster tile.
+  - Expected:
+    - For a non-final monster that is not yet opened for all players, visible marker count equals `door.openedBy.length`.
+    - 1, 2, 3, and 4 cleared-player states are all visually supported.
+    - Markers are visible, distinguishable by player color, and have correct tooltips/labels if those existed before.
+    - Markers are not clipped or hidden behind monster power, tile icon, board edge, route art, player token, or portal preview.
+    - When all players clear a non-final monster, the existing opened-portal visual still replaces the locked monster as before.
+  - Required checks:
+    - `node --check src/game.js` if touched;
+    - `node --check src/cards.config.js` if touched;
+    - `git diff --check`.
+  - Browser/static smoke:
+    - Force or naturally create a monster with `openedBy` count `1`: one marker visible.
+    - Force or naturally create `openedBy` count `2`: two markers visible.
+    - Force or naturally create `openedBy` count `3`: three markers visible.
+    - Force or naturally create `openedBy` count `4`: four markers visible, or portal appears if all-player open rule immediately converts the tile.
+    - Confirm no browser console errors.
+  - Regression:
+    - Monster power badge remains readable before full portal opening.
+    - Player tokens on the same/nearby cell still render normally.
+    - Opened portals still render normally once all players have cleared the monster.
+  - If QA approves, send the approved result to GD for final approval per Task Lifecycle.
+
+- QA READY 2026-06-07 16:30 - Dev 2 handback for card text final-period cleanup:
+  - Status: QA-approved by `QA 1` at 2026-06-07 16:35 and GD-approved at 2026-06-07 16:37.
+  - QA 1 result at 2026-06-07 16:35:
+    - QA-approved and forwarded to GD for final approval.
+    - Checks passed: `node --check src/cards.config.js`, `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+    - Local `src/cards.config.js` and `cards-google-sheet.csv`: no player-facing `title`, `shortTitle`, or `description` ends with final `.`.
+    - Google Sheet readback tabs `good`, `bad`, `tadam`, `event`, and `shop`: no checked player-facing field ends with final `.`.
+    - Browser-smoked Good, Event, TADAM, Shop, and Bad card face reveal; sampled faces had no final period and Event internal punctuation remained readable.
+    - No browser console errors observed in checked reveal flows.
+  - Task:
+    - `ACTIVE CARD STYLE 2026-06-07 16:22 - Remove final periods from all card text`.
+  - Changed:
+    - Removed final trailing periods from player-facing card descriptions in local `src/cards.config.js`.
+    - Removed final trailing periods from player-facing card descriptions in local `cards-google-sheet.csv`.
+    - Updated Google Sheet `Cards Config` tabs `good`, `bad`, `tadam`, `event`, and `shop` so checked `description` cells no longer end with final `.`.
+    - Preserved internal sentence periods, including multi-sentence descriptions like `Сглаз`, `Монетка из фонтана`, `Путевой знак`, Event cards, and Shop descriptions.
+    - Preserved `!` / `?` punctuation; no such punctuation was stripped.
+    - Preserved Dev 1's fresh `tadam/jump-steal` plural text: `Перепрыгивая игроков, забери у каждого по 3 монеты`.
+  - Files changed by Dev 2:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-qa.md`
+  - Google Sheet:
+    - Readback confirmed no checked `title`, `shortTitle`, or `description` in tabs `good`, `bad`, `tadam`, `event`, and `shop` ends with final `.`.
+    - Only column `description` needed updates during this task; titles/shortTitles already had no final period.
+  - Checks passed by Dev 2:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static scan: no player-facing `title`, `shortTitle`, or `description` in `src/cards.config.js` ends with `.`
+    - Static scan: no player-facing `title`, `shortTitle`, or `description` in `cards-google-sheet.csv` ends with `.`
+  - Scope notes:
+    - Did not intentionally change card ids/counts/effects/amounts/icons/artifacts/deck lifecycle/rules/dice/UI.
+    - Did not touch `outputs/`.
+    - Browser reveal smoke was not run by Dev 2; please cover card-face smoke in QA.
+  - Final status:
+    - QA check completed and GD final approval received.
+
+- QA AFTER DEV 2026-06-07 16:25 - Verify TADAM `jump-steal` hits all players on jumped-over cell:
+  - Status: ready for QA from `Dev 1` at 2026-06-07 16:29.
+  - Dev handback:
+    - Updated `resolveJumpSteal(...)` to apply to every other player on the jumped-over cell.
+    - Removed `resolveOnePlayerTieByDie(...)` from `jump-steal` only, so no `Ничья за цель` popup should appear for same-cell multi-target jump.
+    - Each target is processed through existing `stealCoins(target, activePlayer, 3)`, so low-coin targets lose only available coins and active player gains the actual total.
+    - Aggregated log names every affected target and amount stolen.
+    - Kept `resolveLandSteal(...)` unchanged; it still uses `resolveOnePlayerTieByDie(...)`.
+    - Updated `tadam/jump-steal` title/description to `Перепрыгивая игроков, забери у каждого по 3 монеты`.
+    - Synced local `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `tadam`.
+  - Dev files:
+    - `src/game.js`
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-qa.md`
+  - Google Sheet:
+    - Spreadsheet: `Cards Config`, `1dv8cOcoY9P1WZOw2UQ-prUccte2BprZMp0DFCSL0pME`.
+    - Updated tab `tadam`, row `6`, cells `C6` title, `L6` notes, `N6` description.
+    - Readback confirmed id/effect `jump-steal`, amount `3`, count `2`, and plural title/description without final period.
+  - Dev checks passed:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `git diff --check`;
+    - static check: `resolveJumpSteal(...)` no longer references `resolveOnePlayerTieByDie(...)`;
+    - static check: `resolveLandSteal(...)` still references `resolveOnePlayerTieByDie(...)`.
+  - User request:
+    - When jumping over a cell with multiple players on it, the jump effect should trigger on all players on that cell.
+  - Expected rule:
+    - Active TADAM `jump-steal` applies to every other player on the same jumped-over cell.
+    - No target tie-break / `Ничья за цель` popup appears for this `jump-steal` multi-target case.
+    - Each target loses up to `3` coins; active player gains the total actually stolen.
+    - Targets with fewer than `3` coins lose only available coins.
+    - Active player is excluded.
+    - If movement passes through several occupied cells, each passed occupied cell resolves according to the same rule.
+  - Expected card data:
+    - TADAM card id `jump-steal` keeps id/effect/count/amount:
+      - id `jump-steal`;
+      - effect type `jump-steal`;
+      - amount `3`;
+      - count `2`.
+    - Player-facing text is plural and has no final period:
+      - suggested text `Перепрыгивая игроков, забери у каждого по 3 монеты`.
+    - Google Sheet `Cards Config` tab `tadam`, `src/cards.config.js`, and `cards-google-sheet.csv` are synced if Dev had sheet access.
+  - Regression expectations:
+    - `land-steal` is unchanged: landing on a cell with multiple players still chooses one target by 1d6 tie-break and steals from one target only.
+    - Other one-player tie-break effects are unchanged.
+    - Movement distance/routing, dice math, deck lifecycle, and unrelated card effects are unchanged.
+  - Required checks:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`.
+  - Browser smoke:
+    - Enable/force active TADAM `jump-steal`.
+    - Put two other players on the same cell that the active player passes through.
+    - Move/jump over that cell.
+    - Confirm both targets lose coins and active player gains the total.
+    - Confirm no `Ничья за цель` popup appears.
+    - Confirm logs/toasts clearly name affected targets and amounts.
+    - Confirm `land-steal` multi-target tie-break still works separately if practical.
+    - No browser console errors.
+  - If QA approves, send the approved result to GD for final approval per Task Lifecycle.
+
+- QA AFTER DEV 2026-06-07 16:22 - Verify no final periods in card text:
+  - Status: complete; QA-approved by `QA 1` at 2026-06-07 16:35 and GD-approved at 2026-06-07 16:37.
+  - Dev 2 handback received via `QA READY 2026-06-07 16:30 - Dev 2 handback for card text final-period cleanup`.
+  - User request:
+    - All card texts should have no final period.
+    - Internal sentence periods are allowed; only the final trailing period is removed.
+    - Shared Google Sheets and local configs must be updated.
+  - Expected:
+    - Google Sheet `Cards Config` tabs `good`, `bad`, `tadam`, `event`, and `shop` have no player-facing `title`, `shortTitle`, or `description` ending with `.`.
+    - Local `src/cards.config.js` has no player-facing card text ending with `.`.
+    - Local `cards-google-sheet.csv` has no player-facing card text ending with `.`.
+    - Internal punctuation remains in multi-sentence card text.
+    - `!` and `?` are preserved where they are part of card/title text.
+    - Internal `notes` are not part of this rule unless displayed on a card.
+  - Regression expectations:
+    - Card ids, counts, effect types, numeric fields, icons, artifacts, deck lifecycle, and card behavior are unchanged.
+    - Good/Bad/TADAM/Event/Shop reveal still displays card faces correctly.
+  - Required checks:
+    - `node --check src/cards.config.js`;
+    - `node --check src/game.js`;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - static/readback scan for local config, local CSV, and Google Sheet tabs.
+  - Browser smoke:
+    - Reveal/check at least one card from each deck: Good, Bad, TADAM, Event, Shop.
+    - Confirm text has no final trailing period and internal multi-sentence punctuation is still readable.
+    - No browser console errors.
+  - If QA approves, send the approved result to GD for final approval per Task Lifecycle.
+
+- QA AFTER DEV 2026-06-07 16:16 - Verify Event `Сплочение` battle HUD:
+  - Wait for Dev 3 handback for `ACTIVE UI 2026-06-07 16:16 - Add battle HUD for Event Сплочение`.
+  - User request:
+    - During card `Сплочение`, battle UI should show the target and current player results, like other battles.
+  - Expected:
+    - When `Сплочение` starts, a battle HUD appears on the existing battle HUD surface/pattern.
+    - HUD shows title `Сплочение`.
+    - HUD shows target force equal to `6 * playerCount`.
+    - HUD shows current team total.
+    - HUD lists all participating players.
+    - Each player starts with unknown/pending result, then keeps visible final force after their roll.
+    - Rolling player is visually highlighted while dice animate.
+    - Final outcome shows team total vs target and win/loss.
+  - Gameplay expectations:
+    - Rules/rewards are unchanged:
+      - target `6 * playerCount`;
+      - team total is sum of player totals;
+      - win gives all players `10` coins and best hit extra `10`;
+      - loss makes all players lose `5` coins.
+    - Existing `Зелье ярости` and `Сглаз` behavior still applies during `Сплочение`.
+    - Event card still discards normally after resolving.
+  - Required smoke:
+    - Browser `Сплочение` with 3+ players on desktop:
+      - HUD appears;
+      - target is correct;
+      - all players are listed;
+      - rolling player highlight appears;
+      - player result values persist after each roll;
+      - team total updates after each roll;
+      - final outcome is visible;
+      - no browser console errors.
+    - Browser `Сплочение` on mobile width:
+      - HUD is readable;
+      - no incoherent overlap with dice, action button, board, player cards, or TADAM block.
+    - Regression smoke:
+      - ordinary monster battle HUD still appears and shows player vs enemy target;
+      - VS battle HUD still appears;
+      - final battle HUD is not obviously broken.
+  - Checks:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js` if touched;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`.
+  - If QA approves, send the approved result to GD for final approval per Task Lifecycle.
+
+- QA READY 2026-06-07 15:38 - Dev 2 handback for Good `steal5` chosen-target steal
+  - Status: QA-approved by `QA 1` at 2026-06-07 15:43 and GD-approved at 2026-06-07 15:45.
+  - QA 1 result at 2026-06-07 15:43:
+    - QA-approved and forwarded to GD for final approval.
+    - Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+    - Browser-smoked 3-player classic/no-phone flow: `steal5` face showed new text; target popup offered `Кот` and `Выдра` but not active `Пес`; choosing `Выдра` transferred 5 coins from `Выдра` to `Пес`.
+    - Static/edge proof: target with fewer than 5 coins transfers only available coins; `steal5` uses all-opponents choice path rather than old richest-only resolver.
+    - No browser console errors observed in the checked flow.
+  - Task:
+    - `ACTIVE CARD TUNE 2026-06-07 15:35 - Change Good steal5 to chosen target`.
+  - Changed:
+    - Updated Good `steal5` title/description to `Выбери игрока, забери у него 5 монет`.
+    - Kept card id `steal5` and count `2`.
+    - Changed the effect to `steal-chosen-player`, amount `5`.
+    - Human players choose another player as target; self is not included.
+    - Chosen target loses up to `5` coins through the existing `stealCoins(...)` path, so low-coin targets lose only what they have.
+    - Bot scoring uses the same card-choice path and prefers high-coin/high-pressure opponents.
+    - Synced local config, CSV mirror, and Google Sheet `Cards Config` / `good`.
+    - Bumped host game cache key to `src/game.js?v=20260607-0387`.
+  - Files changed by Dev 2:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-qa.md`
+  - Google Sheet:
+    - Readback confirmed `good!A4:N4`: id `steal5`, title/description new text, effect `steal-chosen-player`, amount `5`, count `2`.
+  - Checks passed by Dev 2:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `git diff --check`
+    - Static search: local `steal5` no longer uses the old richest-player title/description/effect.
+  - Scope notes:
+    - Did not change unrelated cards, Joe Shop stock, finite decks, dice UI, Monster Rage indicator, or `outputs/`.
+  - Final status:
+    - QA check completed and GD final approval received.
+
+- QA AFTER DEV 2026-06-07 15:35 - Verify Good `steal5` chosen-target steal:
+  - Status: complete; QA-approved by `QA 1` at 2026-06-07 15:43 and GD-approved at 2026-06-07 15:45.
+  - Dev 2 handback received via `QA READY 2026-06-07 15:38 - Dev 2 handback for Good steal5 chosen-target steal`.
+  - User request:
+    - Good card should change from `Забери 5 монет у игрока с наибольшим количеством монет` to `Выбери игрока, забери у него 5 монет`.
+  - Expected card data:
+    - Deck `good`, id `steal5`.
+    - Title: `Выбери игрока, забери у него 5 монет`.
+    - Description/card face text: `Выбери игрока, забери у него 5 монет.`
+    - Count remains `2`.
+    - Local `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `good` are synced if Dev had access.
+  - Expected behavior:
+    - Human player gets a choice of other players as targets.
+    - Human cannot choose themselves.
+    - The chosen target loses up to `5` coins; active player gains the actual stolen amount.
+    - Choosing a non-richest target is allowed and should steal from that chosen target.
+    - If target has fewer than `5` coins, only available coins are stolen.
+    - Bot resolves the card without hanging and chooses a valid opponent.
+    - Card discards normally after resolving under finite Good deck lifecycle.
+  - Regression smoke:
+    - Existing Good card reveal/face display still works.
+    - Other steal effects, if any, are unchanged unless intentionally shared.
+    - Random-choice dice UI, Joe Shop replenishing stock, Event cards, and Monster Rage indicator work are not regressed.
+  - Checks:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - no browser console errors in the checked flow.
+  - Final status:
+    - QA-approved and GD-approved; no Dev 2 rework item remains for this card tune.
+
 - QA READY 2026-06-07 15:16 - Dev 3 rework handback for random-choice roll UI overlap
   - Status: QA-approved by `QA 1` at 2026-06-07 15:23 and GD-approved at 2026-06-07 15:25.
   - QA 1 result at 2026-06-07 15:23:

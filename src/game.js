@@ -1,4 +1,4 @@
-import { cardConfig } from "./cards.config.js?v=20260607-0378";
+import { cardConfig } from "./cards.config.js?v=20260607-0387";
 import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260531-0271";
 
 const boardEl = document.querySelector("#board");
@@ -580,6 +580,7 @@ function newGame() {
       magicWalletOwnerId: null,
     },
     turns: 0,
+    unityBattleProgress: null,
     vsBattleProgress: null,
     walkPath: [],
   };
@@ -1903,10 +1904,14 @@ function renderEnemyLocks() {
 
     const marks = document.createElement("span");
     marks.className = "enemy-victory-marks";
+    marks.dataset.count = String(victoriousPlayers.length);
+    marks.title = `Победили врага: ${victoriousPlayers.map((player) => player.name).join(", ")}`;
+    marks.setAttribute("aria-label", marks.title);
     for (const player of victoriousPlayers) {
       const dot = document.createElement("i");
       dot.style.setProperty("--player-color", player.color);
       dot.title = `${player.name} победил этого врага`;
+      dot.setAttribute("aria-label", dot.title);
       marks.append(dot);
     }
     tile.append(marks);
@@ -2693,6 +2698,82 @@ function finalScoreFormulaText(score = {}) {
   return `${total} = ${coins} монеты + ${shop} Лавка Джо + ${damage} урон боссу + ${position} позиция`;
 }
 
+function finalHistorySummaryForSnapshot() {
+  return state?.history?.finalSummary || state?.finalBattle?.finalSummary || null;
+}
+
+function finalHistoryOutcomeText(summary) {
+  if (!summary) return "";
+  return summary.bossWon ? "Босс удержал победу" : "Игроки победили босса";
+}
+
+function finalHistoryRoleText(role) {
+  if (!role) return "";
+  return role === "boss" ? "Босс" : "Игрок";
+}
+
+function finalHistoryForceBreakdownText(force = {}) {
+  const parts = [
+    force.rolled !== undefined ? `кубики ${force.rolled}` : "",
+    force.bonus ? `бонус ${force.bonus}` : "",
+    force.opponentBonus ? `противники ${force.opponentBonus}` : "",
+  ].filter(Boolean);
+  const rollsText = Array.isArray(force.rolls) && force.rolls.length
+    ? force.rolls.map((rolls) => `[${rolls.join(", ")}]`).join(" ")
+    : "";
+  return `${parts.join(" + ") || "без бонусов"}${rollsText ? ` · ${rollsText}` : ""}`;
+}
+
+function buildFinalHistorySheetExport(summary = finalHistorySummaryForSnapshot()) {
+  const game = summary ? {
+    finalBossForce: summary.bossForce ?? "",
+    finalBossWon: Boolean(summary.bossWon),
+    finalOutcome: summary.outcome || "",
+    finalOutcomeText: finalHistoryOutcomeText(summary),
+    finalPlayersForce: summary.playersForce ?? "",
+    finalSummaryJson: JSON.stringify(summary),
+    finalWinnerName: summary.winnerName || "",
+    finalWinnerRole: finalHistoryRoleText(summary.winnerRole),
+    finalWinnerRoleId: summary.winnerRole || "",
+    finalWinnerScore: summary.winnerScore ?? "",
+  } : {
+    finalBossForce: "",
+    finalBossWon: "",
+    finalOutcome: "",
+    finalOutcomeText: "",
+    finalPlayersForce: "",
+    finalSummaryJson: "",
+    finalWinnerName: "",
+    finalWinnerRole: "",
+    finalWinnerRoleId: "",
+    finalWinnerScore: "",
+  };
+  const playerSummaryById = new Map((summary?.players || []).map((player) => [player.id, player]));
+  const players = state.players.map((player) => {
+    const finalPlayer = playerSummaryById.get(player.id);
+    const score = finalPlayer?.score || {};
+    const force = finalPlayer?.force || {};
+    return {
+      finalBattleForce: force.total ?? "",
+      finalForceBreakdown: finalPlayer ? finalHistoryForceBreakdownText(force) : "",
+      finalForceJson: finalPlayer ? JSON.stringify(force) : "",
+      finalRole: finalHistoryRoleText(finalPlayer?.role),
+      finalRoleId: finalPlayer?.role || "",
+      finalScoreBreakdown: finalPlayer?.scoreFormula || (finalPlayer ? finalScoreFormulaText(score) : ""),
+      finalScoreCoins: score.coins ?? "",
+      finalScoreDamage: score.damage ?? "",
+      finalScoreDamageToBoss: score.damageToBoss ?? "",
+      finalScoreJson: finalPlayer ? JSON.stringify(score) : "",
+      finalScorePosition: score.position ?? "",
+      finalScoreShop: score.shop ?? "",
+      finalScoreTotal: score.total ?? "",
+      finalWinner: finalPlayer ? Boolean(finalPlayer.winner) : "",
+      playerId: player.id,
+    };
+  });
+  return { game, players };
+}
+
 function renderPlayerHistory(player) {
   const history = playerHistory(player) || createPlayerHistory();
   const fields = renderHistoryPairs(history.fieldVisits, "нет");
@@ -2750,10 +2831,12 @@ function renderMonsterHistory(monsters) {
 function buildGameHistorySnapshot() {
   const savedAt = new Date().toISOString();
   const historyEnd = state.history.finishedAt || Date.now();
+  const finalSummary = finalHistorySummaryForSnapshot();
+  const sheetExport = buildFinalHistorySheetExport(finalSummary);
   return cloneData({
     id: `game-${savedAt}-${Math.random().toString(36).slice(2, 8)}`,
     savedAt,
-    version: 1,
+    version: 2,
     settings: {
       current: collectGameSettings(),
       startedWith: state.gameSettings,
@@ -2765,24 +2848,31 @@ function buildGameHistorySnapshot() {
       eventMonsterRage: monsterRageBonus(),
       finished: state.finished,
       finalBattle: state.finalBattle,
+      finalSummary,
+      ...sheetExport.game,
       round: state.round,
       turns: state.turns,
     },
-    players: state.players.map((player) => ({
-      battleBonus: playerBattleBonus(player),
-      bot: player.bot,
-      coins: player.coins,
-      diceBonus: playerDiceBonus(player),
-      id: player.id,
-      artifacts: playerArtifacts(player),
-      items: player.items.map((item) => ({ id: item.id, title: item.title })),
-      name: player.name,
-      nextMonsterBattleBonus: nextMonsterBattleBonus(player),
-      nextBattlePenalty: nextBattlePenaltyStatus(player),
-      position: player.position,
-      stepBonus: playerStepBonus(player),
-    })),
+    players: state.players.map((player) => {
+      const finalPlayerFields = sheetExport.players.find((item) => item.playerId === player.id) || {};
+      return {
+        battleBonus: playerBattleBonus(player),
+        bot: player.bot,
+        coins: player.coins,
+        diceBonus: playerDiceBonus(player),
+        id: player.id,
+        artifacts: playerArtifacts(player),
+        items: player.items.map((item) => ({ id: item.id, title: item.title })),
+        name: player.name,
+        nextMonsterBattleBonus: nextMonsterBattleBonus(player),
+        nextBattlePenalty: nextBattlePenaltyStatus(player),
+        position: player.position,
+        stepBonus: playerStepBonus(player),
+        ...finalPlayerFields,
+      };
+    }),
     history: state.history,
+    sheetExport,
     chronicle: Array.from(gameLogEl?.children || []).map((item) => item.textContent.trim()),
   });
 }
@@ -3180,12 +3270,17 @@ function renderFinalBattleHud() {
   const progress = state.finalBattleProgress;
   const enemyProgress = state.enemyBattleProgress;
   const vsProgress = state.vsBattleProgress;
+  const unityProgress = state.unityBattleProgress;
   if (enemyProgress && !state.finished) {
     renderEnemyBattleHud(enemyProgress);
     return;
   }
   if (vsProgress && !state.finished) {
     renderVsBattleHud(vsProgress);
+    return;
+  }
+  if (unityProgress && !state.finished) {
+    renderUnityBattleHud(unityProgress);
     return;
   }
 
@@ -3214,6 +3309,57 @@ function renderFinalBattleHud() {
       <span>Босс${boss ? ` - ${boss.name}` : ""}</span>
       ${boss ? playerBattleStrengthText(boss) : ""}
       <strong>${bossDisplayForce}</strong>
+    </div>
+  `;
+}
+
+function renderUnityBattleHud(progress) {
+  const results = progress.results || {};
+  const teamWon = progress.winner === "team";
+  const monsterWon = progress.winner === "monster";
+  const battleState = teamWon ? "is-victory" : monsterWon ? "is-defeat" : progress.isRolling ? "is-rolling" : "is-ready";
+  const cards = state.players
+    .map((participant) => {
+      const result = results[participant.id];
+      const isRolling = participant.id === progress.rollingPlayerId;
+      const isComplete = result !== undefined;
+      const force = isComplete ? result : "?";
+      const status = isRolling ? "Бросает" : isComplete ? "Сила" : "Ждет";
+      return `
+        <div class="final-battle-side enemy-battle-side player vs-battle-card unity-battle-card ${isRolling ? "is-rolling" : ""} ${isComplete ? "is-complete" : ""}" style="--player-color: ${participant.color}">
+          <span class="enemy-battle-portrait player-portrait">
+            <img src="${participant.token}" alt="" aria-hidden="true">
+          </span>
+          <span class="enemy-battle-name">${participant.name}</span>
+          ${playerBattleStrengthBadge(participant)}
+          <small>${status}</small>
+          <strong>${force}</strong>
+        </div>
+      `;
+    })
+    .join("");
+
+  ui.finalBattleHud.hidden = false;
+  ui.finalBattleHud.className = `final-battle-hud enemy-battle-hud vs-battle-hud unity-battle-hud ${battleState}`;
+  ui.finalBattleHud.innerHTML = `
+    <div class="enemy-battle-panel vs-battle-panel unity-battle-panel">
+      <div class="vs-battle-header unity-battle-header">
+        <div class="vs-battle-title">
+          <span>Сплочение</span>
+          <strong>Командная битва</strong>
+        </div>
+        <div class="vs-battle-emblem">Σ</div>
+        <div class="vs-battle-pot">
+          <span>Цель: сила ${progress.target}</span>
+          <strong>${progress.teamTotal || 0} / ${progress.target}</strong>
+        </div>
+      </div>
+      <div class="vs-battle-grid unity-battle-grid">
+        ${cards}
+      </div>
+      <div class="final-battle-result enemy-battle-result ${progress.outcome ? "is-visible" : ""}">
+        ${iconizeHtml(progress.outcome || `Команда собирает силу против цели ${progress.target}`)}
+      </div>
     </div>
   `;
 }
@@ -5066,6 +5212,8 @@ async function applyCardEffect(player, effect, source = {}) {
     stealFromRandomPlayer(player, effect.amount);
   } else if (effect.type === "steal-richest") {
     await stealFromRichestPlayer(player, effect.amount);
+  } else if (effect.type === "steal-chosen-player") {
+    await stealFromChosenPlayer(player, effect.amount);
   } else if (effect.type === "give-poorest") {
     await giveToPoorestPlayer(player, effect.amount);
   } else if (effect.type === "extra-turn") {
@@ -5240,10 +5388,40 @@ async function chooseEventFreeStepAmount(player, total) {
 async function resolveEventUnity(player) {
   const monsterStrength = 6 * state.players.length;
   const results = [];
+  state.unityBattleProgress = {
+    isRolling: false,
+    outcome: `Цель: сила <strong>${monsterStrength}</strong>. Все игроки участвуют`,
+    results: {},
+    rollingPlayerId: null,
+    target: monsterStrength,
+    teamTotal: 0,
+    winner: null,
+  };
+  render();
   log(`<strong>Сплочение</strong>: все игроки сражаются с монстром силой <strong>${monsterStrength}</strong>.`, { toast: true });
   for (const contender of state.players) {
+    state.unityBattleProgress = {
+      ...state.unityBattleProgress,
+      isRolling: true,
+      outcome: `${playerName(contender)} бросает силу для команды`,
+      rollingPlayerId: contender.id,
+    };
+    render();
     const result = await rollPlayerMonsterBattlePower(contender, true, { label: `Сплочение - ${contender.name}` });
     results.push(result);
+    const teamTotal = results.reduce((sum, item) => sum + item.total, 0);
+    state.unityBattleProgress = {
+      ...state.unityBattleProgress,
+      isRolling: false,
+      outcome: `${playerName(contender)} добавляет силу <strong>${result.total}</strong>. Команда: <strong>${teamTotal}</strong> / ${monsterStrength}`,
+      results: {
+        ...state.unityBattleProgress.results,
+        [contender.id]: result.total,
+      },
+      rollingPlayerId: null,
+      teamTotal,
+    };
+    render();
     log(`${playerName(contender)} в событии <strong>Сплочение</strong>: ${formatRoll(result.rolls)}${monsterBattleBonusFormulaText(result.baseBonus, result.rageBonus, result.cursePenalty, result.total)}. Сила: <strong>${result.total}</strong>.`);
   }
   const teamTotal = results.reduce((sum, result) => sum + result.total, 0);
@@ -5256,16 +5434,35 @@ async function resolveEventUnity(player) {
       reason: `Сплочение: лучший удар (${topForce})`,
     });
     if (topPlayer) addCoins(topPlayer, 10);
-    log(
-      `<strong>Сплочение</strong>: команда побеждает ${teamTotal} против ${monsterStrength}. Все получают <strong>${coinAmount(10)}</strong>${topPlayer ? `, лучший удар ${playerName(topPlayer)} получает еще <strong>${coinAmount(10)}</strong>` : ""}.`,
-      { toast: true },
-    );
+    const message = `<strong>Сплочение</strong>: команда побеждает ${teamTotal} против ${monsterStrength}. Все получают <strong>${coinAmount(10)}</strong>${topPlayer ? `, лучший удар ${playerName(topPlayer)} получает еще <strong>${coinAmount(10)}</strong>` : ""}.`;
+    state.unityBattleProgress = {
+      ...state.unityBattleProgress,
+      isRolling: false,
+      outcome: message,
+      rollingPlayerId: null,
+      teamTotal,
+      winner: "team",
+    };
+    render();
+    log(message, { toast: true });
+    await showActionPrompt(message, { autoFor: player });
   } else {
     for (const target of state.players) addCoins(target, -5);
-    log(`<strong>Сплочение</strong>: команда проигрывает ${teamTotal} против ${monsterStrength}. Все теряют <strong>${coinAmount(5)}</strong>.`, {
-      toast: true,
-    });
+    const message = `<strong>Сплочение</strong>: команда проигрывает ${teamTotal} против ${monsterStrength}. Все теряют <strong>${coinAmount(5)}</strong>.`;
+    state.unityBattleProgress = {
+      ...state.unityBattleProgress,
+      isRolling: false,
+      outcome: message,
+      rollingPlayerId: null,
+      teamTotal,
+      winner: "monster",
+    };
+    render();
+    log(message, { toast: true });
+    await showActionPrompt(message, { autoFor: player });
   }
+  state.unityBattleProgress = null;
+  render();
 }
 
 async function resolveEventMagicWallet(player) {
@@ -5936,6 +6133,36 @@ async function stealFromRichestPlayer(player, amount) {
   log(`${playerName(player)} забирает у самого богатого игрока ${playerName(target)} <strong>${taken} монет</strong>.`);
 }
 
+async function stealFromChosenPlayer(player, amount) {
+  const targets = state.players.filter((target) => target.id !== player.id);
+  if (!targets.length) {
+    log(`${playerName(player)} не может выбрать цель для кражи монет.`, { toast: true });
+    return;
+  }
+
+  const choices = targets.map((target) => ({
+    id: String(target.id),
+    label: playerChoiceBadge(target),
+    note: coinAmount(target.coins),
+    noteClass: "choice-player-note",
+    score: target.coins * 2 + leaderPressureScore(target),
+  }));
+  const choice = await chooseCardAction({
+    choices,
+    kicker: "Хорошо",
+    kind: "steal-chosen-player",
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} выбирает другого игрока и забирает у него до ${coinAmount(amount)}.`,
+    title: "У кого забрать монеты?",
+  });
+  const target = targets.find((item) => item.id === Number(choice));
+  if (!target) return;
+
+  const taken = stealCoins(target, player, amount);
+  if (taken > 0) recordEffectReceived(target, player);
+  log(`${playerName(player)} выбирает ${playerName(target)} и забирает <strong>${coinAmount(taken)}</strong>.`, { toast: true });
+}
+
 async function giveToPoorestPlayer(player, amount) {
   const target = await poorestOpponent(player);
   if (!target) return;
@@ -5947,16 +6174,22 @@ async function giveToPoorestPlayer(player, amount) {
 async function resolveJumpSteal(player) {
   const effect = activeTadamEffect("jump-steal");
   if (!effect) return;
-  const candidates = state.players.filter((target) => target.id !== player.id && target.position === player.position);
-  const target = await resolveOnePlayerTieByDie(candidates, {
-    autoFor: player,
-    reason: "перепрыгивание игрока",
+  const targets = state.players.filter((target) => target.id !== player.id && target.position === player.position);
+  if (!targets.length) return;
+
+  const results = targets.map((target) => {
+    const taken = stealCoins(target, player, effect.amount);
+    if (taken > 0) recordEffectReceived(target, player);
+    return { taken, target };
   });
-  if (!target) return;
-  const taken = stealCoins(target, player, effect.amount);
-  if (taken > 0) {
-    recordEffectReceived(target, player);
-    log(`${playerName(player)} перепрыгивает ${playerName(target)} и забирает <strong>${taken} монет</strong>.`);
+  const total = results.reduce((sum, result) => sum + result.taken, 0);
+  const details = results
+    .map(({ taken, target }) => `${playerName(target)} - <strong>${coinAmount(taken)}</strong>`)
+    .join(", ");
+  if (total > 0) {
+    log(`${playerName(player)} перепрыгивает игроков и забирает монеты: ${details}. Всего: <strong>${coinAmount(total)}</strong>.`);
+  } else {
+    log(`${playerName(player)} перепрыгивает игроков, но забрать монеты не удалось: ${details}.`);
   }
 }
 

@@ -4,6 +4,345 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- ACTIVE HISTORY SHEET 2026-06-07 16:51 - Save final History summary to `Games Log`:
+  - Owner: `Dev 2`.
+  - Dispatch status: partial implementation / blocker found by `Dev 2` at 2026-06-07 17:01; handback sent to QA as blocked, not approval-ready.
+  - QA 1 gate at 2026-06-07 17:03:
+    - Not approved / blocked.
+    - Do not send to GD final approval yet.
+    - Next owner needs live Apps Script source/deployment access, must update/deploy the mapping, then send back to QA with real `Сохранить` flow + Sheet readback evidence for non-empty final columns.
+  - Blocker:
+    - Local client payload and Sheet headers are prepared, but the live Apps Script web app still writes only old/basic columns.
+    - Apps Script source/deployment is not available in repo, Google Drive search, or local `clasp`; `clasp` is not installed.
+    - Endpoint smoke with a finished-like v2 payload wrote old `Games`/`Players` fields but left new final columns blank.
+    - Required next edit: update Apps Script save mapping to write `payload.game.final*`, `payload.players[].final*`, or `payload.sheetExport` fields into the new headers.
+  - User request:
+    - Check whether the in-game `История` screen saves to this Google Sheet:
+      - `https://docs.google.com/spreadsheets/d/1uC1xUk52IbpHfm9tNtHT2_cmFSNQIKCkct88TsqmmV8/edit?gid=0#gid=0`
+    - If not, add it.
+  - GD inspection:
+    - The Sheet is `Games Log`, id `1uC1xUk52IbpHfm9tNtHT2_cmFSNQIKCkct88TsqmmV8`.
+    - Existing tabs:
+      - `Games`;
+      - `Players`.
+    - Existing `Games` rows prove that the current Save flow already writes basic game rows there.
+    - Existing `Players` rows prove that per-player rows are also written there.
+    - Current `Games` headers only cover old/basic fields: id, savedAt, elapsedMs, finished, board, playerCount, botCount, diceCount, passThroughMode, botSpeed, tadamPlayed, round, turns, Minutes.
+    - Current `Players` headers cover older per-player stats, but not the full final `История` UI protocol.
+    - Local code already builds and sends a snapshot via `buildGameHistorySnapshot()` / `sendGameHistoryToGoogleSheets(...)`; final summary is inside:
+      - `state.history.finalSummary`;
+      - `state.finalBattle.finalSummary`.
+    - The missing part is making the Google Sheet save path persist the final History summary in readable table fields.
+  - Required behavior:
+    - Pressing `Сохранить` on the finished-game `История` screen must save the final party protocol from the UI into `Games Log`.
+    - Keep writing the existing `Games` and `Players` fields; do not break older analytics.
+    - Add/update Sheet columns and Apps Script/save mapping as needed so the final summary is readable without opening raw JSON.
+    - At minimum, `Games` should include final-level fields:
+      - outcome/result text;
+      - winner name;
+      - winner role (`Босс` / `Игрок`);
+      - winner score;
+      - players total force;
+      - boss force;
+      - boss won boolean;
+      - optional raw final summary JSON for future-proofing.
+    - At minimum, `Players` should include per-player final fields:
+      - role (`Босс` / `Игрок`);
+      - final score total;
+      - coins score part;
+      - Joe Shop/card score part;
+      - boss damage/attack score part;
+      - position score part;
+      - final battle force;
+      - dice/bonus breakdown text or JSON;
+      - winner flag.
+    - Existing local snapshot shape should remain compatible; if you need to bump `version`, do it deliberately and keep old saves readable.
+  - Scope:
+    - Target Google Sheet: `Games Log`, id `1uC1xUk52IbpHfm9tNtHT2_cmFSNQIKCkct88TsqmmV8`.
+    - Likely local files:
+      - `src/game.js` only if the browser payload needs extra fields or URL/docs text needs adjusting.
+      - Apps Script / Google Sheet save endpoint if accessible from your environment.
+      - `project-memory/updates.md`;
+      - `project-memory/inbox/for-dev.md`;
+      - `project-memory/inbox/for-qa.md`.
+    - If Apps Script source is not in repo/access, document exactly what is blocked and what endpoint/header changes are required.
+  - Constraints:
+    - Do not change final battle rules, scoring, winner calculation, history UI layout, card effects, deck lifecycle, dice math, board routes, bots, or phone controller behavior.
+    - Do not replace the existing `Games` / `Players` data; extend it.
+    - Do not treat `mode: "no-cors"` browser success as proof that the Sheet row was actually written; QA must read back the Sheet.
+    - Preserve unrelated local changes and untracked `outputs/`.
+  - Verification:
+    - `node --check src/game.js` if touched;
+    - `node --check src/cards.config.js` if touched;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - Finish or force a finished game with a visible `Итог партии` block;
+    - Click `Сохранить`;
+    - Read back `Games Log`:
+      - a new `Games` row exists for the saved game id;
+      - final-level fields match the visible History summary;
+      - matching `Players` rows exist for every player;
+      - each player's final score and score parts match the visible History player card;
+      - boss/player force values match the visible History summary;
+    - Regression: saving a non-finished/in-progress game still writes basic rows or fails gracefully according to current behavior.
+    - No browser console errors.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
+- ACTIVE UI BUG 2026-06-07 16:31 - Show all monster-clear player markers:
+  - Owner: `Dev 1`.
+  - Dispatch status: implemented by `Dev 1` at 2026-06-07 16:37 and sent to QA first; waiting for QA approval/rework.
+  - User report:
+    - `3 монстра прошло 3 игрока, но отображается только 2 жетона`.
+    - Screenshot shows a monster/enemy tile where three players should be marked as having cleared it, but only two visible victory dots/tokens appear.
+  - Source context:
+    - Monster clear state appears to be tracked in `door.openedBy`.
+    - Rendering path: `renderEnemyLocks()` in `src/game.js`.
+    - Marker DOM: `.enemy-victory-marks` with one `<i>` per victorious player.
+    - Current marker styles are in `styles.css` around `.enemy-victory-marks` / `.enemy-victory-marks i`.
+  - Required behavior:
+    - For each non-final monster/enemy tile that is not yet opened for all players, visible marker count must match the number of players in `door.openedBy`.
+    - If 1, 2, 3, or 4 players cleared that monster, all corresponding markers must be visible.
+    - Markers must use the correct player colors and tooltips.
+    - Markers must not be clipped, hidden behind monster power, hidden behind icon art, or pushed outside the tile.
+    - When all players have cleared the monster and the tile turns into an opened portal, existing portal behavior may still replace/hide monster markers as before.
+  - Implementation guidance:
+    - First confirm whether the bug is data or layout:
+      - if `door.openedBy` contains 3 ids but only 2 markers are visible, fix marker layout/CSS/rendering;
+      - if `door.openedBy` incorrectly contains only 2 ids after 3 players have cleared the monster, fix the clear-state update path.
+    - Likely low-risk fix: make `.enemy-victory-marks` support a compact 2x2/grid or equivalent layout for up to 4 players on all board scales.
+    - Keep the monster strength badge readable.
+  - Constraints:
+    - Do not change monster battle rules, door/opening rules, portal rules, player rewards, dice math, card effects, deck lifecycle, route order, or bot AI.
+    - Do not change current Event `Сплочение` HUD task, card-style cleanup, TADAM `jump-steal` rule, or unrelated UI surfaces except where marker CSS shares safe primitives.
+    - Preserve current untracked `outputs/` and unrelated local changes.
+  - Verification:
+    - `node --check src/game.js` if touched;
+    - `node --check src/cards.config.js` if touched;
+    - `git diff --check`;
+    - Static check: for a door with `openedBy` containing 3 ids, render produces 3 `.enemy-victory-marks i` nodes or equivalent visible markers.
+    - Browser smoke desktop: set up/force one monster cleared by 1, then 2, then 3, then 4 players; every marker is visible and distinguishable.
+    - Browser smoke mobile/tablet or narrow width if practical: 3-4 markers remain visible without incoherent overlap.
+    - Regression: when all players have cleared a non-final monster, the opened portal visual still appears as before.
+    - No browser console errors.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
+- ACTIVE TADAM RULE 2026-06-07 16:25 - `jump-steal` hits every player on the jumped-over cell:
+  - Owner: `Dev 1`.
+  - Dispatch status: implemented by `Dev 1` at 2026-06-07 16:29 and sent to QA first; waiting for QA approval/rework.
+  - User request:
+    - `При перепрыгивании эффект срабатывает на всех игроков, которых игрок перепрыгнул на одной клетке`.
+  - Source context:
+    - TADAM card id: `jump-steal`.
+    - Current title/description: `Перепрыгивая игрока, забери у него 3 монеты`.
+    - Current effect: `jump-steal`, amount `3`, count `2`.
+    - Current code: `resolveJumpSteal(player)` in `src/game.js` filters players on the active player's current/passed cell and then calls `resolveOnePlayerTieByDie(...)`, which creates a tie popup if several players are there.
+  - Updated rule:
+    - For `jump-steal` only, if several other players are on the same jumped-over cell, apply the effect to every one of those players.
+    - No tie-break popup for multiple `jump-steal` targets on the same cell.
+    - Steal up to `3` coins from each target using the existing `stealCoins(...)` path; if a target has fewer than `3`, take only what they have.
+    - Record/log each affected target clearly, either as separate log lines or one concise aggregated line.
+    - If movement passes through several occupied cells, resolve the effect for each passed occupied cell as current trigger timing already intends.
+    - Active player is never a target.
+    - If no other players are on the jumped-over cell, no-op as before.
+  - Important exception/supersession:
+    - This supersedes the older 2026-06-06 one-player tie-break rule for TADAM `jump-steal` only.
+    - Keep `land-steal` singular: when landing on a cell with multiple players, it still chooses one target by 1d6 tie-break unless GD changes it later.
+    - Keep other one-player tie-break behavior unchanged.
+  - Card text sync:
+    - Update player-facing card text to match the new plural rule.
+    - Suggested title/description: `Перепрыгивая игроков, забери у каждого по 3 монеты`
+    - Keep id `jump-steal`, effect type `jump-steal`, amount `3`, count `2`.
+    - Apply the current card-text style rule: no final period.
+    - Sync canonical Google Sheet `Cards Config`, tab `tadam`, if connector/access is available.
+    - Sync local sources:
+      - `src/cards.config.js`;
+      - `cards-google-sheet.csv`.
+    - Coordinate with Dev 2's active bulk card-style task: preserve any no-final-period cleanup and do not overwrite unrelated card text changes.
+  - Constraints:
+    - Do not change `land-steal`, Good/Bad/Event/Shop effects, Joe Shop replenishing stock, finite deck lifecycle, movement distance/routing, dice math, bot AI, random-choice UI, `Сплочение` HUD work, or Monster Rage indicator work.
+    - Preserve current untracked `outputs/` and unrelated local changes.
+  - Verification:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - Static check: `resolveJumpSteal(...)` no longer calls `resolveOnePlayerTieByDie(...)` for multiple same-cell `jump-steal` targets.
+    - Static check: `land-steal` still uses one-target tie-break for multiple landing targets.
+    - Static check: `tadam/jump-steal` text is plural and has no final period in local config/CSV/Google Sheet if sheet access is available.
+    - Browser smoke: active TADAM `jump-steal`, player passes through a cell with two other players on it, both targets lose up to `3` coins and active player gains the total.
+    - Browser smoke: target with fewer than `3` coins loses only available coins.
+    - Browser smoke: no `Ничья за цель` popup appears for `jump-steal` multi-target on the same cell.
+    - Regression smoke: `land-steal` with multiple players on landing cell still shows/uses tie-break and steals from only one target.
+    - No browser console errors.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
+- ACTIVE CARD STYLE 2026-06-07 16:22 - Remove final periods from all card text:
+  - Owner: `Dev 2`.
+  - Status: complete; QA-approved by `QA 1` at 2026-06-07 16:35 and GD-approved at 2026-06-07 16:37.
+  - User request:
+    - Remove final periods on all cards.
+    - If a card has several sentences, periods may remain inside the text, but the last sentence always has no final period.
+    - Update all configs, including shared Google Sheets.
+    - Record this as a rule.
+  - Style rule:
+    - Player-facing card text must not end with a final period.
+    - Applies to `Cards Config` player-facing fields:
+      - `title`;
+      - `shortTitle`;
+      - `description`.
+    - Internal `notes` do not need this cleanup unless the note is displayed on a card.
+    - Keep punctuation inside multi-sentence text, for example `Получи 8 монет. Если у тебя меньше всех монет, получи 15`.
+  - Source scope:
+    - Canonical Google Sheet `Cards Config`: update every card row in tabs `good`, `bad`, `tadam`, `event`, and `shop`.
+    - Sync local sources:
+      - `src/cards.config.js`;
+      - `cards-google-sheet.csv`.
+    - `project-memory/README.md` and `project-memory/handoff.md` already record the rule from GD; update only if implementation reveals wording needs a small correction.
+  - Implementation constraints:
+    - Text-only cleanup.
+    - Do not change card ids, counts, effect types, numeric fields, icons, artifacts, deck lifecycle, card behavior, dice math, board placement, UI layout, or current Dev 3 `Сплочение` HUD work.
+    - Do not remove internal sentence punctuation.
+    - Do not strip `!` / `?` from titles like `ТАДАМ!`; the requested cleanup is final periods.
+    - Preserve current untracked `outputs/` and unrelated local changes.
+  - Verification:
+    - `node --check src/cards.config.js`;
+    - `node --check src/game.js`;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - Static scan: no player-facing `title`, `shortTitle`, or `description` in `src/cards.config.js` ends with `.`;
+    - Static scan: no player-facing `title`, `shortTitle`, or `description` in `cards-google-sheet.csv` ends with `.`;
+    - Google Sheet readback for all tabs confirms no player-facing card text ends with `.`;
+    - Browser smoke: at least one Good, TADAM, Event, Shop, and Bad card face/reveal displays without final trailing period and with internal multi-sentence punctuation preserved.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
+- ACTIVE UI 2026-06-07 16:16 - Add battle HUD for Event `Сплочение`:
+  - Owner: `Dev 3`.
+  - Dispatch status: implemented by `Dev 3` at 2026-06-07 17:42 and sent to QA first; waiting for QA approval/rework.
+  - Dev 3 handback:
+    - Added `state.unityBattleProgress` and `renderUnityBattleHud(...)` on existing `#finalBattleHud`.
+    - HUD shows title `Сплочение`, target force, current team total, all players, per-player `?` / rolling / final force states, player strength badges, and final win/loss outcome.
+    - Rolling player is highlighted with the existing battle-card rolling state.
+    - Final result remains visible behind a normal `Далее` prompt, then the HUD clears.
+    - Event rules/rewards/dice flow were kept unchanged.
+    - Host cache keys bumped to `styles.css?v=20260607-0389` and `src/game.js?v=20260607-0389`.
+  - User request:
+    - During Event card `Сплочение`, make the battle UI show the target and current player results, like other battles.
+  - Source context:
+    - Event card: `event/unity`, title `Сплочение`.
+    - Current resolver: `resolveEventUnity(player)` in `src/game.js`.
+    - Current per-player roll helper: `rollPlayerMonsterBattlePower(...)`.
+    - Existing battle HUD surface: `#finalBattleHud`, with render paths like `renderEnemyBattleHud(...)`, `renderVsBattleHud(...)`, and related `.enemy-battle-hud` / `.vs-battle-hud` styles.
+  - Required UX:
+    - When `Сплочение` starts, show a battle HUD instead of relying only on log/toast/dice labels.
+    - HUD must clearly show:
+      - title `Сплочение`;
+      - monster/team target: `Цель: сила {6 * playerCount}`;
+      - current team total;
+      - all participating players;
+      - each player's current result: `?` before roll, rolling/active state during roll, final force after roll;
+      - player battle strength badge/bonus, consistent with other battle UI;
+      - final outcome: team win/loss and final team total vs target.
+    - The rolling player should be visibly highlighted while their dice are rolling.
+    - The UI should feel like the existing battle HUD, not a separate floating note.
+    - Use `#finalBattleHud` or a closely aligned existing battle-HUD pattern unless there is a strong reason not to.
+  - Gameplay must remain unchanged:
+    - Target remains `6 * state.players.length`.
+    - Each player rolls as before with current dice/battle bonuses, `Зелье ярости`, and `Сглаз` behavior.
+    - Team total remains the sum of player totals.
+    - Win branch remains: all players get `10` coins; best hit gets extra `10`, with existing tie handling.
+    - Loss branch remains: all players lose `5` coins.
+    - Do not change Event card data/count/text, deck lifecycle, dice math, bot logic, rewards, or logs except tiny coherence text if needed for the new HUD.
+  - Suggested implementation shape:
+    - Add a dedicated progress object for `Сплочение`, for example `state.unityBattleProgress`, or another low-risk state name that does not collide with final/VS/enemy battle progress.
+    - Add a render path that runs before/alongside existing final/enemy/VS battle HUD rendering and clears when the Event finishes.
+    - Update the progress object before each roll, during rolling, after each result, and after final outcome.
+    - Keep normal movement and ordinary Event card prompts uncluttered.
+  - Layout constraints:
+    - Desktop and mobile must not overlap dice faces, action button, player cards, board, or TADAM block.
+    - Reuse/extend existing responsive battle HUD styles where possible.
+    - Keep text compact; no explanatory paragraph inside the HUD.
+  - Verification:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js` if touched;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - Browser smoke `Сплочение` with 3+ players:
+      - HUD appears at Event start;
+      - target force is visible and equals `6 * playerCount`;
+      - all players are listed;
+      - current rolling player is highlighted;
+      - completed players keep visible force results;
+      - team total updates after each player roll;
+      - final win/loss outcome is visible;
+      - no console errors.
+    - Browser smoke mobile width:
+      - HUD remains readable and does not cover dice/action controls incoherently.
+    - Regression smoke:
+      - normal monster battle HUD still works;
+      - VS battle HUD still works;
+      - final battle HUD still works or at least is not obviously broken by static/render checks.
+  - Dev 3 checks passed:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `node --check src/controller.js`;
+    - `git diff --check`;
+    - Browser desktop smoke on `http://127.0.0.1:5173/` with 3 players: `Сплочение` HUD appeared, target `18` was visible, all 3 players were listed, current rolling player was highlighted, completed forces stayed visible, team total updated, final defeat `8 / 18` was visible, and HUD cleared after `Далее`; no console errors.
+    - Browser mobile smoke at `390x844` with 3 players: HUD appeared/readable, did not overlap measured dice/action button rects, final defeat `4 / 18` was visible; no console errors.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
+- ACTIVE CARD TUNE 2026-06-07 15:35 - Change Good `steal5` to chosen target:
+  - Owner: `Dev 2`.
+  - Status: complete; QA-approved by `QA 1` at 2026-06-07 15:43 and GD-approved at 2026-06-07 15:45.
+  - User request:
+    - Change Good card text from `Забери 5 монет у игрока с наибольшим количеством монет` to `Выбери игрока, забери у него 5 монет`.
+  - Card scope:
+    - Deck: `good` / `Хорошо`.
+    - Card id: `steal5`.
+    - Current effect: `steal-richest`, `amount: 5`.
+    - Count must remain `2`.
+    - This is not an artifact and not a Shop card.
+  - Required card data:
+    - Title: `Выбери игрока, забери у него 5 монет`.
+    - Description/card face text: `Выбери игрока, забери у него 5 монет.`
+    - Keep id `steal5` so existing deck identity/save references remain stable.
+    - Effect type can be renamed to a clearer chosen-target effect if useful, but keep amount `5`.
+  - Source sync:
+    - Update canonical Google Sheet `Cards Config`, tab `good`, if connector/access is available.
+    - Sync local sources:
+      - `src/cards.config.js`;
+      - `cards-google-sheet.csv`.
+    - Touch only this Good card row unless a tiny shared helper is needed.
+  - Gameplay behavior:
+    - When a human player resolves this card, show a player-choice popup with all other players as valid targets.
+    - The active player cannot choose themselves.
+    - Steal up to `5` coins from the chosen target using the existing coin transfer helper/path; if the target has fewer than 5 coins, take the available amount.
+    - Log the chosen target and actual stolen amount.
+    - If there is no valid target, log a harmless no-op and discard normally.
+    - Bot behavior: choose a sensible opponent target, preferably the opponent with the most coins; ties can use an existing safe/random/tie helper.
+    - The Good card should still discard normally after resolving under the finite Good deck lifecycle.
+  - Constraints:
+    - Do not change Good deck counts except this card's unchanged `count: 2`.
+    - Do not change other Good/Event/Shop/TADAM cards, Joe Shop replenishing stock, finite deck lifecycle, board placement, dice/random-choice UI, or Monster Rage indicator work.
+    - Preserve current untracked `outputs/` and any unrelated local changes.
+  - Verification:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - Static check: no Good `steal5` title/description still says `игрока с наибольшим количеством монет`.
+    - Static check: local config/CSV/Google Sheet are synced for this card if Google Sheet access is available.
+    - Browser smoke: human draws/reveals `steal5`, chooses a target who is not the richest, and steals from that chosen target.
+    - Browser smoke: target with fewer than 5 coins loses only available coins, with coherent log.
+    - Bot smoke/static check: bot resolves the card without hanging and chooses a valid opponent.
+    - Confirm the card discards after resolve and no browser console errors appear.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
 - USER REWORK 2026-06-07 15:00 - Random-choice roll UI overlaps dice animation:
   - Owner: `Dev 3`.
   - Status: complete; QA-approved by `QA 1` at 2026-06-07 15:23 and GD-approved at 2026-06-07 15:25.
@@ -789,8 +1128,8 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
       - Text is singular: `Если остановился на клетке с другим игроком, забери у него 10 монет`.
       - If the active player stops on a cell with multiple other players, select one target by 1d6 tie-break instead of stealing from everyone.
     - TADAM `jump-steal`:
-      - Text is singular: `Перепрыгивая игрока, забери у него 3 монеты`.
-      - If a movement step/passed cell has multiple other players on it, select one target by 1d6 tie-break for that trigger instead of stealing from everyone.
+      - Superseded on 2026-06-07 by `ACTIVE TADAM RULE 2026-06-07 16:25 - jump-steal hits every player on the jumped-over cell`.
+      - New rule: `jump-steal` applies to every other player on the same jumped-over cell and does not use this one-player tie-break.
   - UX/logging:
     - Show/log a clear short message when a tie-break happens:
       - who is tied;

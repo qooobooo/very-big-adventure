@@ -40,12 +40,13 @@ Current important state:
   5. A task is not final until GD explicitly approves it.
 - Google Sheet `Cards Config` is the canonical card-edit source:
   `https://docs.google.com/spreadsheets/d/1dv8cOcoY9P1WZOw2UQ-prUccte2BprZMp0DFCSL0pME/edit`
-- Sheets/tabs: `good`, `bad`, `tadam`, `shop`. Card names use `title`; Good-card face text uses `description`.
+- Sheets/tabs: `good`, `bad`, `tadam`, `event`, `shop`. Card names use `title`; Good-card face text uses `description`.
 - Current sheet/local CSV order is `deck,id,title,shortTitle,effect_type,amount,steps,cost,dice,mode,target_deck,notes,count,description`.
 - Card update workflow: update `title` and matching effect fields/logic directly, then sync `src/cards.config.js` and `cards-google-sheet.csv`.
 - If edited title/rules change numbers (for example coin cost), also update the matching effect fields/logic, not only text.
 - `cards-google-sheet.csv` is a local mirror of the Google Sheet column order, not the canonical source.
 - `src/cards.config.js` and `cards-google-sheet.csv` should stay aligned with Google Sheet when card balance or text changes.
+- Card text style rule: player-facing card text in `title`, `shortTitle`, and `description` must not end with a final period. Internal periods between sentences stay. Internal `notes` may keep punctuation unless displayed on a card.
 - `src/game.config.js` contains game-level config such as door/enemy strengths.
 - The active source folder is now the git repository at `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure`.
 - Remote: `https://github.com/qooobooo/very-big-adventure.git`.
