@@ -1,8 +1,872 @@
-# Inbox For Dev
+# Inbox For Dev Roles
 
-For tasks related to "Очень Большая Бродилка" in `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure`.
+For tasks related to "Очень Большая Бродилка" for `Dev 1`, `Dev 2`, and `Dev 3` in `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure`.
 
 ## Open Items
+
+- QA FOUND 2026-06-07 02:59 - Card source sync drift between live Google Sheet and local mirror/config:
+  - Owner: `Dev 1` / `Dev 3` to pick up after GD/source-of-truth confirmation if needed.
+  - QA context:
+    - Found during `QA 2` count-gate verification for Dev 3.
+    - Count values are correct and were QA-approved separately; this item is about non-count source alignment only.
+  - Expected:
+    - The live Google Sheet `Cards Config`, local `cards-google-sheet.csv`, and local `src/cards.config.js` should either match on card data columns that are meant to mirror each other or have an explicit documented mapping when live Sheet terms differ from runtime effect ids.
+    - No runtime card effect should be accidentally desynced from the canonical card source.
+  - Actual examples from live Sheet readback vs local sources:
+    - `event/unity`:
+      - live Sheet `event!A4` effect_type is `event-unity-monster`;
+      - local CSV/config use `event-unity`.
+    - `event/magic-wallet`:
+      - live Sheet `event!A9` effect_type is `artifact-magic-wallet`;
+      - local CSV/config use `event-magic-wallet`.
+    - `event/monster-rage`:
+      - live Sheet `event!A10` effect_type is `global-monster-rage`;
+      - local CSV/config use `event-monster-rage`.
+    - Several Event descriptions and `shop/extra-die` title also differ between live Sheet and local CSV/config.
+  - Repro:
+    - Read live Google Sheet `Cards Config` ranges:
+      - `event!A1:N10`;
+      - `shop!A1:N5`.
+    - Compare them with local `cards-google-sheet.csv` and `src/cards.config.js`.
+    - Confirm count column is aligned, but non-count columns above differ.
+  - Suggested resolution:
+    - Decide whether the live Google Sheet is still the canonical exact source for these columns.
+    - If yes, sync local CSV/config carefully without breaking runtime effect ids.
+    - If no, update the live Sheet or document the intentional mapping so future card sync work does not overwrite implemented Event Phase 2 behavior.
+  - QA verification after fix:
+    - Re-read live Sheet and local sources.
+    - Confirm card ids/counts/effect ids/descriptions are aligned according to the chosen source-of-truth rule.
+    - Run `node --check src/cards.config.js` and `git diff --check`.
+
+- ACTIVE DECK SYSTEM 2026-06-07 02:49 - Finite card decks with discard reshuffle:
+  - Owner: `Dev 2`.
+  - Status: complete; QA-approved by `QA 1` and GD-approved at 2026-06-07 03:01.
+  - User rule:
+    - When a deck ends, it is shuffled.
+  - Design contract:
+    - Replace repeated random draw-with-replacement behavior with physical per-deck state:
+      - draw pile;
+      - discard pile;
+      - out-of-deck cards that are currently active/owned/in play.
+    - Build each deck from `cardConfig` using existing `count` values, so Dev 3's copy-count task is the source for pile composition.
+    - Draw cards without replacement from the draw pile.
+    - When a draw is requested and the draw pile is empty:
+      - shuffle that deck's discard pile into a fresh draw pile;
+      - clear the discard pile;
+      - continue the draw;
+      - log/chronicle a short line like `Колода Событий перемешана`, where useful.
+    - If both draw pile and discard pile are empty, do not crash; show/log that no card is available and let the game continue gracefully.
+  - Decks covered:
+    - `good`;
+    - `bad`;
+    - `tadam`;
+    - `event`;
+    - `shop`.
+  - Per-card lifecycle:
+    - `good`, `bad`, and instant `event` cards go to that deck's discard after their effect resolves.
+    - `event/magic-wallet` is an artifact: when awarded, it stays out of the Event deck while owned; it must not enter discard while the artifact is in play.
+    - Other future Event artifacts with icon metadata follow the same artifact lifecycle unless GD says otherwise.
+    - `event/monster-rage` is not an artifact; after applying the global +1 effect, it goes to Event discard.
+    - Active/persistent `tadam` cards stay out of the TADAM deck while active. Do not allow reshuffle to create more active copies than the configured physical copies.
+    - Joe Shop cards offered but not taken go to the Shop discard after the offer ends.
+    - Joe Shop cards bought/received/stolen stay out of the Shop deck while owned by a player; do not put owned shop cards back into the deck unless an existing rule explicitly discards them.
+  - Joe Shop offer rule:
+    - When an offer needs multiple cards, draw that many from the finite Shop deck without duplicates from the same physical pile.
+    - If the draw pile empties mid-offer, reshuffle discard and continue.
+    - If there still are not enough available Shop cards because too many are owned/out of deck, offer as many as are available and log it gracefully.
+  - New game/reset:
+    - Starting a new game fully rebuilds all deck piles from current `cardConfig` counts.
+    - Restarting/changing field should not keep old deck order/discard state.
+    - Keep any existing history/save/snapshot flow valid; add deck state only where needed for gameplay correctness.
+  - Constraints:
+    - Do not change card counts, titles, descriptions, ids, icons, effect types, board placement, route order, dice math, or Event effect behavior.
+    - Do not revert Dev 1's Event Phase 2 rework or Dev 3's count changes.
+    - If local `src/game.js` changed while this task starts, re-read the newest file and preserve unrelated edits.
+  - Verification:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js` if touched;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - static or scripted proof that a deck with N configured copies draws all N before repeating any discarded card;
+    - proof that an empty draw pile reshuffles discard and allows the next draw;
+    - Event smoke: `monster-rage` returns to discard after apply, `magic-wallet` stays out while owned;
+    - TADAM/shop smoke: active/owned cards are not duplicated beyond physical copies;
+    - normal card reveal UI still works for Good, Bad, TADAM, Event, and Joe Shop.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
+- QA REWORK 2026-06-07 02:18 - Event Phase 2: persistent Monster Rage indicator is missing:
+  - Owner: `Dev 1`.
+  - Dispatch status: rework complete by `Dev 1` at 2026-06-07 02:49 and sent back to QA first; waiting for QA re-check/approval.
+  - QA gate result:
+    - Event Phase 2 is not QA-approved yet; returned to Dev 1 for this rework.
+  - What QA checked:
+    - Browser host smoke on `http://127.0.0.1:5173/` after Dev 1 Event Phase 2 handback.
+    - Drew and applied `Ярость монстров`.
+    - Waited until the temporary toast disappeared.
+    - Checked board monster labels/tooltips, visible UI text, log, and source.
+  - Expected:
+    - `Ярость монстров` should leave a persistent global indicator near the board/status area, for example `Ярость монстров +1` / `+N`.
+    - The indicator should remain visible after the toast fades and should update when the bonus stacks.
+  - Actual:
+    - Monster powers on the board do update:
+      - `16 -> 17`, `24 -> 25`, `10 -> 11`, `6 -> 7`;
+      - tooltip examples become `Сила монстра: 17 (база 16 + ярость 1)`.
+    - After the toast fades, no persistent `Ярость монстров +N` indicator remains on the host UI.
+    - Visible occurrences are only the Chronicle/log entries; the board/status area shows no global rage chip/state.
+  - Repro:
+    - Start a classic/no-phone game on field2.
+    - Use exact move `4` from start to `4-14` Event.
+    - Reveal/apply Event cards until `Ярость монстров` appears.
+    - Apply it and wait for the toast to disappear.
+    - Observe monster power numbers changed, but no persistent global indicator remains visible.
+  - Where to look:
+    - `src/game.js:2928-2930` builds `monsterRageText` only for `ui.activePlayerRole`.
+    - `src/game.js:23` queries `#activePlayerRole`.
+    - `index.html` currently has no `#activePlayerRole`, so that status text is never rendered.
+  - Suggested verification after fix:
+    - Applying `Ярость монстров` shows persistent host indicator `Ярость монстров +1`.
+    - Applying it again updates the same indicator to `+2`.
+    - Monster labels/tooltips still show effective strength with base + rage.
+    - No console errors; classic/no-phone still starts.
+
+- ACTIVE CARD CONFIG 2026-06-07 - Build real decks with 2 copies per non-artifact card:
+  - Dispatch status: sent directly to `Dev 3` thread at 2026-06-07 02:06; waiting for executor handback to QA.
+  - User request:
+    - For all card decks, every non-artifact card should have 2 copies.
+    - Artifacts are always unique: 1 copy.
+  - Scope:
+    - Update canonical card counts in Google Sheet `Cards Config` if connector/access is available.
+    - Sync local sources:
+      - `src/cards.config.js`;
+      - `cards-google-sheet.csv`.
+  - Decks covered:
+    - `good`;
+    - `bad`;
+    - `tadam`;
+    - `event`;
+    - `shop`.
+  - Count rule:
+    - Every non-artifact card: `count = 2`.
+    - Every artifact card: `count = 1`.
+  - Current artifact rule:
+    - Event cards with icon metadata are artifacts.
+    - Current known artifact: `event/magic-wallet` / `Волшебный кошель`, icon `assets/icons/artifact_magic_wallet_512.png`, count stays `1`.
+    - `event/monster-rage` is a global Event, not a player artifact, so it should get count `2`.
+    - Joe Shop cards are not Event artifacts; unless GD later says otherwise, each shop card gets count `2`.
+  - Constraints:
+    - Data/config counts only.
+    - Do not change card ids, titles, descriptions, effect types, effect amounts, gameplay logic, Event Phase 2 implementation, board placement, route order, UI, or phone protocol.
+    - Event Phase 2 is currently in QA; avoid touching Event logic while QA is verifying it.
+  - Verification:
+    - Static matrix/list shows every `count` value:
+      - all non-artifacts are `2`;
+      - `event/magic-wallet` remains `1`;
+      - no other count remains accidentally `1` unless marked artifact.
+    - Expanded decks reflect intended copy counts.
+    - `node --check src/cards.config.js`;
+    - `git diff --check`;
+    - If Google Sheet sync was not possible, say so clearly in handback.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
+- ACTIVE FEATURE 2026-06-07 - Finish Event deck Phase 2 cards:
+  - Dispatch status: returned by QA to `Dev 1` at 2026-06-07 02:18; waiting for rework handback to QA.
+  - User request:
+    - Finish the remaining Event cards.
+    - `Волшебный кошель` must have an icon.
+    - Any Event card with an icon is an artifact: a persistent player-owned bonus/ability, not a normal instant event and not a Joe Shop card.
+  - Implement remaining Event effects:
+    - `free-step` / `Вольный шаг`;
+    - `unity` / `Сплочение`;
+    - `magic-wallet` / `Волшебный кошель`;
+    - `monster-rage` / `Ярость монстров`.
+  - After all four are implemented:
+    - include all 9 Event cards in the Event draw pool;
+    - remove or rename the temporary Phase 1-only filter so no implemented Event card is excluded;
+    - do not leave any Event card as a silent no-op.
+  - General artifact contract:
+    - Event cards with icon metadata are player artifacts.
+    - Artifacts must be shown as compact icon chips/badges in the player status area and phone controller player card.
+    - Artifacts are not Joe Shop cards:
+      - do not put them in the Joe Shop `items` inventory unless they are clearly separated from shop cards;
+      - Good card `buy-shop-card` and Joe Shop purchase/steal flows must not target artifacts;
+      - artifacts do not count as Joe Shop cards for final score unless GD later says otherwise.
+    - Current artifact icon:
+      - `magic-wallet`: `assets/icons/artifact_magic_wallet_512.png`.
+  - `Вольный шаг` behavior:
+    - Roll 1d6 and add the active player's step bonus.
+    - Human player chooses any integer movement from `0` to that total, forward only.
+    - If `0` is chosen, do not resolve the current landing cell again.
+    - If `>0`, use normal movement/landing handling as much as possible, including route branches, portal handling, jump/land effects, and final cell behavior.
+    - Bots should choose a sensible option from `0..total`; ideal is scoring the possible destination cells, acceptable fallback is max movement if implementing scoring is too risky.
+  - `Сплочение` behavior:
+    - Temporary event monster strength is `6 * playerCount`.
+    - All players roll their normal monster-battle power:
+      - current dice count;
+      - battle bonuses;
+      - temporary next-monster rage bonus may be consumed because this is a monster battle; if consumed, log it clearly.
+    - Sum all player forces.
+    - If team total is at least monster strength:
+      - every player gets `+10` coins;
+      - the single player with the highest individual force gets an extra `+10` coins;
+      - if top force is tied, use existing `resolveOnePlayerTieByDie` / one-player 1d6 tie-break.
+    - If team loses:
+      - every player loses `5` coins through the normal coin helper/path.
+    - This Event battle must not open board doors, award door dice bonuses, or mark board monsters defeated.
+  - `Волшебный кошель` behavior:
+    - Unique artifact in play.
+    - When drawn/resolved, the last player by route receives the artifact; route tie uses the existing one-player 1d6 tie-break.
+    - If the artifact already has an owner, transfer it to the newly selected last player; if it is the same owner, just log that it stays.
+    - At the start of the owner's turn, before normal pre-roll prompts/roll, owner receives `+5` coins via the normal coin helper/path.
+    - If another player overtakes the owner during forward movement, transfer the artifact to that player:
+      - use route progress crossing, e.g. mover was at or behind owner before movement and becomes ahead after movement;
+      - transfer once at the moment/after the movement that caused the overtake;
+      - log the transfer clearly;
+      - do not transfer for position swaps such as `Портальный обмен` unless Dev finds an existing central "movement overtake" hook that safely covers it.
+    - UI:
+      - show the wallet icon chip on the owner;
+      - chip text can be short: `Волшебный кошель`, `+5/ход`;
+      - phone preview/player card should also show it compactly.
+  - `Ярость монстров` behavior:
+    - Persistent global Event, not a player artifact.
+    - When drawn, increase global monster strength bonus by `+1`.
+    - Multiple draws stack: `+N` to all monsters.
+    - Apply the bonus to all board monster battles, including the final monster:
+      - battle required strength;
+      - monster strength labels on the board/HUD;
+      - AI/bot win-chance estimates where practical;
+      - logs/history should show the effective strength.
+    - Do not mutate base `boardDoorConfigs`; prefer a helper like `effectiveMonsterStrength(door)`.
+    - Show a persistent global indicator near the board/status area, e.g. `Ярость монстров +N`.
+  - Constraints:
+    - Do not change Event card titles/descriptions unless needed to sync exact implemented behavior.
+    - Do not change field placement, route order, base board configs, dice random generation, Good/Bad/TADAM/Joe Shop rules, phone room protocol, or unrelated bot AI.
+    - Keep classic/no-phone play working.
+  - Verification:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js` if touched;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - static check that all 9 Event cards can now draw and have implemented effect branches;
+    - `Вольный шаг`: choose 0 and >0 cases;
+    - `Сплочение`: team win, team loss, top-force tie-break;
+    - `Волшебный кошель`: icon visible, last-player assignment, +5 start-turn reward, overtake transfer, not treated as Joe Shop card;
+    - `Ярость монстров`: stacked +N changes effective monster strength and visible labels.
+
+- ACTIVE BOARD UPDATE 2026-06-07 - Set all black-exclamation cells on field2 to Event:
+  - Status: complete by `Dev 1` at 2026-06-07 01:43; static checks passed; browser visual smoke still recommended.
+  - User clarified with the field screenshot: black `!` marks are Event cells.
+  - Update `field2` event placement in `src/game.js` only.
+  - Use these `field2` coordinates as Event cells:
+    - `9-2`
+    - `3-4`
+    - `10-4`
+    - `5-6`
+    - `10-9`
+    - `2-10`
+    - `10-12`
+    - `8-13`
+    - `4-14` already is `event`; keep it.
+  - Current source types to replace:
+    - `9-2`: `bad` -> `event`
+    - `3-4`: `bad` -> `event`
+    - `10-4`: `bad` -> `event`
+    - `5-6`: `green` -> `event`
+    - `10-9`: `bad` -> `event`
+    - `2-10`: `good` -> `event`
+    - `10-12`: `red` -> `event`
+    - `8-13`: `green` -> `event`
+    - `4-14`: remains `event`
+  - Constraints:
+    - Do not change `pathCells`, `route`, route order, board dimensions, doors/monsters, dice math, card deck data, Event draw pool, or Event card effects.
+    - Do not add Phase 2 Event cards to `eventCards`; board placement only.
+    - Keep field1 unchanged.
+  - Verification:
+    - On `field2`, all 9 listed cells render as `Событие` with `assets/icons/event_quest_512.png`.
+    - Adjacent non-listed cells keep their previous event types.
+    - Route order is unchanged.
+    - Landing on any listed Event cell draws/reveals an Event card using the existing Phase 1 Event flow.
+    - `node --check src/game.js`; `git diff --check`.
+
+- QA FOUND 2026-06-07 - Event tiles have no gray tile backing:
+  - What QA/user checked:
+    - Visual comparison of field2 Event cells with nearby icon cells on the board.
+  - Expected:
+    - Event cells should have the same gray parchment/tile backing and border treatment as other icon-based cells (`Хорошо`, `ТАДАМ`, `Лавка Джо`, Joe Auction, etc.).
+    - The Event quest icon should sit on that tile backing, not directly on the board background.
+  - Actual:
+    - Event icon is visible, but the Event cell appears without the gray tile backing, so it looks like a floating icon/marker on the map.
+  - Where to look:
+    - `styles.css:4143-4159`: `.tile-event` is missing from the main gray tile background/border selector group.
+    - `styles.css:4173-4189`: `.tile-event::before` is missing from the pseudo-layer opacity reset group.
+    - `styles.css:4225-4253`: `.tile-event` is missing from icon-tile typography/background groups.
+    - `styles.css:6480-6496` and `styles.css:6904-6920`: tabletop style selector groups also omit `.tile-event`.
+    - `src/game.js:327` correctly renders the Event icon as `tile-icon-event`; this looks like styling coverage rather than event plumbing.
+  - Suggested verification after fix:
+    - On field2, all Event cells keep title `Событие` and icon `event_quest_512.png`.
+    - Event cells have the same gray backing/border as other icon cells in classic and tabletop UI styles.
+    - Desktop and mobile views still show the Event icon centered and not clipped.
+
+- GD TRIAGE 2026-06-07 01:28 - Event Phase 1 accepted; fix phone `full` mode first:
+  - GD reviewed Dev 1 Event Phase 1 handback and QA smoke.
+  - Treat Event Phase 1 as the current MVP vertical slice:
+    - field2 `4-14` Event placement is accepted;
+    - Event face title/body requirement is satisfied;
+    - phone preview support is sufficient for MVP;
+    - Phase 1 draw pool/effects are enough for now.
+  - Next Dev blocker before clean handoff/push:
+    - fix current-source `server.js` so `roomModes` allows `full` as well as `big-button`;
+    - keep `big-button` as the default room mode.
+  - Do not add Phase 2 Event cards to the draw pool until their full effect/UX is implemented.
+  - Phase 2 backlog remains:
+    - `free-step`;
+    - `unity`;
+    - `magic-wallet` with `assets/icons/artifact_magic_wallet_512.png`;
+    - `monster-rage`.
+
+- QA FOUND 2026-06-07 - Phone room `full` mode is rejected by `server.js`:
+  - Dispatch status: sent directly to `Dev 2` thread at 2026-06-07 01:48; waiting for Dev handback.
+  - What QA checked:
+    - Static/runtime normalization path for phone room mode after Dev handback said `Полный контроллер` remains selectable.
+  - Expected:
+    - If host selects `Полный контроллер` and creates/recreates a phone room, server room mode stays `full`.
+    - Host status and controller UI should remain in full-controller mode.
+  - Actual:
+    - `server.js` allows only `big-button` in `roomModes`, so `normalizeRoomMode("full")` returns `big-button`.
+    - Repro command/static proof:
+      - `{"requested":"full","normalized":"big-button","allowed":["big-button"]}`
+    - Note: the already-running localhost server during QA appeared to be an older process and still returned `mode:"full"` for an API-created room; the bug is in the current source and should reproduce after restarting from current `server.js`.
+  - Where to look:
+    - `server.js:14-15`: `defaultRoomMode = "big-button"` and `roomModes = new Set([defaultRoomMode, "big-button"])`;
+    - `server.js:114-115`: `normalizeRoomMode`;
+    - `server.js:171-180`: created room mode normalization.
+    - Host side already allows both modes in `src/game.js:18-19`; `index.html:136-138` still has both options.
+  - Environment note:
+    - QA could not restart the server from current `server.js` because local socket binding was blocked with `EPERM` for both `0.0.0.0:5173` and `127.0.0.1:5173`.
+    - An already-running localhost server was available, but it appeared stale versus current source and still accepted `mode:"full"`.
+  - Suggested verification after fix:
+    - Select `Полный контроллер`, create room, confirm server room payload returns `mode:"full"` and host status says `Полный контроллер`;
+    - Recreate room with the same selection and confirm it stays `full`;
+    - Confirm default fresh room remains `Большая кнопка`.
+
+- ACTIVE FEATURE - Event deck vertical slice:
+  - User request 2026-06-07:
+    - Add new deck `События` / `event`.
+    - Cards are from the provided table; GD created canonical Google Sheet tab:
+      - spreadsheet: `Cards Config`
+      - id: `1dv8cOcoY9P1WZOw2UQ-prUccte2BprZMp0DFCSL0pME`
+      - sheet: `event`
+      - range: `A1:N10`
+    - User says these cards must show their card name on the card face.
+    - Event visual assets are already drawn:
+      - `assets/icons/event_quest_512.png`
+      - `assets/cards/event_back.png`
+      - `assets/cards/event_front.png`
+      - artifact icon for `magic-wallet`: `assets/icons/artifact_magic_wallet_512.png`
+    - Art/UI confirmation for Event face:
+      - `event_front.png` is designed for explicit `title` + effect/body text.
+      - Keep title in the lower text zone above the body, not over the upper exclamation emblem.
+      - Current safe CSS direction: `.event-card-text` around `left/right: 13%`, `top: 57%`, `bottom: 11%`, title max about 2 lines, body fills remaining space with smaller text.
+      - Avoid `overflow-wrap: anywhere` for Event title/body; prefer normal word wrapping, no hyphenation, and clipped/hidden overflow on the visual card. Phone preview can show the full long text.
+  - First board placement:
+    - Add one `event` cell on field2, replacing the Good cell indicated in the screenshot.
+    - GD coordinate read from screenshot/current route: use field2 `4-14` (currently `good`) as the first Event cell.
+    - Keep route order unchanged.
+    - If visual QA shows the screenshot intended the adjacent `3-14` Good cell instead, report back rather than moving multiple cells.
+  - Data/source requirements:
+    - Add `event` deck to local sources from Google Sheet:
+      - `src/cards.config.js`
+      - `cards-google-sheet.csv`
+    - Add `eventCards = expandDeck(cardConfig.event)` or equivalent.
+    - Add board event type `event` with:
+      - board icon `assets/icons/event_quest_512.png`;
+      - tile title/tooltip/history label `Событие`;
+      - landing behavior: draw and reveal one Event card.
+    - Card reveal must show:
+      - card back first;
+      - face with `title` prominently visible;
+      - `description`/effect text below.
+    - Phone card preview should also show Event `title` and body text when a single Event card is drawn, matching existing single-card preview behavior.
+  - Event cards in Google Sheet:
+    - `race` / `Гонка`: roll 1d6 + step bonus. Total >= 8: +20 coins; 5-7: +10; <=4: +5.
+    - `free-step` / `Вольный шаг`: roll 1d6 + step bonus. Player may move 0..total cells forward. Use normal movement/effect handling as much as existing move cards do; if full 0..N choice is too large, implement a compact numeric/choice prompt.
+    - `unity` / `Сплочение`: team battle. MVP design: temporary event monster strength = `6 × playerCount`. All players roll battle power. If team total >= monster strength, all players +10 coins; top damage player +10 extra. If team loses, all players -5 coins. If several players tie for top damage, use the existing 1d6 one-player tie-break rule.
+    - `justice` / `Справедливость`: first player by route moves 10 cells back, last player by route moves 10 cells forward, all others +5 coins. If first/last is tied, use 1d6 one-player tie-break.
+    - `balance` / `Равновесие`: richest player gives 10 coins to poorest player. If richest/poorest is tied, use 1d6 one-player tie-break.
+    - `generous-rain` / `Щедрый дождь`: all players with 0 coins receive +20 coins.
+    - `portal-swap` / `Портальный обмен`: active player chooses any other player and swaps positions with them.
+    - `magic-wallet` / `Волшебный кошель`: artifact card. Last player by route receives the artifact. Owner gets +5 coins at the start of their turn. If another player passes/overtakes the owner, transfer the artifact to that player. Use icon `assets/icons/artifact_magic_wallet_512.png`.
+    - `monster-rage` / `Ярость монстров`: global event placed next to the board. All monsters get +1 strength. Multiple copies stack if more are active later.
+  - Phasing:
+    - It is acceptable to ship this gradually.
+    - Recommended phase 1:
+      - deck plumbing, one board cell, reveal UI, phone preview;
+      - simple cards: `race`, `generous-rain`, `portal-swap`, `balance`, `justice`;
+      - safe stubs/logs for unimplemented complex cards only if needed.
+    - Recommended phase 2:
+      - `free-step`, `unity`, `magic-wallet`, `monster-rage` with full UX.
+    - If you split phases, leave clear in-game text for unavailable cards or temporarily exclude unimplemented cards from `eventCards`; do not let a drawn card silently do nothing.
+  - Art/UI visual notes for artifacts:
+    - Show `Волшебный кошель` as a compact artifact chip/badge near player-owned Joe Shop cards or status bonuses.
+    - Suggested desktop chip: 28-32px icon + short label `Волшебный кошель`, with a small `+5` coin hint if space allows.
+    - Suggested phone chip: icon-first compact badge in player card stats/status area; avoid long repeated explanatory text, use title + `+5 монет/ход` in tooltip/detail text if needed.
+    - If artifact transfers, briefly pulse the chip/icon on the new owner.
+  - Constraints:
+    - Do not change existing Good/Bad/TADAM/Joe Shop decks except necessary shared card rendering helpers.
+    - Do not change route order, monster base config, dice math, phone room protocol beyond safe snapshot/card-preview fields, saves transport, or unrelated bot AI.
+    - Classic/no-phone play must continue to work.
+  - Verification:
+    - Field2 `4-14` renders as `Событие` with Event icon and tooltip.
+    - Landing on the Event cell draws an Event card with back -> face reveal.
+    - Event face shows card title and effect text.
+    - At least phase-1 Event effects work and log clearly.
+    - Phone controllers show the single drawn Event card title/text.
+    - `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js` if touched, `git diff --check`.
+
+- ACTIVE RULE - Tie-break by 1d6 when a one-player effect has multiple candidates:
+  - New GD/user rule 2026-06-06:
+    - If a card or field text says the effect applies to one player, but multiple players satisfy the condition, resolve the dispute with a one-die roll.
+  - Rule contract:
+    - Identify all tied/eligible candidates under the text condition.
+    - Each tied candidate rolls 1d6.
+    - The highest roll becomes the selected target for that one-player effect.
+    - If the highest roll is tied, reroll only among the tied candidates until one target is selected.
+    - Use the selected target exactly as the old single-target effect would.
+    - This applies regardless of whether the effect is good or bad for the selected target; the die roll chooses the target.
+  - Current known cases to update:
+    - Good card `steal5` / effect `steal-richest`:
+      - Text: `у игрока с наибольшим количеством монет`.
+      - If several opponents are tied for most coins, they roll 1d6 to decide the target.
+      - Current code appears to use `richestOpponent()` with `a.id - b.id`; replace this deterministic tie with the dice tie-break.
+    - Bad card `give5` / effect `give-poorest`:
+      - Text: `игроку с наименьшим количеством монет`.
+      - If several opponents are tied for fewest coins, they roll 1d6 to decide the target.
+      - Current code appears to use `poorestOpponent()` with `a.id - b.id`; replace this deterministic tie with the dice tie-break.
+    - TADAM `land-steal`:
+      - Text is singular: `Если остановился на клетке с другим игроком, забери у него 10 монет`.
+      - If the active player stops on a cell with multiple other players, select one target by 1d6 tie-break instead of stealing from everyone.
+    - TADAM `jump-steal`:
+      - Text is singular: `Перепрыгивая игрока, забери у него 3 монеты`.
+      - If a movement step/passed cell has multiple other players on it, select one target by 1d6 tie-break for that trigger instead of stealing from everyone.
+  - UX/logging:
+    - Show/log a clear short message when a tie-break happens:
+      - who is tied;
+      - each 1d6 result;
+      - who became the selected target.
+    - Use existing dice animation/prompt style where practical; a lightweight log-only version is acceptable if full animation would be too invasive, but the roll result must be visible in Chronicle/log.
+    - Bots should auto-resolve these tie-break prompts like other bot-owned prompts.
+  - Implementation notes:
+    - Prefer a reusable helper, e.g. `resolveOnePlayerTieByDie(candidates, { reason, autoFor })`, instead of duplicating logic.
+    - Existing target-picking functions may need to become async because tie-break uses dice/prompt/animation.
+    - Keep existing no-candidate behavior unchanged.
+  - Constraints:
+    - Do not change card text, card ids, effect ids, coin amounts, dice math, routes, phone controllers, saves, or unrelated bot AI.
+    - Do not change effects that explicitly target all matching players; this rule only applies when the text/effect is singular/one-player.
+  - Verification:
+    - `steal-richest`: two or more opponents tied for most coins -> 1d6 tie-break selects one target, only that target loses coins.
+    - `give-poorest`: two or more opponents tied for fewest coins -> 1d6 tie-break selects one target, only that target receives coins.
+    - `land-steal`: active player lands with two other players on the same cell -> 1d6 tie-break, steal from one target only.
+    - `jump-steal`: active player passes through a cell with two other players -> 1d6 tie-break, steal from one target only for that trigger.
+    - Single eligible target cases behave as before with no tie-break.
+    - `node --check src/game.js`, `git diff --check`.
+
+- ACTIVE CARD SYNC/BEHAVIOR - Good card `buy-shop-card` fallback +5 coins:
+  - GD/User update 2026-06-06:
+    - Google Sheet `Cards Config` was updated directly by GD:
+      - spreadsheet: `https://docs.google.com/spreadsheets/d/1dv8cOcoY9P1WZOw2UQ-prUccte2BprZMp0DFCSL0pME/edit`
+      - sheet: `good`
+      - row: `7`
+      - id: `buy-shop-card`
+      - cell: `N7` / `description`
+    - New description:
+      - `Можешь заплатить 5 монет любому игроку и забрать у него любую карту Лавка Джо. Если у тебя не хватает монет или у противников нет Лавок Джо, получи 5 монет`
+  - Current local/code mismatch observed by GD:
+    - `src/cards.config.js` and `cards-google-sheet.csv` still contain the old description.
+    - `resolveBuyShopCardFromPlayer(player, cost)` currently just logs and returns when:
+      - player has fewer than `cost` coins;
+      - opponents have no Joe Shop cards.
+    - It does not grant the fallback `+5 монет`.
+  - Required behavior:
+    - Sync local card sources from Google Sheet:
+      - `src/cards.config.js`
+      - `cards-google-sheet.csv`
+    - Implement fallback behavior for `buy-shop-card-from-player`:
+      - If player cannot pay the cost, they receive `+5` coins instead.
+      - If no other player has any Joe Shop card, they receive `+5` coins instead.
+      - If player can pay and at least one opponent has Joe Shop cards, current choice/buy flow stays as-is.
+      - If player opens the choice and then manually declines, do not grant fallback; declining remains just declining.
+    - Use existing coin helper/path so history coin stats and coin float behave consistently, if applicable.
+  - Constraints:
+    - Do not change the cost (`5`), target selection UI, stealing/purchase transfer logic, card id/effect type, other Good cards, Joe Shop card rules, dice, routes, bots, phones, saves, or balance.
+  - Verification:
+    - Player has <5 coins: drawing this Good card gives +5 coins.
+    - Player has enough coins, but opponents have no Joe Shop cards: gives +5 coins.
+    - Player has enough coins and an opponent has Joe Shop card: existing purchase choice works, player pays 5 to owner and receives selected card.
+    - Player manually declines from available purchase choice: no +5 fallback.
+    - `node --check src/game.js`, `node --check src/cards.config.js`, `git diff --check`.
+
+- ACTIVE BOARD TWEAK - Swap TADAM and Joe Auction on field2 top-right:
+  - User request 2026-06-06 with screenshot:
+    - Swap the adjacent `ТАДАМ!` and `Аукцион Лавки Джо` cells in the top-right of field 2.
+  - Exact current cells from `src/game.js` / `boardConfigs.field2.events`:
+    - `13-0`: currently `tadam`;
+    - `14-0`: currently `joe-auction`.
+  - Required change:
+    - On field2 only:
+      - `13-0` should become `joe-auction`;
+      - `14-0` should become `tadam`.
+    - Keep route/path order unchanged.
+    - Keep field1 unchanged.
+  - Constraints:
+    - Board event placement only.
+    - Do not change TADAM rules, Joe Auction rules, icons, tooltips except what naturally follows from event assignment, route order, dice, cards, bots, phones, saves, or balance.
+  - Verification:
+    - Field2 top-right row renders auction icon on `13-0` and TADAM icon on `14-0`.
+    - Tooltips/titles match the new events.
+    - Landing on `13-0` triggers Joe Auction; landing on `14-0` triggers TADAM.
+    - `node --check src/game.js`, `git diff --check`.
+
+- ACTIVE HISTORY FEATURE - Final game summary with scores and final-battle forces:
+  - User request 2026-06-06:
+    - Add final party result to statistics/history:
+      - who won;
+      - with what score;
+      - how much final-battle strength each player had;
+      - how many points every player earned, including players who lost.
+  - Current code context from GD read:
+    - `resolveFinalBattle()` already computes:
+      - `challengerResults`;
+      - `bossRollResults`;
+      - `playersForce`;
+      - `bossForce`;
+      - `scores`;
+      - `winner`;
+      - `state.finalBattle`.
+    - `renderHistory()` / `renderPlayerHistory()` currently show per-player stats but not a full final result protocol.
+    - `buildGameHistorySnapshot()` saves `state.finalBattle` and `state.history`; final summary should be present in saved/local/Google snapshot too.
+  - Required behavior:
+    - Add a clear `Итог партии` / `Финал` block to the History/statistics UI once the game is finished.
+    - Show:
+      - winner name and role/outcome:
+        - boss won, or players beat boss and winner by points;
+      - winner final score total;
+      - total players force vs boss force;
+      - for every player, a compact row/card with:
+        - player name;
+        - role: `Босс` or `Игрок`;
+        - final score total;
+        - score breakdown from existing `finalBattleScore()` fields:
+          - coins;
+          - Joe Shop/card points;
+          - damage/attack points;
+          - position bonus;
+        - final-battle strength:
+          - challengers: their rolled final battle `total`, plus useful breakdown if easy (`rolled`, `bonus`, `rolls`);
+          - boss: final `bossForce`, plus useful breakdown if easy (`bossRolled`, permanent/battle bonus, opponent bonus, rolls).
+    - Show scores for all players even if they lost:
+      - losing challengers still show their total score and final strength;
+      - if boss wins, non-winning players still show their scores;
+      - boss should also have a row/card, even when the players beat the boss.
+    - User clarification 2026-06-06:
+      - If players beat the boss, the final result must explicitly explain what player points came from.
+      - Do not show only `Пес - 54`; show a readable breakdown like:
+        - `54 = 22 монеты + 10 Лавка Джо + 18 урон боссу + 4 позиция`.
+      - This breakdown should be visible for every player in the final summary, not only for the winner.
+      - Prefer the same breakdown in the final History block and saved structured final summary.
+    - Persist the same data in game history/save snapshot:
+      - Prefer storing a structured final summary in `state.history.finalSummary` or extending `state.finalBattle` safely.
+      - `buildGameHistorySnapshot()` should include it through existing `state.history` / `state.finalBattle` so localStorage and Google Sheets receive the result.
+    - Keep existing final-battle winner rules and score formula unchanged.
+  - UI expectations:
+    - Use the existing History visual language; no broad redesign.
+    - Keep it readable on desktop and mobile.
+    - Avoid oversized dense text; use compact labels and numbers.
+    - If history is hidden in fullscreen, no need to change fullscreen behavior.
+  - Constraints:
+    - History/statistics/snapshot only.
+    - Do not change final battle rules, winner calculation, score formula, dice math, boss/challenger roll flow, cards, bots, routes, phones, or saves transport.
+  - Verification:
+    - Finish a game through final battle where boss wins:
+      - History shows winner boss, boss force, players force, every player score/strength.
+    - Finish a game where players beat boss:
+      - History shows point winner, winning score, every player score/strength, boss row included.
+    - Save history after finish:
+      - local snapshot includes final summary;
+      - Google Sheets payload path still receives the snapshot without shape-breaking errors.
+    - `node --check src/game.js`, `git diff --check`; browser smoke if feasible.
+
+- ACTIVE BOT AI FIX - Smarter open portal choice near endgame:
+  - User report 2026-06-06:
+    - Bots sometimes do not choose the farthest/latest opened portal even when the endgame is close.
+    - Observed case: bots had plenty of coins, one bot landed on a red field after choosing another portal, so the non-last portal did not look like a deliberate tactical reward choice.
+  - Problem diagnosis from GD/code read:
+    - Ordinary opened portals currently flow through `pendingChoice.kind === "portal"` and then the generic `chooseBotDirection()` / `scoreCellForBot()` path.
+    - That path mostly scores the immediate chosen cell/event and only lightly considers `remaining`; it does not appear to score the portal as a strategic shortcut using `projectedPortalEndCell()`, route progress gained, and endgame urgency.
+  - Desired behavior:
+    - Add a dedicated scoring path for `pendingChoice.kind === "portal"` or enrich the generic path with a portal-specific score.
+    - Bot should evaluate each portal option by expected strategic value:
+      - destination portal door position;
+      - projected end cell after the remaining movement steps, using existing `projectedPortalEndCell(player, choice.cell, pending.remaining)`;
+      - progress gained toward finish compared with staying/declining;
+      - distance to final monster/finish after projection;
+      - landing/projected cell event value/risk.
+    - In late game, progress toward the final stretch should dominate normal local tile value:
+      - if an option is the latest/farthest opened portal or otherwise produces the highest route progress toward finish, give it a strong endgame bonus;
+      - when `finalDistance(player)` is low/medium and the progress gap is meaningful, the bot should usually choose that best-progress portal unless the downside is clearly catastrophic.
+    - Do not make "last portal" unconditional:
+      - a bot may avoid it if it would immediately hit a very bad/catastrophic outcome, a locked/impossible transition, or a monster/final monster it has almost no chance to beat;
+      - but ordinary red/bad risk should not outweigh a large endgame shortcut when the bot has a healthy coin reserve.
+    - Red/bad penalties should scale with resources:
+      - low coins: red/bad fields are more scary;
+      - high coins, e.g. 15+ or 20+: red penalties should be softened, because the bot can absorb the risk.
+    - Decline / "Не входить" should generally lose to a clearly progressive portal in endgame, unless all portal options are bad enough.
+    - Keep bot personality/noise model, but make the score gap large enough that endgame best-progress portal is not randomly lost to a mediocre option.
+  - Suggested implementation direction:
+    - Add helper like `scorePortalChoiceForBot(player, choice, pending)` and call it for `state.pendingChoice.kind === "portal"` in `runBotAction()` or `chooseBotDirection()`.
+    - Score both `choice.cell` and `projectedPortalEndCell(...)`; the projected cell should probably carry more weight than the raw portal door cell.
+    - Include a "route progress delta" term versus current position and versus the decline/stay option.
+    - Include an endgame multiplier based on `gamePhase() === "late"`, `finalDistance(player)`, or ratio to finish.
+    - Reuse existing helpers where possible: `routeProgress`, `finalDistance`, `scoreCellForBot`, `monsterGatePressure`, `estimateWinChance`, `doorByEnemyCell`, `isDoorOpenForPlayer`.
+  - Constraints:
+    - Bot AI only.
+    - Do not change portal rules, human portal UI/choice behavior, board routes, door configs, card rules, dice math, random roll generation, phone controllers, saves, or balance values.
+  - Verification:
+    - Create/reproduce a scenario with multiple opened portals near endgame and a bot with enough coins: bot should choose the latest/farthest/highest-progress portal unless it is truly disastrous.
+    - Scenario with high coins and projected red landing: large progress portal should still be favored over a weaker portal if the red risk is ordinary.
+    - Scenario with low coins and a bad/red/dangerous projection: bot may avoid the risky portal.
+    - Scenario where an alternative portal has only slightly less progress but a much better tactical event: bot may choose the alternative.
+    - `node --check src/game.js`, `git diff --check`; browser or deterministic smoke if feasible.
+
+- ACTIVE BUG - `Отображать кубики` checkbox re-checks itself:
+  - User report 2026-06-06:
+    - When the user unchecks `Отображать кубики`, it becomes checked again immediately/soon after.
+  - Expected behavior:
+    - Manual unchecked state must persist in the host UI.
+    - The checkbox should not be re-checked by render/sync/default logic after the user turns it off.
+    - Existing room/snapshot state should update to `diceVisible: false` when unchecked.
+    - If a room is recreated after unchecking, it should use dice display off unless the user re-enables it.
+    - Default remains off for fresh setup, per latest GD/user request.
+  - Likely area:
+    - Check any `syncPhoneRoomSettings`, render, room creation/recreation, or snapshot sync logic that may set checkbox `.checked` from default `true` or coerce missing value to true.
+    - Distinguish "missing/undefined" from explicit `false`; explicit false must win.
+  - Constraints:
+    - Bugfix only.
+    - Do not change dice math, random generation, phone action payloads, rules, cards, bots, saves, routes, or balance.
+  - Verification:
+    - Fresh page: `Отображать кубики` unchecked.
+    - Manually check it: remains checked and dice visual can show.
+    - Manually uncheck it: remains unchecked; does not re-check itself after room state/snapshot updates.
+    - Create/recreate room after unchecking: room/snapshot uses dice display off.
+    - `node --check src/game.js`, `node --check src/controller.js` if touched, `node --check server.js` if touched, `git diff --check`.
+
+- ACTIVE PHONE UX - Defaults: Big Button mode, dice display off:
+  - User request 2026-06-06:
+    - Make `Большая кнопка` the default phone room mode.
+    - Make `Отображать кубики` disabled/off by default.
+  - Supersedes earlier defaults:
+    - Supersedes `Полный контроллер` as default mode.
+    - Supersedes `Отображать кубики` default enabled/on from the initial dice-toggle task.
+  - Behavior contract:
+    - In the host `Телефоны` room block, fresh/default setup should select `Большая кнопка`.
+    - `Полный контроллер` remains available/selectable.
+    - `Отображать кубики` checkbox/toggle should be off by default.
+    - If user manually enables `Отображать кубики`, dice visual works as implemented.
+    - If user manually selects `Полный контроллер`, room creation/recreation respects that selection.
+    - Phone controllers remain opt-in behind `Играть с телефонами`; classic/no-phone game remains unchanged.
+  - Constraints:
+    - UI/initial-state only.
+    - Do not change dice math, random generation, phone action payloads, room protocol beyond default value, controller rendering behavior beyond respecting existing settings, rules, cards, bots, saves, routes, or balances.
+  - Verification:
+    - Fresh page/default setup: phone mode selector shows `Большая кнопка`.
+    - Fresh page/default setup: `Отображать кубики` is unchecked/off.
+    - Creating room without touching settings creates Big Button room with dice visual disabled.
+    - Manually selecting `Полный контроллер` works.
+    - Manually enabling `Отображать кубики` works.
+    - `node --check src/game.js`, `node --check src/controller.js` if touched, `node --check server.js` if touched, `git diff --check`.
+
+- ACTIVE PHONE DICE FOLLOW-UP - Center dice, sync duration, add display toggle:
+  - User request 2026-06-06 with real-phone screenshot:
+    - Phone dice is slightly off-center to the left; center it.
+    - Phone dice rolling animation lasts longer than the board/field animation; make duration the same.
+    - Add a phone-room setting near `Шейк`: `Отображать кубики`.
+  - Display toggle contract:
+    - Add setting in host `Телефоны` room settings near `Шейк`.
+    - Label: `Отображать кубики`.
+    - Default: enabled/on.
+    - If enabled: show phone dice visual during rolls as currently intended.
+    - If disabled: do not show phone dice visual; phone UI should fall back to the previous non-dice visual/wait/action state.
+    - Applies to both phone modes:
+      - `Полный контроллер`;
+      - `Большая кнопка`.
+    - The setting should be included in room/snapshot state like other phone-room settings and should apply on room creation/recreation consistently.
+  - Dice animation/centering contract:
+    - Dice visual should be horizontally centered in its stage on real phones.
+    - The die/cube itself should appear centered, not just its containing row.
+    - Match board/field dice animation duration and settle timing as closely as practical.
+    - Do not extend phone rolling animation after the board roll is visually done.
+    - Final result still comes only from host snapshot.
+  - Constraints:
+    - UI/snapshot/settings only.
+    - Do not change dice math, random generation, bonuses, card rules, inventory state, bots, routes, saves, phone action payload semantics, or balances.
+    - Preserve shake-to-roll behavior; `Шейк` and `Отображать кубики` are independent settings.
+    - Preserve grouped Joe Shop counts and card-preview behavior.
+  - Verification:
+    - On 390x844/360x760, dice appears centered in both phone modes.
+    - Phone rolling duration matches board/field duration closely.
+    - `Отображать кубики` is on by default.
+    - Toggle off: roll no longer shows dice visual and uses previous waiting/action visual.
+    - Toggle on: roll shows dice visual.
+    - Shake still works/does not regress.
+    - `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js` if touched, `git diff --check`.
+
+- ACTIVE PHONE POLISH - Mirror board dice animation and group Joe Shop inventory on phones:
+  - User request 2026-06-06:
+    - During dice rolls, the phone should show the same dice-roll animation as on the board/field.
+    - Phones should display the count of identical Joe Shop cards/items the player has, as the board/player panel does.
+  - Dice animation contract:
+    - Applies to both phone modes:
+      - `Полный контроллер`;
+      - `Большая кнопка`.
+    - Phone dice rolling should visually match the field/board dice animation as closely as practical:
+      - same dice face style/assets/classes where possible;
+      - same rolling/settling feeling and timing where possible;
+      - same number of dice as the host roll.
+    - Host remains authoritative. The phone must not generate final random results.
+    - If exact animation frames are not part of the snapshot, it is acceptable to mirror the board animation style/timing locally during rolling, then show host-provided final faces/total.
+    - Preserve current phone dice result behavior: final values come from host snapshot.
+  - Joe Shop inventory grouping contract:
+    - Applies to phone player info in both modes.
+    - Group identical Joe Shop cards/items and show their counts the same way the field/player panel does.
+    - Example: instead of repeated identical bonuses, show compact grouped chips like `+1 к силе x4`, `+2 монеты x3`, `+1🎲 за 5`, etc., matching existing host labels as closely as possible.
+    - This is display-only. Do not merge/remove inventory items in game state.
+  - UI requirements:
+    - Group chips and dice visual must fit on real phone sizes without overflow/clipping.
+    - Keep `Полный контроллер` and `Большая кнопка` readable.
+    - Do not regress card-preview text, Big Button Joe Shop `Левая карта` / `Правая карта`, or full-controller large primary button layout.
+  - Constraints:
+    - Display/snapshot/UI only.
+    - Do not change dice math, random roll generation, card rules, inventory state, bots, routes, saves, phone action payloads, room protocol beyond safe snapshot fields, or balances.
+  - Verification:
+    - Phone dice roll animation visually matches board/field animation style closely in both modes.
+    - Multi-dice roll shows same count and host-provided final values.
+    - Phone player info groups identical Joe Shop items with counts in both modes.
+    - No overflow/clipping at 390x844 and 360x760.
+    - `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+
+- ACTIVE PHONE FEATURE - Show dice on phone during roll:
+  - User request 2026-06-05:
+    - During a dice roll, show the die/dice on the phone.
+  - Design contract:
+    - Applies to both phone modes:
+      - `Полный контроллер`;
+      - `Большая кнопка`.
+    - When the host/game is in rolling state, the claimed player's phone should show a clear dice-roll visual instead of a plain waiting state.
+    - If multiple dice are being rolled, show the relevant dice set/count, not just one misleading die.
+    - While rolling, dice should animate/spin/roll visually.
+    - When the host result becomes available in snapshot/state, show the final die/dice result if that data is available.
+    - The phone must not generate random dice results itself; host remains authoritative.
+    - If the exact dice faces are not currently available in snapshot, show an animated dice state during roll and a clear `бросок завершён`/continue state afterward rather than inventing values.
+  - UI requirements:
+    - Dice visual should be large, readable, and pleasant on phone.
+    - It should fit with existing card preview / Big Button / Full Controller layouts.
+    - Text and dice should not overflow at 390x844 and 360x760.
+  - Constraints:
+    - Display/snapshot/UI only.
+    - Do not change dice math, random roll generation, bonuses, cards, bots, routes, saves, phone action payloads, room protocol beyond safe snapshot fields, or balances.
+    - Preserve shake-to-roll: shake can still trigger the same host roll action, but visual dice feedback should come from host/controller state.
+  - Verification:
+    - In `Полный контроллер`, after pressing `Бросить`, phone shows dice rolling visual during roll.
+    - In `Большая кнопка`, after pressing `Бросить` or shaking, phone shows dice rolling visual during roll.
+    - If result faces/values are available, phone shows final result; otherwise it does not invent one.
+    - No overflow/clipping on 390x844 and 360x760.
+    - `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+
+- ACTIVE PHONE UX - Default phone mode should be Full Controller:
+  - User request 2026-06-05:
+    - Make `Полный контроллер` the default phone room mode again.
+  - Behavior contract:
+    - In the host `Телефоны` room block, the default selected controller mode should be `Полный контроллер`.
+    - `Большая кнопка` must remain available/selectable as another mode.
+    - Phone controllers remain opt-in behind `Играть с телефонами`; classic/no-phone game remains unchanged.
+    - If a user manually selects `Большая кнопка`, room creation/recreation should still respect that selected mode.
+  - Constraints:
+    - UI/initial state only.
+    - Do not change room protocol, controller rendering behavior, phone actions, rules, dice, cards, bots, saves, routes, or balances.
+  - Verification:
+    - Fresh page / default setup: phone mode selector shows `Полный контроллер`.
+    - Creating a phone room without changing selector creates full-controller room.
+    - Manually selecting `Большая кнопка` still creates big-button room.
+    - `node --check src/game.js`, `node --check src/controller.js` if touched, `git diff --check`.
+
+- ACTIVE PHONE FEATURE - Show single drawn/received card text on phone:
+  - User request 2026-06-05:
+    - In all phone modes, when a player receives or is shown one concrete card (`Хорошо`, `Плохо`, TADAM, Joe Shop, etc.), the phone should display the text of that card.
+    - The card text should be neatly fitted and pleasant to read.
+  - Design contract:
+    - Applies to both phone modes:
+      - `Полный контроллер`;
+      - `Большая кнопка`.
+    - Applies when the game state is about one specific revealed/received card for the claimed player.
+    - Show the card title/name if useful and the card effect/body text.
+    - For Good cards, remember existing card contract: card name uses `title`; Good-card face/body text uses `description`.
+    - If a card type has `description`, `text`, `effect`, or similar configured body text, display the player-facing body text rather than internal ids.
+    - Do not change the effect timing or require extra confirmation unless current flow already has a `Далее`/continue action.
+    - Preserve previous Joe Shop no-look choice rule: when choosing between multiple Joe Shop cards in `Большая кнопка`, keep labels as `Левая карта` / `Правая карта`; only show full text when one specific card is received/revealed.
+  - UI requirements:
+    - Text must fit on real phone sizes without overflowing or clipping.
+    - Use a card-like readable panel, short title, and body text with sane line-height.
+    - Long card text should wrap cleanly; no single-letter/orphan wrapping.
+    - In `Большая кнопка`, keep primary action area usable; if there is also a `Далее` action, card text should be readable above/inside a layout that still leaves a clear action button.
+  - Constraints:
+    - Display/phone snapshot/UI only.
+    - Do not change card rules, card configs, deck contents, random draw, effects, dice math, bots, routes, saves, phone room protocol beyond safe snapshot fields, or balances.
+  - Verification:
+    - Draw/receive a single `Хорошо` card: phone shows the card body text.
+    - Draw/receive a single `Плохо` card: phone shows the card body text.
+    - If applicable, single TADAM/Joe Shop card reveal also shows text.
+    - Big Button Joe Shop multi-choice still shows only `Левая карта` / `Правая карта`.
+    - Text fits at 390x844 and 360x760.
+    - `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+
+- ACTIVE UI FIX - Full controller roll button should fill bottom space:
+  - User request 2026-06-05:
+    - In phone controller mode `Полный контроллер`, make the roll button larger.
+    - It should occupy the empty lower space like the primary action in `Большая кнопка`.
+  - Behavior/design contract:
+    - This applies to the normal/full phone controller mode, not only `Большая кнопка`.
+    - When the active available action is the primary roll/continue action (`Бросить`, `Далее`, or equivalent primary action), the button should become a large bottom-anchored action zone.
+    - The button should fill the unused lower area of the controller panel instead of staying as a small regular action button.
+    - Keep full-controller information visible above it: player stats, cards/items, and other relevant state.
+    - If the full controller is showing multiple meaningful choice buttons/cards, do not blindly enlarge every small control; prioritize the primary roll/continue action state.
+    - Text must remain centered and neatly fitted with no overflow or clipped labels.
+  - Constraints:
+    - UI/layout only unless a small class/state hook is needed.
+    - Do not change action ids/payloads, controller protocol, rules, dice math, cards, bots, routes, saves, phone room behavior, or balances.
+    - Do not regress `Большая кнопка` sizing, Joe Shop `Левая карта` / `Правая карта`, or Rest three-button layout.
+  - Verification:
+    - In `Полный контроллер`, active player's `Бросить` button is large and bottom-anchored, filling the empty lower space.
+    - `Далее`/primary continuation uses the same large treatment where appropriate.
+    - Waiting/not-your-turn states remain readable and do not overflow.
+    - Full-controller stats/cards remain visible.
+    - `git diff --check`; `node --check src/controller.js` if touched.
+
+- ACTIVE UI FIX - Fullscreen background should match normal mode:
+  - User request 2026-06-05 with screenshot:
+    - In `На весь экран` / `Большой экран`, the page background behind game panels is currently plain black.
+    - It should use the same decorative/dark tabletop background as normal mode.
+  - Behavior contract:
+    - Fullscreen mode should preserve the normal page/game background treatment.
+    - Do not introduce a flat black fullscreen canvas behind the board/sidebar.
+    - The game should still fill the available screen, but the surrounding/background area should visually match normal mode.
+    - Keep existing fullscreen behavior: `Настройки` visible, `Хроника`/`История` hidden, top controls usable.
+  - Constraints:
+    - CSS/layout only unless absolutely necessary.
+    - Do not change rules, board logic, dice math, cards, bots, saves, phone protocol, or balances.
+  - Verification:
+    - Enter fullscreen/big-screen: background behind panels matches normal mode, not plain black.
+    - Exit fullscreen: normal background still unchanged.
+    - `git diff --check`; `node --check src/game.js` if touched.
 
 - ACTIVE UI/RUNTIME FOLLOW-UP - Return Settings in fullscreen / big-screen mode:
   - User correction 2026-06-05: `Верни настройки`.
@@ -417,7 +1281,7 @@ For tasks related to "Очень Большая Бродилка" in `/Users/qoo
   - Recommended coordination:
     - Dev 3 = implementation lead for the first vertical slice.
     - Dev 2 = join after the protocol works to polish mobile controller UI.
-    - Dev = join after the vertical slice for QA/regression and expanding supported choice types.
+    - Dev 1 = join after the vertical slice for QA/regression and expanding supported choice types.
   - MVP target:
     - Local network only for now, not public internet.
     - Big screen remains the host board.

@@ -13,8 +13,12 @@ Meaning of that request: refresh yourself from project memory, summarize what ch
 - `project-memory/updates.md`
 - inbox своей роли:
   - `Important`: `project-memory/inbox/for-important.md`
-  - `Dev`: `project-memory/inbox/for-dev.md`
+  - `Dev 1`: `project-memory/inbox/for-dev.md`
+  - `Dev 2`: `project-memory/inbox/for-dev.md`
+  - `Dev 3`: `project-memory/inbox/for-dev.md`
   - `GD`: `project-memory/inbox/for-gd.md`
+  - `QA 1`: `project-memory/inbox/for-qa.md`
+  - `QA 2`: `project-memory/inbox/for-qa.md`
   - `UI`: `project-memory/inbox/for-ui.md`, если файл есть
 - `project-memory/prompts/new-chat.md`
 - `project-memory/prompts/next-chat.md`
@@ -45,4 +49,3 @@ Meaning of that request: refresh yourself from project memory, summarize what ch
 - Если во время чтения новостей понял важное изменение статуса, которое должно попасть в память, предложи или добавь краткую запись в `project-memory/updates.md` согласно роли и ситуации.
 - Если не уверен, какие новости считать последними, скажи это явно и используй верхние записи `updates.md`.
 ```
-

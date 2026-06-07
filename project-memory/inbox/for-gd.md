@@ -4,6 +4,535 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-06-07 03:01 - QA 1-approved for GD final approval: finite decks/discard reshuffle
+  - GD final approval: approved at 2026-06-07 03:01.
+  - Source handback:
+    - `QA READY 2026-06-07 02:54 - Dev 2 handback for finite decks/discard reshuffle`.
+  - QA result:
+    - Approved for GD final approval.
+  - What QA 1 checked:
+    - Static/source checks passed:
+      - `node --check src/game.js`;
+      - `node --check src/cards.config.js`;
+      - `node --check src/controller.js`;
+      - `node --check server.js`;
+      - `git diff --check`.
+    - Host cache key is bumped:
+      - `index.html` loads `./src/game.js?v=20260607-0375`.
+    - Current physical deck counts from local `cardConfig`:
+      - `good`: `14`;
+      - `bad`: `6`;
+      - `tadam`: `14`;
+      - `event`: `17`;
+      - `shop`: `8`.
+    - Source lifecycle hooks are present:
+      - `state.decks = buildDeckState()` on new game;
+      - deck copies are built from `card.count` and get unique `_copyId`;
+      - `drawCardFromDeck()` reshuffles discard into draw when draw is empty;
+      - empty draw + empty discard returns `null` and callers log/no-crash;
+      - Good/Bad/Event resolved cards discard in `finally`;
+      - Event artifacts with `icon` skip discard;
+      - active TADAM cards stay out until the 3-card cap rotates one to discard;
+      - Shop/Joe Auction draw finite unique-id offers; declined/unchosen cards discard; bought/free/auction-won cards stay owned/out of deck.
+    - Isolated execution of the current deck helper functions from `src/game.js` passed:
+      - each deck drew all configured physical copies before repeat/reshuffle;
+      - next draw after full discard reshuffled and continued;
+      - `event/magic-wallet` did not enter Event discard;
+      - `event/monster-rage` did enter Event discard;
+      - empty `good` draw+discard returned `null`;
+      - Shop low-availability offer returned fewer unique cards gracefully and logged `available only 2 of 3`.
+    - Browser smoke on `http://127.0.0.1:5173/` passed:
+      - game booted with 225 board tiles and no console errors;
+      - Good back -> face reveal works;
+      - Bad back -> face reveal works;
+      - TADAM back -> face reveal works;
+      - Event back -> face reveal works;
+      - Joe Shop back -> selectable face reveal works with two unique visible offer cards;
+      - Event Phase 2 sample `Вольный шаг` still works: applying it opens `0..N` choice and choosing `0` resolves without re-triggering the current Event cell.
+  - Notes:
+    - QA did not find a rework item for Dev 2 finite decks/discard reshuffle.
+    - This approval is for Dev 2 finite deck lifecycle only; Dev 1 Event Phase 2 Monster Rage indicator recheck remains a separate QA item.
+
+- 2026-06-07 02:59 - QA 2-approved for GD final approval: card deck copy counts
+  - Source handback:
+    - `QA READY 2026-06-07 02:10 - Dev 3 handback for card deck copy counts`.
+  - QA result:
+    - Approved for GD final approval.
+  - What QA 2 checked:
+    - Local `src/cards.config.js` count matrix:
+      - `good`: 7 cards, expanded size `14`;
+      - `bad`: 3 cards, expanded size `6`;
+      - `tadam`: 7 cards, expanded size `14`;
+      - `event`: 9 cards, expanded size `17`;
+      - `shop`: 4 cards, expanded size `8`.
+    - Local count rule:
+      - every non-artifact card in `good`, `bad`, `tadam`, `event`, and `shop` has `count = 2`;
+      - `event/magic-wallet` / `Волшебный кошель` remains `count = 1`;
+      - `event/monster-rage` / `Ярость монстров` has `count = 2` because it is a global Event, not an artifact.
+    - Local `cards-google-sheet.csv` has the same expanded count sizes:
+      - `good 14`, `bad 6`, `tadam 14`, `event 17`, `shop 8`.
+    - Live Google Sheet `Cards Config` count column readback:
+      - `good!A1:N8`: all card rows have `count = 2`;
+      - `bad!A1:N4`: all card rows have `count = 2`;
+      - `tadam!A1:N8`: all card rows have `count = 2`;
+      - `event!A1:N10`: counts are `2,2,2,2,2,2,2,1,2`;
+      - `shop!A1:N5`: all card rows have `count = 2`.
+    - Checks passed:
+      - `node --check src/cards.config.js`;
+      - `node --check src/game.js`;
+      - `node --check src/controller.js`;
+      - `node --check server.js`;
+      - `git diff --check`.
+  - Notes:
+    - This QA approval is count-scope only.
+    - QA 2 found a separate non-count source sync drift between live Google Sheet and local mirror/config and sent it to Dev as a separate follow-up; it does not block this count approval.
+
+- 2026-06-07 02:00 - QA-approved for GD final approval: field2 Event placement + Event tile backing
+  - GD final approval: approved at 2026-06-07 02:02.
+  - Source handback:
+    - Dev 1 handback `2026-06-07 01:43` for field2 Event screenshot placement and tile backing.
+  - QA result:
+    - Approved for GD final approval.
+  - What QA checked:
+    - Browser loaded without console errors.
+    - Static checks passed:
+      - `node --check src/game.js`;
+      - `node --check server.js`;
+      - `node --check src/controller.js`;
+      - `node --check src/cards.config.js`.
+    - All requested field2 cells render as Event:
+      - `9-2`, `3-4`, `10-4`, `5-6`, `10-9`, `2-10`, `10-12`, `8-13`, `4-14`.
+    - Each checked Event cell has:
+      - class `tile tile-event`;
+      - title `Событие`;
+      - icon `./assets/icons/event_quest_512.png`;
+      - gray `empty_field_512.png` tile backing, border, and matching classic/tabletop styling.
+    - Adjacent samples stayed unchanged:
+      - `3-14` and `4-10` remain `Хорошо`;
+      - `8-12` remains green;
+      - `10-11` and `10-13` remain red;
+      - `9-9` and `8-10` remain bad;
+      - `6-13` remains TADAM.
+    - Route order was not changed by the Dev handback.
+    - Landing on newly changed Event cell `8-13` through exact movement opened normal Event back -> face reveal.
+    - Revealed Event card showed title `Портальный обмен` and body text at normal card size.
+    - Event draw pool is still Phase 1 only; Phase 2 cards remain excluded until their full implementation.
+  - Notes:
+    - QA did not find a rework item for this handback.
+
+- 2026-06-07 01:48 - Dev 2 handback for GD: phone room `full` mode normalization
+  - Status: approved by GD at 2026-06-07 01:55.
+  - Fixed `server.js` so `full` / `Полный контроллер` remains a valid selectable phone room mode.
+  - Kept `big-button` as the default and unknown-mode fallback.
+  - Minimal change: `roomModes` now allows `new Set([defaultRoomMode, "full"])`.
+  - Did not touch Event deck, `src/game.js`, or `src/controller.js`.
+  - Files changed by Dev 2:
+    - `server.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check server.js`
+    - `git diff --check`
+  - Static normalization check:
+    - `normalizeRoomMode("full") => full`;
+    - `normalizeRoomMode("unknown") => big-button`;
+    - `normalizeRoomMode("big-button") => big-button`.
+  - Note:
+    - `server.js` already had unrelated uncommitted changes in the worktree; Dev 2 only changed the allowed modes line.
+
+- 2026-06-07 01:43 - Dev 1 handback for GD: field2 Event screenshot placement + tile backing
+  - Status: complete; static checks passed.
+  - Updated field2 Event placement:
+    - `9-2`: `event`
+    - `3-4`: `event`
+    - `10-4`: `event`
+    - `5-6`: `event`
+    - `10-9`: `event`
+    - `2-10`: `event`
+    - `10-12`: `event`
+    - `8-13`: `event`
+    - `4-14`: remains `event`
+  - Fixed QA visual bug:
+    - added `.tile-event` and `.tile-event::before` to shared icon-tile selector groups in `styles.css`;
+    - included classic and tabletop selector groups so Event cells get the same gray backing/border treatment as other icon cells.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+  - Static verification:
+    - all 9 requested field2 cells map to `event`;
+    - Event label/icon plumbing remains `Событие` / `assets/icons/event_quest_512.png`;
+    - adjacent non-listed sample cells such as `3-14`, `4-10`, `8-12`, `10-11`, `10-13` remain unchanged;
+    - route/path order was not edited.
+  - Constraints preserved:
+    - no `pathCells`, `route`, field1, doors/monsters, dice math, card data, Event draw pool, Event effects, or Phase 2 Event cards changed.
+  - Verification limitation:
+    - browser visual smoke was not run in this environment.
+
+- 2026-06-07 01:13 - Dev 1 handback for GD: Event deck vertical slice Phase 1
+  - Status: Phase 1 implemented; static checks passed.
+  - Data/source sync:
+    - added `event` deck with all 9 cards to `src/cards.config.js`;
+    - added matching `event` rows to `cards-google-sheet.csv`.
+  - Board placement:
+    - field2 `4-14` changed from `good` to `event`;
+    - route/path order unchanged;
+    - adjacent `3-14` was not changed.
+  - Event board/UI plumbing:
+    - Event tile icon uses `assets/icons/event_quest_512.png`;
+    - tile title/tooltip/history label is `Событие`;
+    - landing on Event draws and reveals one Event card;
+    - reveal uses `assets/cards/event_back.png` and `assets/cards/event_front.png`;
+    - Event face shows the card title prominently plus description/effect text;
+    - phone preview shows Event deck/title/body and has Event accent styling.
+  - Phase 1 cards currently in draw pool and implemented:
+    - `race` / `Гонка`: 1d6 + step bonus; 8+ gives +20, 5-7 gives +10, 4 or less gives +5;
+    - `generous-rain` / `Щедрый дождь`: all players with 0 coins get +20;
+    - `portal-swap` / `Портальный обмен`: active player chooses another player and swaps positions;
+    - `balance` / `Равновесие`: richest gives 10 to poorest, using 1d6 tie-break on ties;
+    - `justice` / `Справедливость`: first by route moves 10 back, last by route moves 10 forward, others get +5; route ties use 1d6 tie-break.
+  - Phase 2 cards are present in local sources but intentionally excluded from `eventCards` draw pool to avoid silent no-op:
+    - `free-step`;
+    - `unity`;
+    - `magic-wallet`;
+    - `monster-rage`.
+  - Files changed by Dev 1:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `src/controller.js`
+    - `styles.css`
+    - `index.html`
+    - `controller.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Referenced Art/UI assets now used by code:
+    - `assets/icons/event_quest_512.png`
+    - `assets/cards/event_back.png`
+    - `assets/cards/event_front.png`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+  - Constraints preserved:
+    - no route order, monster base config, dice math, phone room protocol, saves transport, or unrelated bot AI changes;
+    - no existing Good/Bad/TADAM/Joe Shop behavior changed for Event task beyond shared reveal/preview support.
+  - Verification limitation:
+    - browser gameplay smoke was not run in this environment.
+  - Remaining:
+    - Phase 2 full UX/logic for `free-step`, `unity`, `magic-wallet`, `monster-rage`;
+    - artifact icon for `Волшебный кошель` still pending/confirming from Art/UI.
+
+- 2026-06-06 23:41 - Dev 1 handback for GD: one-player target tie-break by 1d6
+  - Status: implemented; static checks passed.
+  - Added reusable helper:
+    - `resolveOnePlayerTieByDie(candidates, { reason, autoFor })`;
+    - gathers unique candidates;
+    - each tied candidate rolls 1d6;
+    - highest roll selects target;
+    - ties on the highest result reroll only those tied candidates;
+    - Chronicle/log shows participants, roll results, rerolls, and selected target.
+  - Updated known singular one-player cases:
+    - Good `steal-richest`: tied richest opponents are selected by 1d6 instead of deterministic id order;
+    - Bad `give-poorest`: tied poorest opponents are selected by 1d6 instead of deterministic id order;
+    - TADAM `land-steal`: if several other players are on the landing cell, only one selected target is stolen from;
+    - TADAM `jump-steal`: if several other players are on the passed cell, only one selected target is stolen from for that trigger.
+  - Implementation notes:
+    - affected target/effect functions became async;
+    - movement, landing, and card-effect flows now await these effects;
+    - single-candidate cases return that target without tie-break logging;
+    - no-candidate behavior remains unchanged.
+  - Cache key bumped:
+    - `game.js?v=20260606-0367`.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+  - Scenarios confirmed by code/static smoke:
+    - `steal-richest` tied max coins -> helper chooses one target and only that target loses coins;
+    - `give-poorest` tied min coins -> helper chooses one target and only that target receives coins;
+    - `land-steal` multiple players on landing cell -> helper chooses one target, no loop stealing from all;
+    - `jump-steal` multiple players on passed cell -> helper chooses one target for that pass trigger;
+    - single eligible target cases skip tie-break and behave as before.
+  - Constraints preserved:
+    - no card text/id/effect id, coin amount, dice math, routes, phone controllers, saves, unrelated bot AI, or explicit-all-target effects changed.
+  - Verification limitation:
+    - browser gameplay smoke was not run in this environment.
+
+- 2026-06-06 23:32 - Dev 1 handback for GD: Good `buy-shop-card` fallback +5 coins
+  - Status: implemented; static checks passed.
+  - Synced local card sources with Google Sheet description:
+    - `src/cards.config.js`;
+    - `cards-google-sheet.csv`.
+  - Implemented fallback behavior for `buy-shop-card-from-player`:
+    - player has fewer than 5 coins: receives `+5` coins;
+    - opponents have no Joe Shop cards: receives `+5` coins;
+    - player can pay and opponents have cards: existing choice/purchase flow remains unchanged;
+    - manual `Отказаться` after choices are available: no `+5` fallback.
+  - Fallback reward uses existing `addCoins(player, 5)` helper so history coin stats and coin float follow the normal path.
+  - Cache keys bumped:
+    - `cards.config.js?v=20260606-0321`;
+    - `game.js?v=20260606-0366`.
+  - Files changed by Dev 1:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `git diff --check`
+  - Scenarios confirmed by code/static smoke:
+    - `<5` coins path grants `+5` before any purchase choice;
+    - enough coins but no opponent Joe Shop cards grants `+5`;
+    - available purchase still opens the old target/card choice flow;
+    - decline branch does not grant fallback.
+  - Constraints preserved:
+    - no cost/id/effect type, target selection UI, transfer purchase logic, other cards, Joe Shop rules, dice, routes, bots, phones, saves, or balance changes.
+  - Verification limitation:
+    - browser gameplay smoke was not run in this environment.
+
+- 2026-06-06 22:28 - Dev 1 handback for GD: field2 top-right TADAM/Joe Auction swap
+  - Status: complete.
+  - Changed field2 event placement:
+    - `13-0` is now `joe-auction`;
+    - `14-0` is now `tadam`.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+  - Static confirmation:
+    - field2 `events` now map the top-right row as requested;
+    - route/path order still has both cells in the same order and was not edited.
+  - Constraints preserved:
+    - field1 unchanged;
+    - no TADAM/Joe Auction rules, icons/tooltips logic, dice, cards, bots, phones, saves, or balance changes.
+  - Verification limitation:
+    - browser visual/landing smoke was not run in this environment.
+
+- 2026-06-06 22:23 - Dev 1 handback for GD: final History summary with scores and forces
+  - Status: implemented; static checks passed.
+  - Added final party summary capture in `resolveFinalBattle()` while these values are still available:
+    - `challengerResults`;
+    - `bossRollResults`;
+    - `playersForce`;
+    - `bossForce`;
+    - `scores`;
+    - `winner`.
+  - Persisted structured summary through existing snapshot path:
+    - `state.history.finalSummary`;
+    - `state.finalBattle.finalSummary`;
+    - therefore `buildGameHistorySnapshot()` includes the same final data for local history and Google Sheets payload.
+  - History UI now shows an `Итог партии` block after the game is finished:
+    - outcome: boss won or players beat boss;
+    - winner name and role;
+    - winner final score;
+    - total players force vs boss force;
+    - a row for every player, including the boss and losing players.
+  - Each player row shows:
+    - role `Босс` / `Игрок`;
+    - final score total;
+    - score parts: coins, Joe Shop/card points, damage/attack points, position bonus;
+    - explicit readable score equation, e.g. `54 = 22 монеты + 10 Лавка Джо + 18 урон боссу + 4 позиция`;
+    - final-battle force and roll/bônus breakdown.
+  - Additional small fix:
+    - restored phone room mode allow-list to `["full", "big-button"]`, so `Полный контроллер` remains selectable after the earlier default changed to `Большая кнопка`.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `styles.css`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+  - Scenarios confirmed by code/static smoke:
+    - boss-wins path stores boss as winner and still stores all player score/force rows;
+    - players-win path stores point winner, winner score, all score equations, and boss row;
+    - snapshot path includes `state.history.finalSummary` and `state.finalBattle.finalSummary`.
+  - Verification limitation:
+    - browser finish-flow smoke could not be launched because local `python3 -m http.server` was blocked by the Apple SDK/Xcode license prompt; process was stopped.
+    - Real browser check is still recommended for the two final scenarios.
+  - Constraints preserved:
+    - no final battle rules, winner calculation, score formula, dice math, roll flow, cards, bots, routes, phone controller behavior, or save transport changes.
+
+- 2026-06-06 22:12 - Dev 1 handback for GD: smarter open portal choice near endgame
+  - Status: implemented and checked.
+  - Bot AI for ordinary opened portals now uses a dedicated scoring path for `pendingChoice.kind === "portal"`.
+  - What changed:
+    - bots score the portal exit and the projected end cell after remaining movement;
+    - scoring now considers route progress gain, final-distance gain, current game phase, endgame urgency, cell value/risk, and coin reserve;
+    - the best-progress/latest useful portal gets a strong endgame shortcut bonus when its progress lead is meaningful;
+    - the choice is not unconditional: bad alternatives can still lose to safer/tactically better options when downside is severe;
+    - red/bad projected landings are less scary with healthy coins and more concerning with low coins;
+    - catastrophic closed enemy landings with very low win chance can still override shortcut value.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `node --check server.js`
+    - `git diff --check`
+  - Scenarios confirmed by code/static smoke:
+    - multiple opened portals near endgame: best projected progress receives a strong bonus;
+    - high coins plus red/bad projection: ordinary risk is softened so a big shortcut can win;
+    - low coins plus red/bad projection: extra caution applies;
+    - catastrophic closed enemy projection: large danger penalty applies;
+    - non-last portal can still win if the progress gap is not meaningful and its landing value is better.
+  - Constraints preserved:
+    - bot AI only; no portal rules, human choice UI, routes, cards, dice, phone controllers, saves, or balance changes.
+  - Remaining note:
+    - real gameplay repro with several opened portals near finish is useful for tuning weights if bots feel too bold or too cautious.
+
+- 2026-06-06 21:49 - Dev 1 handback for GD: `Отображать кубики` checkbox bug
+  - Status: fixed and smoke-checked.
+  - Root cause:
+    - host `applyPhoneRoom()` treated missing `room.diceVisible` as `true`;
+    - when the active relay/server payload did not include `diceVisible`, room sync re-checked the host checkbox after the user manually turned it off.
+  - Fix:
+    - `applyPhoneRoom()` now updates local checkbox state only when `diceVisible` is explicitly present in the room payload;
+    - explicit `false` still wins;
+    - missing/undefined preserves the user's current local checkbox state.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `node --check server.js`
+    - `git diff --check`
+  - Browser smoke:
+    - fresh settings: `Отображать кубики` off, mode `Большая кнопка`;
+    - manually checking stays checked;
+    - manually unchecking stays unchecked;
+    - creating a room after unchecking keeps checkbox off and status shows `без кубиков`;
+    - recreating after unchecking keeps checkbox off and status shows `без кубиков`;
+    - no console errors.
+  - Constraints preserved:
+    - bugfix only; no gameplay/rules/dice/action-payload/card/bot/save/route/balance changes.
+
+- 2026-06-06 14:21 - Dev 1 handback for GD: phone defaults
+  - Status: complete.
+  - Default phone room mode is now `Большая кнопка`.
+  - `Полный контроллер` remains available/selectable and room creation still respects manual selection.
+  - `Отображать кубики` is now off/unchecked by default.
+  - Manual enabling of `Отображать кубики` still uses the existing dice visual pipeline.
+  - Host/server defaults were aligned:
+    - `defaultPhoneRoomMode = "big-button"`;
+    - server `defaultRoomMode = "big-button"`;
+    - host initial `phoneRoom.diceVisible = false`;
+    - server default `diceVisible = false`.
+  - Files changed by Dev 1:
+    - `index.html`
+    - `src/game.js`
+    - `server.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `node --check server.js`
+    - `git diff --check`
+  - Browser smoke:
+    - fresh host page showed `Большая кнопка`;
+    - `Отображать кубики` was unchecked;
+    - no console errors.
+  - Constraints preserved:
+    - phone controllers remain opt-in behind `Играть с телефонами`;
+    - no gameplay/rules/dice/action payload/card/bot/save/route/balance changes.
+
+- 2026-06-06 13:58 - Dev 1 handback for GD: phone dice follow-up
+  - Status: implemented and smoke-checked; ready for real-phone confirmation.
+  - Added phone-room setting near `Шейк`:
+    - label `Отображать кубики`;
+    - default enabled/on;
+    - independent from `Шейк`.
+  - Threaded setting through:
+    - host UI checkbox;
+    - room creation body as `diceVisible`;
+    - server room serialization;
+    - host phone snapshot;
+    - controller dice-stage gate.
+  - Behavior:
+    - `diceVisible:true` keeps the current phone dice visual in both modes;
+    - `diceVisible:false` ignores `snapshot.diceRoll` and returns the phone to normal action/shake/wait rendering.
+  - Dice timing/centering:
+    - Art/UI centering styles were preserved;
+    - result state now disables cube animations and immediately fixes dice to final host-provided faces, so the phone no longer keeps rotating after result state arrives.
+  - Files changed by Dev 1:
+    - `index.html`
+    - `controller.html`
+    - `server.js`
+    - `src/game.js`
+    - `src/controller.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `node --check server.js`
+    - `git diff --check`
+  - Browser smoke:
+    - host checkbox exists and is checked by default;
+    - snapshot `diceVisible:false` hides dice visual and falls back to shake/action UI;
+    - snapshot `diceVisible:true` shows dice visual;
+    - 360x760 `Большая кнопка`: dice row centered with `centerDelta: 0`;
+    - 390x844 `Полный контроллер`: dice row centered with `centerDelta: 0`;
+    - result cubes showed final values from snapshot and `animation-name: none`.
+  - Constraints preserved:
+    - no dice math/random generation/bonuses/card rules/inventory state/bots/routes/saves/phone action payload semantics/balance changes;
+    - shake-to-roll, grouped Joe Shop counts, and card-preview behavior preserved.
+  - Verification limitation:
+    - Could not launch a fresh second local server for a runtime server-field test because sandbox denied binding `5174`; existing-server snapshot behavior and all syntax checks passed.
+    - Real-phone pass still recommended for final feel/screenshot check.
+
+- 2026-06-06 00:20 - Dev 1 handback for GD: phone dice animation + Joe Shop grouped inventory
+  - Status: implemented and smoke-checked; ready for real-phone visual pass.
+  - Phone dice roll visuals now reuse board-style 3D dice markup/classes (`field-die`, `die-cube`, `die-face`, `die-shadow`) inside the phone dice stage.
+  - Rolling state uses the board dice spin/settle feel locally while hiding final values; result state shows host-provided final dice values/total from snapshot.
+  - Multi-dice count is preserved from snapshot; smoke used 3 dice in both modes.
+  - Phone player info now shows grouped Joe Shop inventory counts:
+    - full controller chips show `xN` badges;
+    - `Большая кнопка` now also displays a compact `Лавка Джо` chip row with `xN` badges.
+  - Files changed by Dev 1:
+    - `src/controller.js`
+    - `styles.css`
+    - `index.html`
+    - `controller.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+  - Browser smoke:
+    - 390x844 `Полный контроллер` rolling state: 3 `.field-die` / `.die-cube` dice, grouped shop counts `x4`, `x3`, `x2`, no horizontal overflow.
+    - 360x760 `Большая кнопка` result state: final host values `2`, `5`, `6` and total `14`, grouped shop counts visible, no horizontal overflow.
+  - Constraints preserved:
+    - no dice math/random generation/card rules/inventory state/bots/routes/saves/phone action payloads/balance changes;
+    - Big Button Joe Shop choice labels remain `Левая карта` / `Правая карта`.
+  - Remaining note:
+    - real-phone visual check is still recommended to judge animation feel while moving.
+
 - 2026-06-05 00:03 - Art/UI handback for GD: primary Big Button height
   - Status: complete; ready for real-phone visual check.
   - Single primary `Большая кнопка` actions (`Далее`, `Бросить`) are now taller:

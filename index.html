@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Очень Большая Бродилка — веб-прототип</title>
-    <link rel="stylesheet" href="./styles.css?v=20260605-0362" />
+    <link rel="stylesheet" href="./styles.css?v=20260607-0374" />
   </head>
   <body data-ui-style="classic">
     <main class="app-shell">
@@ -21,6 +21,7 @@
             </div>
           </div>
           <div class="map-wrap">
+            <div id="monsterRageIndicator" class="monster-rage-indicator" aria-live="polite" hidden></div>
             <div id="eventToast" class="event-toast" role="button" tabindex="0" aria-live="polite" hidden></div>
             <div id="finalBattleHud" class="final-battle-hud" aria-live="polite" hidden></div>
             <div id="winnerPopup" class="winner-popup" aria-live="polite" hidden></div>
@@ -142,6 +143,10 @@
                   <input id="phoneRoomShake" type="checkbox" />
                   <span>Шейк</span>
                 </label>
+                <label class="cheat-toggle phone-dice-toggle">
+                  <input id="phoneRoomDice" type="checkbox" />
+                  <span>Отображать кубики</span>
+                </label>
                 <div id="phoneRoomDetails" class="phone-room-details" hidden>
                   <div>
                     <span>Код</span>
@@ -187,6 +192,6 @@
 
     </main>
 
-    <script type="module" src="./src/game.js?v=20260605-0358"></script>
+    <script type="module" src="./src/game.js?v=20260607-0376"></script>
   </body>
 </html>

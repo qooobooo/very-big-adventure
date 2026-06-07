@@ -11,8 +11,8 @@ const closedRooms = new Map();
 const roomCodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const maxBodyBytes = 1024 * 1024;
 const roomTtlMs = 1000 * 60 * 60 * 6;
-const defaultRoomMode = "full";
-const roomModes = new Set([defaultRoomMode, "big-button"]);
+const defaultRoomMode = "big-button";
+const roomModes = new Set([defaultRoomMode, "full"]);
 
 const types = {
   ".css": "text/css;charset=utf-8",
@@ -103,6 +103,7 @@ function serializeRoom(room, request = null) {
     createdAt: room.createdAt,
     joinUrl: request ? controllerUrl(request, room.code) : `/controller.html?room=${encodeURIComponent(room.code)}`,
     lanUrls: getLanUrls(room.code),
+    diceVisible: room.diceVisible !== false,
     mode: normalizeRoomMode(room.mode),
     shakeEnabled: Boolean(room.shakeEnabled),
     snapshot: room.snapshot,
@@ -167,7 +168,7 @@ function closeRoom(room, { reason = "room-closed" } = {}) {
   rooms.delete(room.code);
 }
 
-function createRoom(request, { mode = defaultRoomMode, shakeEnabled = false } = {}) {
+function createRoom(request, { diceVisible = false, mode = defaultRoomMode, shakeEnabled = false } = {}) {
   const code = createRoomCode();
   const room = {
     clients: new Set(),
@@ -175,6 +176,7 @@ function createRoom(request, { mode = defaultRoomMode, shakeEnabled = false } = 
     controllers: new Map(),
     createdAt: Date.now(),
     hostId: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    diceVisible: Boolean(diceVisible),
     mode: normalizeRoomMode(mode),
     shakeEnabled: Boolean(shakeEnabled),
     snapshot: null,
@@ -196,7 +198,7 @@ async function handleApi(request, response, url) {
 
   if (request.method === "POST" && url.pathname === "/api/rooms") {
     const body = await readJsonBody(request);
-    const room = createRoom(request, { mode: body.mode, shakeEnabled: body.shakeEnabled });
+    const room = createRoom(request, { diceVisible: body.diceVisible, mode: body.mode, shakeEnabled: body.shakeEnabled });
     sendJson(response, 201, {
       hostId: room.hostId,
       room: serializeRoom(room, request),

@@ -20,6 +20,1699 @@ Open questions:
 - ...
 ```
 
+## 2026-06-07 03:04 - Art/UI
+
+Changed:
+- Added a field-view option to the Event `Вольный шаг` step-choice flow.
+- Extended the existing card-choice preview mechanism with explicit `canPreviewField` support.
+- Marked `chooseEventFreeStepAmount()` as previewable, so its popup can show `Показать поле`.
+- Bumped host game cache key to `game.js?v=20260607-0376`.
+- Sent the completed task to QA first per the updated Task Lifecycle.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI-only flow change; Event rules, dice math, step choice values, bot behavior, and movement resolution were not changed.
+- The feature reuses existing behavior: `Показать поле` hides the choice popup, main action button becomes `К выбору`, and `К выбору` returns to the same choice.
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+
+Open questions:
+- Waiting for QA approval/rework before GD final approval.
+
+## 2026-06-07 03:01 - GD
+
+Changed:
+- Gave GD final approval to the QA-approved finite decks/discard reshuffle task from `Dev 2`.
+- Marked the Dev, QA, and GD inbox entries for the finite deck lifecycle task as approved/complete.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Approved scope: finite draw piles for `good`, `bad`, `tadam`, `event`, `shop`; discard reshuffle when draw pile ends; no-repeat-before-exhaustion behavior; graceful empty-deck handling.
+- Approved lifecycle details: `magic-wallet` stays out while owned, `monster-rage` discards after applying, active TADAM/owned Shop cards stay out while active/owned, unchosen Shop offers discard.
+- This approval is only for Dev 2 finite deck lifecycle; Dev 1 Event Phase 2 Monster Rage indicator recheck remains separate.
+
+Open questions:
+- Waiting for separate QA/GD closure on Event Phase 2 Monster Rage indicator.
+
+## 2026-06-07 03:01 - QA 1
+
+Changed:
+- Completed QA-gate for `Dev 2` finite decks/discard reshuffle handback.
+- QA-approved the handback and sent it to GD for final approval per Task Lifecycle.
+- Updated Dev/QA/GD inbox statuses for the finite deck task.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `node --check server.js`, `git diff --check`.
+- Host browser loaded `./src/game.js?v=20260607-0375` with no console errors.
+- Physical deck counts from local `cardConfig`: `good 14`, `bad 6`, `tadam 14`, `event 17`, `shop 8`.
+- Isolated execution of the current `src/game.js` deck helper functions confirmed draw-without-replacement, discard reshuffle, empty draw+discard null handling, `magic-wallet` out-of-discard, `monster-rage` to Event discard, and low-availability Shop offers returning fewer unique cards gracefully.
+- Browser smoke passed for Good/Bad/TADAM/Event/Joe Shop back -> face reveal and Event Phase 2 `Вольный шаг` choose-0 flow.
+
+Open questions:
+- Waiting for GD final approval of the QA-approved finite deck lifecycle handback.
+- Separate QA item still remains for Dev 1 Event Phase 2 Monster Rage persistent indicator recheck.
+
+## 2026-06-07 02:59 - QA 2
+
+Changed:
+- Read QA 2 onboarding/project memory and checked active folder/git state before work.
+- QA-approved `Dev 3` card deck copy counts and sent the approved result to GD for final approval.
+- Ran static re-check for `Dev 1` Event Phase 2 Monster Rage rework; persistent indicator wiring is present, but browser verification is still blocked in this environment.
+- Added a separate Dev follow-up for card source sync drift between live Google Sheet non-count columns and local card mirror/config.
+
+Files:
+- `project-memory/inbox/for-qa.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Count QA evidence: `src/cards.config.js`, `cards-google-sheet.csv`, and live Google Sheet count column all match the rule: non-artifacts `count = 2`; `event/magic-wallet` stays `count = 1`; expanded sizes are `good 14`, `bad 6`, `tadam 14`, `event 17`, `shop 8`.
+- Checks passed: `node --check src/cards.config.js`, `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, `git diff --check`.
+- Event Phase 2 static rework evidence: `#monsterRageIndicator` exists, `renderMonsterRageIndicator()` hides at `+0` and shows `Ярость монстров +N`, `render()` calls it, and `resolveEventMonsterRage()` stacks `state.eventMonsterRage` then renders.
+- Browser smoke limitation: local server bind failed with `listen EPERM 127.0.0.1:5173`; in-app Browser policy also blocked `file://.../index.html`. QA 2 did not give browser-based Event Phase 2 approval.
+
+Open questions:
+- Waiting for GD final approval of the QA-approved card-count task.
+- Event Phase 2 still needs a browser-capable QA re-check before GD final approval unless QA 1/another QA pass already covers it.
+
+## 2026-06-07 02:56 - Dev 2
+
+Changed:
+- Sent a direct follow-up to the `QA 1` Codex thread for the finite decks/discard reshuffle QA gate.
+- Clarified that `QA READY 2026-06-07 02:54 - Dev 2 handback for finite decks/discard reshuffle` is ready for immediate QA review.
+
+Files:
+- `project-memory/updates.md`
+
+Notes for others:
+- The QA handback was already in `project-memory/inbox/for-qa.md`; this update records the direct thread dispatch after the user noted QA had not started.
+- Direct target thread: `QA 1` (`019e9ef2-389c-78a3-bc66-9f38f69988f9`).
+
+Open questions:
+- Waiting for QA 1 approval or rework task.
+
+## 2026-06-07 02:54 - Dev 2
+
+Changed:
+- Implemented finite physical card decks with draw/discard piles for `good`, `bad`, `tadam`, `event`, and `shop`.
+- New games rebuild all deck piles from current `cardConfig.*.count`.
+- Draws now take physical card copies without replacement; empty draw piles reshuffle their discard pile and continue.
+- Good/Bad/instant Event cards discard after resolving; `event/monster-rage` discards after applying; `event/magic-wallet` stays out of the Event deck while owned/in play.
+- Active TADAM cards stay out of the deck while active; when the active TADAM table rotates past 3, the removed physical card goes to TADAM discard.
+- Joe Shop offers draw finite cards; unchosen offers discard, bought/free/auction-won/owned cards stay out of the Shop deck.
+- Shop and auction gracefully handle too-few/no available cards.
+- Bumped host `src/game.js` cache key to `20260607-0375`.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Did not change card counts, ids, titles, descriptions, effects, board placement, route order, dice math, Event effect behavior, `src/cards.config.js`, or controller protocol.
+- Preserved Dev 1 Event Phase 2 and Dev 3 count work; implementation uses current `cardConfig` counts.
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `git diff --check`.
+- Static proof passed:
+  - `good`: configured 14 physical copies, drew 14 unique before reshuffle;
+  - `bad`: configured 6 physical copies, drew 6 unique before reshuffle;
+  - `tadam`: configured 14 physical copies, drew 14 unique before reshuffle;
+  - `event`: configured 17 physical copies, drew 17 unique before repeat, Event discard had 16 because `magic-wallet` stayed out;
+  - `shop`: configured 8 physical copies, drew 8 unique before reshuffle.
+
+Open questions:
+- Sent to QA first per Task Lifecycle; browser/regression smoke still needed by QA.
+
+## 2026-06-07 02:49 - GD
+
+Changed:
+- Added a new deck lifecycle contract: decks are finite draw piles with discard piles, and an empty draw pile reshuffles its discard.
+- Assigned implementation to `Dev 2` to avoid mixing it with Dev 1's Event Phase 2 rework and Dev 3's count QA loop.
+- Added QA follow-up for finite decks, reshuffle behavior, and persistent/owned card lifecycle.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Covered decks: `good`, `bad`, `tadam`, `event`, `shop`.
+- Deck piles must be built from `cardConfig` using current `count` values.
+- `good`, `bad`, and instant `event` cards go to discard after resolving.
+- `event/magic-wallet`, active TADAM cards, and owned Shop cards stay out of their source deck while in play/owned.
+- `event/monster-rage` is not an artifact and should discard after applying its global bonus.
+
+Open questions:
+- Waiting for Dev 2 handback to QA.
+
+## 2026-06-07 02:49 - Dev 1
+
+Changed:
+- Completed QA rework for Event Phase 2: added a persistent host indicator for global `Ярость монстров +N`.
+- Added `#monsterRageIndicator` to the board/map status area so the indicator remains visible after the toast fades.
+- Added `renderMonsterRageIndicator()` to update/hide the chip on every render; stacking should update the same chip to `+2`, `+N`.
+- Styled the indicator for desktop and narrow board layouts.
+- Sent the rework handback back to QA first per Task Lifecycle.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `git diff --check`.
+- Static check passed: `#monsterRageIndicator`, `.monster-rage-indicator`, and `renderMonsterRageIndicator()` are present and connected.
+- Browser re-check needed by QA: apply `Ярость монстров`, wait for toast fade, confirm visible `Ярость монстров +1`; apply again and confirm `+2`.
+
+Open questions:
+- None.
+
+## 2026-06-07 02:18 - QA 1
+
+Changed:
+- Ran QA-gate browser/static smoke for `Dev 1` Event deck Phase 2 handback.
+- Returned Event Phase 2 to Dev 1 instead of forwarding to GD, because `Ярость монстров` lacks a persistent global host indicator after the toast fades.
+- Added a reproducible Dev rework item with expected/actual/result notes.
+- Marked the Event Phase 2 QA item as returned to Dev 1 and recorded completed coverage.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Passed in browser: `Вольный шаг` 0 and >0, `Сплочение` win/loss, `Волшебный кошель` assignment/+5/overtake/host chip/phone Big Button chip, `Ярость монстров` monster power labels/tooltips, and Good/Bad/TADAM/Joe Shop reveal regression smoke.
+- Static checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `node --check server.js`, `git diff --check`.
+- Static Event config check found all 9 Event card ids/effect branches present; note that Dev 3 count changes later expand the Event deck size beyond 9 physical copies.
+- QA fail detail: after `Ярость монстров`, monster powers update (`16 -> 17`, `24 -> 25`, `10 -> 11`, `6 -> 7`) and tooltips show base + rage, but after the toast disappears the only visible `Ярость монстров` text is in Chronicle/log. `src/game.js` writes `monsterRageText` to `#activePlayerRole`, but `index.html` has no such element.
+
+Open questions:
+- Waiting for Dev 1 rework handback, then QA should re-check persistent rage indicator and stacking to `+2` before sending to GD.
+
+## 2026-06-07 02:10 - Dev 3
+
+Changed:
+- Completed count-only card deck config task and sent handback to QA first per Task Lifecycle.
+- Set every non-artifact card in `good`, `bad`, `tadam`, `event`, and `shop` to `count = 2`.
+- Kept `event/magic-wallet` / `Волшебный кошель` at `count = 1` because it is the current artifact.
+- Set `event/monster-rage` / `Ярость монстров` to `count = 2` because it is a global Event, not an artifact.
+- Synced local `src/cards.config.js`, local CSV mirror, and Google Sheet `Cards Config` count column.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Google Sheet `Cards Config` was updated only in column `M` / `count` for tabs `good`, `bad`, `tadam`, `event`, and `shop`; readback confirmed the expected counts.
+- Count matrix passed locally:
+  - `good` expanded size `14`;
+  - `bad` expanded size `6`;
+  - `tadam` expanded size `14`;
+  - `event` expanded size `17`;
+  - `shop` expanded size `8`.
+- Verification passed:
+  - `node --check src/cards.config.js`;
+  - `git diff --check`;
+  - static matrix found no count mismatches.
+- Data/config count-only: no ids, titles, descriptions, effect types, amounts, Event logic, board placement, routes, UI, controller protocol, or dice math changed by Dev 3.
+
+Open questions:
+- Waiting for QA approval/rework, then QA should forward approved result to GD.
+
+## 2026-06-07 02:07 - Important
+
+Changed:
+- Renamed the active `QA` role to `QA 1`.
+- Added `QA 2` as an active additional testing chat.
+- Updated shared onboarding, read-news, next-chat, handoff, and QA inbox wording for `QA 1` / `QA 2`.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/prompts/read-news.md`
+- `project-memory/prompts/next-chat.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `QA 1` and `QA 2` share `project-memory/inbox/for-qa.md`.
+- QA approval remains the required first gate before GD final approval.
+
+Open questions:
+- None.
+
+## 2026-06-07 02:06 - GD
+
+Changed:
+- Added and dispatched a new card-count task: all non-artifact cards should have 2 copies; artifacts stay at 1 copy.
+- Assigned the task to `Dev 3` to keep it separate from Dev 1's Event Phase 2 implementation/QA loop.
+- Added QA follow-up for card deck copy counts.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Covered decks: `good`, `bad`, `tadam`, `event`, `shop`.
+- Current known artifact: `event/magic-wallet`; it stays `count = 1`.
+- `event/monster-rage` is global Event, not artifact, so it should become `count = 2`.
+- This is data/config only; do not change card logic while Event Phase 2 is in QA.
+
+Open questions:
+- Waiting for Dev 3 handback to QA.
+
+## 2026-06-07 02:02 - GD
+
+Changed:
+- Gave GD final approval to the QA-approved field2 Event placement + Event tile backing task.
+
+Files:
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Approved scope:
+  - all 9 screenshot Event cells on field2;
+  - Event gray tile backing/border styling;
+  - route order and adjacent sample cells preserved;
+  - normal Event reveal still opens on landing.
+- This approval is separate from Event deck Phase 2, which is implemented by Dev 1 and currently awaiting QA approval.
+
+Open questions:
+- Waiting for QA result on Event deck Phase 2.
+
+## 2026-06-07 02:00 - QA
+
+Changed:
+- Read updated `project-memory/README.md` Task Lifecycle and fresh `updates.md`; adopted the process rule that QA is the first approval gate before GD final approval.
+- Ran QA-gate browser/static verification for Dev 1 handback: field2 Event screenshot placement + Event tile backing.
+- QA-approved the handback and sent the approved result to GD for final approval.
+- Marked the matching QA follow-up as QA-approved/sent to GD.
+
+Files:
+- `project-memory/inbox/for-gd.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified all 9 field2 Event cells, Event gray backing in classic/tabletop styles, adjacent sample cells unchanged, and landing on newly changed `8-13` opens normal Event back -> face reveal.
+- Static checks passed: `node --check src/game.js`, `node --check server.js`, `node --check src/controller.js`, `node --check src/cards.config.js`.
+- No host console errors in tested browser flow.
+
+Open questions:
+- Waiting for GD final approval of the QA-approved Event board/tile-backing handback.
+
+## 2026-06-07 02:00 - Dev 1
+
+Changed:
+- Finished Event deck Phase 2 implementation and sent it to QA first per the new Task Lifecycle.
+- Enabled all 9 Event cards in the draw pool by using full `cardConfig.event`.
+- Implemented `Вольный шаг`, `Сплочение`, `Волшебный кошель`, and `Ярость монстров`.
+- Added Magic Wallet as a separate player artifact with icon chip on host player status and phone controller player card.
+- Added stacked global monster-rage state and effective monster strength labels/checks for board monster battles, including the final monster gate.
+- Added artifact/global rage fields to game history and phone snapshots.
+
+Files:
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Static Event-pool check passed: 9 Event cards, all expected effect types present, no Phase 1-only filter remains.
+- Browser smoke was attempted but blocked in this environment: local bind failed with `PermissionError: [Errno 1] Operation not permitted`, and in-app browser blocked `localhost`/`127.0.0.1` with `net::ERR_BLOCKED_BY_CLIENT`.
+- QA should browser-smoke the Phase 2 card flows and phone artifact chip before forwarding to GD.
+
+Open questions:
+- None.
+
+## 2026-06-07 01:58 - Important
+
+Changed:
+- Synced the new required task lifecycle into handoff and onboarding context.
+- Reinforced the process: executor handback goes to QA first, then QA-approved work goes to GD for final approval.
+
+Files:
+- `project-memory/handoff.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Implementation/design tasks should follow: executor -> QA approval -> GD final approval.
+- A task is not final until GD explicitly approves it.
+
+Open questions:
+- None.
+
+## 2026-06-07 01:58 - GD
+
+Changed:
+- Sent direct read-notice prompts to all active role threads: `Important`, `Dev 1`, `Dev 2`, `Dev 3`, `Art / UI`, and `QA`.
+- Asked everyone to read updated `project-memory/README.md`, especially `Task Lifecycle`, and follow the QA-first approval flow.
+
+Files:
+- `project-memory/updates.md`
+
+Notes for others:
+- Process reminder sent: executor -> QA approval -> GD final approval.
+
+Open questions:
+- None.
+
+## 2026-06-07 01:57 - GD
+
+Changed:
+- Tightened the shared task lifecycle: QA is now the first approval gate before GD final approval.
+- Updated the flow so executors send completed tasks to QA; QA either returns them to the executor for rework or forwards QA-approved results to GD.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- GD final approval should happen after QA approval for implementation tasks.
+- If GD still rejects a QA-approved task, GD sends a rework task back to the executor and the loop repeats.
+
+Open questions:
+- None.
+
+## 2026-06-07 01:55 - GD
+
+Changed:
+- Approved Dev 2's `server.js` fix for phone room `full` mode normalization.
+- Confirmed the design contract is satisfied: `big-button` remains the default/fallback, and `full` is a valid selectable mode.
+
+Files:
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA is not required before GD approval for this minimal server allow-list fix.
+- A browser/server restart smoke is still useful before release/commit if QA is already doing a phone-controller pass.
+
+Open questions:
+- None.
+
+## 2026-06-07 01:55 - GD
+
+Changed:
+- Added the shared task lifecycle to `project-memory/README.md`.
+- Formalized the loop: GD task -> executor implementation -> QA when needed -> GD approval -> brief report or rework -> repeat until GD approval.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Inbox handback alone is not final acceptance.
+- A task is considered finished only after GD explicitly approves it.
+
+Open questions:
+- None.
+
+## 2026-06-07 01:48 - Dev 2
+
+Changed:
+- Fixed the current-source phone room mode normalization bug in `server.js`.
+- `full` is now a valid room mode while `big-button` remains the default/fallback mode.
+
+Files:
+- `server.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Minimal server-only change: updated `roomModes` from duplicate `big-button` entries to `new Set([defaultRoomMode, "full"])`.
+- Did not touch Event deck / `src/game.js` / `src/controller.js`, to avoid conflicts with Dev 1 Event Phase 2 work.
+- Pre-existing uncommitted `server.js` changes from other work are still present in the worktree; Dev 2 only changed the allowed modes line.
+- Checks passed: `node --check server.js`, `git diff --check`.
+- Static normalization check passed:
+  - `normalizeRoomMode("full") => full`;
+  - `normalizeRoomMode("unknown") => big-button`;
+  - `normalizeRoomMode("big-button") => big-button`.
+
+Open questions:
+- None.
+
+## 2026-06-07 01:48 - GD
+
+Changed:
+- Redistributed current Dev load across available Dev chats.
+- Kept `Dev 1` on Event deck Phase 2 because that work touches shared game state, movement, battle, UI, and controller surfaces.
+- Sent independent `server.js` phone-room `full` mode regression directly to `Dev 2`.
+- Left `Dev 3` idle for now to avoid concurrent edits in the same `src/game.js` Event implementation surface.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Current split:
+  - `Dev 1`: Event Phase 2 cards.
+  - `Dev 2`: `server.js` room mode allow-list, keep `big-button` default and allow `full`.
+  - `Dev 3`: reserve for follow-up QA/review or a clearly independent task.
+
+Open questions:
+- Waiting for Dev 1 and Dev 2 handbacks.
+
+## 2026-06-07 01:43 - GD
+
+Changed:
+- Added implementation-ready Dev task for Event deck Phase 2: `Вольный шаг`, `Сплочение`, `Волшебный кошель`, `Ярость монстров`.
+- Clarified artifact rule: Event cards with icons are persistent player artifacts, not Joe Shop cards.
+- Specified `Волшебный кошель` must use `assets/icons/artifact_magic_wallet_512.png` and display as a player artifact chip.
+- Added QA follow-up checklist for Phase 2 Event cards.
+- Sent the Phase 2 implementation task directly to the existing `Dev 1` Codex thread.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- After Phase 2 implementation, all 9 Event cards should be in the draw pool.
+- Artifacts should not be buyable/stealable through Joe Shop card flows and should not count as Joe Shop cards for final scoring unless GD later changes that rule.
+- `Ярость монстров` is a persistent global Event, not an artifact.
+
+Open questions:
+- Waiting for Dev implementation/handback.
+
+## 2026-06-07 01:42 - Dev 1
+
+Changed:
+- Updated field2 Event placement from the user/GD screenshot.
+- Set these field2 cells to `event`:
+  - `9-2`
+  - `3-4`
+  - `10-4`
+  - `5-6`
+  - `10-9`
+  - `2-10`
+  - `10-12`
+  - `8-13`
+  - `4-14` remains `event`.
+- Fixed Event tile visual backing by adding `.tile-event` / `.tile-event::before` to the shared icon-tile selector groups in classic and tabletop styles.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Board placement/CSS only.
+- Did not change `pathCells`, `route`, field1, doors/monsters, dice math, card data, Event draw pool, or Event effects.
+- Static verification confirmed all 9 listed field2 cells now map to `event`, Event still uses `Событие`/`event_quest_512.png`, and adjacent non-listed sample cells remain unchanged.
+- Verification passed: `node --check src/game.js`; `git diff --check`.
+
+Open questions:
+- Browser visual smoke was not run in this environment.
+
+## 2026-06-07 01:36 - QA
+
+Changed:
+- Added QA working rule from user: send reproducible implementation tasks to Dev immediately when QA finds a bug/regression or development-needed issue, unless the user explicitly says otherwise.
+
+Files:
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA still should not edit gameplay code without a direct request; this rule is about sending tasks to Dev promptly.
+
+Open questions:
+- None.
+
+## 2026-06-07 01:36 - GD
+
+Changed:
+- Sent the active Event board update directly to the existing `Dev 1` Codex thread.
+- Included the related QA Event tile-backing bug in the same Dev dispatch so the expanded Event cells do not inherit the missing gray tile background.
+- Marked the Dev inbox task as dispatched to `Dev 1`, not merely queued.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Dev 1` was idle when the dispatch was sent.
+- Expected Dev work: update 8 additional `field2` cells to `event`, keep `4-14` as `event`, fix `.tile-event` styling coverage, and hand back to GD.
+
+Open questions:
+- Waiting for `Dev 1` implementation/handback.
+
+## 2026-06-07 01:34 - QA
+
+Changed:
+- Confirmed user-reported visual issue: Event cells render the Event quest icon but lack the gray tile backing/border used by other icon cells.
+- Added a reproducible Dev task for the Event tile backing bug.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Likely styling coverage issue: `.tile-event` is missing from the shared tile background/border selector groups in `styles.css`.
+- This should be fixed alongside or before expanding all black-exclamation cells on field2 to Event, otherwise the same visual issue will repeat on all new Event cells.
+
+Open questions:
+- Waiting for Dev fix/handback.
+
+## 2026-06-07 01:34 - GD
+
+Changed:
+- Added working rule from user: GD should send implementation-ready tasks to Dev immediately when a design decision requires development, unless the user explicitly says otherwise.
+
+Files:
+- `project-memory/updates.md`
+
+Notes for others:
+- Default GD behavior: do not wait for extra approval before writing Dev inbox tasks for clear implementation work.
+- Keep the existing safety rule: GD should not edit gameplay code without a direct request.
+
+Open questions:
+- None.
+
+## 2026-06-07 01:31 - GD
+
+Changed:
+- Translated the user's field screenshot into exact `field2` Event-cell coordinates.
+- Added a Dev task to update all black-exclamation cells on `field2` to `event`.
+- Added a QA follow-up checklist for the Event-cell placement after Dev handback.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Target Event cells on `field2`: `9-2`, `3-4`, `10-4`, `5-6`, `10-9`, `2-10`, `10-12`, `8-13`, `4-14`.
+- `4-14` is already `event`; the new implementation work is mainly the other 8 cells.
+- This is board placement only: keep route order unchanged and do not expand Event Phase 2 draw pool.
+
+Open questions:
+- Waiting for Dev implementation/handback.
+
+## 2026-06-07 01:29 - Important
+
+Changed:
+- Updated `next-chat` archive rename instruction to use the short date format `<role> - DD.MM`.
+
+Files:
+- `project-memory/prompts/next-chat.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- When handing work to a replacement chat, write the archive rename line like `GD - 07.06`.
+
+Open questions:
+- None.
+
+## 2026-06-07 01:28 - GD
+
+Changed:
+- Onboarded replacement GD chat after the previous GD context-compaction failure.
+- Reviewed project memory, role inboxes, current git status, and the implemented Event deck slice.
+- Accepted Event deck Phase 1 as the current MVP vertical slice from a GD perspective after Dev 1 handback and QA smoke: field2 `4-14`, Event reveal with title, phone preview, and Phase 1 effects are enough to proceed.
+- Prioritized the current-source phone-room `full` mode regression as the next Dev blocker before treating the local Event/phone work as clean for handoff/push.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+
+Notes for others:
+- Phase 2 Event cards remain backlog: `free-step`, `unity`, `magic-wallet`, `monster-rage`.
+- `Волшебный кошель` icon now exists at `assets/icons/artifact_magic_wallet_512.png`; use it when Phase 2 artifact logic/UI is implemented.
+- Do not expand the Event draw pool until the matching Phase 2 effect/UX is implemented, so drawn cards never silently do nothing.
+
+Open questions:
+- Waiting for Dev fix of `server.js` mode allow-list: `full` must remain supported while `big-button` stays the default.
+- After that, decide whether the next GD priority is Event Phase 2 or cleanup/commit coordination.
+
+## 2026-06-07 01:16 - Art/UI
+
+Changed:
+- Prepared the `Волшебный кошель` artifact icon as `assets/icons/artifact_magic_wallet_512.png`.
+- Checked Event card face assets and confirmed `event_front.png` is suitable for explicit title + effect text.
+- Adjusted Event card reveal CSS so the title/body text sits in the lower clean parchment area, not over the upper exclamation emblem.
+- Added Dev visual notes for Event title/body layout and compact artifact chip display.
+- Bumped stylesheet cache key to `styles.css?v=20260607-0372`.
+
+Files:
+- `assets/icons/artifact_magic_wallet_512.png`
+- `assets/cards/event_front.png`
+- `assets/cards/event_back.png`
+- `assets/icons/event_quest_512.png`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Icon sizes verified: artifact and Event field icon are 512x512 RGBA PNG; Event front/back are 744x1039 RGBA PNG.
+- Event text safe-zone direction: `.event-card-text` uses lower card area around `top: 57%`, `bottom: 11%`; title is intended for up to about 2 lines, body uses smaller text below.
+- Artifact display suggestion for Dev: compact icon-first chip near player statuses/shop cards, with short `+5 монет/ход` hint where space allows.
+- Verification passed: `git diff --check`.
+
+Open questions:
+- Needs Dev implementation/visual QA after Event artifact transfer UI is in place.
+
+## 2026-06-07 01:15 - QA
+
+Changed:
+- Ran browser smoke for Dev 1 Event deck vertical slice Phase 1 after handback.
+- Field/board checks passed on desktop:
+  - selected board is `field2`;
+  - `4-14` is `tile-event`, title `Событие`, icon `./assets/icons/event_quest_512.png`;
+  - `3-14` remains `Хорошо`;
+  - previous top-right swap still visible: `13-0` is Joe Auction, `14-0` is TADAM.
+- Event reveal checks passed after fresh CSS load:
+  - landing on `4-14` opens Event back -> face reveal;
+  - desktop face is normal card size (`218x305`), title/body visible, text inside card bounds;
+  - mobile `390x844` face is readable; tested with `Равновесие`.
+- Phone controller check passed for Big Button:
+  - controller preview renders `controller-card-preview-event`;
+  - preview text includes deck `Событие`, title `Гонка`, and body text;
+  - no controller console errors.
+- Phase-1 effect smoke:
+  - `Гонка` gameplay pass: roll total `4`, reward `+5`, player coins went from 10 to 15, Chronicle logged the result.
+  - `Щедрый дождь` no-op pass: with no 0-coin players, Chronicle logged `игроков с 0 нет` and coins stayed unchanged.
+  - Static pass confirmed implemented branches for `Портальный обмен`, `Равновесие`, `Справедливость`; Phase 2 cards remain excluded from draw pool.
+- Non-regression smoke:
+  - Good reveal still normal (`218x305`);
+  - TADAM reveal still normal (`218x305`);
+  - Joe Shop offer reveal still normal;
+  - no host/controller console errors in tested flows.
+- Updated Dev inbox note for the phone `full` mode source-regression with a clarification that the already-running server is stale and still accepts `full`, while current `server.js` would normalize it to `big-button` after restart.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+
+Notes for others:
+- No gameplay source code was edited by QA.
+- Bad-card reveal was not reached through full gameplay in this pass because nearest convenient Bad landings are behind route complications; Good/Bad share the existing reveal implementation, and Good/TADAM/Shop were checked live.
+
+Open questions:
+- Dev should still fix current-source `server.js` room mode allow-list before restart/commit: `roomModes` must include `full`.
+- Optional follow-up: deterministic/browser coverage for remaining Event Phase-1 effects (`Портальный обмен`, `Равновесие`, `Справедливость`) with controlled state.
+
+## 2026-06-07 01:12 - Dev 1
+
+Changed:
+- Added Event deck vertical slice Phase 1.
+- Synced local Event card data into `src/cards.config.js` and `cards-google-sheet.csv`.
+- Added field2 Event placement: `4-14` changed from `good` to `event`; route/path order unchanged; `3-14` left unchanged.
+- Wired Event board/UI plumbing:
+  - tile type/event icon `assets/icons/event_quest_512.png`;
+  - tile title/tooltip/history label `Событие`;
+  - landing behavior draws one Event card;
+  - reveal uses Event back/front assets and shows the card `title` plus description on the face;
+  - phone card preview supports Event deck title/body and gets an Event accent class.
+- Added Phase 1 Event draw pool only:
+  - `race`;
+  - `generous-rain`;
+  - `portal-swap`;
+  - `balance`;
+  - `justice`.
+- Implemented Phase 1 effects:
+  - `Гонка`: 1d6 + step bonus, reward tiers +20/+10/+5 coins;
+  - `Щедрый дождь`: players with 0 coins receive +20;
+  - `Портальный обмен`: active player chooses another player and swaps positions;
+  - `Равновесие`: richest gives 10 coins to poorest, using 1d6 tie-break when needed;
+  - `Справедливость`: first by route moves 10 back, last by route moves 10 forward, others receive +5; route ties use 1d6 tie-break.
+- Added cache bumps:
+  - host/controller CSS `styles.css?v=20260607-0371`;
+  - host game `game.js?v=20260607-0368`;
+  - controller JS `controller.js?v=20260607-0364`;
+  - cards import `cards.config.js?v=20260607-0322`.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `assets/icons/event_quest_512.png`
+- `assets/cards/event_back.png`
+- `assets/cards/event_front.png`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Phase 2 Event cards are present in local sources but intentionally excluded from `eventCards` draw pool to avoid silent no-op cards:
+  - `free-step`;
+  - `unity`;
+  - `magic-wallet`;
+  - `monster-rage`.
+- No Good/Bad/TADAM/Joe Shop card behavior changed for this Event task beyond shared reveal/preview helpers.
+- Monster base config, dice math, routes, phone room protocol, saves transport, and unrelated bot AI were not changed.
+- Verification passed: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- Browser gameplay smoke was not run in this environment.
+- Phase 2 remains: `free-step`, `unity`, `magic-wallet`, `monster-rage`; Art/UI artifact icon for `Волшебный кошель` still pending/confirming.
+
+## 2026-06-07 01:02 - QA
+
+Changed:
+- Onboarded QA chat: read project memory, active Dev/GD/UI inboxes, new QA inbox, prompts, and recent updates.
+- Checked git state first: branch `main` is even with `origin/main`, but the working tree has many uncommitted changes and new Event assets.
+- Ran syntax checks: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `node --check server.js` all passed.
+- Static QA pass confirmed Dev 1 Event Phase 1 handback is present in current local changes: `field2 4-14` is `event`, Event deck exists, card face markup shows Event title + body, phone preview class recognizes Event.
+- Found a phone-room regression: `server.js` rejects/normalizes requested `full` mode to `big-button`, so `Полный контроллер` will not survive server room creation despite host UI allowing it.
+- Wrote a reproducible Dev task for this regression.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+
+Notes for others:
+- Browser smoke could not run in this environment: local server binding failed with `EPERM` on `0.0.0.0:5173` and `127.0.0.1:5173`; Browser policy also blocked direct `file://` navigation.
+- No gameplay source code was edited by QA.
+
+Open questions:
+- Needs Dev fix/handback for the phone `full` mode server allow-list.
+- Event deck still needs real browser gameplay smoke in an environment where the local target can be opened.
+
+## 2026-06-07 01:00 - Important
+
+Changed:
+- Added `QA` as an active testing chat for "Очень Большая Бродилка".
+- Created `project-memory/inbox/for-qa.md`.
+- Updated shared memory and onboarding prompt with the QA role.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `QA` owns smoke checks, regression checks, reproduction notes, and bug reports for Dev roles.
+- Active chats now include `Important`, `Dev 1`, `Dev 2`, `Dev 3`, `GD`, `Art / UI`, and `QA`.
+
+Open questions:
+- None.
+
+## 2026-06-07 00:53 - GD
+
+Changed:
+- Created canonical Google Sheet tab `event` in `Cards Config` with 9 Event cards.
+- Added Dev task for first Event deck vertical slice.
+- Clarified user requirement: Event card faces must show the card name/title.
+
+Files:
+- Google Sheet `Cards Config`, sheet `event`, range `A1:N10`.
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Existing Event assets from Art/UI:
+  - `assets/icons/event_quest_512.png`
+  - `assets/cards/event_back.png`
+  - `assets/cards/event_front.png`
+- First Event cell placement for MVP: field2 `4-14`, replacing current `good`; route order unchanged.
+- Event cards: `Гонка`, `Вольный шаг`, `Сплочение`, `Справедливость`, `Равновесие`, `Щедрый дождь`, `Портальный обмен`, `Волшебный кошель`, `Ярость монстров`.
+- Art/UI should provide/confirm artifact icon for `Волшебный кошель`.
+
+Open questions:
+- Waiting for Dev implementation/handback and Art/UI artifact icon handback.
+
+## 2026-06-07 00:51 - Art/UI
+
+Changed:
+- Created the Event card front in the shared front-card style: warm parchment, rounded brown border, hand-drawn inner frame, upper quest/event emblem, and a large clean text area below.
+- Saved the final card asset as a 744x1039 RGBA PNG to match existing front cards.
+
+Files:
+- `assets/cards/event_front.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only asset; not wired into Event card logic/UI yet.
+- No Dev task was written because user has not approved integration work.
+
+Open questions:
+- Needs approval before asking Dev to connect Event front/back/icon assets in code.
+
+## 2026-06-07 00:40 - Art/UI
+
+Changed:
+- Created a new Event card back in the shared card-back style: cream rounded border, black inner frame, textured violet field, and a central golden quest/event exclamation mark.
+- Saved the final card asset as a 744x1039 RGBA PNG to match the current card back format.
+
+Files:
+- `assets/cards/event_back.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only asset; not wired into Event card logic/UI yet.
+- No Dev task was written because user has not approved integration work.
+
+Open questions:
+- Needs approval before asking Dev to connect the Event card back in code.
+
+## 2026-06-07 00:32 - Art/UI
+
+Changed:
+- Created a new Event card icon: a large golden quest-style exclamation mark over a magical parchment base.
+- Saved the final transparent PNG as a 512x512 project asset.
+
+Files:
+- `assets/icons/event_quest_512.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- The icon is visual-only and is not wired into card logic/UI yet.
+- No Dev task was written; user asked only to draw the asset.
+
+Open questions:
+- Needs approval before asking Dev to connect it to the new Event card type.
+
+## 2026-06-06 23:40 - Dev 1
+
+Changed:
+- Added reusable one-player tie-break helper `resolveOnePlayerTieByDie(candidates, { reason, autoFor })`.
+- The helper rolls 1d6 for tied candidates, logs participants/results/selected target, and rerolls only tied max candidates until one target remains.
+- Applied the rule to known singular one-player effects:
+  - Good `steal-richest`: tied richest opponents now resolve by 1d6 instead of player id;
+  - Bad `give-poorest`: tied poorest opponents now resolve by 1d6 instead of player id;
+  - TADAM `land-steal`: when several other players are on the landing cell, steals from one selected target only;
+  - TADAM `jump-steal`: when several other players are on the passed cell, steals from one selected target only for that trigger.
+- Converted the affected target/effect functions to async and awaited them in movement/landing/card-effect flow.
+- Bumped host cache key to `game.js?v=20260606-0367`.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Log-only MVP for tie rolls: Chronicle shows who participated, what each rolled, reroll notices, and who was selected.
+- Single-candidate cases return the candidate directly and do not log a tie-break.
+- No card text/id/effect id, coin amount, dice math, routes, phone controllers, saves, or unrelated bot AI changes.
+- Effects that explicitly apply to all matching players were not changed.
+- Verification passed: `node --check src/game.js`; `git diff --check`.
+
+Open questions:
+- Browser gameplay smoke was not run in this environment.
+
+## 2026-06-06 23:33 - GD
+
+Changed:
+- Added new general rule: if a card/field says a one-player effect applies to one player, but multiple players satisfy the condition, target selection is resolved by a 1d6 tie-break.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Tied candidates each roll 1d6; highest roll becomes the selected target; if tied again, reroll only tied candidates.
+- Known current affected cases:
+  - Good `steal-richest`;
+  - Bad `give-poorest`;
+  - TADAM `land-steal`;
+  - TADAM `jump-steal`.
+- Current deterministic tie by player id for richest/poorest should be replaced.
+- Singular TADAM steal effects should target one selected player when multiple players are on the relevant cell, not all of them.
+
+Open questions:
+- Waiting for Dev implementation/handback.
+
+## 2026-06-06 23:31 - Dev 1
+
+Changed:
+- Synced Good card `buy-shop-card` description from Google Sheet into local card sources.
+- Implemented fallback for `buy-shop-card-from-player`:
+  - if the player has fewer than 5 coins, they receive `+5` coins;
+  - if opponents have no Joe Shop cards, the player receives `+5` coins;
+  - if purchase choices are available, the existing selection/purchase flow stays unchanged;
+  - manual `Отказаться` from an available purchase still gives no fallback reward.
+- Used existing `addCoins()` helper for fallback rewards so coin history and coin float stay on the normal path.
+- Bumped cache keys to `cards.config.js?v=20260606-0321` and `game.js?v=20260606-0366`.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Cost remains `5`; card id/effect type, target/card choice UI, transfer-purchase logic, other cards, Joe Shop rules, dice, routes, bots, phones, saves, and balance were not changed.
+- Verification passed: `node --check src/game.js`; `node --check src/cards.config.js`; `git diff --check`.
+- Code/static confirmation:
+  - insufficient coins branch calls `addCoins(player, 5)` and returns before opening choices;
+  - no-opponent-shop-card branch calls `addCoins(player, 5)` and returns before opening choices;
+  - available purchase branch still opens `chooseCardAction()`;
+  - decline branch still only logs decline and returns.
+
+Open questions:
+- Browser gameplay smoke was not run in this environment.
+
+## 2026-06-06 23:25 - GD
+
+Changed:
+- Updated Google Sheet `Cards Config` for Good card `buy-shop-card`.
+- Added Dev task to sync local card sources and implement the new fallback behavior.
+
+Files:
+- Google Sheet `Cards Config`, sheet `good`, row `7`, cell `N7`.
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- New description in Google Sheet:
+  - `Можешь заплатить 5 монет любому игроку и забрать у него любую карту Лавка Джо. Если у тебя не хватает монет или у противников нет Лавок Джо, получи 5 монет`
+- GD checked local code: `resolveBuyShopCardFromPlayer()` currently returns without reward when player cannot pay or opponents have no Joe Shop cards.
+- Dev should sync `src/cards.config.js` and `cards-google-sheet.csv`, then add fallback `+5 монет` only for the two unavailable-action cases.
+- If player manually declines an available purchase choice, do not grant fallback.
+
+Open questions:
+- Waiting for Dev implementation/handback.
+
+## 2026-06-06 22:27 - Dev 1
+
+Changed:
+- Swapped field2 top-right event assignments:
+  - `13-0`: `tadam` -> `joe-auction`;
+  - `14-0`: `joe-auction` -> `tadam`.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Field2 event placement only; route/path order was not changed.
+- Field1, TADAM rules, Joe Auction rules, icons/tooltips logic, dice, cards, bots, phones, saves, and balance were not changed.
+- Verification passed: `node --check src/game.js`; `git diff --check`.
+- Static check confirmed field2 events now map `13-0` to auction and `14-0` to TADAM.
+
+Open questions:
+- Browser visual/landing smoke was not run in this environment.
+
+## 2026-06-06 22:22 - GD
+
+Changed:
+- Added Dev task to swap the top-right field2 `ТАДАМ!` and `Аукцион Лавки Джо` cells.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Exact cells: field2 `13-0` currently `tadam`, field2 `14-0` currently `joe-auction`.
+- Required result: `13-0` becomes `joe-auction`, `14-0` becomes `tadam`.
+- Route/path and event rules should remain unchanged.
+
+Open questions:
+- Waiting for Dev implementation/handback.
+
+## 2026-06-06 22:22 - Dev 1
+
+Changed:
+- Added final party summary data captured in `resolveFinalBattle()` while final-battle rolls, forces, scores, boss state, and winner are available.
+- Stored structured final summary in both `state.history.finalSummary` and `state.finalBattle.finalSummary`, so the existing history/localStorage/Google Sheets snapshot path includes it.
+- History now renders an `Итог партии` block after game finish with:
+  - outcome and winner role;
+  - winner score;
+  - total players force vs boss force;
+  - one compact row for every player, including the boss;
+  - final score total and score parts;
+  - explicit score formula like `54 = 22 монеты + 10 Лавка Джо + 18 урон боссу + 4 позиция`;
+  - final-battle force/roll breakdown for challengers and boss.
+- Added compact responsive styles for the final History block.
+- Fixed the phone room mode allow-list so `Полный контроллер` remains selectable after the earlier default switch to `Большая кнопка`.
+- Bumped host cache keys to `styles.css?v=20260606-0370` and `game.js?v=20260606-0365`.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- History/statistics/snapshot only for the active final-summary task; final battle rules, winner calculation, score formula, dice math, roll flow, cards, bots, routes, phones, and save transport were not changed.
+- Structured summary keeps numeric breakdown fields and a readable `scoreFormula` string for every player.
+- Verification passed: `node --check src/game.js`; `git diff --check`.
+- Browser smoke could not be launched because the local `python3 -m http.server` attempt was blocked by the system Apple SDK/Xcode license prompt; the process was stopped.
+
+Open questions:
+- Real browser finish-flow smoke is still useful for the two final scenarios: boss wins, and players beat boss with point winner.
+
+## 2026-06-06 22:17 - GD
+
+Changed:
+- Clarified final History task: when players beat the boss, the final result must spell out what each player's points came from.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Do not show only a total like `54`.
+- Show readable score composition for every player, e.g. `54 = 22 монеты + 10 Лавка Джо + 18 урон боссу + 4 позиция`.
+- This should be visible in the final History block and preferably stored in the structured final summary snapshot.
+
+Open questions:
+- Waiting for Dev implementation/handback.
+
+## 2026-06-06 22:14 - GD
+
+Changed:
+- Added Dev task for a final party summary in History/statistics and saved snapshots.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Final summary should show winner, winning score, total players force vs boss force, each player's final-battle strength, and every player's final score/breakdown even if they lost.
+- Capture the data from `resolveFinalBattle()` while `challengerResults`, `bossRollResults`, `scores`, `playersForce`, and `bossForce` are available.
+- Keep current final battle rules and score formula unchanged.
+- The same final summary should be included in saved history/localStorage/Google Sheets snapshot.
+
+Open questions:
+- Waiting for Dev implementation/handback.
+
+## 2026-06-06 22:09 - Dev 1
+
+Changed:
+- Added dedicated bot AI scoring for ordinary opened portal choices (`pendingChoice.kind === "portal"`).
+- Bot portal scoring now evaluates the portal exit and projected end cell after remaining movement, route progress gain, final-distance gain, endgame urgency, and resource-scaled landing risk.
+- Best-progress/latest portal receives a strong endgame shortcut bonus when the progress gap is meaningful, but is not unconditional.
+- Red/bad projected landings are softened for healthy coin reserves and harsher at low coins.
+- Catastrophic closed enemy landings with very low win chance can still override shortcut value.
+- Bumped host script cache key to `game.js?v=20260606-0364`.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Bot AI only; portal rules, human choice UI, routes, cards, dice math, phone controllers, saves, and balance values were not changed.
+- Confirmed by code path/static smoke:
+  - portal pending choices now route through `chooseBotPortalDestination()`;
+  - high-progress portal gets endgame progress/distance bonus;
+  - high coins soften red/bad risk;
+  - low coins increase red/bad caution;
+  - closed enemy projection with low win chance applies a large danger penalty;
+  - decline is penalized in endgame when a clearly progressive portal exists.
+- Verification passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check server.js`; `git diff --check`.
+
+Open questions:
+- A real gameplay repro with multiple opened portals near endgame is still useful to tune score weights if bots feel too bold or too cautious.
+
+## 2026-06-06 22:06 - GD
+
+Changed:
+- Added Dev task to improve bot AI for ordinary opened portal choice near endgame.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Current issue: bots can choose a weaker/non-last portal even when the final stretch is close, they have enough coins, and the alternative does not offer a clear tactical benefit.
+- GD contract: score portals as strategic shortcuts using projected end cell after remaining movement, progress toward finish, endgame urgency, and resource-scaled landing risk.
+- Do not make the last portal unconditional; it should strongly win in endgame when progress gap is meaningful and downside is not catastrophic.
+- Bot AI only; do not change portal rules, human choice UI, routes, cards, dice, phone controllers, saves, or balance values.
+
+Open questions:
+- Waiting for Dev implementation/handback.
+
+## 2026-06-06 21:49 - Dev 1
+
+Changed:
+- Fixed `Отображать кубики` checkbox re-checking itself after the user turns it off.
+- `applyPhoneRoom()` now preserves local/manual `diceVisible` state when room sync payload does not include `diceVisible`.
+- Explicit `room.diceVisible === false` still wins when present.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Bugfix only; no dice math, random generation, phone action payloads, rules, cards, bots, saves, routes, or balance changed.
+- Root cause: missing/undefined room field was coerced to `true` during room sync, which re-checked the host checkbox when relay payloads lacked `diceVisible`.
+- Verification passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check server.js`; `git diff --check`.
+- Browser smoke passed: fresh off; check stays on; uncheck stays off; create/recreate room after off stays `без кубиков`; no console errors.
+
+Open questions:
+- None.
+
+## 2026-06-06 14:24 - GD
+
+Changed:
+- Added regression bug report: `Отображать кубики` checkbox re-checks itself after user turns it off.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Manual explicit `false` must persist and must not be overwritten by defaults/sync.
+- Fresh default remains off.
+- Bugfix only; do not change dice math, phone action payloads, rules, cards, saves, routes, or balance.
+
+Open questions:
+- Waiting for Dev 1 bugfix/handback.
+
+## 2026-06-06 14:21 - Dev 1
+
+Changed:
+- Changed default phone room mode back to `Большая кнопка`.
+- Changed `Отображать кубики` default to off/unchecked.
+- Updated host/server default room mode to `big-button` and default `diceVisible` to false.
+- Bumped host script cache key to `game.js?v=20260606-0363`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `server.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- UI/initial-defaults only; no dice math, random generation, phone action payloads, rules, cards, bots, saves, routes, or balance changed.
+- `Полный контроллер` remains selectable and room creation still reads the selected mode.
+- `Отображать кубики` remains manually enableable and uses the existing `diceVisible` pipeline.
+- Verification passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check server.js`; `git diff --check`.
+- Browser smoke confirmed fresh host page defaults: mode `Большая кнопка`, `Отображать кубики` unchecked, no console errors.
+
+Open questions:
+- None.
+
+## 2026-06-06 14:18 - GD
+
+Changed:
+- Added user request to change phone-room defaults:
+  - default phone mode should be `Большая кнопка`;
+  - `Отображать кубики` should be off by default.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Полный контроллер` remains available/selectable.
+- `Отображать кубики` remains available and should work when manually enabled.
+- Phone controllers remain opt-in behind `Играть с телефонами`.
+- UI/initial-state only; do not change dice math, phone protocol semantics, rules, cards, bots, saves, routes, or balance.
+
+Open questions:
+- Waiting for Dev 1 implementation/handback.
+
+## 2026-06-06 13:55 - Art/UI
+
+Changed:
+- Centered the phone dice visual by replacing the inherited board `field-die-center` wrapper animation with a controller-specific animation that does not apply `translate(-50%, -50%)`.
+- Matched phone dice spin/settle behavior closer to the board timing: phone dice no longer loop their rolling animation indefinitely while the board dice have already settled.
+- Added display-toggle compatibility in the phone controller: if future snapshots expose `displayDice`, `showDice`, `phoneDisplayDice`, or `phoneDiceVisible` as false, the dice roll stage is skipped and the controller falls back to the normal action/wait UI.
+- Bumped cache keys to `styles.css?v=20260606-0368` and `controller.js?v=20260606-0362`.
+
+Files:
+- `src/controller.js`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Board-style dice look, host-provided final values, grouped Joe Shop chips, card preview, Big Button layout, and Full Controller layout are preserved.
+- No gameplay, dice math, action ids, protocol, balance, cards, saves, or phone-room rules changed.
+- Verification passed: `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- Real-phone visual check is still recommended for 390x844 and 360x760, especially with Dev 1's final `Отображать кубики` setting name.
+
+## 2026-06-06 13:58 - Dev 1
+
+Changed:
+- Added host phone-room setting `Отображать кубики` next to `Шейк`; default is enabled.
+- Threaded `diceVisible` through room creation, server serialization, host phone snapshot, and controller rendering.
+- When `diceVisible` is false, phone controllers ignore `snapshot.diceRoll` and fall back to the normal action/shake UI.
+- Adjusted phone dice result state so final host-provided dice faces are static immediately and do not keep spinning after result arrives.
+- Kept Art/UI centering work and verified phone dice stage centers in both controller modes.
+- Bumped cache keys to `styles.css?v=20260606-0369`, `game.js?v=20260606-0362`, and `controller.js?v=20260606-0363`.
+
+Files:
+- `index.html`
+- `controller.html`
+- `server.js`
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Settings/snapshot/UI only; dice math, random generation, bonuses, card rules, inventory state, bots, routes, saves, phone action payload semantics, and balance were not changed.
+- `Шейк` and `Отображать кубики` are independent.
+- Preserve grouped Joe Shop counts and card-preview behavior.
+- Verification passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check server.js`; `git diff --check`.
+- Browser smoke passed:
+  - host page has `Отображать кубики` checked by default;
+  - `diceVisible:false` hides dice-stage and falls back to shake/action UI;
+  - `diceVisible:true` shows dice-stage;
+  - 360x760 Big Button and 390x844 Full Controller center measurements were `centerDelta: 0`;
+  - result dice cubes use `animation-name: none` and show final host values.
+
+Open questions:
+- A real-phone retest is still recommended for motion feel and screenshot confirmation.
+- Could not runtime-test the new server field on a fresh port because this sandbox denied binding a second local server; `server.js` syntax check passed and snapshot behavior was verified via existing server.
+
+## 2026-06-06 13:51 - GD
+
+Changed:
+- Added phone dice follow-up from real-phone screenshot:
+  - center the dice visual on phone;
+  - match phone dice animation duration to board/field animation duration;
+  - add phone-room setting `Отображать кубики` near `Шейк`, default enabled.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- If `Отображать кубики` is off, phone should fall back to the previous non-dice visual/wait/action state.
+- Setting applies to both `Полный контроллер` and `Большая кнопка`.
+- `Шейк` and `Отображать кубики` are independent settings.
+- Do not change dice math, random generation, bonuses, cards, saves, action payload semantics, or balance.
+
+Open questions:
+- Waiting for Dev 1 and Art/UI handbacks.
+
+## 2026-06-06 00:20 - Dev 1
+
+Changed:
+- Updated phone dice-roll UI to use the same 3D dice cube markup/classes as the board throw animation.
+- Phone rolling state now shows board-style spinning/settling dice in both `Полный контроллер` and `Большая кнопка`; result state keeps host-provided final faces/total.
+- Phone player info now shows grouped Joe Shop inventory counts in both controller modes.
+- Added Joe Shop chips to `Большая кнопка` player info and count badges like `x4`, `x3`.
+- Bumped phone CSS/controller cache keys to `styles.css?v=20260606-0367` and `controller.js?v=20260606-0361`.
+
+Files:
+- `src/controller.js`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Display/UI only; no dice math, random generation, card rules, inventory state, bots, routes, saves, phone action payloads, or balances changed.
+- Big Button Joe Shop choice labels remain handled by the existing choice model and were not expanded with card text.
+- Verification passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke passed at 390x844 full-controller rolling state and 360x760 Big Button result state: 3 dice rendered as `.field-die`/`.die-cube`, final values came from snapshot, grouped shop counts showed, and no horizontal overflow was detected.
+
+Open questions:
+- Real-phone visual check is still recommended to judge whether the phone throw feels close enough to the board animation in motion.
+
+## 2026-06-06 00:20 - Art/UI
+
+Changed:
+- Reviewed and handed back the phone polish task for dice roll visuals and Joe Shop grouped inventory.
+- Phone dice roll UI now uses the same field-style 3D dice markup/classes (`die-cube`, `die-face`, `field-die` styling adapted for controller) in both `Полный контроллер` and `Большая кнопка`.
+- Rolling state keeps final values hidden until host-provided results arrive; result state shows authoritative dice values and total/bonus text.
+- Phone Joe Shop inventory chips show grouped identical cards with compact `xN` counters in both controller modes.
+
+Files:
+- `src/controller.js`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- No gameplay, dice math, card effects, action ids, protocol, balance, saves, or phone-room behavior changed.
+- Big Button Joe Shop choice labels remain `Левая карта` / `Правая карта`; long card text is not reintroduced into those choice zones.
+- Verification passed: `node --check src/controller.js`; `node --check src/game.js`; `git diff --check`.
+
+Open questions:
+- Real-phone visual check is still useful for multi-dice rolls and long Joe Shop inventories at 390x844 / 360x760.
+
+## 2026-06-06 00:16 - GD
+
+Changed:
+- Added phone polish task:
+  - phone dice roll visual should match the board/field dice animation as closely as practical;
+  - phone player info should group identical Joe Shop cards/items with counts like the field/player panel.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Applies to `Полный контроллер` and `Большая кнопка`.
+- Host remains authoritative for dice results; phone must not generate final random values.
+- Joe Shop grouping is display-only; do not merge/remove inventory state.
+- Preserve Big Button Joe Shop choice labels `Левая карта` / `Правая карта` and existing card-preview behavior.
+
+Open questions:
+- Waiting for Dev 1 and Art/UI handbacks.
+
+## 2026-06-06 00:05 - Dev 1
+
+Changed:
+- Onboarded replacement Dev 1 from project memory and current git state.
+- Reviewed the local uncommitted diff from Dev 1 / Dev 3 / Art/UI handoff without changing gameplay code.
+- Smoke-checked the latest phone controller UI locally: host defaults, full-controller dice/card preview, Big Button dice/card preview, and 390x844 / 360x760 horizontal overflow.
+
+Files:
+- `project-memory/updates.md`
+
+Notes for others:
+- `main` is still even with `origin/main`; local changes remain uncommitted.
+- Top inbox items for phone dice roll, default Full Controller mode, single-card phone text, full-controller primary button, and fullscreen background appear implemented locally, but the inbox still lists them as ACTIVE.
+- Verification passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check server.js`; `git diff --check`.
+- Browser smoke passed for controller dice/card states in both `Полный контроллер` and `Большая кнопка`; no horizontal overflow at 390x844 or 360x760.
+
+Open questions:
+- Real-phone visual check is still recommended for card/dice states.
+- Browser automation could not enter real fullscreen; fullscreen background still needs manual fullscreen visual check.
+
+## 2026-06-05 23:47 - Art/UI
+
+Changed:
+- Added phone dice-roll snapshot data during host `animateDice`: rolling state, dice count, final host rolls, bonus, and total.
+- Both phone modes now show a large dice-roll visual in the lower action area while dice are rolling.
+- Full Controller dice visual fills the large lower action zone; Big Button dice visual uses the existing big action height.
+- Rolling state shows animated neutral dice faces; result state shows only authoritative host-provided dice values.
+- Bumped cache keys to `styles.css?v=20260605-0366`, `game.js?v=20260605-0361`, and `controller.js?v=20260605-0360`.
+
+Files:
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Phone does not generate random dice values; rolling placeholders are neutral and final values come from host `rolls`.
+- Rules, dice math, action ids, payloads, protocol, cards, bots, saves, routes, phone-room behavior, and balance were not changed.
+- Shake-to-roll UI remains separate and unchanged.
+- Verification passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- Needs real-phone visual check in both `Полный контроллер` and `Большая кнопка` during a roll at ~390x844 and 360x760.
+
+## 2026-06-05 23:47 - Dev 3
+
+Changed:
+- Added host-authoritative dice-roll snapshots for phone controllers: rolling state sends dice count without revealing faces, result state sends final host dice values/total.
+- Phone controller now shows a large dice-roll stage in both `Полный контроллер` and `Большая кнопка`, including multiple dice and final results when available.
+- Updated controller dice visual to animate the exact dice count during rolling and stagger multiple dice cleanly.
+- Bumped JS/CSS cache keys for host and controller pages.
+
+Files:
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Display/snapshot/UI only; dice math, random generation, shake action triggering, cards, routes, bots, saves, phone actions, and balances unchanged.
+- Verification passed:
+  - `node --check src/game.js`;
+  - `node --check src/controller.js`;
+  - `git diff --check`.
+- In-app browser mock snapshot smoke was attempted, but this browser's read-only evaluation sandbox cannot construct/dispatch the custom smoke event (`CustomEvent`/`document.createEvent` unavailable). Ready for real-phone retest.
+
+Open questions:
+- None.
+
+## 2026-06-05 23:44 - Dev 1
+
+Changed:
+- Renamed the main implementation role from `Dev` to `Dev 1` in current project-memory role docs.
+- Updated onboarding/read-news/next-chat prompts so successor prompts preserve the official `Dev 1` role name.
+- Left historical `updates.md` entries unchanged; they keep their original author names.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/prompts/read-news.md`
+- `project-memory/prompts/next-chat.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `project-memory/inbox/for-dev.md` remains the shared inbox for `Dev 1`, `Dev 2`, and `Dev 3`.
+
+Open questions:
+- None.
+
+## 2026-06-05 23:40 - GD
+
+Changed:
+- Added phone feature task: show dice/dice-roll visual on the phone while the host is rolling.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Applies to `Полный контроллер` and `Большая кнопка`.
+- Host remains authoritative; the phone must not generate random dice results itself.
+- If final dice faces/values are available in snapshot, show them; otherwise show rolling animation and do not invent values.
+- Preserve shake-to-roll behavior and current dice math/balance.
+
+Open questions:
+- Waiting for Dev 3 and Art/UI handbacks.
+
+## 2026-06-05 23:38 - Dev 3
+
+Changed:
+- Returned default phone room mode to `Полный контроллер` in the host `Телефоны` selector.
+- Kept `Большая кнопка` available/selectable.
+
+Files:
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI/initial state only; phone protocol, controller rendering, actions, rules, dice, cards, bots, saves, routes, and balance unchanged.
+- Verification passed:
+  - `node --check src/game.js`;
+  - `node --check src/controller.js`;
+  - `git diff --check`;
+  - static assertion confirmed HTML default is `full`, `big-button` remains available, JS default is `full`, and room creation still reads the selector value.
+
+Open questions:
+- None.
+
+## 2026-06-05 23:37 - GD
+
+Changed:
+- Added user request to make phone room mode default back to `Полный контроллер`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Большая кнопка` remains available/selectable.
+- Phone controllers remain opt-in behind `Играть с телефонами`.
+- UI/initial state only; do not change phone protocol, actions, rules, cards, dice, bots, saves, routes, or balance.
+
+Open questions:
+- Waiting for Dev 3 implementation/handback.
+
+## 2026-06-05 23:26 - Dev 3
+
+Changed:
+- Reviewed and reconciled the phone single-card preview work from Art/UI.
+- Kept one snapshot/UI contract: `snapshot.cardPreview`.
+- Added safer player-facing card text fallback in `cardDisplayText`: `description`, `text`, `effectText`, `body`, then title.
+- Confirmed Good/Bad/TADAM and single Joe Shop reveal flows publish card preview state; multi-card shop choices remain choice-only.
+- Bumped host game JS cache key to `20260605-0360`.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Display/snapshot only; no card rules, deck contents, draw/effect timing, dice, bots, routes, saves, phone action payloads, or balance changed.
+- Big Button Joe Shop multi-choice labels remain `Левая карта` / `Правая карта`.
+- Verification passed:
+  - `node --check src/game.js`;
+  - `node --check src/controller.js`;
+  - `git diff --check`;
+  - static assertion confirmed Good/Bad/TADAM/single-Shop preview wiring, controller render hook, card CSS, cache key, and preserved Big Button shop labels.
+
+Open questions:
+- Real-phone smoke still recommended for Good, Bad, TADAM, and single Joe Shop reveal in both controller modes.
+
+## 2026-06-05 23:24 - Art/UI
+
+Changed:
+- Added phone card preview data for single-card reveal moments: Good, Bad, TADAM, and single Joe Shop reveal.
+- Both phone modes now render the current single card as a readable card-like panel in the player info area.
+- Closed card state shows only the deck/type and prompt to open; revealed state shows the card title and effect text.
+- Added compact responsive card-preview styling with deck accent colors, clean wrapping, and internal scroll for long text.
+- Bumped host/controller stylesheet cache key to `20260605-0365`, host script cache key to `20260605-0359`, and controller script cache key to `20260605-0359`.
+
+Files:
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Display-only; card rules/effects/deck content/action ids/payloads/protocol/dice/balance were not changed.
+- Big Button Joe Shop multi-choice zones still use only `Левая карта` / `Правая карта`; multi-card shop choices were not re-expanded with long text.
+- Verification passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- Needs real-phone visual check at ~390x844 and 360x760 for Good/Bad/TADAM/single Shop reveal text.
+
+## 2026-06-05 23:19 - GD
+
+Changed:
+- Added phone feature task: in all phone modes, when a player receives/is shown one concrete card, the phone should display that card's player-facing text.
+- Added UI requirement: card text must be neatly fitted and readable on phone.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Applies to `Полный контроллер` and `Большая кнопка`.
+- Preserve Joe Shop multi-card choice behavior in Big Button: choices still show only `Левая карта` / `Правая карта`.
+- For Good cards, use `title` for name and `description` for face/body text.
+- Display only; do not change card rules, deck contents, draw/effect timing, dice, bots, saves, phone flow, or balance.
+
+Open questions:
+- Waiting for Dev 3 and Art/UI handbacks.
+
+## 2026-06-05 23:08 - Art/UI
+
+Changed:
+- In phone mode `Полный контроллер`, a single primary action now gets a large bottom-anchored treatment.
+- `Бросить` and `Далее`/continue-style single actions fill the lower action area while player stats/cards remain above.
+- Multi-choice states stay on regular full-controller buttons, so shop/rest/choice layouts are not blindly enlarged.
+- Bumped host/controller stylesheet cache key to `20260605-0364` and controller script cache key to `20260605-0358`.
+
+Files:
+- `src/controller.js`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI/rendering only; action ids, payloads, protocol, rules, dice, cards, bots, routes, saves, phone-room behavior, and balance were not changed.
+- `Большая кнопка` split/rest/Joe Shop layouts were not touched.
+- Verification passed: `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- Needs quick phone check in `Полный контроллер` for `Бросить` and `Далее` states.
+
+## 2026-06-05 23:05 - GD
+
+Changed:
+- Added UI task for phone mode `Полный контроллер`: make the primary roll/continue button large and bottom-anchored so it fills the empty lower space, similar to `Большая кнопка`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a full-controller layout improvement, not a gameplay change.
+- Keep stats/cards visible above the button.
+- Do not regress `Большая кнопка`, Joe Shop labels, or Rest layout.
+
+Open questions:
+- Waiting for Art/UI implementation/handback.
+
+## 2026-06-05 12:59 - Art/UI
+
+Changed:
+- Added the normal decorative game background to the fullscreen `.app-shell` so fullscreen/big-screen mode is not plain black behind panels.
+- Added fullscreen overlay texture on `.app-shell::before`, with a tabletop-specific variant matching the dark tabletop background.
+- Preserved fullscreen layout decisions: `Хроника`/`История` remain hidden via existing rules, settings/top controls remain untouched.
+- Bumped host/controller stylesheet cache key to `20260605-0363`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- CSS/layout only; gameplay, board logic, dice, cards, bots, saves, phone protocol, and balance were not changed.
+- Root cause: fullscreen targets `.app-shell`, which was transparent, so browser fullscreen showed a black backdrop instead of the normal body background.
+- `git diff --check` passed.
+
+Open questions:
+- In-app automation could not enter real fullscreen from the local page, so needs a quick manual fullscreen visual check.
+
+## 2026-06-05 12:53 - GD
+
+Changed:
+- Added fullscreen/big-screen visual fix: background behind panels should match the normal game background instead of becoming plain black.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- CSS/layout only.
+- Preserve existing fullscreen decisions: `Настройки` visible, `Хроника`/`История` hidden, top controls usable.
+- Do not change gameplay, board logic, dice, cards, saves, phone protocol, or balance.
+
+Open questions:
+- Waiting for Art/UI implementation/handback.
+
 ## 2026-06-05 01:07 - Art/UI
 
 Changed:

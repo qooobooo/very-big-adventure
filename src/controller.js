@@ -307,13 +307,14 @@ function render() {
   setControllerState(actions.length ? "active" : "waiting");
   setStatus(connectionError || `${room.code} - ${activeText}`);
   const shakeAction = shakeActionForPlayer(player, actions);
+  const diceRoll = shouldShowPhoneDice() ? controllerDiceRollForPlayer(snapshot.diceRoll, player.id) : null;
   syncShake(player, shakeAction);
   if (mode === "big-button") {
     renderBigButtonPlayerCard(player, activeText);
-    renderBigButtonAction(player, activePlayer, actions, shakeAction);
+    renderBigButtonAction(player, activePlayer, actions, shakeAction, diceRoll);
   } else {
     renderPlayerCard(player, activeText);
-    renderActions(actions, { shakeAction });
+    renderActions(actions, { diceRoll, shakeAction });
   }
 }
 
@@ -360,6 +361,8 @@ function renderClaimList(players, claimedIds) {
 }
 
 function renderBigButtonPlayerCard(player, activeText) {
+  const shopCards = controllerShopCardsMarkup(player.items);
+  const artifacts = controllerArtifactsMarkup(player.artifacts);
   ui.playerCard.style.setProperty("--player-color", player.color || "#ffd470");
   ui.playerCard.innerHTML = `
     <div class="controller-big-card">
@@ -374,21 +377,17 @@ function renderBigButtonPlayerCard(player, activeText) {
         <span><b>${signed(player.battleBonus)}</b><small>сила</small></span>
         <span><b>${signed(player.stepBonus)}</b><small>шаги</small></span>
       </div>
+      <div class="controller-shop-cards controller-big-shop-cards"><small>Лавка Джо</small><div>${shopCards}</div></div>
+      ${artifacts}
+      ${controllerCardPreviewMarkup(controller.snapshot?.cardPreview, player.id)}
       ${player.nextMonsterBattleBonus ? `<div class="controller-rage controller-big-rage">Зелье ярости +${player.nextMonsterBattleBonus}</div>` : ""}
     </div>
   `;
 }
 
 function renderPlayerCard(player, activeText) {
-  const cards = player.items.length
-    ? player.items
-      .map((item) => `
-        <span class="controller-shop-card" title="${escapeAttribute(item.title || item.shortTitle || "")}">
-          ${escapeHtml(item.shortTitle || item.title)}
-        </span>
-      `)
-      .join("")
-    : '<span class="controller-shop-card empty-card">нет карт</span>';
+  const cards = controllerShopCardsMarkup(player.items);
+  const artifacts = controllerArtifactsMarkup(player.artifacts);
   ui.playerCard.style.setProperty("--player-color", player.color || "#ffd470");
   ui.playerCard.innerHTML = `
     <div class="controller-turn-badge ${player.isActive ? "is-active" : "is-waiting"}">${escapeHtml(activeText)}</div>
@@ -406,12 +405,213 @@ function renderPlayerCard(player, activeText) {
       <span class="controller-stat stat-strength"><b>${signed(player.battleBonus)}</b><small>сила</small></span>
     </div>
     ${player.nextMonsterBattleBonus ? `<div class="controller-rage">Зелье ярости +${player.nextMonsterBattleBonus}</div>` : ""}
+    ${artifacts}
     <div class="controller-shop-cards"><small>Лавка Джо</small><div>${cards}</div></div>
+    ${controllerCardPreviewMarkup(controller.snapshot?.cardPreview, player.id)}
   `;
 }
 
-function renderActions(actions, { shakeAction = null } = {}) {
+function controllerArtifactsMarkup(artifacts = []) {
+  if (!Array.isArray(artifacts) || artifacts.length === 0) return "";
+  return `
+    <div class="controller-artifacts">
+      <small>Артефакты</small>
+      <div>
+        ${artifacts.map((artifact) => `
+          <span class="controller-artifact-chip" title="${escapeAttribute(`${artifact.title || "Артефакт"}: ${artifact.hint || ""}`)}">
+            ${artifact.icon ? `<img src="${escapeAttribute(artifact.icon)}" alt="" aria-hidden="true">` : ""}
+            <b>${escapeHtml(artifact.shortTitle || artifact.title || "Артефакт")}</b>
+          </span>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function controllerShopCardsMarkup(items = []) {
+  if (!items.length) return '<span class="controller-shop-card empty-card">нет карт</span>';
+  return items.map((item) => {
+    const count = Math.max(1, Number(item.count) || 1);
+    const label = item.shortTitle || item.title || "Карта";
+    const countText = count > 1 ? ` x${count}` : "";
+    const title = `${item.title || label}${countText}`;
+    return `
+      <span class="controller-shop-card" title="${escapeAttribute(title)}">
+        ${escapeHtml(label)}${count > 1 ? `<b class="controller-shop-count">x${count}</b>` : ""}
+      </span>
+    `;
+  }).join("");
+}
+
+function controllerCardPreviewMarkup(preview, playerId) {
+  if (!preview || (preview.playerId !== null && preview.playerId !== playerId)) return "";
+  const deckClass = controllerCardPreviewClass(preview.deck);
+  const title = preview.revealed ? preview.title || "Карта" : `Карта ${preview.deck || ""}`.trim();
+  const body = preview.revealed
+    ? preview.description || preview.title || "Карта открыта."
+    : `Нажми «Открыть», чтобы увидеть текст карты.`;
+  return `
+    <article class="controller-card-preview controller-card-preview-${deckClass} ${preview.revealed ? "is-revealed" : "is-hidden"}">
+      <span>${escapeHtml(preview.deck || "Карта")}</span>
+      <strong>${escapeHtml(title || "Карта")}</strong>
+      <p>${escapeHtml(body)}</p>
+    </article>
+  `;
+}
+
+function controllerCardPreviewClass(deck) {
+  const normalized = String(deck || "").trim().toLocaleLowerCase("ru");
+  if (normalized.includes("хорош")) return "good";
+  if (normalized.includes("плох")) return "bad";
+  if (normalized.includes("тадам")) return "tadam";
+  if (normalized.includes("событ")) return "event";
+  if (normalized.includes("лавк")) return "shop";
+  return "card";
+}
+
+function controllerDiceRollForPlayer(roll, playerId) {
+  if (!roll) return null;
+  if (roll.playerId !== null && roll.playerId !== playerId) return null;
+  return roll;
+}
+
+function shouldShowPhoneDice() {
+  const snapshot = controller.snapshot || {};
+  const room = controller.room || {};
+  if ("diceVisible" in snapshot) return snapshot.diceVisible !== false;
+  if ("displayDice" in snapshot) return Boolean(snapshot.displayDice);
+  if ("showDice" in snapshot) return Boolean(snapshot.showDice);
+  if ("phoneDisplayDice" in snapshot) return Boolean(snapshot.phoneDisplayDice);
+  if ("phoneDiceVisible" in snapshot) return Boolean(snapshot.phoneDiceVisible);
+  if ("diceVisible" in room) return room.diceVisible !== false;
+  return true;
+}
+
+function createPhoneDiceRollStage(roll, { big = false, full = false } = {}) {
+  const stage = document.createElement("section");
+  stage.className = [
+    "controller-dice-roll-stage",
+    big ? "is-big" : "",
+    full ? "is-full" : "",
+    roll.rolling ? "is-rolling" : "is-result",
+  ].filter(Boolean).join(" ");
+
+  const count = Math.max(1, Number(roll.count) || (Array.isArray(roll.rolls) ? roll.rolls.length : 0) || 1);
+  const title = roll.rolling ? "Кубики крутятся" : "Результат броска";
+  const note = roll.rolling
+    ? `Большой экран бросает ${count} ${diceCountLabel(count)}.`
+    : diceRollResultText(roll);
+  stage.innerHTML = `
+    <div class="controller-dice-roll-faces" aria-hidden="true">
+      ${diceRollFacesMarkup(roll)}
+    </div>
+    <div class="controller-dice-roll-copy">
+      ${roll.label ? `<span>${escapeHtml(roll.label)}</span>` : ""}
+      <b>${escapeHtml(title)}</b>
+      <small>${escapeHtml(note)}</small>
+    </div>
+  `;
+  return stage;
+}
+
+function diceRollFacesMarkup(roll) {
+  const count = Math.max(1, Number(roll.count) || (Array.isArray(roll.rolls) ? roll.rolls.length : 0) || 1);
+  const values = Array.isArray(roll.rolls) && roll.rolls.length
+    ? roll.rolls
+    : Array.from({ length: count }, () => null);
+  return values.slice(0, 8).map((value, index) => `
+    <span class="field-die controller-field-die" aria-label="${value ? `Кубик ${value}` : "Кубик крутится"}" style="${phoneDieStyle(value, index, values.length)}">
+      ${diceCubeMarkup(value || ((index % 6) + 1))}
+    </span>
+  `).join("");
+}
+
+function phoneDieStyle(value, index, count) {
+  const dieSize = count > 4 ? 54 : 64;
+  const depth = dieSize / 2;
+  const finalRotation = diceCubeRotations[Math.max(1, Math.min(6, Number(value) || ((index % 6) + 1)))] || diceCubeRotations[1];
+  const spinX = rotationDegrees(finalRotation.x) + 360 * (6 + (index % 2));
+  const spinY = rotationDegrees(finalRotation.y) + 360 * (6 + ((index + 1) % 2));
+  const spinZ = rotationDegrees(finalRotation.z) + 360 * (4 + (index % 2));
+  return [
+    `--die-index: ${index}`,
+    `--die-size: clamp(48px, 17vw, ${dieSize}px)`,
+    `--die-depth: clamp(24px, 8.5vw, ${depth}px)`,
+    `--final-x: ${finalRotation.x}`,
+    `--final-y: ${finalRotation.y}`,
+    `--final-z: ${finalRotation.z}`,
+    `--spin-x: ${spinX}deg`,
+    `--spin-y: ${spinY}deg`,
+    `--spin-z: ${spinZ}deg`,
+  ].join("; ");
+}
+
+function diceCubeMarkup(value) {
+  const faces = [
+    ["front", 1],
+    ["right", 2],
+    ["top", 3],
+    ["bottom", 4],
+    ["left", 5],
+    ["back", 6],
+  ];
+  return `
+    <span class="die-shadow" aria-hidden="true"></span>
+    <span class="die-cube" data-value="${Math.max(1, Math.min(6, Number(value) || 1))}">
+      ${faces.map(([side, faceValue]) => `<span class="die-face die-face-${side}">${diceFaceDots(faceValue)}</span>`).join("")}
+    </span>
+  `;
+}
+
+function diceFaceDots(value) {
+  return Array.from({ length: 9 }, (_, index) => diceDotMap[value]?.includes(index + 1) ? '<i aria-hidden="true"></i>' : "<b></b>").join("");
+}
+
+function diceRollResultText(roll) {
+  if (!Array.isArray(roll.rolls) || !roll.rolls.length) return "Бросок завершен.";
+  const rolled = roll.rolls.reduce((sum, value) => sum + Number(value || 0), 0);
+  const bonus = Number(roll.bonus || 0);
+  if (bonus) return `${roll.rolls.join(" + ")} ${bonus > 0 ? "+" : "-"} ${Math.abs(bonus)} = ${roll.total ?? rolled + bonus}`;
+  return roll.rolls.length > 1 ? `${roll.rolls.join(" + ")} = ${roll.total ?? rolled}` : `${roll.total ?? rolled}`;
+}
+
+function rotationDegrees(value) {
+  return Number.parseFloat(value) || 0;
+}
+
+const diceDotMap = {
+  1: [5],
+  2: [1, 9],
+  3: [1, 5, 9],
+  4: [1, 3, 7, 9],
+  5: [1, 3, 5, 7, 9],
+  6: [1, 3, 4, 6, 7, 9],
+};
+
+const diceCubeRotations = {
+  1: { x: "0deg", y: "0deg", z: "0deg" },
+  2: { x: "0deg", y: "-90deg", z: "0deg" },
+  3: { x: "-90deg", y: "0deg", z: "0deg" },
+  4: { x: "90deg", y: "0deg", z: "0deg" },
+  5: { x: "0deg", y: "90deg", z: "0deg" },
+  6: { x: "0deg", y: "180deg", z: "0deg" },
+};
+
+function diceCountLabel(count) {
+  const value = Math.abs(Number(count) || 0) % 100;
+  const tail = value % 10;
+  if (value > 10 && value < 20) return "кубиков";
+  if (tail === 1) return "кубик";
+  if (tail >= 2 && tail <= 4) return "кубика";
+  return "кубиков";
+}
+
+function renderActions(actions, { diceRoll = null, shakeAction = null } = {}) {
   ui.actions.innerHTML = "";
+  if (diceRoll) {
+    ui.actions.append(createPhoneDiceRollStage(diceRoll, { full: true }));
+    return;
+  }
   if (shakeAction) {
     ui.actions.append(createShakeStage(shakeAction, { compact: true }));
   }
@@ -425,9 +625,15 @@ function renderActions(actions, { shakeAction = null } = {}) {
     return;
   }
 
+  const hasSinglePrimaryAction = actions.length === 1 && isFullControllerPrimaryAction(actions[0]);
   for (const action of actions) {
     const button = document.createElement("button");
-    button.className = `controller-action controller-action-${escapeClassName(action.kind || action.type || "default")}`;
+    button.className = [
+      "controller-action",
+      `controller-action-${escapeClassName(action.kind || action.type || "default")}`,
+      hasSinglePrimaryAction ? "is-full-primary" : "",
+      hasSinglePrimaryAction ? bigButtonToneClass(action) : "",
+    ].filter(Boolean).join(" ");
     button.type = "button";
     button.innerHTML = `
       <b>${escapeHtml(action.label || "Действие")}</b>
@@ -442,8 +648,12 @@ function renderActions(actions, { shakeAction = null } = {}) {
   }
 }
 
-function renderBigButtonAction(player, activePlayer, actions, shakeAction) {
+function renderBigButtonAction(player, activePlayer, actions, shakeAction, diceRoll = null) {
   ui.actions.innerHTML = "";
+  if (diceRoll) {
+    ui.actions.append(createPhoneDiceRollStage(diceRoll, { big: true }));
+    return;
+  }
   const model = bigButtonActionModel(actions);
 
   if (model.type === "rest") {
@@ -795,6 +1005,20 @@ function isRollLikeAction(action) {
   const id = String(action?.id || "");
   const label = String(action?.label || "").trim().toLocaleLowerCase("ru");
   return kind === "roll" || id === "roll" || label.startsWith("бросить");
+}
+
+function isFullControllerPrimaryAction(action) {
+  const kind = String(action?.kind || action?.type || "").toLocaleLowerCase("ru");
+  const id = String(action?.id || "").toLocaleLowerCase("ru");
+  const label = String(action?.label || "").trim().toLocaleLowerCase("ru");
+  return (
+    isRollLikeAction(action) ||
+    kind === "continue" ||
+    id === "continue" ||
+    id === "next" ||
+    label === "далее" ||
+    label.startsWith("далее ")
+  );
 }
 
 function shakeHintText({ canShake, permissionNeeded, permissionDenied, secureContextMissing, sensorUnavailable }) {

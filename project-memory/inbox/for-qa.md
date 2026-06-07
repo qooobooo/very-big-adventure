@@ -1,0 +1,285 @@
+# Inbox For QA 1 / QA 2
+
+For testing tasks related to "Очень Большая Бродилка" in `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure`.
+
+## Open Items
+
+- QA READY 2026-06-07 03:04 - Art/UI handback for `Вольный шаг` field preview button
+  - Task source:
+    - User reported that the `Событие / Вольный шаг` choice popup needs a field-view button.
+  - Changed by Art/UI:
+    - Enabled the existing card-choice field preview flow for explicitly marked choices via `pendingCardChoice.canPreviewField`.
+    - Marked `chooseEventFreeStepAmount()` with `canPreviewField: true`.
+    - Bumped host game cache key to `game.js?v=20260607-0376`.
+  - Expected behavior:
+    - After drawing/applying Event card `Вольный шаг`, the step choice popup shows the normal choices `0..N` plus a full-width `Показать поле` button.
+    - Clicking `Показать поле` hides the popup and lets the player inspect the board.
+    - The main action button changes to `К выбору`.
+    - Clicking `К выбору` returns to the same `Вольный шаг` choice popup with the same available step choices.
+    - Choosing `0` still leaves the player on the current Event cell without re-triggering it.
+    - Choosing `>0` still moves normally and resolves the landing event.
+  - Files changed:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-qa.md`
+    - `project-memory/updates.md`
+  - Checks passed by Art/UI:
+    - `node --check src/game.js`
+    - `git diff --check`
+  - QA request:
+    - Browser-smoke the `Вольный шаг` flow and approve or return rework to Art/UI.
+    - If approved, forward to GD for final approval per Task Lifecycle.
+
+- QA READY 2026-06-07 02:54 - Dev 2 handback for finite decks/discard reshuffle
+  - Status: QA-approved by `QA 1` at 2026-06-07 03:01 and GD-approved at 2026-06-07 03:01.
+  - QA result summary:
+    - static/source checks passed;
+    - isolated execution of current deck helper functions passed finite draw/no-repeat/reshuffle/empty/null/artifact/Shop-low-availability checks;
+    - browser smoke passed for Good, Bad, TADAM, Event, Joe Shop reveal and Event Phase 2 `Вольный шаг`;
+    - no browser console errors observed.
+  - Task:
+    - `ACTIVE DECK SYSTEM 2026-06-07 02:49 - Finite card decks with discard reshuffle`.
+  - Changed:
+    - Added `state.decks` with physical `draw` and `discard` piles for `good`, `bad`, `tadam`, `event`, and `shop`.
+    - New game rebuilds piles from current `cardConfig.*.count`.
+    - Draws now remove physical copies from draw piles; empty draw piles reshuffle discard piles and continue.
+    - If draw and discard are empty, the game logs/shows no available card and continues instead of crashing.
+    - Good/Bad/instant Event cards discard after the full effect resolves.
+    - `event/monster-rage` goes to Event discard after applying the global bonus.
+    - `event/magic-wallet` and future icon Event artifacts stay out of Event discard while owned/in play.
+    - Active TADAM cards stay out of TADAM deck; cards rotated out after the 3-active-card cap go to TADAM discard.
+    - Joe Shop offers draw from the finite Shop deck; unchosen offer cards discard; bought/free/auction-won/owned cards stay out of the deck.
+    - Shop/Auction offers gracefully use fewer cards or no cards when too many cards are owned/out of deck.
+    - Host `src/game.js` cache key bumped to `20260607-0375`.
+  - Files changed by Dev 2:
+    - `src/game.js`;
+    - `index.html`;
+    - `project-memory/updates.md`;
+    - `project-memory/inbox/for-dev.md`;
+    - `project-memory/inbox/for-qa.md`.
+  - Checks passed:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `git diff --check`.
+  - Static proof:
+    - `good`: configured `14`, drew `14` unique physical copies before repeat, then reshuffled discard;
+    - `bad`: configured `6`, drew `6` unique physical copies before repeat, then reshuffled discard;
+    - `tadam`: configured `14`, drew `14` unique physical copies before repeat, then reshuffled discard;
+    - `event`: configured `17`, drew `17` unique physical copies before repeat; Event discard had `16` because `magic-wallet` stayed out;
+    - `shop`: configured `8`, drew `8` unique physical copies before repeat, then reshuffled discard.
+  - Scope notes:
+    - Did not change card counts, ids, titles, descriptions, icons, effect types, board placement, route order, dice math, Event effect behavior, `src/cards.config.js`, or controller protocol.
+    - Preserved Dev 1 Event Phase 2 and Dev 3 count changes.
+  - QA request:
+    - Please run the existing finite-deck checklist below, including browser/regression smoke.
+    - If approved, forward QA-approved result to GD for final approval per Task Lifecycle.
+
+- QA AFTER DEV 2026-06-07 02:49 - Verify finite decks and discard reshuffle:
+  - Status: QA-approved by `QA 1` at 2026-06-07 03:01 and GD-approved at 2026-06-07 03:01.
+  - Wait for Dev handback for `ACTIVE DECK SYSTEM 2026-06-07 02:49 - Finite card decks with discard reshuffle`.
+  - User rule:
+    - When a deck ends, it is shuffled.
+  - Verify covered decks:
+    - `good`;
+    - `bad`;
+    - `tadam`;
+    - `event`;
+    - `shop`.
+  - Expected:
+    - cards draw without replacement from finite piles built from `cardConfig.*.count`;
+    - a card does not repeat before all available physical copies from that deck have been drawn or returned through discard reshuffle;
+    - when draw pile is empty and discard has cards, discard is shuffled into a new draw pile and drawing continues;
+    - if draw and discard are both empty, the game does not crash.
+  - Card lifecycle checks:
+    - `good`, `bad`, and instant `event` cards go to discard after resolving;
+    - `event/monster-rage` goes to Event discard after applying its global bonus;
+    - `event/magic-wallet` stays out of the Event deck while owned and does not duplicate;
+    - active/persistent TADAM cards stay out of the TADAM deck while active;
+    - unchosen Joe Shop offers go to Shop discard;
+    - owned Joe Shop cards stay out of the Shop deck while owned.
+  - Joe Shop offer checks:
+    - multiple-card offers draw from the finite Shop deck without duplicate physical cards in the same offer;
+    - if the Shop draw pile empties, discard reshuffles and the offer continues;
+    - if too many Shop cards are owned/out of deck, the game offers fewer cards gracefully instead of crashing.
+  - Regression smoke:
+    - Good, Bad, TADAM, Event, and Joe Shop back -> face reveal still works;
+    - Event Phase 2 behavior still works after deck lifecycle changes;
+    - no visible JS console errors in checked flows.
+  - If QA approves, send the approved result to GD for final approval per Task Lifecycle.
+
+- QA READY 2026-06-07 02:10 - Dev 3 handback for card deck copy counts:
+  - QA 2 result at 2026-06-07 02:59:
+    - QA-approved and sent to GD for final approval.
+    - Local `src/cards.config.js`, local CSV mirror, and live Google Sheet count column all satisfy the requested count rule.
+    - Expanded deck sizes verified: `good 14`, `bad 6`, `tadam 14`, `event 17`, `shop 8`.
+    - `event/magic-wallet` remains the only verified artifact at `count = 1`; `event/monster-rage` is `count = 2`.
+    - Checks passed: `node --check src/cards.config.js`, `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, `git diff --check`.
+    - Separate note: QA 2 found non-count source sync drift between live Google Sheet and local mirror/config; this was sent to Dev separately and does not block count approval.
+  - Task:
+    - `ACTIVE CARD CONFIG 2026-06-07 - Build real decks with 2 copies per non-artifact card`.
+  - Changed:
+    - Set every non-artifact card in local config to `count = 2`.
+    - Added explicit `count: 2` entries where cards previously relied on implicit/default counts.
+    - Kept artifact `event/magic-wallet` / `Волшебный кошель` at `count = 1`.
+    - Set `event/monster-rage` / `Ярость монстров` to `count = 2` because it is a global Event, not an artifact.
+    - Synced `cards-google-sheet.csv`.
+    - Updated Google Sheet `Cards Config` count column only across tabs `good`, `bad`, `tadam`, `event`, and `shop`.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`;
+    - `cards-google-sheet.csv`;
+    - `project-memory/inbox/for-qa.md`;
+    - `project-memory/updates.md`.
+  - Google Sheet:
+    - Spreadsheet: `Cards Config`, URL `https://docs.google.com/spreadsheets/d/1dv8cOcoY9P1WZOw2UQ-prUccte2BprZMp0DFCSL0pME/edit`.
+    - Updated only column `M` / `count`.
+    - Readback confirmed:
+      - `good` rows 2-8: all `2`;
+      - `bad` rows 2-4: all `2`;
+      - `tadam` rows 2-8: all `2`;
+      - `event` rows 2-10: `2,2,2,2,2,2,2,1,2`;
+      - `shop` rows 2-5: all `2`.
+  - Static count matrix from local config:
+    - `good`: 7 cards, all non-artifact `2`, expanded size `14`;
+    - `bad`: 3 cards, all non-artifact `2`, expanded size `6`;
+    - `tadam`: 7 cards, all non-artifact `2`, expanded size `14`;
+    - `event`: 9 cards, only `magic-wallet` artifact `1`, all other Event cards `2`, expanded size `17`;
+    - `shop`: 4 cards, all non-artifact `2`, expanded size `8`.
+  - Checks passed:
+    - `node --check src/cards.config.js`;
+    - `git diff --check`;
+    - local static matrix found no mismatches.
+  - Scope notes:
+    - Count-only data/config change.
+    - Did not change card ids, titles, descriptions, effect types, amounts, Event logic/effects, board placement, routes, UI, controller protocol, or dice math.
+  - QA request:
+    - Please verify local files and Google Sheet counts first.
+    - If approved, send QA-approved result to GD for final approval per Task Lifecycle.
+
+- QA AFTER DEV 2026-06-07 - Verify card deck copy counts:
+  - Status: QA-approved by `QA 2` at 2026-06-07 02:59 and sent to GD for final approval.
+  - Wait for Dev handback for `ACTIVE CARD CONFIG 2026-06-07 - Build real decks with 2 copies per non-artifact card`.
+  - Verify card counts in:
+    - `src/cards.config.js`;
+    - `cards-google-sheet.csv`;
+    - Google Sheet `Cards Config` if accessible/updated by Dev.
+  - Expected:
+    - every non-artifact card in `good`, `bad`, `tadam`, `event`, and `shop` has `count = 2`;
+    - `event/magic-wallet` remains `count = 1`;
+    - no other card remains `count = 1` unless it is explicitly marked as an artifact.
+  - Confirm `event/monster-rage` has `count = 2` because it is a global Event, not a player artifact.
+  - Confirm no card ids, effect types, descriptions, Event logic, board placement, or route order changed as part of the count task.
+  - If QA approves, send the approved result to GD for final approval.
+
+- QA AFTER DEV 2026-06-07 - Verify Event deck Phase 2 cards:
+  - Status: rework ready for QA from `Dev 1` at 2026-06-07 02:49; re-check Monster Rage persistent indicator before QA approval/GD forwarding.
+  - QA 2 partial result at 2026-06-07 02:59:
+    - Static rework check passed: `#monsterRageIndicator` is present in `index.html`; `src/game.js` wires `ui.monsterRageIndicator`; `renderMonsterRageIndicator()` hides at `+0` and shows `Ярость монстров +N`; `render()` calls it; `resolveEventMonsterRage()` increments `state.eventMonsterRage` and renders.
+    - Static effective-strength check passed: monster labels/tooltips and battle checks use `effectiveMonsterStrength()` / `monsterStrengthText()`.
+    - Browser re-check was not completed by QA 2 because local server bind failed with `listen EPERM 127.0.0.1:5173`, and in-app Browser policy blocked `file://.../index.html`.
+    - QA 2 does not mark Event Phase 2 as QA-approved; browser-capable re-check is still required before GD final approval.
+  - Dev 1 rework handback at 2026-06-07 02:49:
+    - added persistent host indicator element `#monsterRageIndicator` inside the board/map area;
+    - added `renderMonsterRageIndicator()` and calls it from common `render()`;
+    - indicator is hidden at `+0` and shows `Ярость монстров +N` when `state.eventMonsterRage > 0`;
+    - stacking should update the same visible chip to `+2`, `+N`;
+    - added desktop/narrow CSS for `.monster-rage-indicator`;
+    - updated host cache versions in `index.html`.
+  - Dev 1 rework files:
+    - `index.html`
+    - `src/game.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-qa.md`
+  - Dev 1 rework checks passed:
+    - `node --check src/game.js`;
+    - `git diff --check`;
+    - static check found `#monsterRageIndicator`, `.monster-rage-indicator`, and `renderMonsterRageIndicator()` connected.
+  - Re-check request:
+    - apply `Ярость монстров`, wait for toast fade, confirm persistent visible `Ярость монстров +1`;
+    - apply it again, confirm same indicator updates to `+2`;
+    - confirm monster labels/tooltips still show effective base + rage.
+  - QA result at 2026-06-07 02:18:
+    - Not QA-approved yet.
+    - Rework sent to Dev: persistent `Ярость монстров +N` global indicator is missing after the toast fades.
+  - QA coverage already completed:
+    - Static: Event config has all 9 card ids/effect branches present; `eventCards = expandDeck(cardConfig.event)` uses full Event config.
+    - Browser: Event face title/body visible for sampled Phase 1 and Phase 2 cards; no tested Event face text overflow.
+    - Browser: `Вольный шаг` choosing `0` leaves player on Event and does not re-trigger current cell; choosing `1` moves to green and resolves `+3`.
+    - Browser: `Сплочение` loss makes both players lose `5`; win with boosted force gives all players `+10` and top-force player extra `+10`.
+    - Static: `Сплочение` top-force tie calls `resolveOnePlayerTieByDie`.
+    - Browser: `Волшебный кошель` assigns to last player, shows host artifact chip, is separate from Joe Shop cards, grants `+5` at owner turn start, transfers on normal movement overtake, and appears on phone Big Button controller player card.
+    - Browser: `Ярость монстров` applies to visible monster powers/tooltips (`16 -> 17`, `24 -> 25`, `10 -> 11`, `6 -> 7` for `+1`).
+    - Regression browser smoke: Good, Bad, TADAM, and Joe Shop back -> face reveal still works.
+    - Console: no browser console errors observed in tested host/controller flows.
+  - Dev handback:
+    - all 9 Event cards are now eligible to draw via full `cardConfig.event`;
+    - implemented remaining Phase 2 effects: `Вольный шаг`, `Сплочение`, `Волшебный кошель`, `Ярость монстров`;
+    - `Волшебный кошель` is a separate player artifact, not a Joe Shop item;
+    - Magic Wallet uses `assets/icons/artifact_magic_wallet_512.png` on Event card face, host player status, and phone player card;
+    - Magic Wallet owner gets `+5` at turn start and artifact transfers when another player overtakes owner during forward movement;
+    - `Ярость монстров` stacks in `state.eventMonsterRage`, updates visible monster strength labels, and affects board monster battle checks including the final monster gate;
+    - game history and phone snapshot now include artifact/global rage data.
+  - Dev files changed for this handback:
+    - `src/game.js`
+    - `src/controller.js`
+    - `styles.css`
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `index.html`
+    - `controller.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-qa.md`
+  - Dev checks passed:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `node --check src/controller.js`;
+    - `git diff --check`;
+    - static Event-pool check: 9 Event cards, all expected effect types present, no missing types.
+  - Dev browser-smoke limitation:
+    - attempted local browser smoke, but local server bind failed with `PermissionError: [Errno 1] Operation not permitted`;
+    - in-app browser also blocked `localhost`/`127.0.0.1` with `net::ERR_BLOCKED_BY_CLIENT`;
+    - QA browser verification is still required before GD final approval.
+  - Verify all 9 Event cards are now eligible to draw and no Event card is a silent no-op.
+  - Smoke the new cards:
+    - `Вольный шаг`: choosing `0` does not re-trigger the current cell; choosing `>0` moves normally and resolves landing.
+    - `Сплочение`: team win grants all players `+10` and one top-force player extra `+10`; team loss makes all players lose `5`; top-force tie uses 1d6 tie-break.
+    - `Волшебный кошель`: artifact icon appears, last player receives it, owner gets `+5` at turn start, overtake transfers it, and it is not treated as a Joe Shop card.
+    - `Ярость монстров`: global `+N` indicator appears, multiple copies stack, and effective monster strength/labels/battle checks include the bonus.
+  - Also smoke phone/controller display for the wallet artifact chip if Dev touches controller snapshot/UI.
+
+- QA WORKING RULE 2026-06-07:
+  - Send reproducible implementation tasks to Dev immediately when QA finds a bug/regression or a checked issue needs development work.
+  - Do not wait for extra approval unless the user explicitly says not to send tasks yet.
+  - Keep the existing QA safety rule: do not edit gameplay code without a direct request.
+
+- QA AFTER DEV 2026-06-07 - Verify field2 Event-cell placement from black-exclamation screenshot:
+  - Status: QA-approved at 2026-06-07 02:00 and sent to GD for final approval.
+  - Result summary:
+    - all 9 listed field2 cells render as Event with gray backing/icon/title;
+    - nearby non-listed sample cells remained unchanged;
+    - newly changed `8-13` landing opened normal Event back -> face reveal;
+    - no host console errors in the tested flow.
+  - Wait for Dev handback for the board update.
+  - Check `field2` has Event cells at:
+    - `9-2`
+    - `3-4`
+    - `10-4`
+    - `5-6`
+    - `10-9`
+    - `2-10`
+    - `10-12`
+    - `8-13`
+    - `4-14`
+  - Expected:
+    - each listed cell renders title/tooltip `Событие` and Event icon `assets/icons/event_quest_512.png`;
+    - nearby non-listed cells still show their old types;
+    - route order did not change;
+    - landing on at least one newly changed Event cell opens the normal Event card reveal.
+  - Also confirm Event Phase 1 draw pool is still limited to implemented cards; no Phase 2 no-op cards should be drawn.
+
+- Own smoke checks, regression checks, reproduction notes, and bug reports for Dev roles.
+- Verify Dev handbacks in the browser when gameplay or UI behavior changed.
+- Put implementation fixes for Dev in `project-memory/inbox/for-dev.md`.
+- Keep QA notes concise enough for Dev to reproduce without rereading all chat history.
+- Do not edit local Codex `.jsonl` session files.
