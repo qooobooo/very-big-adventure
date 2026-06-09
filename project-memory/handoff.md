@@ -1,6 +1,6 @@
 # Project Handoff
 
-Last updated: 2026-06-07 by Important.
+Last updated: 2026-06-09 by GD.
 
 ## Очень Большая Бродилка
 
@@ -33,11 +33,14 @@ Key files:
 Current important state:
 
 - Required task lifecycle for implementation/design tasks:
-  1. GD creates an implementation-ready task for the executor.
-  2. The executor completes it, writes a handback, updates `updates.md`, and sends it to QA.
-  3. QA approves first or sends reproducible rework back to the executor.
-  4. GD gives final approval only after QA approval, or sends clear rework back to the executor.
-  5. A task is not final until GD explicitly approves it.
+  1. For planning/executing multi-role work, GD routes tasks through specialists by default: Dev for implementation, Art / UI for visual assets/UI polish, and QA only when the user explicitly asks.
+  2. GD should not directly implement cross-role plans unless the user explicitly asks GD to do the implementation personally or the change is an urgent tiny documentation/memory edit.
+  3. GD creates an implementation-ready task for the executor.
+  4. Default pipeline: the executor completes it, writes a handback, updates `updates.md`, and sends it to GD as a context note only.
+  5. GD does not verify or approve handbacks by default; GD only keeps them in mind.
+  6. GD approval/checking/rework happens only when the user explicitly asks for review/approval/checking.
+  7. QA is skipped by default and is involved only when the user explicitly asks, for example says `привлеки QA`.
+  8. If QA is explicitly requested, use the QA-gated pipeline: executor -> QA approval/rework -> GD context note, unless the user also asks GD for approval.
 - Google Sheet `Cards Config` is the canonical card-edit source:
   `https://docs.google.com/spreadsheets/d/1dv8cOcoY9P1WZOw2UQ-prUccte2BprZMp0DFCSL0pME/edit`
 - Sheets/tabs: `good`, `bad`, `tadam`, `event`, `shop`. Card names use `title`; Good-card face text uses `description`.

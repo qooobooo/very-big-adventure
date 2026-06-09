@@ -4,6 +4,704 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- DONE TADAM UI 2026-06-09 03:00 - New TADAM appears in first slot:
+  - Owner: `Dev 2`.
+  - Dispatch status: implemented by `Dev 2` at 2026-06-09 03:03; handback sent to GD as context note only.
+  - User request:
+    - Each new TADAM card appears in the first slot.
+    - If the first slot is occupied, all visible TADAM cards move one slot to the right.
+  - Current source:
+    - `drawTadamCard(...)` appends new cards with `state.tadams.push(card)`.
+    - When more than 3 cards are active, the oldest card is discarded with `state.tadams.shift()`.
+    - `visibleTadamCards()` currently returns `state.tadams.slice(-3)`, so visual order is oldest-left to newest-right.
+  - Required visual behavior:
+    - Slot 1 (left) always shows the newest visible TADAM card.
+    - Slot 2 shows the previous TADAM card.
+    - Slot 3 shows the third-newest TADAM card.
+    - When a fourth TADAM is played, the oldest visible card leaves/discards as today.
+    - Example visual sequence:
+      - after A: `[A, empty, empty]`;
+      - after B: `[B, A, empty]`;
+      - after C: `[C, B, A]`;
+      - after D: `[D, C, B]`, A is discarded/deactivated.
+  - Implementation guidance:
+    - Prefer changing only the visual ordering helper, for example `visibleTadamCards()`, to return the active cards newest-first.
+    - Preserve the current `state.tadams` storage/discard lifecycle unless a cleaner local pattern requires otherwise.
+    - Do not change TADAM card effects, counts, deck lifecycle, discard reshuffle, card text, or active effect semantics.
+    - Be careful not to change which card is discarded when the fourth TADAM appears: the oldest active card should still leave.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Source/static check: `visibleTadamCards()` or equivalent renders newest-first.
+    - Browser smoke if environment allows:
+      - Play/draw 1 TADAM: it appears in left slot.
+      - Play/draw 2nd TADAM: new card appears left, first card moves center.
+      - Play/draw 3rd TADAM: new card appears left, earlier cards shift right.
+      - Play/draw 4th TADAM: new card appears left, previous two shift right, oldest is gone.
+      - Active TADAM effects still apply as before.
+      - No console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Send GD a context note only; no QA unless the user explicitly asks.
+
+- DONE EVENT CARD 2026-06-09 02:52 - Remove extra top-damage reward from `Сплочение`:
+  - Owner: `Dev 2`.
+  - Dispatch status: implemented by `Dev 2` at 2026-06-09 02:57; handback sent to GD as context note only.
+  - User request:
+    - Change `Сплочение` text from:
+      - `Общий бой с монстром. При победе все игроки получают 10 монет, при проигрыше все теряют 5 монет. Игрок, который нанес больше всего урона, получает еще 10 монет`
+    - To:
+      - `Общий бой с монстром. При победе все игроки получают 10 монет, при проигрыше все теряют 5 монет`
+  - Current source:
+    - Deck: `event`.
+    - id: `unity`.
+    - title: `Сплочение`.
+    - effect type: `event-unity`.
+    - Current implementation grants all players +10 on team win and grants an extra +10 to the top-force player after a tie-break.
+  - Required card data:
+    - Keep id `unity`.
+    - Keep deck `event`.
+    - Keep title `Сплочение`.
+    - Keep count `2`.
+    - Keep effect type `event-unity`.
+    - Set player-facing description to exactly:
+      - `Общий бой с монстром. При победе все игроки получают 10 монет, при проигрыше все теряют 5 монет`
+    - No final period.
+  - Required behavior:
+    - Remove the extra top-damage reward.
+    - On team win: every player gets exactly 10 coins.
+    - No player gets an additional 10 coins for best/top damage.
+    - Do not run top-force tie-break for this Event anymore.
+    - On team loss: every player still loses 5 coins.
+    - Keep monster strength/target, battle HUD, rolling, `Зелье ярости`, and `Сглаз` interactions unchanged.
+  - Source sync:
+    - Update canonical Google Sheet `Cards Config`, tab `event`.
+    - Sync local sources:
+      - `src/cards.config.js`;
+      - `cards-google-sheet.csv`.
+    - Update `index.html` / import cache keys if current app pattern requires it.
+  - Constraints:
+    - Do not change other Event cards, battle HUD layout, dice math, deck lifecycle, board placement, or card counts.
+    - Preserve recent Art/UI layout changes and unrelated local changes.
+    - Preserve untracked `outputs/`.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static check: local config, CSV, and Google Sheet row `event/unity` have the new description and no final period.
+    - Static search: player-facing `unity` / `Сплочение` text no longer mentions `лучший удар`, `больше всего урона`, `нанес больше всего`, or `получает еще 10`.
+    - Source check: `resolveUnityEvent(...)` no longer awards top-player extra 10 and no longer runs top-force tie-break.
+    - Browser smoke if environment allows:
+      - Force/reveal `Сплочение`.
+      - On a team win, all players receive +10 and no extra +10 is awarded.
+      - On a team loss, all players lose 5.
+      - Battle HUD still shows target, team total, player results, and final outcome.
+      - No console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Send GD a context note only; no QA unless the user explicitly asks.
+
+- DONE BAD CARD 2026-06-09 02:47 - Change `give5` to chosen recipient:
+  - Owner: `Dev 2`.
+  - Dispatch status: implemented by `Dev 2` at 2026-06-09 02:53; handback sent to GD as context note only.
+  - User request:
+    - Change card text from `Отдай 5 монет игроку с наименьшим количеством монет` to `Выбери игрока и отдай ему 5 монет`.
+  - Current source:
+    - Deck: `bad`.
+    - id: `give5`.
+    - Current title/description: `Отдай 5 монет игроку с наименьшим количеством монет`.
+    - Current effect type: `give-poorest`.
+    - Current amount: `5`.
+  - Required card data:
+    - title: `Выбери игрока и отдай ему 5 монет`.
+    - description: `Выбери игрока и отдай ему 5 монет`.
+    - Keep id `give5`.
+    - Keep deck `bad`.
+    - Keep count `2`.
+    - Keep amount `5`.
+    - Use a clear new effect type, suggested: `give-chosen-player`.
+  - Required behavior:
+    - When this Bad card resolves, the active player chooses another player.
+    - Self must not be selectable.
+    - The active player gives up to 5 coins to the chosen player.
+    - If active player has fewer than 5 coins, transfer only available coins.
+    - If there are no other players, do nothing with a clear log.
+    - Record effect received for the chosen target when any coins are transferred.
+    - Log/toast should name the chosen target and amount transferred.
+  - UX/bot behavior:
+    - Use existing target-choice prompt style where possible.
+    - Good card `steal5` / effect `steal-chosen-player` is the closest reference, but reverse the transfer direction.
+    - For bot active player, choose a sensible target automatically. Recommended MVP: choose the opponent with the fewest coins, tie by existing bot choice scoring or stable order if no local pattern exists.
+  - Source sync:
+    - Update canonical Google Sheet `Cards Config`, tab `bad`.
+    - Sync local sources:
+      - `src/cards.config.js`;
+      - `cards-google-sheet.csv`.
+    - Update `index.html` / import cache keys if current app pattern requires it.
+  - Constraints:
+    - Do not change other Bad cards, Good `steal5`, Event `Равновесие`, `poorestOpponent(...)` helper, deck lifecycle, board placement, or card counts.
+    - Preserve recent Art/UI layout changes and unrelated local changes.
+    - Preserve untracked `outputs/`.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static check: local config, CSV, and Google Sheet row `bad/give5` have the new title/description, amount `5`, count `2`, and no final period.
+    - Static search: no player-facing text for `give5` still says `игроку с наименьшим количеством монет`.
+    - Browser smoke if environment allows:
+      - Reveal/draw `give5`.
+      - Choice popup lists other players and excludes active player.
+      - Choosing a target transfers up to 5 coins from active player to that target.
+      - Active player with fewer than 5 coins transfers only available coins.
+      - Bot can resolve the card without blocking.
+      - No console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Send GD a context note only; no QA unless the user explicitly asks.
+
+- DONE BLACK MARKET UI 2026-06-09 02:42 - Show all options even when unaffordable:
+  - Owner: `Dev 2`.
+  - Dispatch status: implemented by `Dev 2` at 2026-06-09 02:48; handback sent to GD as context note only.
+  - User request:
+    - In `Черный рынок`, display all purchase variants even when the player does not have enough coins.
+  - Current issue:
+    - `blackMarketChoices(player)` only pushes affordable options, so expensive deals disappear from the choice UI.
+  - Required behavior:
+    - Always show these three deal options:
+      - `Карта Лавки Джо`: cost `5`, reward `Лавка Джо + Событие`.
+      - `Тайная тренировка`: cost `10`, reward `+1 к силе + Событие`.
+      - `Зелье ярости`: cost `15`, reward `+10 к следующему монстру`.
+    - If the player has enough coins and the option is otherwise valid, it is selectable and works exactly as today.
+    - If the player does not have enough coins, show the option as unavailable/disabled, not hidden.
+    - Unavailable option note should clearly say how much is missing, for example `Не хватает 3 монет`.
+    - The `Уйти` option remains selectable.
+    - Do not allow an unaffordable option to be selected by human UI, phone UI, or bot auto-choice.
+  - Special case:
+    - `Зелье ярости` may also be unavailable because the player already has an active next-monster bonus.
+    - In that case still show it disabled with a clear note, for example `Зелье уже активно`.
+  - Implementation guidance:
+    - Prefer extending the existing choice object/UI pattern with a disabled/unavailable flag if one exists.
+    - If no disabled choice pattern exists, implement the smallest local pattern needed for `chooseCardAction` to render disabled choices and ignore clicks/auto-choice on them.
+    - Keep bot scoring from choosing unavailable `black-market` options.
+  - Constraints:
+    - Do not change Black Market costs, rewards, or balance.
+    - Do not change card configs, Google Sheet, CSV, board placement, or other fields.
+    - Preserve recent Art/UI card-text layout changes and cache keys; bump only the needed host cache key if JS/CSS changes require it.
+    - Preserve unrelated local changes and untracked `outputs/`.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source check: all three Black Market deals are always present in the choices list.
+    - Browser smoke if environment allows:
+      - Player with 0 coins sees all three deals disabled plus `Уйти`.
+      - Player with 5 coins can select only the 5-cost deal; 10/15 are disabled.
+      - Player with 10 coins can select 5/10; 15 is disabled.
+      - Player with 15+ coins can select all money-affordable deals unless `Зелье ярости` is already active.
+      - Disabled choices cannot be clicked/selected.
+      - Bot does not choose disabled deals.
+      - No console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Send GD a context note only; no QA unless the user explicitly asks.
+
+- DONE BOARD TWEAK 2026-06-09 02:24 - Restore Joe Shop at `field2 6-7`:
+  - Owner: `Dev 2`.
+  - Dispatch status: implemented by `Dev 2` at 2026-06-09 02:26; handback sent to GD as context note only.
+  - User request:
+    - `Лавка Джо` disappeared from the marked cell; restore it.
+  - GD coordinate read:
+    - The marked cell is `field2 6-7`.
+    - It was changed from `shop` to `green` during the latest screenshot placement sync.
+  - Required change:
+    - Set `boardConfigs.field2.events["6-7"]` to `"shop"`.
+    - Do not change route/path order.
+    - Do not change adjacent cells.
+    - Do not change Joe Shop deck/cards or Joe Auction.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Static check: `field2 6-7` is `shop`.
+    - Browser smoke if environment allows: `field2 6-7` renders as `Лавка Джо` with the shop icon/tooltip and no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Send GD a context note only; no QA unless the user explicitly asks.
+
+- DONE BOARD TWEAK 2026-06-09 02:21 - Change `field2 4-14` to Good:
+  - Owner: `Dev 2`.
+  - Dispatch status: implemented by `Dev 2` at 2026-06-09 02:22; handback sent to GD as context note only.
+  - User request:
+    - Change the field indicated by the screenshot arrow to `Хорошо`.
+  - GD coordinate read:
+    - The arrow points to bottom-row `field2 4-14`.
+    - Current code has `4-14: "event"`.
+  - Required change:
+    - Set `boardConfigs.field2.events["4-14"]` to `"good"`.
+    - Do not change route/path order.
+    - Do not change adjacent bottom-row cells.
+    - Do not change Event deck/cards or Good deck/cards.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Static check: `field2 4-14` is `good`.
+    - Browser smoke if environment allows: `field2 4-14` renders as `Хорошо` with the Good icon/tooltip and no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Send GD a context note only; no QA unless the user explicitly asks.
+
+- DONE FIELD 2026-06-09 02:05 - Add `Игра Джо` field:
+  - Owner: `Dev 2`.
+  - Dispatch status: implemented by `Dev 2` at 2026-06-09 02:13; handback sent to GD as context note only.
+  - Art dependency:
+    - `Art / UI 2` owns the tile icon task.
+    - Final asset path: `assets/icons/joe_game_512.png`.
+    - You may start mechanics/code now, but final handback should wire this PNG after Art/UI 2 handback or after the asset exists locally.
+  - User request:
+    - Add new field: `Игра Джо`.
+    - Rule text: `Выбери 2 цифры от 1 до 6 для себя и по одной для каждого другого игрока. Брось кубик, если выпала цифра присвоенная какому-то игроку, он получает 2 Лавки Джо`.
+    - Place it on `field2 11-9`, replacing current `Большой привал`.
+  - Board/config changes:
+    - Add new event type: `joe-game`.
+    - In `boardConfigs.field2.events`, replace `11-9: "big-rest"` with `11-9: "joe-game"`.
+    - Do not change route order or other cells.
+    - `Большой привал` must still work on remaining cells `0-3` and `14-4`.
+  - Additional `field2` placement sync from the latest user screenshot:
+    - After adding `Игра Джо`, update the other changed field cells to match the screenshot.
+    - Keep route/path order unchanged.
+    - Expected event assignments:
+      - `0-0`: `very-bad` (was ordinary `bad`).
+      - `6-2`: `event` (was `dice-fortune`).
+      - `9-2`: `dice-fortune` (was `event`).
+      - `6-7`: `green` (was `shop`).
+      - `9-9`: `big-rest` (was `bad`).
+      - `11-9`: `joe-game` (was `big-rest`).
+    - Leave all other `field2` event cells unchanged unless the code already has one of these values from a parallel handback.
+  - Icon/title/field text:
+    - Add `eventIcons["joe-game"]` using `assets/icons/joe_game_512.png`.
+    - Add title/tooltip:
+      - `Игра Джо — выбери 2 цифры себе и по 1 каждому другому игроку. Брось кубик: игрок с выпавшей цифрой получает 2 карты Лавки Джо`
+    - Add field-effect text:
+      - title: `Игра Джо`
+      - effect: `Выбери цифры. Выпавший игрок получает 2 Лавки Джо`
+    - Add history field label if field labels are recorded: `Игра Джо`.
+  - CSS:
+    - Add `.tile-joe-game` to all tile groups that give gray backing, border, tabletop styling, and icon-tile treatment to fields like `joe-auction`, `black-market`, `very-bad`.
+    - Add `.tile-icon-joe-game` sizing if needed for the new icon.
+  - Gameplay:
+    - When a player lands on `Игра Джо`, the active player assigns unique dice numbers from 1 to 6.
+    - Active player receives 2 different numbers.
+    - Each other player receives 1 different number.
+    - With 4 players, 5 numbers are assigned and 1 number remains empty.
+    - Numbers cannot repeat.
+    - Then roll 1 die.
+    - If the rolled number is assigned, that assigned player receives 2 physical Shop deck cards as owned `Лавка Джо` items.
+    - If only 1 Shop card is available, give 1 and log/show that only 1 was available.
+    - If 0 Shop cards are available, give none and log/show that no `Лавка Джо` cards are available.
+    - If the rolled number is unassigned, nobody receives a reward and the result UI/log must say so clearly.
+    - Use the existing finite Shop deck / discard reshuffle lifecycle; do not bypass shop deck helpers.
+  - Human UI flow:
+    - Use sequential prompts or an equivalent clear UI:
+      - choose first number for self;
+      - choose second number for self from remaining numbers;
+      - for each other player in turn order, choose one remaining number.
+    - Before the die roll, show a summary of assignments.
+    - Use existing choice prompt patterns where possible.
+  - Bot behavior:
+    - If the active player is a bot, auto-assign random unique numbers.
+    - Assignment order:
+      - two numbers to active bot first;
+      - then one number to each other player in table order starting after the active player.
+    - No strategic weighting needed for MVP; random unique assignment is enough.
+  - Roll UI:
+    - Use the existing random-choice roll context pattern used by `Кубик удачи` / `Портал хаоса`.
+    - Show:
+      - kicker/reason: `Игра Джо`;
+      - participants and their assigned numbers;
+      - die result;
+      - winner and reward, or empty-number/no-reward result.
+  - Constraints:
+    - Do not change ordinary `Лавка Джо`, `Аукцион Джо`, Shop card config, Shop card prices, or board route order.
+    - Do not involve QA unless the user explicitly asks.
+    - Preserve unrelated local changes and untracked `outputs/`.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static check: `field2 11-9` is `joe-game`.
+    - Static check: no stale `11-9: "big-rest"`.
+    - Static check: `field2` placements match the additional screenshot sync list:
+      - `0-0 very-bad`;
+      - `6-2 event`;
+      - `9-2 dice-fortune`;
+      - `6-7 green`;
+      - `9-9 big-rest`;
+      - `11-9 joe-game`.
+    - Browser smoke if environment allows:
+      - `field2 11-9` shows `Игра Джо` icon and tooltip.
+      - Human flow assigns 2 self numbers and 1 per other player, without duplicates.
+      - Roll assigned to active player gives active player 2 Shop cards.
+      - Roll assigned to another player gives that player 2 Shop cards.
+      - Roll on empty number gives no reward.
+      - Bot active player auto-resolves assignment and roll.
+      - No console errors.
+    - Regression:
+      - ordinary `Лавка Джо`, `Аукцион Джо`, and existing free Shop-card rewards still use finite Shop deck correctly.
+      - `Большой привал` still works on cells `0-3` and `14-4`.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Send GD a context note only; no GD approval or QA by default.
+
+- DONE FIELD RULE/TEXT SYNC 2026-06-09 01:20 - Align special field names, rules, and text with reference sheet:
+  - Owner: `Dev 2`.
+  - Dispatch status: implemented by `Dev 2` at 2026-06-09 01:32; handback sent to GD as context note only.
+  - User request:
+    - Compare the special field rows from the provided reference screenshot.
+    - Some rows changed formatting, some changed rule, some changed name.
+    - Bring all listed fields to the exact reference view.
+  - Important:
+    - This is not only a copy/text cleanup. Several rows require rule changes.
+    - Keep internal event ids unless a change is truly required. Prefer changing user-facing labels/text/rules around existing ids.
+    - Preserve unrelated local changes and untracked `outputs/`.
+  - Fields to align:
+    - `enemy` / `Враг`:
+      - Name: `Враг`.
+      - Field effect/rule text: `Сразись с врагом`.
+      - Do not change monster door/battle mechanics unless needed for wording.
+    - `dice-fortune` / `Кубик удачи`:
+      - Rule text: `Кинь кубик 6 раз, получи 10 монет за каждую 6, походи на 10 шагов назад за каждую 1`.
+      - Current code uses 6 dice, `1 = -10`, but reward is currently `20`; change reward back to `10`.
+      - Update all prompt/result/tooltip/field-effect text to match the new reward and screenshot wording.
+      - Static search after change: no `Кубик удачи` player-facing text should still say `+20`.
+    - `pay-double` / coin-bag x2 field:
+      - Rule text: `Удвой свои монеты`.
+      - Keep/restore the simple behavior: double the player's current coins without charging 5 coins.
+      - Do not add an insufficient-coins branch or a 5-coin cost.
+      - Ensure tooltip/field-effect/log/prompt wording does not say `Заплати 5`.
+    - `vs`:
+      - Rule text: `Все игроки скидывают по 10 монет, затем между ними происходит битва. Игрок с наибольшей силой забирает все скинутые монеты`.
+      - Preserve current VS battle flow unless it contradicts this text.
+      - Update tooltip/field-effect/log/prompt wording where currently shortened.
+    - `very-bad` / `Очень Плохо`:
+      - Name: `Очень Плохо`.
+      - Rule text: `Возьми 3 карты "Плохо"`.
+      - Current working slice already draws 3 Bad cards; align capitalization/quotes/tooltip/field-effect text.
+    - `chaos-portal` / `Портал хаоса`:
+      - Name: `Портал хаоса`.
+      - Rule text exactly as reference:
+        - `Игрок бросает кубик:`
+        - `1-2: Назад к ближайшему монстру/порталу;`
+        - `3-4: К ближайшей Лавке Джо;`
+        - `5: К ближайшему Хорошо;`
+        - `6: Вперед к ближайшему монстру/порталу.`
+      - Current rule for `6` is player choice; change it to automatic forward teleport to the nearest monster/portal.
+      - Current `1-2` says backward to monster; update behavior/text to nearest backward monster/portal if feasible.
+      - Treat “портал” as an open monster portal / portal-gate target if the current code already has a reliable representation for opened portals. If there is ambiguity, implement the closest safe version and document the exact interpretation in handback.
+      - Update bot scoring if the outcome profile changes materially.
+    - `big-rest`:
+      - User-facing name must be `Большой привал`, not `Привал`.
+      - Rule text exactly as reference:
+        - `Выбери:`
+        - `Восстановиться: +10 монет;`
+        - `Потренироваться: +1 силе;`
+        - `Ускориться: +2 к шагам.`
+      - Keep current rewards `+10 монет`, `+1 сила`, `+2 шаги`.
+      - Update all player-facing labels/logs/prompts/tooltips/history field labels from `Привал` to `Большой привал`.
+    - `joe-auction` / `Аукцион Лавки Джо`:
+      - Rule text exactly as reference:
+        - `Открываются 3 карты Лавки Джо.`
+        - `Все игроки, начиная с активного игрока делают ставки монетами, либо пасуют.`
+        - `Последний оставшийся игрок забирает все 3 карты Лавка Джо. Остальные игроки забирают свои поставленные монеты`
+      - Current behavior opens 3 cards, but winner chooses one card. Change winner reward to all 3 revealed Shop cards.
+      - Preserve/ensure losers do not pay / get their bid back. If current implementation only charges winner at the end, that is acceptable and should be reflected in handback.
+      - Ensure bidding order starts from the active player, then continues through players in table order.
+      - Update prompts/logs/tooltips/field-effect text.
+      - Update bot choice/value logic because the prize is now 3 cards, not 1.
+    - `black-market` / `Черный рынок`:
+      - Rule text exactly as reference:
+        - `Можешь купить:`
+        - `Заплати 5, получи карту Лавки Джо и карту Событие;`
+        - `Заплати 10, получи +1 к силе и карту Событие;`
+        - `Заплати 15, получи +10 к силе в следующей битве с монстром`
+      - Current behavior gives no Event card on the 5/10 options; change behavior so:
+        - 5-cost option gives 1 Shop card and 1 Event card;
+        - 10-cost option gives permanent +1 strength and 1 Event card;
+        - 15-cost option stays +10 for next monster battle.
+      - Update prompts/logs/tooltips/field-effect text and bot scoring for the added Event-card value.
+  - Text/formatting expectations:
+    - Match the screenshot wording and capitalization for these field rows.
+    - These are field-rule texts, not card texts; the card no-final-period rule does not apply unless the text is reused on cards.
+    - Keep text readable in the host field-effect panel and tooltip. If exact multiline formatting is not possible in tooltip, use the same wording in one line without changing rule meaning.
+  - Files likely involved:
+    - `src/game.js`;
+    - `index.html` cache key if JS changes;
+    - any local field/reference CSV or sheet mirror if such a source exists for these field rows.
+  - Do not touch:
+    - Card deck text/config unless directly needed by the field behavior;
+    - board route/cell placement;
+    - `Очень Плохо` icon/art task owned by Art/UI;
+    - unrelated Event/Good/Bad/TADAM/Shop card behavior.
+  - Verification:
+    - `node --check src/game.js`;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - Static search for old/stale player-facing field text:
+      - `Кубик удачи` should not say `+20`;
+      - `big-rest` user-facing text should not say standalone `Привал` where the field name is intended;
+      - `Портал хаоса` should not advertise `6: выбор`;
+      - `Аукцион Лавки Джо` should not say winner chooses one card / право выбрать карту / one-card prize;
+      - `Черный рынок` 5/10 options should mention and grant `Событие`.
+    - Browser smoke if environment allows:
+      - field-effect panel/tooltips for all listed fields match the reference;
+      - `Кубик удачи` gives 10 coins per rolled 6;
+      - `pay-double` doubles coins without charging;
+      - `Портал хаоса` roll 6 goes forward to nearest monster/portal automatically;
+      - `Аукцион Лавки Джо` winner receives all 3 cards;
+      - `Черный рынок` 5/10 options include Event card draw;
+      - no console errors.
+  - Task lifecycle:
+    - Current pipeline: send handback to GD as context only. Do not involve QA unless the user explicitly asks.
+
+- DEV PIPELINE RULE 2026-06-09 01:10 - GD routes implementation through Dev:
+  - For future planning and plan execution, GD must send implementation work to Dev specialists by default.
+  - GD should not directly implement cross-role plans unless the user explicitly asks GD to implement personally or the change is an urgent tiny documentation/memory edit.
+  - Dev handbacks still follow the current pipeline: send to GD as context only, no QA unless the user explicitly asks.
+
+- CONTEXT 2026-06-09 01:08 - `Очень Плохо` field vertical slice:
+  - Status: GD implemented a working slice directly by mistake after reading `PLEASE IMPLEMENT THIS PLAN` too literally.
+  - Current implementation files:
+    - `src/game.js`;
+    - `styles.css`;
+    - `index.html`;
+    - `assets/icons/very_bad_512.png`;
+    - `project-memory/updates.md`.
+  - Current behavior:
+    - New cell type `very-bad`;
+    - `field2` cells `8-7`, `9-7`, `10-7`;
+    - title `Очень Плохо`;
+    - effect text `возьми 3 карты Плохо`;
+    - landing draws/resolves 3 central `Плохо` cards sequentially;
+    - bot scoring treats it as roughly triple Bad risk.
+  - Art/UI follow-up:
+    - Art/UI has an active task to review or replace `assets/icons/very_bad_512.png` as final art.
+  - Dev action:
+    - No Dev work is requested right now unless the user explicitly asks for a rework.
+    - Do not duplicate this task or overwrite the current implementation without a new instruction.
+
+- ACTIVE GOOD CARD 2026-06-09 00:34 - Add `Двойное Плохо` next-bad extra draw card:
+  - Owner: `Dev 2`.
+  - Dispatch status: implemented by `Dev 2` at 2026-06-09 00:40; handback sent to GD as context note only.
+  - User request:
+    - Add a Good card:
+      - `Отдай эту карту любому игроку, в следующий раз, когда он берет карту "Плохо", он берет ещё одну`
+  - Proposed card identity:
+    - Deck: `good` / `Хорошо`.
+    - id: `next-bad-extra-draw`.
+    - title: `Двойное Плохо`.
+    - description: `Отдай эту карту любому игроку. В следующий раз, когда он берет карту Плохо, он берет ещё одну`.
+    - effect type: `give-next-bad-extra-draw` or another clear local name.
+    - count: `2` because this is not an artifact.
+  - Required behavior:
+    - When the Good card is played, the active player chooses any other player and gives them this card as a pending one-time effect.
+    - The receiving player keeps a visible/status-tracked pending effect until it triggers.
+    - The next time that player takes/draws a card from the `Плохо` deck, they must draw and resolve one additional `Плохо` card immediately after the first one.
+    - After the extra draw is triggered, discard/remove the pending `Двойное Плохо` effect.
+    - If several copies of this pending effect are on the same player, resolve one copy per Bad draw event unless an existing local pending-card pattern strongly suggests another safer behavior; document the choice in handback.
+    - If the extra Bad card itself creates another Bad draw flow in the future, avoid infinite loops; this card should add exactly one additional Bad card per pending copy.
+  - UX/status expectations:
+    - Use the existing pattern for `Сглаз` / `next-battle-minus3` where possible:
+      - target choice popup;
+      - player status/card chip;
+      - log/toast when given;
+      - log/toast when triggered and discarded.
+    - Player-facing text must not end with a final period.
+    - If the UI needs a compact chip label, suggested: `Двойное Плохо`.
+  - Source sync:
+    - Update canonical Google Sheet `Cards Config`, tab `good`.
+    - Sync local sources:
+      - `src/cards.config.js`;
+      - `cards-google-sheet.csv`.
+    - Update `index.html` / import cache keys if the current app pattern requires it.
+  - Constraints:
+    - Do not change existing Bad card effects, Good `Сглаз`, deck lifecycle, discard reshuffle, TADAM red-field behavior except where it naturally draws Bad, board routes, dice math, shop cards, Event cards, or bot AI beyond safe generic handling if bots receive/use the card.
+    - Preserve unrelated local changes and untracked `outputs/`.
+  - Suggested implementation notes:
+    - Look at `give-next-battle-penalty` / `nextBattlePenaltyStatus(...)` and reuse the pending-effect style.
+    - Hook the trigger at the central Bad-card draw/apply path so it works for:
+      - landing on `Плохо`;
+      - TADAM red-field draw-Bad effect;
+      - any other current/future draw from deck `bad`.
+    - Make sure the original Bad card is fully resolved in a sane order before/while resolving the extra one, without double-discarding the pending Good card.
+  - Verification:
+    - `node --check src/game.js`;
+    - `node --check src/cards.config.js`;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - Static check: card exists in `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `good`, count `2`, no final period.
+    - Browser smoke:
+      - Draw/use `Двойное Плохо`;
+      - choose another player;
+      - chosen player receives visible pending effect;
+      - chosen player later draws a `Плохо` card and then exactly one additional `Плохо` card;
+      - pending effect disappears after triggering;
+      - no console errors.
+    - Regression:
+      - `Сглаз` next-battle penalty still works and discards after the next battle;
+      - ordinary Bad draw without pending effect still draws exactly one Bad card.
+  - Task lifecycle:
+    - New default pipeline: after implementation, send handback to GD as a context note only. Do not wait for GD approval and do not involve QA unless the user explicitly asks.
+
+- ACTIVE EVENT CARD UI 2026-06-09 00:10 - Event card faces must show exact config descriptions:
+  - Owner: `Art/UI` handback; `Dev 3` fallback not needed unless clipping is still reported.
+  - Status: complete; Art/UI handback received and GD-approved at 2026-06-09 00:16.
+  - GD approval notes:
+    - `eventCardMarkup(...)` now uses `cardDisplayText(card)` and renders title separately from description.
+    - Event descriptions are split into sentence lines without losing text; static round-trip check passed for all `event` descriptions.
+    - Live browser reveal checked `Портальный обмен`: face text matched config and all lines were visible.
+    - Direct live reveal of `Волшебный кошель` was not forced because generated preview was blocked by browser URL policy and random Event draw did not produce it quickly.
+    - Approved because the verified source/render path is shared by all Event cards and the CSS specificity/clipping issue was addressed.
+  - User report:
+    - Event card face text differs from config / does not show the full configured text.
+    - Example screenshot: `Волшебный кошель` card face shows only:
+      - `Последний игрок по маршруту получает артефакт. В начале своего хода владелец получает 5 [coin]`
+    - Expected configured text from `src/cards.config.js`:
+      - `Последний игрок по маршруту получает артефакт. В начале своего хода владелец получает 5 монет. Если другой игрок обгоняет владельца, артефакт переходит к нему`
+  - Source context:
+    - Deck: `event`.
+    - Event card reveal renderer: `eventCardMarkup(card, { revealed })` in `src/game.js`.
+    - Text source helper: `cardDisplayText(card)`.
+    - Current description splitting:
+      - `eventCardDescriptionMarkup(description)`;
+      - `eventCardDescriptionLines(description)`;
+      - `eventCardTextDensityClass(description)`.
+    - Recent Art/UI note at 2026-06-09 00:42 changed Event face layout for readability, but GD/user still needs a full-text verification/fix.
+  - Required behavior:
+    - Every Event card face must display the exact player-facing `description` from `src/cards.config.js` / card config.
+    - Do not substitute older copy, shortened copy, generated copy, or hardcoded artifact copy.
+    - Do not hide/clip the final sentence on long Event cards.
+    - `Волшебный кошель` must show all three sentences, including:
+      - `Если другой игрок обгоняет владельца, артефакт переходит к нему`
+    - Preserve the card text style rule: no final period at the very end.
+    - Sentence splitting / line breaks are allowed, but the full wording and order must remain intact.
+  - Scope:
+    - Audit all `event` cards:
+      - `race`;
+      - `free-step`;
+      - `unity`;
+      - `justice`;
+      - `balance`;
+      - `generous-rain`;
+      - `portal-swap`;
+      - `magic-wallet`;
+      - `monster-rage`.
+    - Fix rendering/CSS/layout if text is clipped.
+    - If any Event text differs between Google Sheet `Cards Config`, `cards-google-sheet.csv`, and `src/cards.config.js`, report the drift before changing copy; config/Sheet sync is a separate data decision unless the drift is obviously from recent intended text.
+  - Constraints:
+    - Do not change Event rules/effects/counts, artifact ownership logic, icon paths, deck lifecycle, dice math, rewards, route cells, or non-Event card faces.
+    - Do not rewrite Event card copy for style unless GD/user explicitly asks; this task is fidelity/readability, not balance wording.
+    - Preserve unrelated local changes and untracked `outputs/`.
+  - Verification:
+    - `node --check src/game.js` if touched;
+    - `node --check src/cards.config.js` if touched;
+    - `git diff --check`;
+    - Static/browser check: revealed Event face text for each Event card matches the exact `description` string from config after normal icon rendering and sentence line breaks.
+    - Browser smoke or safe generated preview: reveal all Event cards and confirm no text is clipped/hidden, especially `magic-wallet`, `unity`, and `race`.
+    - Confirm `Волшебный кошель` card face displays the final transfer sentence.
+    - Confirm Event title and artifact icon still render correctly.
+    - Confirm no browser console errors.
+  - Task lifecycle:
+    - New default pipeline used: executor handback went directly to GD; QA was not involved.
+
+- DEVELOPMENT PIPELINE RULE 2026-06-09 00:18 - Handback to GD is context, not approval:
+  - New default pipeline:
+    - GD assigns task to executor.
+    - Executor implements, writes handback, updates `project-memory/updates.md`.
+    - Executor sends finished task to GD as a context note only.
+    - GD does not verify, approve, reject, or write rework by default.
+    - GD just keeps the handback in mind for future design/status decisions.
+  - GD approval/checking happens only if the user explicitly asks for review/approval/checking.
+  - QA is skipped by default.
+  - Involve QA only when the user explicitly asks GD to involve QA, for example says `привлеки QA`.
+  - If QA is explicitly requested, use the QA-gated pipeline:
+    - executor -> QA approval/rework -> GD context note, unless the user also asks GD for approval.
+  - This rule supersedes the 2026-06-08 rule that said handbacks go to GD for approval.
+
+- DEVELOPMENT PIPELINE RULE 2026-06-08 23:57 - Default handback goes directly to GD:
+  - Status: superseded by `DEVELOPMENT PIPELINE RULE 2026-06-09 00:18 - Handback to GD is context, not approval`.
+  - New default pipeline:
+    - GD assigns task to executor.
+    - Executor implements, writes handback, updates `project-memory/updates.md`.
+    - Executor sends finished task directly to GD for approval.
+    - GD either approves and gives the user a brief report, or sends rework back to the executor.
+    - Repeat until GD explicitly approves.
+  - QA is skipped by default.
+  - Involve QA only when the user explicitly asks GD to involve QA, for example says `привлеки QA`.
+  - If QA is explicitly requested, use the previous pipeline:
+    - executor -> QA approval/rework -> GD final approval/rework.
+  - This rule applies to new handbacks from now on. Older QA-gated entries can remain as historical records unless GD/user redirects them.
+
+- ACTIVE SHOP CARD TUNE 2026-06-08 23:40 - Buff `step-plus` to `+2 к шагам` and shorten `battle-plus` text:
+  - Owner: `Dev 2`.
+  - Dispatch status: implemented by `Dev 2` at 2026-06-08 23:43; handback sent to QA first.
+  - QA status: QA 1 partial checks passed at 2026-06-08 23:48, but approval is blocked on independent browser gameplay smoke in QA environment; no Dev rework filed yet.
+  - User request:
+    - Change the Shop card `+1 к шагам каждый раз, когда двигаешься с помощью кубиков` to `+2 к шагам`.
+    - Change this card description to `+2 к шагам`.
+    - Change the Shop card description `+1 к силе только в битвах` to `+1 к силе`.
+  - Card scope:
+    - Deck: `shop` / `Лавка Джо`.
+    - Card id `step-plus`:
+      - current title/shortTitle: `+1 к шагам`;
+      - current description: `+1 к шагам каждый раз, когда двигаешься с помощью кубиков`;
+      - current effect: `passive-step-bonus`, amount currently `1`, count `2`.
+    - Card id `battle-plus`:
+      - current title/shortTitle: `+1 к силе`;
+      - current description: `+1 к силе только в битвах`;
+      - current effect: `passive-battle-bonus`, amount `1`, count `2`.
+  - Required changes:
+    - For `shop/step-plus`:
+      - title: `+2 к шагам`;
+      - shortTitle: `+2 к шагам`;
+      - description: `+2 к шагам`;
+      - effect stays `passive-step-bonus`;
+      - amount changes from `1` to `2`;
+      - count stays `2`.
+    - For `shop/battle-plus`:
+      - title stays `+1 к силе`;
+      - shortTitle stays `+1 к силе`;
+      - description becomes `+1 к силе`;
+      - effect stays `passive-battle-bonus`;
+      - amount stays `1`;
+      - count stays `2`.
+    - Keep the card-text style rule: no final period.
+  - Source sync:
+    - Update canonical Google Sheet `Cards Config`, tab `shop`.
+    - Sync local sources:
+      - `src/cards.config.js`;
+      - `cards-google-sheet.csv`.
+    - Update cache key in `index.html` if the app relies on it for changed `src/game.js` / config load in browser.
+  - Constraints:
+    - Do not change Joe Shop offer counts, deck lifecycle, price/payment flow, stock return behavior, auction behavior, bots except any existing text/value reads that naturally use the new amount, card ids, unrelated Shop cards, Good/Bad/TADAM/Event cards, dice math, board routes, or History Sheet work.
+    - Preserve unrelated local changes and untracked `outputs/`.
+  - Verification:
+    - `node --check src/cards.config.js`;
+    - `node --check src/game.js`;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`;
+    - Static check:
+      - `shop/step-plus` has amount `2`, count `2`, title/shortTitle/description `+2 к шагам` in local config, CSV, and Google Sheet readback;
+      - `shop/battle-plus` description is `+1 к силе`, amount `1`, count `2` in local config, CSV, and Google Sheet readback.
+    - Browser smoke:
+      - Joe Shop can reveal both updated cards;
+      - `step-plus` face shows `+2 к шагам`;
+      - after buying/owning `step-plus`, dice-based movement bonus increases by `+2` per copy;
+      - `battle-plus` face shows `+1 к силе`;
+      - existing battle strength effect remains `+1` per copy.
+    - No browser console errors.
+  - Task lifecycle:
+    - After implementation, send handback to QA first, not directly to GD.
+
 - ACTIVE HISTORY SHEET 2026-06-07 16:51 - Save final History summary to `Games Log`:
   - Owner: `Dev 2`.
   - Dispatch status: partial implementation / blocker found by `Dev 2` at 2026-06-07 17:01; handback sent to QA as blocked, not approval-ready.

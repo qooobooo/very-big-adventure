@@ -3782,6 +3782,17 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   height: 72%;
 }
 
+.board[data-board-id="field2"] .tile-icon-very-bad {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  filter:
+    drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45))
+    drop-shadow(0 0 10px rgba(163, 226, 56, 0.82))
+    drop-shadow(0 0 16px rgba(71, 129, 38, 0.92));
+}
+
 .board[data-board-id="field2"] .tile-icon-enemy {
   width: 78%;
   height: 78%;
@@ -3805,6 +3816,11 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 }
 
 .board[data-board-id="field2"] .tile-icon-joe-auction {
+  width: 82%;
+  height: 82%;
+}
+
+.board[data-board-id="field2"] .tile-icon-joe-game {
   width: 82%;
   height: 82%;
 }
@@ -3911,6 +3927,14 @@ body[data-controller-mode="big-button"] .controller-top h1 {
     drop-shadow(0 0 9px rgba(255, 200, 78, 0.42));
 }
 
+.tile-icon-joe-game {
+  object-fit: contain;
+  object-position: center;
+  filter:
+    drop-shadow(0 2px 2px rgba(0, 0, 0, 0.34))
+    drop-shadow(0 0 9px rgba(86, 211, 255, 0.42));
+}
+
 .tile-icon-enemy {
   width: 84%;
   height: 84%;
@@ -3982,6 +4006,18 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   width: 80%;
   height: 80%;
   transform: none;
+}
+
+.tile-icon-very-bad {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  transform: none;
+  filter:
+    drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45))
+    drop-shadow(0 0 10px rgba(163, 226, 56, 0.72))
+    drop-shadow(0 0 14px rgba(71, 129, 38, 0.84));
 }
 
 .tile-icon-tadam {
@@ -4363,8 +4399,10 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 .tile-event,
 .tile-good,
 .tile-bad,
+.tile-very-bad,
 .tile-enemy,
 .tile-joe-auction,
+.tile-joe-game,
 .tile-pay-double,
 .tile-shop,
 .tile-tadam,
@@ -4394,8 +4432,10 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 .tile-event::before,
 .tile-good::before,
 .tile-bad::before,
+.tile-very-bad::before,
 .tile-enemy::before,
 .tile-joe-auction::before,
+.tile-joe-game::before,
 .tile-pay-double::before,
 .tile-shop::before,
 .tile-tadam::before,
@@ -4437,6 +4477,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 
 .tile-good,
 .tile-bad,
+.tile-very-bad,
 .tile-big-rest,
 .tile-black-market,
 .tile-chaos-portal,
@@ -4444,6 +4485,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 .tile-event,
 .tile-enemy,
 .tile-joe-auction,
+.tile-joe-game,
 .tile-pay-double,
 .tile-shop,
 .tile-tadam,
@@ -4461,6 +4503,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 .tile-event,
 .tile-enemy,
 .tile-joe-auction,
+.tile-joe-game,
 .tile-pay-double,
 .tile-shop,
 .tile-tadam,
@@ -4483,6 +4526,13 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   background-image:
     radial-gradient(circle at 68% 30%, rgba(255, 225, 90, 0.32), transparent 28%),
     radial-gradient(circle at 32% 70%, rgba(100, 58, 22, 0.24), transparent 34%),
+    var(--tile-gray-art);
+}
+
+.tile-joe-game {
+  background-image:
+    radial-gradient(circle at 68% 32%, rgba(86, 211, 255, 0.28), transparent 30%),
+    radial-gradient(circle at 30% 70%, rgba(255, 225, 90, 0.24), transparent 34%),
     var(--tile-gray-art);
 }
 
@@ -4517,7 +4567,8 @@ body[data-controller-mode="big-button"] .controller-top h1 {
     0 0 12px rgba(255, 92, 54, 0.5);
 }
 
-.tile-bad {
+.tile-bad,
+.tile-very-bad {
   background-image: var(--tile-gray-art);
 }
 
@@ -5664,6 +5715,46 @@ button.event-card-preview:focus-visible {
   overflow-wrap: anywhere;
 }
 
+.good-card-text.is-dense,
+.good-card-text.is-long {
+  left: 12%;
+  right: 12%;
+  display: flex;
+  flex-direction: column;
+}
+
+.good-card-text.is-dense {
+  top: 58%;
+  bottom: 7%;
+  gap: clamp(3px, 0.45vw, 6px);
+}
+
+.good-card-text.is-long {
+  top: 55%;
+  bottom: 6%;
+  gap: clamp(2px, 0.32vw, 4px);
+}
+
+.good-card-text.is-dense span,
+.good-card-text.is-long span {
+  max-height: none;
+  overflow: visible;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+  text-wrap: balance;
+}
+
+.good-card-text.is-dense span {
+  font-size: clamp(0.5rem, 0.98vw, 0.66rem);
+  line-height: 1.05;
+}
+
+.good-card-text.is-long span {
+  font-size: clamp(0.34rem, 0.64vw, 0.48rem);
+  line-height: 1.02;
+}
+
 .bad-card-text span {
   font-size: clamp(0.56rem, 1.14vw, 0.76rem);
 }
@@ -5689,22 +5780,25 @@ button.event-card-preview:focus-visible {
 }
 
 .event-card-text {
-  left: 13%;
-  right: 13%;
-  top: 57%;
-  bottom: 11%;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  align-content: start;
-  align-items: start;
-  justify-items: center;
-  gap: clamp(5px, 0.8vw, 8px);
+  left: 12.5%;
+  right: 12.5%;
+  top: 58%;
+  bottom: 8%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(9px, 1.25vw, 14px);
 }
 
-.event-card-text strong {
+.event-card-text .event-card-title {
   color: #2b1608;
-  max-height: 2.18em;
-  font-size: clamp(0.66rem, 1.2vw, 0.86rem);
+  width: 100%;
+  max-height: 2.14em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.72rem, 1.26vw, 0.92rem);
   line-height: 1.06;
   overflow-wrap: break-word;
   word-break: normal;
@@ -5712,13 +5806,74 @@ button.event-card-preview:focus-visible {
   text-wrap: balance;
 }
 
-.event-card-text span {
+.event-card-text .event-card-description {
+  width: 100%;
+  max-height: none;
+  min-height: 0;
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(3px, 0.45vw, 6px);
+  overflow: visible;
+}
+
+.event-card-text .event-card-description-line {
   max-width: 100%;
-  font-size: clamp(0.46rem, 0.88vw, 0.62rem);
-  line-height: 1.08;
+  max-height: none;
+  font-size: clamp(0.43rem, 0.8vw, 0.58rem);
+  line-height: 1.1;
+  overflow: visible;
   overflow-wrap: break-word;
   word-break: normal;
   hyphens: none;
+  text-wrap: balance;
+}
+
+.event-card-text .event-card-description-line .coin-icon,
+.event-card-text .event-card-description-line .dice-icon {
+  width: 0.92em;
+  height: 0.92em;
+  vertical-align: -0.12em;
+}
+
+.event-card-text.is-dense {
+  top: 56%;
+  bottom: 7.5%;
+  gap: clamp(6px, 0.95vw, 10px);
+}
+
+.event-card-text.is-dense .event-card-title {
+  font-size: clamp(0.68rem, 1.18vw, 0.84rem);
+}
+
+.event-card-text.is-dense .event-card-description {
+  gap: clamp(2px, 0.34vw, 5px);
+}
+
+.event-card-text.is-dense .event-card-description-line {
+  font-size: clamp(0.4rem, 0.72vw, 0.53rem);
+  line-height: 1.04;
+}
+
+.event-card-text.is-long {
+  top: 54%;
+  bottom: 7%;
+  gap: clamp(4px, 0.72vw, 8px);
+}
+
+.event-card-text.is-long .event-card-title {
+  font-size: clamp(0.64rem, 1.1vw, 0.8rem);
+}
+
+.event-card-text.is-long .event-card-description {
+  gap: clamp(1px, 0.24vw, 3px);
+}
+
+.event-card-text.is-long .event-card-description-line {
+  font-size: clamp(0.36rem, 0.64vw, 0.48rem);
+  line-height: 1.02;
 }
 
 .shop-card-reveal {
@@ -6888,8 +7043,10 @@ body[data-ui-style="tabletop"] .tile-dice-fortune,
 body[data-ui-style="tabletop"] .tile-event,
 body[data-ui-style="tabletop"] .tile-good,
 body[data-ui-style="tabletop"] .tile-bad,
+body[data-ui-style="tabletop"] .tile-very-bad,
 body[data-ui-style="tabletop"] .tile-enemy,
 body[data-ui-style="tabletop"] .tile-joe-auction,
+body[data-ui-style="tabletop"] .tile-joe-game,
 body[data-ui-style="tabletop"] .tile-pay-double,
 body[data-ui-style="tabletop"] .tile-shop,
 body[data-ui-style="tabletop"] .tile-tadam,
@@ -7314,8 +7471,10 @@ body[data-ui-style="tabletop"] .tile-dice-fortune,
 body[data-ui-style="tabletop"] .tile-event,
 body[data-ui-style="tabletop"] .tile-good,
 body[data-ui-style="tabletop"] .tile-bad,
+body[data-ui-style="tabletop"] .tile-very-bad,
 body[data-ui-style="tabletop"] .tile-enemy,
 body[data-ui-style="tabletop"] .tile-joe-auction,
+body[data-ui-style="tabletop"] .tile-joe-game,
 body[data-ui-style="tabletop"] .tile-pay-double,
 body[data-ui-style="tabletop"] .tile-shop,
 body[data-ui-style="tabletop"] .tile-tadam,
@@ -7338,7 +7497,9 @@ body[data-ui-style="tabletop"] .tile-dice-fortune,
 body[data-ui-style="tabletop"] .tile-event,
 body[data-ui-style="tabletop"] .tile-good,
 body[data-ui-style="tabletop"] .tile-bad,
+body[data-ui-style="tabletop"] .tile-very-bad,
 body[data-ui-style="tabletop"] .tile-joe-auction,
+body[data-ui-style="tabletop"] .tile-joe-game,
 body[data-ui-style="tabletop"] .tile-pay-double,
 body[data-ui-style="tabletop"] .tile-tadam,
 body[data-ui-style="tabletop"] .tile-vs {

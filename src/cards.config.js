@@ -57,6 +57,13 @@ export const cardConfig = {
       effect: { type: "give-next-battle-penalty", amount: -3 },
     },
     {
+      id: "next-bad-extra-draw",
+      count: 2,
+      title: "Двойное Плохо",
+      description: "Отдай эту карту любому игроку. В следующий раз, когда он берет карту Плохо, он берет ещё одну",
+      effect: { type: "give-next-bad-extra-draw" },
+    },
+    {
       id: "fountain-coin",
       count: 2,
       title: "Монетка из фонтана",
@@ -89,9 +96,9 @@ export const cardConfig = {
     {
       id: "give5",
       count: 2,
-      title: "Отдай 5 монет игроку с наименьшим количеством монет",
-      description: "Отдай 5 монет игроку с наименьшим количеством монет",
-      effect: { type: "give-poorest", amount: 5 },
+      title: "Выбери игрока и отдай ему 5 монет",
+      description: "Выбери игрока и отдай ему 5 монет",
+      effect: { type: "give-chosen-player", amount: 5 },
     },
   ],
   tadam: [
@@ -164,7 +171,7 @@ export const cardConfig = {
       id: "unity",
       count: 2,
       title: "Сплочение",
-      description: "Все игроки вместе сражаются с монстром силой 6 за каждого игрока. Победа: всем +10 монет, лучший удар получает еще +10. Поражение: все теряют 5 монет",
+      description: "Общий бой с монстром. При победе все игроки получают 10 монет, при проигрыше все теряют 5 монет",
       effect: { type: "event-unity" },
     },
     {
@@ -215,17 +222,17 @@ export const cardConfig = {
     {
       id: "step-plus",
       count: 2,
-      title: "+1 к шагам",
-      shortTitle: "+1 к шагам",
-      description: "+1 к шагам каждый раз, когда двигаешься с помощью кубиков",
-      effect: { type: "passive-step-bonus", steps: 1 },
+      title: "+2 к шагам",
+      shortTitle: "+2 к шагам",
+      description: "+2 к шагам",
+      effect: { type: "passive-step-bonus", steps: 2 },
     },
     {
       id: "battle-plus",
       count: 2,
       title: "+1 к силе",
       shortTitle: "+1 к силе",
-      description: "+1 к силе только в битвах",
+      description: "+1 к силе",
       effect: { type: "passive-battle-bonus", amount: 1 },
     },
     {

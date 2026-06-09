@@ -16,18 +16,26 @@ This folder is the shared mailbox for Codex chats working on "Очень Бол�
 
 ## Task Lifecycle
 
+0. For planning and executing multi-role work, GD routes tasks through the appropriate specialists by default:
+   - Dev handles implementation.
+   - Art / UI handles visual assets, board presentation, and UI polish.
+   - QA handles testing only when the user explicitly asks to involve QA.
+   - GD should not directly implement cross-role plans unless the user explicitly asks GD to do the implementation personally or an urgent tiny documentation/memory edit is enough.
 1. GD creates a clear implementation-ready task and sends it to the right executor:
    - Dev tasks go to `inbox/for-dev.md` and may also be sent directly to a Dev thread.
-   - QA-only verification tasks go to `inbox/for-qa.md`.
+   - QA tasks go to `inbox/for-qa.md` only when the user explicitly asks to involve QA, for example says `привлеки QA`.
    - Art / UI tasks go to the matching Art / UI inbox or thread.
-2. The executor completes the task, writes a short handback, updates `updates.md`, and sends the finished task to QA.
-3. QA is the first approval gate:
+2. By default, QA and GD approval gates are skipped. The executor completes the task, writes a short handback, updates `updates.md`, and sends the finished task to GD only as a context note.
+3. GD does not verify or approve handbacks by default:
+   - GD keeps the result in mind for future design decisions and user reports.
+   - GD checks, approves, rejects, or writes rework only when the user explicitly asks for review/approval/checking, or when GD is separately asked to involve QA.
+4. If the user explicitly asks to involve QA, use the QA-gated pipeline:
+   - The executor sends the finished task to QA first.
    - If QA does not approve the task, QA sends a reproducible rework task back to the executor.
-   - If QA approves the task, QA sends the approved result to GD for final approval.
-4. GD reviews the QA-approved task:
+   - If QA approves the task, QA sends the result to GD as a context note unless the user also asked for GD approval.
+5. If the user explicitly asks for GD approval/checking, GD reviews the handback:
    - If approved, GD gives the user a brief report and marks/records the task as accepted.
    - If not approved, GD gives the user a brief report, writes a clear rework task, and sends it back to the executor.
-5. This loop continues until GD explicitly approves the task.
 
 ## Chat Roles
 

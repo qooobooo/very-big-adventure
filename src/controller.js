@@ -382,6 +382,7 @@ function renderBigButtonPlayerCard(player, activeText) {
       ${controllerCardPreviewMarkup(controller.snapshot?.cardPreview, player.id)}
       ${player.nextMonsterBattleBonus ? `<div class="controller-rage controller-big-rage">Зелье ярости +${player.nextMonsterBattleBonus}</div>` : ""}
       ${controllerNextBattlePenaltyMarkup(player.nextBattlePenalty)}
+      ${controllerNextBadExtraDrawMarkup(player.nextBadExtraDraw)}
     </div>
   `;
 }
@@ -407,6 +408,7 @@ function renderPlayerCard(player, activeText) {
     </div>
     ${player.nextMonsterBattleBonus ? `<div class="controller-rage">Зелье ярости +${player.nextMonsterBattleBonus}</div>` : ""}
     ${controllerNextBattlePenaltyMarkup(player.nextBattlePenalty)}
+    ${controllerNextBadExtraDrawMarkup(player.nextBadExtraDraw)}
     ${artifacts}
     <div class="controller-shop-cards"><small>Лавка Джо</small><div>${cards}</div></div>
     ${controllerCardPreviewMarkup(controller.snapshot?.cardPreview, player.id)}
@@ -417,6 +419,12 @@ function controllerNextBattlePenaltyMarkup(status) {
   if (!status?.count) return "";
   const count = status.count > 1 ? ` x${status.count}` : "";
   return `<div class="controller-curse">Сглаз ${signed(status.penalty)}${count} к след. бою</div>`;
+}
+
+function controllerNextBadExtraDrawMarkup(status) {
+  if (!status?.count) return "";
+  const count = status.count > 1 ? ` x${status.count}` : "";
+  return `<div class="controller-curse">Двойное Плохо${count}</div>`;
 }
 
 function controllerArtifactsMarkup(artifacts = []) {
@@ -643,11 +651,12 @@ function renderActions(actions, { diceRoll = null, shakeAction = null } = {}) {
       hasSinglePrimaryAction ? bigButtonToneClass(action) : "",
     ].filter(Boolean).join(" ");
     button.type = "button";
+    button.disabled = Boolean(action.disabled);
     button.innerHTML = `
       <b>${escapeHtml(action.label || "Действие")}</b>
       ${action.note ? `<small>${escapeHtml(action.note)}</small>` : ""}
     `;
-    button.addEventListener("click", () => {
+    if (!button.disabled) button.addEventListener("click", () => {
       const snapshot = controller.snapshot;
       const player = snapshot?.players?.find((item) => item.id === controller.playerId) || null;
       sendControllerAction(action, player);
@@ -713,13 +722,14 @@ function renderBigSplitChoice(player, model) {
     const button = document.createElement("button");
     button.className = `controller-choice-zone ${index === 0 ? "is-left" : "is-right"}`;
     button.type = "button";
+    button.disabled = Boolean(action.disabled);
     const badge = bigZoneBadge(action, index);
     button.innerHTML = `
       ${badge ? `<span>${escapeHtml(badge)}</span>` : ""}
       <b>${escapeHtml(bigZoneLabel(action, index))}</b>
       ${bigZoneNote(action) ? `<small>${escapeHtml(bigZoneNote(action))}</small>` : ""}
     `;
-    button.addEventListener("click", () => sendControllerAction(action, player));
+    if (!button.disabled) button.addEventListener("click", () => sendControllerAction(action, player));
     zones.append(button);
   }
   wrapper.append(zones);
@@ -748,11 +758,12 @@ function renderBigDetailChoice(player, model) {
     const button = document.createElement("button");
     button.className = "controller-detail-choice";
     button.type = "button";
+    button.disabled = Boolean(action.disabled);
     button.innerHTML = `
       <b>${escapeHtml(action.label || "Выбрать")}</b>
       ${detailOwnerMarkup(action)}
     `;
-    button.addEventListener("click", () => sendControllerAction(action, player));
+    if (!button.disabled) button.addEventListener("click", () => sendControllerAction(action, player));
     list.append(button);
   }
   wrapper.append(list);
@@ -769,11 +780,12 @@ function renderBigRestChoice(player, model) {
     const button = document.createElement("button");
     button.className = `controller-rest-choice controller-rest-choice-${escapeClassName(action.id)}`;
     button.type = "button";
+    button.disabled = Boolean(action.disabled);
     button.innerHTML = `
       <b>${escapeHtml(restChoiceLabel(action))}</b>
       ${action.note ? `<small>${escapeHtml(action.note)}</small>` : ""}
     `;
-    button.addEventListener("click", () => sendControllerAction(action, player));
+    if (!button.disabled) button.addEventListener("click", () => sendControllerAction(action, player));
     wrapper.append(button);
   }
 

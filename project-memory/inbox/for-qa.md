@@ -4,6 +4,130 @@ For testing tasks related to "Очень Большая Бродилка" in `/U
 
 ## Open Items
 
+- QA PIPELINE RULE 2026-06-09 00:18 - QA and GD approval are on-demand:
+  - QA is skipped by default for new implementation handbacks.
+  - GD approval is also skipped by default; handbacks to GD are context notes, not approval requests.
+  - QA should pick up a task only when GD/user explicitly asks to involve QA, for example `привлеки QA`.
+  - If QA is explicitly requested, use the QA-gated workflow:
+    - executor -> QA approval/rework -> GD context note, unless the user also asks GD for approval/checking.
+  - This supersedes older entries that say QA forwards approved work to GD for final approval by default.
+
+- QA PIPELINE RULE 2026-06-08 23:57 - QA is now on-demand:
+  - Status: superseded by `QA PIPELINE RULE 2026-06-09 00:18 - QA and GD approval are on-demand`.
+  - QA is skipped by default for new implementation handbacks.
+  - Executors should send completed tasks directly to GD unless the user explicitly asks to involve QA, for example says `привлеки QA`.
+  - When QA is explicitly requested, use the previous QA-gated workflow:
+    - executor -> QA approval/rework -> GD final approval/rework.
+  - Existing QA entries remain historical/open records unless GD or the user redirects them.
+  - QA should not pick up new implementation handbacks unless GD/user explicitly routes that task to QA.
+
+- QA READY 2026-06-08 23:43 - Dev 2 handback for Shop `step-plus` / `battle-plus` tune:
+  - Task:
+    - `ACTIVE SHOP CARD TUNE 2026-06-08 23:40 - Buff step-plus to +2 к шагам and shorten battle-plus text`.
+  - Changed:
+    - `shop/step-plus` now has:
+      - title `+2 к шагам`;
+      - shortTitle `+2 к шагам`;
+      - description `+2 к шагам`;
+      - effect type `passive-step-bonus`;
+      - `steps` value `2`;
+      - count `2`.
+    - `shop/battle-plus` now has:
+      - title `+1 к силе`;
+      - shortTitle `+1 к силе`;
+      - description `+1 к силе`;
+      - effect type `passive-battle-bonus`;
+      - amount `1`;
+      - count `2`.
+    - Synced local config, CSV mirror, and Google Sheet `Cards Config` tab `shop`.
+    - Bumped host/config cache keys to `20260608-0390`.
+  - Files changed by Dev 2:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-qa.md`
+  - Google Sheet:
+    - Readback confirmed `shop/step-plus`: title/shortTitle/description `+2 к шагам`, effect `passive-step-bonus`, steps `2`, count `2`.
+    - Readback confirmed `shop/battle-plus`: description `+1 к силе`, amount `1`, count `2`.
+  - Checks passed by Dev 2:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static local config check for both updated Shop cards.
+    - Static CSV check for both updated Shop cards.
+    - Browser smoke: `http://localhost:5173/` loaded with `src/game.js?v=20260608-0390`, board ready, no console errors.
+  - Scope notes:
+    - Did not change Joe Shop offer counts, deck lifecycle, stock return behavior, auction behavior, unrelated cards, dice math, board routes, or blocked History Sheet work.
+    - Full browser gameplay smoke for buying/owning both cards remains for QA.
+  - Requested QA:
+    - Verify Joe Shop reveal/card face for both updated cards.
+    - Verify owning one `step-plus` adds `+2` to dice-based movement.
+    - Verify owning one `battle-plus` still adds `+1` to battle strength.
+    - If approved, send result to GD for final approval per Task Lifecycle.
+  - QA 1 partial result at 2026-06-08 23:48:
+    - QA approval not given yet; blocked on independent browser gameplay smoke in this QA environment.
+    - Passed in QA:
+      - `node --check src/cards.config.js`;
+      - `node --check src/game.js`;
+      - `node --check src/controller.js`;
+      - `git diff --check`;
+      - static local config/CSV/code-path checks for `step-plus` and `battle-plus`;
+      - imported-config arithmetic check: one `step-plus` gives `roll + 2`, one `battle-plus` gives `roll + 1`;
+      - cache keys checked: `index.html` -> `src/game.js?v=20260608-0390`, `src/game.js` -> `cards.config.js?v=20260608-0390`.
+    - Browser blocker:
+      - Playwright Chromium launch failed with macOS `MachPortRendezvous` permission errors.
+      - Starting a new simple local server on another port failed with sandbox `PermissionError`.
+      - Existing `5173` process replied to `HEAD`, but returned empty response bodies to `curl` in this session.
+    - Remaining before approval:
+      - actual browser Joe Shop reveal/card face for both cards;
+      - actual dice movement with owned `step-plus`;
+      - actual battle strength with owned `battle-plus`;
+      - browser console error check.
+    - No Dev rework filed yet; no product bug found in static/formula checks.
+
+- QA AFTER DEV 2026-06-08 23:40 - Verify Shop `step-plus` / `battle-plus` card tune:
+  - Status: waiting for Dev 2 implementation handback.
+  - Task:
+    - `ACTIVE SHOP CARD TUNE 2026-06-08 23:40 - Buff step-plus to +2 к шагам and shorten battle-plus text`.
+  - Expected:
+    - `shop/step-plus` becomes a `+2 к шагам` Shop card:
+      - title `+2 к шагам`;
+      - shortTitle `+2 к шагам`;
+      - description `+2 к шагам`;
+      - effect type `passive-step-bonus`;
+      - amount `2`;
+      - count `2`.
+    - `shop/battle-plus` keeps gameplay as `+1 к силе`:
+      - title `+1 к силе`;
+      - shortTitle `+1 к силе`;
+      - description `+1 к силе`;
+      - effect type `passive-battle-bonus`;
+      - amount `1`;
+      - count `2`.
+    - Local `src/cards.config.js`, local `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `shop` are synced.
+    - No player-facing card text ends with a final period.
+  - Required checks:
+    - `node --check src/cards.config.js`;
+    - `node --check src/game.js`;
+    - `node --check src/controller.js` if touched;
+    - `git diff --check`.
+  - Browser smoke:
+    - Reveal Joe Shop offers until each updated card appears, or force the card if there is an existing safe QA helper.
+    - Confirm `step-plus` face/chip shows `+2 к шагам`.
+    - Confirm owning one `step-plus` adds `+2` to dice-based movement, not `+1`.
+    - Confirm `battle-plus` face/chip shows `+1 к силе`.
+    - Confirm owning one `battle-plus` still adds `+1` to battle strength.
+    - Confirm no browser console errors.
+  - Regression:
+    - Shop still has `8` physical configured copies total if no other Shop cards changed:
+      - `2` each for current four Shop card ids.
+    - Joe Shop offer/deck lifecycle and stock return behavior remain unchanged.
+  - If QA approves, send the approved result to GD for final approval per Task Lifecycle.
+
 - QA READY 2026-06-07 17:42 - Dev 3 handback for Event `Сплочение` battle HUD:
   - Task:
     - `ACTIVE UI 2026-06-07 16:16 - Add battle HUD for Event Сплочение`.

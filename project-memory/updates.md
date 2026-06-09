@@ -20,6 +20,912 @@ Open questions:
 - ...
 ```
 
+## 2026-06-09 03:03 - Dev 2
+
+Changed:
+- Implemented `ACTIVE TADAM UI 2026-06-09 03:00 - New TADAM appears in first slot`.
+- `visibleTadamCards()` now renders active TADAM cards newest-first.
+- Preserved `state.tadams.push(card)` storage and `state.tadams.shift()` oldest-card discard lifecycle.
+- Bumped host `src/game.js` cache key to `20260609-0408`.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- TADAM effects, counts, deck lifecycle, discard reshuffle, and card text were not changed.
+- Static check for A/B/C/D sequence returns `[A]`, `[B,A]`, `[C,B,A]`, `[D,C,B]`.
+- Checks passed: `node --check src/game.js` and `git diff --check`.
+- Browser smoke loaded host at `http://localhost:5173/` with `src/game.js?v=20260609-0408`; console error log was empty.
+- Browser smoke did not force live TADAM draws; visual ordering was verified by source/static checks.
+
+Open questions:
+- None.
+
+## 2026-06-09 03:00 - GD
+
+Changed:
+- Added and dispatched a Dev 2 task to change visible TADAM slot ordering.
+- New visual rule: every new TADAM appears in the first/left slot and existing visible cards shift one slot right.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Preserve current TADAM storage/discard lifecycle if possible: newest should render left, but the oldest active card should still be discarded when a fourth card appears.
+- Do not change TADAM card effects, counts, deck lifecycle, discard reshuffle, or card text.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:57 - Dev 2
+
+Changed:
+- Implemented `ACTIVE EVENT CARD 2026-06-09 02:52 - Remove extra top-damage reward from Сплочение`.
+- Event card `unity` / `Сплочение` now has description exactly `Общий бой с монстром. При победе все игроки получают 10 монет, при проигрыше все теряют 5 монет`.
+- Removed the top-force/best-damage tie-break from `resolveEventUnity(...)`.
+- Team win now gives every player exactly `+10` coins and no additional `+10` to any top-damage player.
+- Team loss still makes every player lose `5` coins.
+- Synced local card config, CSV mirror, and Google Sheet `Cards Config` tab `event`.
+- Bumped host `src/game.js` cache key to `20260609-0407` and `cards.config.js` import key to `20260609-0407`.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Kept `unity` id, deck, title, count `2`, and effect type `event-unity`.
+- Kept the existing `Сплочение` battle HUD, monster target, dice flow, `Зелье ярости`, and `Сглаз` interactions.
+- Google Sheet readback for `event!A4:N4`: `unity`, title `Сплочение`, effect `event-unity`, count `2`, description exactly matches the requested text and has no final period.
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`, static local config/CSV checks, static old-text search in card sources, and source check that `resolveEventUnity(...)` no longer calls top-force tie-break or awards top-player extra `+10`.
+- Browser smoke loaded host at `http://localhost:5173/` with `src/game.js?v=20260609-0407`; console error log was empty.
+- Browser smoke did not force a full `Сплочение` roll; win/loss reward logic was verified by source/static checks.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:53 - Dev 2
+
+Changed:
+- Implemented `ACTIVE BAD CARD 2026-06-09 02:47 - Change give5 to chosen recipient`.
+- Bad card `give5` now uses player-facing text `Выбери игрока и отдай ему 5 монет`.
+- Changed `give5` effect from `give-poorest` to `give-chosen-player`.
+- Added chosen-target Bad-card resolution: active player chooses another player, self is excluded, and transfers up to 5 available coins to the target.
+- Bot card choice uses per-choice score that favors poorer opponents for this Bad-card transfer.
+- Synced local card config, CSV mirror, and Google Sheet `Cards Config` tab `bad`.
+- Bumped host `src/game.js` cache key to `20260609-0406` and `cards.config.js` import key to `20260609-0406`.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Kept `give5` id, deck, count `2`, and amount `5`.
+- Kept the old `give-poorest` runtime branch for compatibility; no current `give5` card data points at it.
+- Google Sheet readback for `bad!A4:N4`: `give5`, title/description `Выбери игрока и отдай ему 5 монет`, effect `give-chosen-player`, amount `5`, count `2`.
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`, static local config/CSV checks, static old-text search in card sources.
+- Browser smoke loaded host at `http://localhost:5173/` with `src/game.js?v=20260609-0406`; console error log was empty.
+- Browser smoke did not force a random deck draw of `give5`; target-choice behavior was covered by source/static checks.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:48 - Dev 2
+
+Changed:
+- Implemented `ACTIVE BLACK MARKET UI 2026-06-09 02:42 - Show all options even when unaffordable`.
+- `Черный рынок` now always builds all three deal choices: `Карта Лавки Джо`, `Тайная тренировка`, and `Зелье ярости`.
+- Unaffordable deals are visible but disabled with `Не хватает N монет`.
+- `Зелье ярости` is visible but disabled with `Зелье уже активно` when a next-monster rage bonus is already active.
+- `Уйти` remains selectable.
+- Added shared disabled-choice handling for card-choice UI, bot choice filtering, phone snapshots, phone host rejection, and controller buttons.
+- Bumped host `src/game.js` and controller `src/controller.js` cache keys to `20260609-0405`.
+
+Files:
+- `src/game.js`
+- `src/controller.js`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Black Market costs, rewards, balance, cards, Sheet/CSV, board placement, and other fields were not changed.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`, and source checks for all three always-present deals plus disabled guards.
+- Browser smoke loaded host and controller with cache keys `20260609-0405`; no console errors appeared.
+- Browser smoke did not force every coin-count state; those paths were covered by source/static checks.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:52 - GD
+
+Changed:
+- Added and dispatched a Dev 2 task to simplify Event card `Сплочение`.
+- New description removes the top-damage extra reward.
+- Required behavior: team win gives every player exactly 10 coins; no extra +10 for best/top damage and no top-force tie-break.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Keep `event/unity` id, count, and effect type.
+- Keep `Сплочение` battle HUD, target, dice, `Зелье ярости`, and `Сглаз` interactions.
+- Source sync should cover Google Sheet `Cards Config`, `src/cards.config.js`, and `cards-google-sheet.csv`.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:47 - GD
+
+Changed:
+- Added and dispatched a Dev 2 task to change Bad card `give5`.
+- New player-facing text: `Выбери игрока и отдай ему 5 монет`.
+- Required behavior changes from automatic poorest target to chosen target.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Keep card id `give5`, deck `bad`, count `2`, and amount `5`.
+- Suggested new effect type: `give-chosen-player`.
+- Source sync should cover Google Sheet `Cards Config`, `src/cards.config.js`, and `cards-google-sheet.csv`.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:42 - GD
+
+Changed:
+- Added and dispatched a Dev 2 task for Black Market choice visibility.
+- Requirement: `Черный рынок` must show all three deal options even when the player lacks coins.
+- Unaffordable or otherwise unavailable deals should be visible but disabled/unselectable with a clear reason.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Do not change Black Market costs/rewards/balance.
+- `Уйти` remains selectable.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:30 - Art/UI
+
+Changed:
+- Fixed long Good-card face text fitting for `buy-shop-card`.
+- Good card face markup now adds density classes based on description length.
+- Long Good descriptions are split into sentence lines instead of one dense span.
+- Added compact/dense CSS for long Good card text: smaller font, tighter line-height, wider vertical text area, balanced wrapping.
+- Bumped `styles.css` cache key to `20260609-0404`.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only update; card text, rules, config, CSV, and Google Sheet were not changed.
+- Per user preference, no GD context note was sent.
+- Checks passed: `node --check src/game.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:26 - Dev 2
+
+Changed:
+- Implemented `ACTIVE BOARD TWEAK 2026-06-09 02:24 - Restore Joe Shop at field2 6-7`.
+- Changed `boardConfigs.field2.events["6-7"]` from `green` back to `shop`.
+- Bumped host `src/game.js` cache key to `20260609-0402`.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Route/path order, adjacent cells, Joe Shop deck/cards, and Joe Auction were not changed.
+- Checks passed: `node --check src/game.js`, `git diff --check`, static `6-7 shop` check.
+- Browser smoke on `http://localhost:5173/`: `field2 6-7` rendered as `tile-shop`, tooltip `Лавка Джо`, shop icon loaded, no console errors.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:24 - Art/UI 2
+
+Changed:
+- Redrew the `Аукцион Джо` tile icon to be simpler and more readable.
+- Replaced the old busy composition with three real `Лавка Джо` card backs from `assets/cards/shop_back.png` plus one large auction gavel and a few coins.
+- Replaced `assets/icons/joe_auction_512.png` in place and bumped its image cache key in `src/game.js`.
+- Added a small tile-size preview for visual readability checks.
+- Sent GD a context handback only under the current pipeline; QA was not involved.
+
+Files:
+- `assets/icons/joe_auction_512.png`
+- `outputs/joe-auction-redraw-tile-preview.png`
+- `src/game.js`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Asset status: wired via existing `joe-auction` icon path.
+- Final asset: `assets/icons/joe_auction_512.png`, PNG, 512x512, RGBA with transparent corners.
+- Cache key: `assets/icons/joe_auction_512.png?v=20260609-0401`.
+- Checks passed: PNG dimension/alpha validation; `node --check src/game.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:24 - GD
+
+Changed:
+- Added and dispatched a small board fix to Dev 2.
+- User reported that `Лавка Джо` disappeared from the marked cell.
+- GD coordinate read: restore `field2 6-7` from `green` to `shop`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This corrects the previous screenshot placement sync item that changed `6-7` to `green`.
+- Route/path order, adjacent cells, Joe Shop cards/deck, and Joe Auction should not change.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:22 - Dev 2
+
+Changed:
+- Implemented `ACTIVE BOARD TWEAK 2026-06-09 02:21 - Change field2 4-14 to Good`.
+- Changed `boardConfigs.field2.events["4-14"]` from `event` to `good`.
+- Bumped host `src/game.js` cache key to `20260609-0401`.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Route/path order, neighboring cells, Event deck, and Good deck were not changed.
+- Checks passed: `node --check src/game.js`, `git diff --check`, static `4-14 good` check.
+- Browser smoke on `http://localhost:5173/`: `field2 4-14` rendered as `tile-good`, tooltip `Хорошо`, Good icon loaded, no console errors.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:21 - GD
+
+Changed:
+- Added and dispatched a small board tweak to Dev 2.
+- User-marked field from screenshot is interpreted as `field2 4-14`.
+- Required change: `field2 4-14` from `event` to `good`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Route/path order should not change.
+- Adjacent bottom-row cells should not change.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:14 - Art/UI 2
+
+Changed:
+- Completed `ACTIVE ART/UI 2026-06-09 02:05 - Игра Джо tile icon`.
+- Created a new transparent tile icon for `Игра Джо`: a lucky game table with a large die, fantasy cards, and a Joe Shop chest accent.
+- Added a small tile-size preview for visual readability checks.
+- Sent GD a context handback only under the current pipeline; QA was not involved.
+
+Files:
+- `assets/icons/joe_game_512.png`
+- `outputs/joe-game-icon-tile-preview.png`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Asset status: created by Art/UI; Dev 2 has already wired the path in the current local work.
+- Final asset: `assets/icons/joe_game_512.png`, PNG, 512x512, RGBA with transparent corners.
+- Preview: `outputs/joe-game-icon-tile-preview.png`.
+- Checks passed: PNG dimension/alpha validation; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:07 - Art/UI
+
+Changed:
+- Adjusted `Очень Плохо` tile icon per user request.
+- Changed the glow from purple necromantic to swamp green.
+- Set `field2` `.tile-icon-very-bad` art size to `100%` instead of `112%`.
+- Set general `.tile-icon-very-bad` art size to `100%`.
+- Bumped cache keys to `20260609-0400`.
+
+Files:
+- `assets/icons/very_bad_512.png`
+- `styles.css`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only update; no rules, cells, balance, or card behavior changed.
+- Per user preference, no GD context note was sent.
+- Checks passed: PNG validation for 512x512 RGBA with transparent corners, `node --check src/game.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:13 - Dev 2
+
+Changed:
+- Implemented `ACTIVE FIELD 2026-06-09 02:05 - Add Игра Джо field` as a context handback to GD, no QA requested.
+- Added new event type `joe-game` / `Игра Джо`.
+- Placed `Игра Джо` on `field2 11-9`, replacing the previous `Большой привал` there.
+- Applied the latest screenshot placement sync: `0-0 very-bad`, `6-2 event`, `9-2 dice-fortune`, `6-7 green`, `9-9 big-rest`, `11-9 joe-game`.
+- Added title/tooltip, field-effect text, history label, bot field scoring, tile CSS groups, and `.tile-icon-joe-game` styling.
+- Wired `eventIcons["joe-game"]` to `assets/icons/joe_game_512.png?v=20260609-0400`; the 512x512 PNG is present locally from Art/UI work.
+- Added `Игра Джо` mechanics: active player assigns unique numbers, gets 2 numbers, each other player gets 1, then a 1d6 roll resolves reward/no reward.
+- Bot active player assigns random unique numbers: two to self, then one to other players in table order from active.
+- Reward uses finite Shop deck helpers and grants owned Shop items; source physical cards return to Shop discard/stock like other free Shop rewards.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- `assets/icons/joe_game_512.png` exists locally as a 512x512 RGBA PNG and is now loaded by the board; Art/UI owns the asset itself.
+- Browser smoke on `http://localhost:5173/` confirmed `field2 11-9` is `tile-joe-game`, the icon loads at 512px, all six synced placements match, cache keys are `20260609-0400`, and no console errors appeared.
+- Deep deterministic gameplay browser paths for forced die outcomes were not automated; static checks cover resolver/placement and browser smoke covers render.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:05 - GD
+
+Changed:
+- Added and dispatched the new `Игра Джо` field work through Art/UI 2 and Dev 2.
+- Art/UI 2 owns `assets/icons/joe_game_512.png`.
+- Dev 2 owns the `joe-game` field type, `field2 11-9` placement, digit-assignment mini-game, Shop-card reward flow, UI prompts, and roll context.
+- Added the latest screenshot placement sync to the Dev task.
+
+Files:
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Final `Игра Джо` placement: `field2 11-9`.
+- Digits are unique: active player gets 2 unique digits, each other player gets 1 unique digit.
+- Additional screenshot field sync expected in Dev task:
+  - `0-0 very-bad`;
+  - `6-2 event`;
+  - `9-2 dice-fortune`;
+  - `6-7 green`;
+  - `9-9 big-rest`;
+  - `11-9 joe-game`.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-09 02:02 - Art/UI
+
+Changed:
+- Made `Очень Плохо` much more visually distinct from ordinary `Плохо`.
+- Rebuilt `assets/icons/very_bad_512.png` with a larger/brighter purple-green necromantic glow.
+- Added a `field2`-specific `.tile-icon-very-bad` override so `Очень Плохо` no longer gets compressed by the generic `field2` 72% icon rule.
+- Increased `Очень Плохо` display on `field2` to `112%` with extra glow drop-shadows; general `.tile-icon-very-bad` is `104%`.
+- Bumped cache keys to `20260609-0399`.
+
+Files:
+- `assets/icons/very_bad_512.png`
+- `styles.css`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only update; no rules, cells, balance, or card behavior changed.
+- Per user request, this was not sent to GD because the task did not come from GD and the user did not ask for GD handback.
+- Checks passed: PNG validation for 512x512 RGBA with transparent corners, `node --check src/game.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-09 01:46 - Art/UI
+
+Changed:
+- Made the `Очень Плохо` tile icon brighter and more distinct from ordinary `Плохо`.
+- Increased the necromantic purple/green glow around the three Bad chests.
+- Made the chest art larger in the PNG and increased `.tile-icon-very-bad` from `88%` to `96%` so it reads bigger on the board.
+- Bumped cache keys to `20260609-0398`.
+
+Files:
+- `assets/icons/very_bad_512.png`
+- `styles.css`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only update; no rules, cells, balance, or card behavior changed.
+- Checks passed: PNG validation for 512x512 RGBA with transparent corners, `node --check src/game.js`, `git diff --check`.
+- Previous glow version kept at `outputs/very_bad_512_before_bright_necro_glow.png`.
+
+Open questions:
+- None.
+
+## 2026-06-09 01:45 - Dev 2
+
+Changed:
+- Renamed the player-facing field/event name `Аукцион Лавки Джо` to `Аукцион Джо`.
+- Updated host alt text, history label, prompts, logs, dice animation label, tooltip, and field-effect title.
+- Kept internal id `joe-auction` and all auction rules/mechanics unchanged.
+- Left card/object wording `карты Лавки Джо` unchanged where it describes the prize cards.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Host cache key already stands at `src/game.js?v=20260609-0397` from the latest Art/UI bump, so no additional cache-key edit was needed.
+- Checks passed: `node --check src/game.js`, `git diff --check`, and static search in `src/game.js` found no remaining `Аукцион Лавки Джо`.
+
+Open questions:
+- None.
+
+## 2026-06-09 01:31 - Art/UI
+
+Changed:
+- Updated `Очень Плохо` tile icon with a contained necromantic purple/green glow around the three Bad chests.
+- Made the chest art slightly larger inside the 512x512 PNG while keeping transparent padding so it fits inside the board tile.
+- Bumped `very_bad_512.png` cache key in `src/game.js` to `20260609-0397`.
+- Bumped host `src/game.js` cache key in `index.html` to `20260609-0397`.
+- Kept pre-glow backup in `outputs/very_bad_512_before_necro_glow.png`.
+
+Files:
+- `assets/icons/very_bad_512.png`
+- `src/game.js`
+- `index.html`
+- `outputs/very_bad_512_before_necro_glow.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only update; `Очень Плохо` rules, cells, and balance were not changed.
+- Checks passed: PNG validation for 512x512 RGBA with transparent corners, `node --check src/game.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-09 01:32 - Dev 2
+
+Changed:
+- Implemented `ACTIVE FIELD RULE/TEXT SYNC 2026-06-09 01:20` as a context handback to GD, no QA requested.
+- Aligned player-facing special-field names/tooltips/field-effect/log text for `Враг`, `Кубик удачи`, `Удвой свои монеты`, `VS`, `Очень Плохо`, `Портал хаоса`, `Большой привал`, `Аукцион Лавки Джо`, and `Черный рынок`.
+- Changed `Кубик удачи` reward to 10 coins per rolled 6.
+- Kept `pay-double` simple: doubles current coins, with no 5-coin cost and no insufficient-coins branch.
+- Changed `Портал хаоса` roll 6 to automatic forward teleport to nearest monster/portal; roll 1-2 now targets nearest backward monster/portal.
+- Changed `Аукцион Лавки Джо` so bidding starts from the active player and the winner receives all 3 revealed Shop cards; source offer copies return to Shop discard/stock and losers are not charged.
+- Changed `Черный рынок` 5-cost and 10-cost deals to also draw/resolve one Event card.
+- Bumped host `src/game.js` cache key to `20260609-0396`.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- `Портал хаоса` treats “портал” as a monster-door enemy cell that is open for all players; unopened enemy cells are treated as monsters.
+- Joe Auction still charges only the winner at the end; losing/pass bids are never subtracted, which matches the “others get their coins back” rule in the current architecture.
+- Browser smoke on `http://localhost:5173/` loaded the board, saw the updated field titles, found no stale title strings, and reported no console errors.
+
+Open questions:
+- None.
+
+## 2026-06-09 01:25 - GD
+
+Changed:
+- Updated the active Dev 2 special-field sync task per user correction.
+- `pay-double` must stay/return to the simple rule text and behavior: `Удвой свои монеты`.
+- Removed the earlier `Заплати 5 монет и удвой свои монеты` requirement from the Dev task.
+- Dev 2 was asked to start the task now.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Do not add a 5-coin cost or insufficient-coins branch to `pay-double`.
+- The rest of the special-field sync task remains active.
+
+Open questions:
+- None.
+
+## 2026-06-09 01:20 - GD
+
+Changed:
+- Added and dispatched a Dev 2 task to align special field rows with the user's reference screenshot.
+- Scope includes both text/name formatting and rule changes for several fields.
+- Fields covered: `Враг`, `Кубик удачи`, `pay-double`, `VS`, `Очень Плохо`, `Портал хаоса`, `Большой привал`, `Аукцион Лавки Джо`, and `Черный рынок`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is intentionally routed through Dev under the new pipeline rule.
+- Important expected rule changes:
+  - `Кубик удачи`: reward should be 10 coins per 6, not 20.
+  - `pay-double`: keep/return to `Удвой свои монеты`, without a 5-coin cost.
+  - `Портал хаоса`: roll 6 should move forward to nearest monster/portal, not player choice.
+  - `Аукцион Лавки Джо`: winner should receive all 3 revealed Shop cards.
+  - `Черный рынок`: 5/10 coin options should also grant an Event card.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- Dev should document the exact interpretation of `монстр/портал` for `Портал хаоса` if current open-portal data makes this ambiguous.
+
+## 2026-06-09 01:10 - GD
+
+Changed:
+- Added a project rule for future planning and plan execution.
+- GD must route implementation work through Dev and visual/UI/asset work through Art/UI by default.
+- GD should not directly implement cross-role plans unless the user explicitly asks GD to implement personally or the change is an urgent tiny documentation/memory edit.
+- Duplicated the rule in shared memory, handoff, Dev inbox, and Art/UI inbox.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This rule is a correction after the `Очень Плохо` task, where GD implemented a working slice directly instead of routing through Dev/ArtUI first.
+- Current handback pipeline remains unchanged: executor handbacks go to GD as context only; QA is on-demand only.
+
+Open questions:
+- None.
+
+## 2026-06-09 01:08 - GD
+
+Changed:
+- Corrected process handling for the `Очень Плохо` field/art task.
+- Marked GD's direct implementation as a working slice rather than the final Art/UI-owned asset pass.
+- Added an Art/UI task to review or replace `assets/icons/very_bad_512.png` as the final `Очень Плохо` tile icon.
+- Added Dev context so Dev roles do not duplicate or overwrite the current implementation without a new user instruction.
+
+Files:
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- The user explicitly wanted the art path to go through Art/UI.
+- Current `Очень Плохо` mechanics remain in place as a working vertical slice.
+- Art/UI should keep the final path `assets/icons/very_bad_512.png` so no code change is needed unless cache keys/reference details change.
+
+Open questions:
+- None.
+
+## 2026-06-09 00:57 - GD
+
+Changed:
+- Implemented the new `Очень Плохо` field type directly in the game.
+- Replaced `field2` cells `8-7`, `9-7`, and `10-7` with `very-bad`.
+- Added `assets/icons/very_bad_512.png`: transparent 512x512 icon with three cursed Bad chests/skulls and `x3`.
+- Landing on `Очень Плохо` now draws and resolves 3 central `Плохо` cards in sequence.
+- Added `Очень Плохо` title/field-effect text and tile styling.
+- Added `Очень Плохо` to history field labels.
+- Updated bot scoring so `very-bad` is treated as roughly triple Bad risk.
+- Bumped host cache keys to `styles.css?v=20260609-0394` and `src/game.js?v=20260609-0394`.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `assets/icons/very_bad_512.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Очень Плохо` uses the central Bad draw path, so finite deck/discard reshuffle and `Двойное Плохо` stay on the existing lifecycle.
+- If `Двойное Плохо` is pending, it should trigger on the first Bad draw inside `Очень Плохо`, producing 4 total Bad cards.
+- If one Bad card moves the player, the remaining `Очень Плохо` Bad draws still continue.
+- Checks passed: `node --check src/game.js`, `git diff --check`, static readback for `field2` cells `8-7`/`9-7`/`10-7`, and PNG validation for 512x512 transparent `assets/icons/very_bad_512.png`.
+
+Open questions:
+- Browser smoke could not run in this environment: starting a local server was denied by permissions, and Playwright Chromium failed with macOS `MachPortRendezvous` permission denied.
+
+## 2026-06-09 00:40 - Dev 2
+
+Changed:
+- Implemented `ACTIVE GOOD CARD 2026-06-09 00:34 - Add Двойное Плохо next-bad extra draw card`.
+- Added Good card `Двойное Плохо` / `next-bad-extra-draw`, count `2`, effect `give-next-bad-extra-draw`.
+- Card text: `Отдай эту карту любому игроку. В следующий раз, когда он берет карту Плохо, он берет ещё одну`.
+- Playing the card makes the active player choose another player; the target receives a pending physical Good-card effect.
+- The next central `bad` deck draw for that target consumes exactly one pending copy, discards it to the Good discard pile, then draws/resolves exactly one extra Bad card with re-trigger disabled.
+- Multiple pending copies resolve one per future Bad draw event.
+- Added host score/turn status and phone controller chip for `Двойное Плохо`.
+- Synced `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `good`.
+- Bumped cache keys to `20260609-0393`.
+- Sent handback to GD as context note only under the current pipeline.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `src/controller.js`
+- `index.html`
+- `controller.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Static local config and CSV checks passed for `good/next-bad-extra-draw`.
+- Google Sheet readback confirmed row in `good` with id `next-bad-extra-draw`, effect `give-next-bad-extra-draw`, count `2`, and no final period.
+- Browser load smoke passed on `http://localhost:5173/` with `src/game.js?v=20260609-0393`, board ready, no console errors.
+
+Open questions:
+- Full manual browser flow for drawing/playing the exact card was not forced; implementation hooks the central `drawAndApplyCard(..., "bad")` path.
+
+## 2026-06-09 00:34 - GD
+
+Changed:
+- Added and dispatched a new Good-card task to Dev 2.
+- New card concept: `Двойное Плохо`.
+- Effect: give the card to another player; the next time that player draws `Плохо`, they draw one additional `Плохо`, then the pending effect is discarded.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Suggested id: `next-bad-extra-draw`.
+- Suggested effect type: `give-next-bad-extra-draw`.
+- Count should be `2`; this is not an artifact.
+- Use the existing `Сглаз` / pending-effect pattern where practical.
+- Under the current pipeline, Dev 2 handback goes to GD as context only, no approval needed by default.
+
+Open questions:
+- None.
+
+## 2026-06-09 00:18 - GD
+
+Changed:
+- Updated the project pipeline again per user instruction.
+- New default: executor handbacks to GD are context notes only, not approval requests.
+- GD no longer checks, approves, rejects, or writes rework for handbacks by default.
+- GD review/approval/checking happens only when the user explicitly asks.
+- QA remains on-demand only, when the user explicitly asks to involve QA.
+- Recorded the rule in README, handoff, Dev inbox, QA inbox, and Art/UI inbox.
+- Notified Dev 1, Dev 2, Dev 3, Art/UI 1, and Art/UI 2.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- The previous 2026-06-08 rule `handback goes directly to GD for approval` is superseded.
+- New handbacks should not wait for GD approval unless the user explicitly asks for it.
+
+Open questions:
+- None.
+
+## 2026-06-09 00:16 - GD
+
+Changed:
+- Reviewed Art/UI handback for Event card face readability and text fidelity.
+- Gave GD approval for the Event card face layout/fidelity fix.
+- Confirmed by static check that all `event` descriptions round-trip through the current sentence-splitting renderer without losing text.
+- Live browser checked one revealed Event card (`Портальный обмен`): visible face text matched the config description and was not clipped.
+- Marked the fallback Dev 3 Event text-fidelity task as covered by the Art/UI handback.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Волшебный кошель` config text is still the full three-sentence text:
+  `Последний игрок по маршруту получает артефакт. В начале своего хода владелец получает 5 монет. Если другой игрок обгоняет владельца, артефакт переходит к нему`
+- Generated all-card preview was blocked by browser URL policy, and `Волшебный кошель` did not appear during a quick random live draw.
+- Approval is based on the shared Event render path plus static all-card text fidelity and one live reveal check; if the user still sees clipping on `Волшебный кошель`, reopen as a focused UI rework.
+
+Open questions:
+- None.
+
+## 2026-06-09 00:10 - GD
+
+Changed:
+- Checked Event card config against the user's `Волшебный кошель` screenshot.
+- Confirmed `src/cards.config.js` has the full three-sentence `magic-wallet` description, including the transfer sentence.
+- Added a fallback Dev 3 task to audit/fix Event card face rendering so every Event card displays the exact configured `description` without clipping or shortened copy.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a UI/text fidelity task, not an Event balance/copy rewrite.
+- `Волшебный кошель` must show: `Если другой игрок обгоняет владельца, артефакт переходит к нему`.
+- Under the new pipeline, Dev 3 should hand back directly to GD unless QA is explicitly requested.
+
+Open questions:
+- Superseded by Art/UI handback and GD approval at 2026-06-09 00:16 unless the user still sees clipping.
+
+## 2026-06-09 00:42 - Art/UI
+
+Changed:
+- Reworked Event card face layout for readability.
+- Event card descriptions now split into separate sentence lines instead of one dense paragraph.
+- Added density classes for long Event texts so cards like `Гонка`, `Сплочение`, and `Волшебный кошель` get smaller text, tighter gaps, and more usable description height.
+- Fixed Event text CSS specificity so old generic card text rules no longer override the new Event title/description sizing or clip long lines.
+- Follow-up correction after user screenshot: Event text groups now center within the lower card area instead of sticking to the top; short cards start lower with more air between art and title, while long cards keep compact sizing.
+- Bumped `index.html` cache keys for `styles.css` and `src/game.js`.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- No Event rules/effects/card data were changed.
+- Checks passed: `node --check src/game.js`, `git diff --check`.
+- Browser opened local game, but a separate generated Event-card preview page was blocked by browser URL policy; visual correction is based on the live screenshots and the confirmed CSS clipping/specificity cause.
+
+Open questions:
+- GD/user should visually approve the new Event face layout in live card reveal, especially the longest `Волшебный кошель` text.
+
+## 2026-06-08 23:57 - GD
+
+Changed:
+- Updated the project development pipeline.
+- New default: executor completes task, writes handback, updates `updates.md`, and sends the finished task directly to GD for approval.
+- QA is skipped by default.
+- QA is involved only when the user explicitly asks, for example `привлеки QA`; in that case the previous QA-gated pipeline applies.
+- Added the rule to the shared README, handoff, Dev inbox, and QA inbox.
+- Notified Dev 1, Dev 2, and Dev 3 directly.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Older QA-gated records can remain as historical/open records unless GD or the user redirects them.
+- New handbacks should go to GD by default.
+
+Open questions:
+- None.
+
+## 2026-06-08 23:48 - QA 1
+
+Changed:
+- Picked up `QA READY 2026-06-08 23:43 - Dev 2 handback for Shop step-plus / battle-plus tune`.
+- QA gate result: blocked by local browser automation environment, not approved yet.
+- Verified static/config side:
+  - `shop/step-plus` is `+2 к шагам`, effect `passive-step-bonus`, `steps: 2`, count `2`;
+  - `shop/battle-plus` is `+1 к силе`, effect `passive-battle-bonus`, `amount: 1`, count `2`;
+  - Shop physical configured copies total remains `8`;
+  - no final periods on the checked player-facing Shop texts.
+- Verified code-path arithmetic with imported config and the same bonus formulas:
+  - owning one `step-plus` gives movement totals `roll + 2`;
+  - owning one `battle-plus` gives battle totals `roll + 1`.
+- Confirmed `index.html` loads `src/game.js?v=20260608-0390`, and `src/game.js` imports `cards.config.js?v=20260608-0390`.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- Checks passed in QA: `node --check src/cards.config.js`, `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+- Full independent browser gameplay smoke is still required before QA approval: Joe Shop reveal in browser, owning `step-plus` movement through an actual dice turn, and owning `battle-plus` battle strength in an actual battle.
+- Browser automation was blocked in this QA environment: Playwright Chromium launch failed with macOS `MachPortRendezvous` permission errors; starting a new local server on another port was also denied by sandbox permissions. Existing port `5173` responded to HEAD but returned empty bodies to `curl` in this session.
+- No Dev rework is filed from QA yet because no product bug was found; this is a QA environment blocker.
+
+Open questions:
+- Can another QA/browser-capable thread run the remaining independent visual/gameplay smoke?
+
+## 2026-06-08 23:43 - Dev 2
+
+Changed:
+- Implemented `ACTIVE SHOP CARD TUNE 2026-06-08 23:40 - Buff step-plus to +2 к шагам and shorten battle-plus text`.
+- Updated `shop/step-plus` to title/shortTitle/description `+2 к шагам`, kept effect `passive-step-bonus`, changed `steps` from `1` to `2`, kept count `2`.
+- Updated `shop/battle-plus` description to `+1 к силе`, kept title/shortTitle/effect/amount/count unchanged.
+- Synced local `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `shop`.
+- Bumped cache keys to `src/game.js?v=20260608-0390` and `cards.config.js?v=20260608-0390`.
+- Sent handback to QA first per Task Lifecycle.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Google Sheet readback confirmed `shop/step-plus` has `steps=2`, count `2`, and `+2 к шагам` in title/shortTitle/description.
+- Google Sheet readback confirmed `shop/battle-plus` has description `+1 к силе`, amount `1`, count `2`.
+- Checks passed: `node --check src/cards.config.js`, `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+- Browser smoke loaded `http://localhost:5173/` with `src/game.js?v=20260608-0390`, board ready, no console errors.
+
+Open questions:
+- Waiting for QA approval before GD final approval.
+
+## 2026-06-08 23:40 - GD
+
+Changed:
+- Added and dispatched a Shop card balance/text task to Dev 2.
+- `shop/step-plus` should become `+2 к шагам` in title, shortTitle, description, and effect amount.
+- `shop/battle-plus` should keep amount `1` but shorten description to `+1 к силе`.
+- Added QA coverage for local config, CSV, Google Sheet readback, Joe Shop reveal, movement bonus, and battle strength regression.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a Shop card tuning task only.
+- Keep Shop counts at `2` per card and preserve finite deck / Joe Shop stock lifecycle.
+- Apply current card text style rule: no final period.
+
+Open questions:
+- Waiting for Dev 2 handback to QA.
+
 ## 2026-06-07 17:42 - Dev 3
 
 Changed:
