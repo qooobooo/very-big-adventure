@@ -4,6 +4,172 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- DONE FINAL BATTLE UI/RULE CLARITY 2026-06-09 21:58 - Boss force display flow:
+  - Owner: `Dev 3`.
+  - Dispatch status: implemented by `Dev 3` at 2026-06-09 22:05; GD context handback sent; QA not involved.
+  - Dev 3 handback:
+    - Final battle boss pre-roll/start force now applies only `bossOpponentBonus` / `+N за противников`.
+    - Ordinary boss combat bonuses are counted per boss roll through `result.total`, together with any per-roll `Сглаз` penalty.
+    - Boss cumulative HUD/progress force now increases by each boss roll's displayed total.
+    - Final boss force now computes as `bossOpponentBonus + sum(bossRollResults.total)`.
+    - Boss logs show the start opponent bonus separately, then each boss roll's dice/ordinary bonus/penalty, roll total, and cumulative boss force.
+    - Final summary breakdown still separates rolled dice, ordinary boss bonuses/penalties, opponent bonus, and total boss force.
+    - Host `src/game.js` cache key bumped to `20260609-0411`.
+    - Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+    - Browser smoke loaded `http://127.0.0.1:5173/` with `src/game.js?v=20260609-0411`, board ready, no console errors.
+    - Full browser final-battle smoke was attempted with 4 players and exact movement, but the long exact move landed in a `Плохо` card flow instead of quickly reaching final battle; no direct state mutation was used.
+  - User concern:
+    - During the final battle it looks like each boss roll displays `dice + bonuses`, but all bonuses were already added before the rolls.
+    - This makes boss force display feel inconsistent/confusing.
+  - Intended GD flow:
+    - First apply only the boss bonus for other players/opponents.
+      - In a 4-player game this is `+3 за противников`.
+      - This is a pre-roll/start boss force component.
+    - Then the boss rolls once per other player.
+      - In a 4-player game the boss rolls 3 times.
+    - Each boss roll should count and display:
+      - rolled dice total;
+      - the boss's normal battle bonuses/modifiers for that roll;
+      - temporary penalties like `Сглаз` if they apply to that roll.
+    - Each boss roll should not include the already-applied opponent/player-count bonus again.
+    - Final boss force should read as:
+      - `bonus за противников + сумма всех бросков босса`;
+      - where each boss roll is `кубики + обычные бонусы/штрафы`.
+  - Current source notes:
+    - Likely area: `src/game.js`.
+    - `resolveFinalBattle(...)` currently computes:
+      - `bossBonus = playerCombatBonus(boss) * challengers.length`;
+      - `bossOpponentBonus = challengers.length`;
+      - `bossStartBonus = bossBonus + bossOpponentBonus`;
+      - then displays/applies `bossStartBonus` before boss rolls.
+    - Per-roll progress currently adds only `result.rolled + cursePenalty`, because ordinary boss bonuses were pre-multiplied into `bossStartBonus`.
+    - This is mathematically close, but visually misleading.
+  - Required change:
+    - Change final boss force flow/display so ordinary boss combat bonuses are accounted for per boss roll, not visually pre-added before rolls.
+    - The pre-roll boss component should be only `bossOpponentBonus`.
+    - During each boss roll, use the same per-roll result semantics as other battle rolls:
+      - show/log `кубики + бонусы/штрафы = сила броска`;
+      - add that roll's total to cumulative boss force.
+    - Final summary/log/history should still separate:
+      - rolled dice total;
+      - ordinary boss bonuses/penalties total;
+      - opponent bonus;
+      - total boss force.
+    - Keep final winner/scoring rules unchanged.
+  - UI guidance:
+    - HUD should make the running boss force understandable:
+      - before rolls: show `+N за противников` or the numeric cumulative value with clear text in prompt/log;
+      - after each roll: cumulative boss force updates by that roll's displayed total.
+    - Logs/prompts should avoid implying that ordinary boss bonuses were added twice or before the roll.
+    - Example for 4 players:
+      - `Босс получает +3 за противников`;
+      - roll 1: `кубики 8 + бонус 2 = 10`, cumulative boss force `13`;
+      - roll 2: `кубики 7 + бонус 2 = 9`, cumulative `22`;
+      - roll 3: `кубики 11 + бонус 2 = 13`, cumulative `35`.
+  - Do not:
+    - Do not change who becomes boss, final battle trigger, number of boss rolls, winner/scoring formula, card effects, deck lifecycle, board placement, dice count rules, bots, phone controller protocol, or saved history schema beyond naturally corrected force breakdown values.
+    - Do not touch the current Apps Script / history-sheet blocker task.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source check:
+      - pre-roll boss force uses only opponent/player-count bonus;
+      - per boss roll adds `result.total` or equivalent `rolled + per-roll bonuses/penalties`;
+      - final `bossForce` equals opponent bonus plus per-roll totals.
+    - Browser smoke if environment allows:
+      - force a final battle with 4 players;
+      - boss gets a clear `+3 за противников` step;
+      - boss rolls 3 times;
+      - each boss roll UI/log shows dice plus ordinary bonuses for that roll;
+      - cumulative/final boss force matches the visible breakdown;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Send GD context handback only; QA не подключать unless user explicitly asks.
+
+- BLOCKED HISTORY SHEET 2026-06-09 21:49 - Final party fields still blank in `Games Log`:
+  - Owner: `Dev 2`.
+  - Dispatch status: investigated by `Dev 2` at 2026-06-09 21:55; blocked on live Apps Script source/deployment access; GD context handback sent.
+  - Blocker note:
+    - Local/client payload already includes the final fields.
+    - The live `Games Log` Sheet already has final headers.
+    - The deployed Apps Script web app source/deployment is not accessible from the repo or current Drive connector search.
+    - Dev 2 added the exact mapping patch needed at `project-memory/apps-script-games-log-final-fields-patch.js`.
+    - Product behavior remains blocked until someone with Apps Script access updates and redeploys the web app.
+  - User report:
+    - In the stats Google Sheet, end-of-game fields are blank even for recent saved finished games that already had the final History UI.
+    - Target Sheet:
+      - `https://docs.google.com/spreadsheets/d/1uC1xUk52IbpHfm9tNtHT2_cmFSNQIKCkct88TsqmmV8/edit?gid=0#gid=0`
+  - GD live readback:
+    - Spreadsheet title: `Games Log`.
+    - Tabs:
+      - `Games`;
+      - `Players`.
+    - `Games!A1:X20` has headers through final fields:
+      - `finalOutcome`, `finalOutcomeText`, `finalWinnerName`, `finalWinnerRole`, `finalWinnerRoleId`, `finalWinnerScore`, `finalPlayersForce`, `finalBossForce`, `finalBossWon`, `finalSummaryJson`.
+    - Latest visible row read by GD:
+      - `game-2026-06-09T00:09:09.257Z-7myl7q`;
+      - `finished = TRUE`;
+      - basic fields through `Minutes = 41` are filled;
+      - `Games!O:X` are blank.
+    - `Players!A1:AG12` has headers through player final fields:
+      - `finalRole`, `finalRoleId`, `finalWinner`, `finalScoreTotal`, `finalScoreCoins`, `finalScoreShop`, `finalScoreDamage`, `finalScoreDamageToBoss`, `finalScorePosition`, `finalBattleForce`, `finalForceBreakdown`, `finalScoreBreakdown`, `finalScoreJson`, `finalForceJson`.
+    - Player rows are filled through `itemsJson`, but `Players!T:AG` are blank.
+  - Current local/client context:
+    - `src/game.js` already builds final sheet data:
+      - `buildFinalHistorySheetExport(...)`;
+      - `buildGameHistorySnapshot()`;
+      - `snapshot.game.final*`;
+      - `snapshot.players[].final*`;
+      - `snapshot.sheetExport`.
+    - Previous QA blocker from 2026-06-07 said the deployed Apps Script/save mapping still writes only old/basic columns.
+    - The current sheet state matches that blocker: headers exist, final cells are not populated.
+  - Required behavior:
+    - Pressing `Сохранить` after a finished game with visible `История -> Итог партии` must write final fields into the readable columns.
+    - `Games!O:X` must be populated from the same final summary shown in the UI:
+      - final outcome/id;
+      - final outcome text;
+      - winner name;
+      - winner role text/id;
+      - winner score;
+      - players force;
+      - boss force;
+      - boss-won boolean;
+      - raw final summary JSON.
+    - `Players!T:AG` must be populated for every saved player row:
+      - final role text/id;
+      - winner flag;
+      - final score total and score parts;
+      - final battle force;
+      - force/score breakdown text;
+      - score/force JSON.
+    - Keep existing basic `Games` and `Players` fields working.
+    - If save happens before the game is finished and no final summary exists, final columns may stay blank.
+  - Likely fix area:
+    - Apps Script / deployed Google Sheet save endpoint mapping.
+    - If Apps Script source is not accessible from repo/connector, document exact blocker and the mapping patch needed.
+    - Only touch `src/game.js` if the browser payload is missing anything after a fresh check.
+  - Do not:
+    - Do not change final battle rules, scoring, winner calculation, History UI, card effects, decks, board placement, dice math, bots, or phone controller behavior.
+    - Do not overwrite or backfill existing historical rows unless the user explicitly asks.
+    - Do not treat browser `no-cors` success as proof; read back the Sheet.
+  - Verification:
+    - `node --check src/game.js` if touched.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Create/force a finished game with visible `Итог партии`.
+    - Click `Сохранить`.
+    - Read back `Games Log`:
+      - new `Games` row exists for the saved id;
+      - `Games!O:X` are non-empty and match visible final summary;
+      - matching `Players` rows exist;
+      - `Players!T:AG` are non-empty and match visible player final cards.
+    - Regression: saving an in-progress game still writes old/basic fields or fails gracefully as before.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Send GD context handback only; QA не подключать unless user explicitly asks.
+
 - DONE TADAM UI 2026-06-09 03:00 - New TADAM appears in first slot:
   - Owner: `Dev 2`.
   - Dispatch status: implemented by `Dev 2` at 2026-06-09 03:03; handback sent to GD as context note only.

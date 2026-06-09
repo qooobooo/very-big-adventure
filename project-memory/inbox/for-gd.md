@@ -4,6 +4,93 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-06-09 22:05 - Dev 3 context handback: final battle boss force display flow
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - No GD approval requested by default.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE FINAL BATTLE UI/RULE CLARITY 2026-06-09 21:58 - Boss force display flow`.
+  - Implemented:
+    - Final battle boss pre-roll/start force now applies only `bossOpponentBonus` / `+N за противников`.
+    - Ordinary boss combat bonuses are counted per boss roll through `result.total`, together with any per-roll `Сглаз` penalty.
+    - Boss cumulative HUD/progress force now increases by each boss roll's displayed total.
+    - Final boss force now computes as `bossOpponentBonus + sum(bossRollResults.total)`.
+    - Boss logs show the start opponent bonus separately, then each boss roll's dice/ordinary bonus/penalty, roll total, and cumulative boss force.
+    - Final summary breakdown still separates rolled dice, ordinary boss bonuses/penalties, opponent bonus, and total boss force.
+    - Host cache key bumped to `src/game.js?v=20260609-0411`.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source check: old `playerCombatBonus(boss) * challengers.length` pre-roll flow is gone; pre-roll force uses `bossOpponentBonus`; per-roll cumulative force adds `result.total`; final boss force is `bossOpponentBonus + bossRollTotal`.
+    - Browser smoke loaded `http://127.0.0.1:5173/` with `src/game.js?v=20260609-0411`, board ready, and no console errors.
+  - Not fully run:
+    - Full browser final-battle smoke was attempted with 4 players and exact movement, but the long exact move landed in a `Плохо` card flow instead of quickly reaching final battle; no direct state mutation was used.
+  - Notes:
+    - Did not change final battle trigger, number of boss rolls, winner/scoring formula, card effects, deck lifecycle, board placement, dice count rules, bots, phone protocol, or the Games Log blocker.
+
+- 2026-06-09 21:55 - Dev 2 blocker handback: Games Log final fields still blank
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+    - Not product-complete; blocked on live Apps Script source/deployment access.
+  - Task:
+    - `ACTIVE HISTORY SHEET 2026-06-09 21:49 - Final party fields still blank in Games Log`.
+  - Findings:
+    - Local `src/game.js` already sends final History fields in `snapshot.game.final*`, `snapshot.players[].final*`, and `snapshot.sheetExport`.
+    - Target Sheet `Games Log` already has final headers in `Games!O:X` and `Players!T:AG`.
+    - Current Sheet state still matches the previous blocker: saved rows fill old/basic columns but leave final columns blank.
+    - Drive search found the `Games Log` spreadsheet but no accessible Apps Script project/source for the deployed web app.
+    - Search by deployment id `AKfycbxNXmGjR9w3U0vmUd9xS5Rc2KHwR8Q7ViB5Pcl70qIOEhwIJp_M_1faO7RvpDtuPLqkdQ` returned no source files.
+    - Search for `application/vnd.google-apps.script` returned no accessible Apps Script files.
+  - Deliverable:
+    - Added a concrete endpoint mapping patch at `project-memory/apps-script-games-log-final-fields-patch.js`.
+    - Patch preserves old/basic `Games!A:N` and `Players!A:S`, then writes final fields to `Games!O:X` and `Players!T:AG`.
+  - Files changed by Dev 2:
+    - `project-memory/apps-script-games-log-final-fields-patch.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check project-memory/apps-script-games-log-final-fields-patch.js`
+    - `git diff --check`
+  - Not run / not possible:
+    - Real finished-game `Сохранить` verification with final-column Sheet readback, because the live Apps Script deployment could not be edited/redeployed here.
+  - Required next action:
+    - Someone with Apps Script access must update and redeploy the live web app mapping using `project-memory/apps-script-games-log-final-fields-patch.js`, then run a real finished-game save and read back `Games!O:X` / `Players!T:AG`.
+
+- 2026-06-09 21:45 - Art/UI 2 context handback: `Черный рынок` icon redraw wired
+  - Pipeline status:
+    - Context note only under `UI PIPELINE RULE 2026-06-09 00:18`.
+    - No GD approval requested by default.
+    - QA was not involved.
+  - User request:
+    - Redraw the black market icon so it clearly shows that something can be bought there.
+    - Use minimal details for small-tile readability.
+    - User approved wiring the candidate with `Заливай`.
+  - Completed:
+    - Replaced `assets/icons/black_market_ultra_simple_512.png`.
+    - New composition: dark market stall, one mystery item/card, one large gold coin/price token.
+    - Kept candidate copy `assets/icons/black_market_buy_candidate_512.png`.
+    - Added visual preview `outputs/black-market-buy-candidate-preview.png`.
+    - Updated `blackMarketIconSrc` cache key in `src/game.js` to `assets/icons/black_market_ultra_simple_512.png?v=20260609-0409`.
+    - Updated host script cache key in `index.html` to `src/game.js?v=20260609-0409`.
+  - Asset status:
+    - Wired via existing `black-market` icon path.
+  - Checks passed:
+    - PNG dimension and alpha/corner transparency validation.
+    - `node --check src/game.js`.
+    - `git diff --check`.
+  - Notes:
+    - Art/UI 2 did not change gameplay rules, board placement, card config, or `black-market` mechanics.
+
 - 2026-06-09 03:03 - Dev 2 context handback: TADAM newest-first slots
   - Pipeline status:
     - Context note only under the current pipeline rule.

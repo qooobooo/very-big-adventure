@@ -20,6 +20,203 @@ Open questions:
 - ...
 ```
 
+## 2026-06-09 22:22 - Art/UI
+
+Changed:
+- Restored the `Очень Плохо` skull icon to the approved green-wisp skull version after the user asked to return it.
+- Bumped the `very_bad_512.png` and host `src/game.js` cache keys to `20260609-0412`.
+
+Files:
+- `assets/icons/very_bad_512.png`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only asset restore; no rules, cells, balance, card behavior, or layout logic changed.
+- Per user preference, no GD/QA handback was sent.
+- Checks passed: PNG validation for 512x512 RGBA with transparent corners, `node --check src/game.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-09 22:05 - Dev 3
+
+Changed:
+- Implemented `ACTIVE FINAL BATTLE UI/RULE CLARITY 2026-06-09 21:58 - Boss force display flow`.
+- Final battle boss pre-roll/start force now applies only `+N за противников`.
+- Ordinary boss combat bonuses are now counted per boss roll through `result.total`, alongside any per-roll `Сглаз` penalty.
+- Boss cumulative HUD/progress force now increases by each boss roll's displayed total.
+- Final boss force now computes as `bossOpponentBonus + sum(bossRollResults.total)`.
+- Boss logs now show the start opponent bonus separately, then each boss roll's dice/ordinary bonus/penalty, roll total, and cumulative boss force.
+- Final summary breakdown still separates rolled dice, ordinary boss bonuses/penalties, opponent bonus, and total boss force.
+- Bumped host `src/game.js` cache key to `20260609-0411`.
+- Sent GD a context handback only under the current pipeline; QA was not involved.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+- Static/source check passed: old `playerCombatBonus(boss) * challengers.length` pre-roll flow is gone; pre-roll force uses `bossOpponentBonus`; per-roll cumulative force adds `result.total`; final boss force is `bossOpponentBonus + bossRollTotal`.
+- Browser smoke loaded `http://127.0.0.1:5173/` with `src/game.js?v=20260609-0411`, board ready, and no console errors.
+- Full browser final-battle smoke was attempted with 4 players and exact movement, but the long exact move landed in a `Плохо` card flow instead of quickly reaching final battle; no direct state mutation was used.
+- Did not change final battle trigger, number of boss rolls, winner/scoring formula, card effects, deck lifecycle, board placement, dice count rules, bots, phone protocol, or the Games Log blocker.
+
+Open questions:
+- None for Dev 3. GD review/approval not requested by default; handback is context only.
+
+## 2026-06-09 21:58 - GD
+
+Changed:
+- Reviewed final battle boss-force flow after user concern about confusing boss bonus display.
+- Current implementation pre-applies `playerCombatBonus(boss) * challengers.length` together with `+1 per challenger`, then each boss roll visually adds mostly dice/penalty, which is mathematically close but confusing.
+- Clarified intended GD flow:
+  - first apply only the boss bonus for opponents/other players;
+  - then the boss rolls once per other player;
+  - each boss roll displays and contributes `dice + ordinary boss bonuses/penalties`;
+  - opponent/player-count bonus is not repeated inside each roll.
+- Added and dispatched Dev 3 task `ACTIVE FINAL BATTLE UI/RULE CLARITY 2026-06-09 21:58 - Boss force display flow`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a final battle clarity/display/math-structure task, not a scoring redesign.
+- Do not touch the separate `Games Log` Apps Script blocker.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-09 21:55 - Dev 2
+
+Changed:
+- Investigated `ACTIVE HISTORY SHEET 2026-06-09 21:49 - Final party fields still blank in Games Log`.
+- Confirmed local `src/game.js` already sends final History fields in `snapshot.game.final*`, `snapshot.players[].final*`, and `snapshot.sheetExport`.
+- Confirmed the target Sheet headers exist for `Games!O:X` and `Players!T:AG`.
+- Searched Drive for the deployed Apps Script source by `Games Log`, project keywords, the web app deployment id, and `application/vnd.google-apps.script`; only the Sheet was accessible, no Apps Script project/source was found.
+- Added a concrete Apps Script mapping patch for the endpoint owner: `project-memory/apps-script-games-log-final-fields-patch.js`.
+
+Files:
+- `project-memory/apps-script-games-log-final-fields-patch.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Product behavior is still blocked until someone with Apps Script source/deployment access updates and redeploys the live web app `AKfycbxNXmGjR9w3U0vmUd9xS5Rc2KHwR8Q7ViB5Pcl70qIOEhwIJp_M_1faO7RvpDtuPLqkdQ`.
+- Required endpoint change: keep old/basic `Games!A:N` and `Players!A:S`, and append the already-sent final fields into `Games!O:X` and `Players!T:AG`.
+- Patch file maps exact current headers:
+  - `Games`: `finalOutcome`, `finalOutcomeText`, `finalWinnerName`, `finalWinnerRole`, `finalWinnerRoleId`, `finalWinnerScore`, `finalPlayersForce`, `finalBossForce`, `finalBossWon`, `finalSummaryJson`;
+  - `Players`: `finalRole`, `finalRoleId`, `finalWinner`, `finalScoreTotal`, `finalScoreCoins`, `finalScoreShop`, `finalScoreDamage`, `finalScoreDamageToBoss`, `finalScorePosition`, `finalBattleForce`, `finalForceBreakdown`, `finalScoreBreakdown`, `finalScoreJson`, `finalForceJson`.
+- Checks passed: `node --check project-memory/apps-script-games-log-final-fields-patch.js` and `git diff --check`.
+- No real finished-game `Сохранить` verification was possible because the live Apps Script deployment could not be edited/redeployed from this environment.
+- Did not backfill existing rows and did not touch final battle rules/scoring/history UI/cards/decks/board/dice/bots/phone behavior.
+
+Open questions:
+- Who can open and redeploy the live Apps Script web app for `Games Log`?
+
+## 2026-06-09 21:52 - Art/UI
+
+Changed:
+- Reduced the working `Очень Плохо` skull icon by 20% inside the 512x512 PNG.
+- Bumped `very_bad_512.png` and host `src/game.js` cache keys to `20260609-0410`.
+- Saved the previous larger skull version at `outputs/very_bad_512_before_skull_20pct_smaller.png`.
+
+Files:
+- `assets/icons/very_bad_512.png`
+- `src/game.js`
+- `index.html`
+- `outputs/very_bad_512_before_skull_20pct_smaller.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only update; no rules, cells, balance, or card behavior changed.
+- Per user preference, no GD context note was sent.
+- Checks passed: PNG validation for 512x512 RGBA with transparent corners, `node --check src/game.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-09 21:49 - GD
+
+Changed:
+- Investigated the user report that final party info is blank in the stats Google Sheet.
+- Live-read `Games Log`:
+  - `Games!A1:X20` has final headers `finalOutcome` through `finalSummaryJson`;
+  - latest finished rows, including `game-2026-06-09T00:09:09.257Z-7myl7q`, still stop at `Minutes` and leave `Games!O:X` blank;
+  - `Players!A1:AG12` has final headers, but player rows stop at `itemsJson` and leave `Players!T:AG` blank.
+- Added and dispatched Dev 2 task `ACTIVE HISTORY SHEET 2026-06-09 21:49 - Final party fields still blank in Games Log`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Local `src/game.js` already builds `snapshot.game.final*`, `snapshot.players[].final*`, and `snapshot.sheetExport`.
+- This matches the old 2026-06-07 blocker: the deployed Apps Script/save endpoint likely still maps only old/basic fields.
+- Required fix is readable Google Sheet persistence for `Games!O:X` and `Players!T:AG`, with live Sheet readback after a real save.
+- Do not backfill existing rows unless the user explicitly asks.
+
+Open questions:
+- Who has live Apps Script/deployment access if Dev 2 cannot access it from the current environment?
+
+## 2026-06-09 21:49 - Art/UI
+
+Changed:
+- Replaced the working `Очень Плохо` tile icon with the approved simple skull draft.
+- Kept the icon at `assets/icons/very_bad_512.png`.
+- Bumped `very_bad_512.png` and host `src/game.js` cache keys to `20260609-0409`.
+- Saved the previous working icon backup at `outputs/very_bad_512_before_skull_upload.png`.
+
+Files:
+- `assets/icons/very_bad_512.png`
+- `src/game.js`
+- `index.html`
+- `outputs/very_bad_512_before_skull_upload.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only update; no rules, cells, balance, or card behavior changed.
+- Per user preference, no GD context note was sent.
+- Checks passed: PNG validation/view, `node --check src/game.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-09 21:45 - Art/UI 2
+
+Changed:
+- Wired the new simplified `Черный рынок` icon into the current game asset path after user approval.
+- Replaced `assets/icons/black_market_ultra_simple_512.png` with the buy-focused candidate: dark stall, one mystery item/card, large gold coin/price token.
+- Kept the candidate copy and tile preview for comparison.
+- Bumped cache keys for `black_market_ultra_simple_512.png` and host `src/game.js`.
+- Sent GD a context handback only under the current pipeline; QA was not involved.
+
+Files:
+- `assets/icons/black_market_ultra_simple_512.png`
+- `assets/icons/black_market_buy_candidate_512.png`
+- `outputs/black-market-buy-candidate-preview.png`
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Asset status: wired via existing `black-market` icon path.
+- Final asset: `assets/icons/black_market_ultra_simple_512.png`, PNG, 512x512, RGBA with transparent corners.
+- Cache key: `assets/icons/black_market_ultra_simple_512.png?v=20260609-0409`; host `src/game.js?v=20260609-0409`.
+- Checks passed: PNG dimension/alpha validation; `node --check src/game.js`; `git diff --check`.
+
+Open questions:
+- None.
+
 ## 2026-06-09 03:03 - Dev 2
 
 Changed:

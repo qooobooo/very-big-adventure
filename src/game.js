@@ -317,7 +317,7 @@ const diceIconSrc = "./assets/icons/dice.png?v=20260524-0305";
 const enemyIconSrc = "./assets/icons/enemy_512.png";
 const magicWalletIconSrc = "./assets/icons/artifact_magic_wallet_512.png";
 const finalEnemyIconSrc = "./assets/icons/final_enemy.png?v=20260525-0146";
-const blackMarketIconSrc = "./assets/icons/black_market_ultra_simple_512.png?v=20260601-0294";
+const blackMarketIconSrc = "./assets/icons/black_market_ultra_simple_512.png?v=20260609-0409";
 const chaosPortalIconSrc = "./assets/icons/chaos_portal_1254.png?v=20260601-0276";
 const eventIconSrc = "./assets/icons/event_quest_512.png";
 const joeAuctionIconSrc = "./assets/icons/joe_auction_512.png?v=20260609-0401";
@@ -325,7 +325,7 @@ const portalIconSrc = "./assets/icons/portal_1254.png?v=20260530-0222";
 const vsIconSrc = "./assets/icons/vs_1254.png?v=20260531-0233";
 const eventIcons = {
   bad: '<img class="tile-icon-image tile-icon-bad" src="./assets/icons/bad_tight.png" alt="Плохо">',
-  "very-bad": '<img class="tile-icon-image tile-icon-very-bad" src="./assets/icons/very_bad_512.png?v=20260609-0400" alt="Очень Плохо">',
+  "very-bad": '<img class="tile-icon-image tile-icon-very-bad" src="./assets/icons/very_bad_512.png?v=20260609-0412" alt="Очень Плохо">',
   "big-rest": '<img class="tile-icon-image tile-icon-big-rest" src="./assets/icons/big_rest_fire_512.png" alt="Большой привал">',
   "black-market": `<img class="tile-icon-image tile-icon-black-market" src="${blackMarketIconSrc}" alt="Черный рынок">`,
   "chaos-portal": `<img class="tile-icon-image tile-icon-chaos-portal" src="${chaosPortalIconSrc}" alt="Портал хаоса">`,
@@ -4505,27 +4505,22 @@ async function resolveFinalBattle(boss, animate = true) {
   log(`Итоговая сила игроков: <strong>${playersForce}</strong>.`);
 
   const bossRollResults = [];
-  const bossBonus = playerCombatBonus(boss) * challengers.length;
   const bossOpponentBonus = challengers.length;
-  const bossBonusText = [
-    bossBonus ? `${bossBonus} модификаторы` : "",
-    bossOpponentBonus ? `${bossOpponentBonus} за противников` : "",
-  ].filter(Boolean);
-  const bossStartBonus = bossBonus + bossOpponentBonus;
-  const bossBonusBreakdown = bossBonusText.length ? ` (${bossBonusText.join(" + ")})` : "";
+  const bossOpponentBonusLabel = bossOpponentBonus > 0 ? `+${bossOpponentBonus}` : String(bossOpponentBonus);
+  const bossOpponentBonusBreakdown = bossOpponentBonus ? ` (${bossOpponentBonusLabel} за противников)` : "";
   if (animate) {
     await showActionPrompt(
-      `Босс ${playerName(boss)} добавляет бонус перед бросками: <strong>${bossStartBonus}</strong>${bossBonusBreakdown}.`,
+      `Босс ${playerName(boss)} добавляет стартовый бонус: <strong>${bossOpponentBonusLabel}</strong>${bossOpponentBonusBreakdown}.`,
       {
         autoFor: boss,
         buttonLabel: "Добавить бонус",
       },
     );
   }
-  state.finalBattleProgress.bossForce = bossStartBonus;
+  state.finalBattleProgress.bossForce = bossOpponentBonus;
   state.finalBattleProgress.bossBonusApplied = true;
   render();
-  log(`Босс ${playerName(boss)} получает бонус перед бросками: <strong>${bossStartBonus}</strong>${bossBonusBreakdown}.`);
+  log(`Босс ${playerName(boss)} получает стартовый бонус: <strong>${bossOpponentBonusLabel}</strong>${bossOpponentBonusBreakdown}.`);
   if (animate) await sleep(400);
   for (let index = 0; index < challengers.length; index += 1) {
     if (animate) {
@@ -4537,21 +4532,27 @@ async function resolveFinalBattle(boss, animate = true) {
     const result = await rollFinalBattlePower(boss, animate, { label: `Босс - ${boss.name}` });
     bossRollResults.push(result);
     state.finalBattleProgress.bossRollsStarted = true;
-    state.finalBattleProgress.bossForce = Math.max(0, state.finalBattleProgress.bossForce + result.rolled + (result.cursePenalty || 0));
+    state.finalBattleProgress.bossForce += result.total;
     render();
-    const curseText = result.cursePenalty ? `, Сглаз <strong>${result.cursePenalty}</strong>` : "";
     log(
-      `${playerName(boss)} бросает как босс ${index + 1}/${challengers.length}: ${formatRoll(result.rolls)}. Кубики: <strong>${result.rolled}</strong>${curseText}.`,
+      `${playerName(boss)} бросает как босс ${index + 1}/${challengers.length}: ${formatRoll(result.rolls)}${finalBonusText(result.baseBonus, result.cursePenalty, result.total)}. Сила броска: <strong>${result.total}</strong>. Сила босса: <strong>${state.finalBattleProgress.bossForce}</strong>.`,
     );
   }
 
   const bossRolled = bossRollResults.reduce((sum, result) => sum + result.rolled, 0);
+  const bossBonus = bossRollResults.reduce((sum, result) => sum + (result.baseBonus || 0), 0);
   const bossCursePenalty = bossRollResults.reduce((sum, result) => sum + (result.cursePenalty || 0), 0);
-  const bossForce = Math.max(0, bossRolled + bossBonus + bossOpponentBonus + bossCursePenalty);
+  const bossRollTotal = bossRollResults.reduce((sum, result) => sum + result.total, 0);
+  const bossForce = bossOpponentBonus + bossRollTotal;
   state.finalBattleProgress.bossForce = bossForce;
-  const bossCurseText = bossCursePenalty ? ` + Сглаз ${bossCursePenalty}` : "";
+  const bossForceBreakdown = [
+    bossOpponentBonus ? `${bossOpponentBonusLabel} за противников` : "",
+    bossRolled ? `${bossRolled} кубики` : "",
+    bossBonus ? `${bossBonus} обычные бонусы` : "",
+    bossCursePenalty ? `Сглаз ${bossCursePenalty}` : "",
+  ].filter(Boolean).join(" + ");
   log(
-    `Сила босса: <strong>${bossForce}</strong> (${bossRolled} кубики${bossBonusText.length ? ` + ${bossBonusText.join(" + ")}` : ""}${bossCurseText}).`,
+    `Сила босса: <strong>${bossForce}</strong>${bossForceBreakdown ? ` (${bossForceBreakdown})` : ""}.`,
   );
 
   const bossWon = bossForce >= playersForce;
