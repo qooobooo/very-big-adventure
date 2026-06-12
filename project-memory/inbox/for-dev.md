@@ -4,6 +4,1104 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- DONE TEAM BATTLE 2026-06-12 04:47 - Manual player rolls in shared/team battles:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by `Dev 3` at 2026-06-12 04:47; context handback added for GD.
+  - Context:
+    - User clarified the request is for `Командная битва`, not ordinary `VS`.
+    - Screenshot shows `Сплочение` / `Командная битва` auto-resolving all player rolls immediately.
+    - Expected: players should roll themselves during the team/shared battle flow.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - During shared/team monster battles, each human player must explicitly roll their own dice instead of the game auto-rolling for them.
+    - Applicable shared battles include at least:
+      - Event `Сплочение` / `unity`;
+      - Event `Бой за старт` / `unity-start`;
+      - any other current shared/team monster battle that reuses the same resolver/HUD.
+    - Bots may continue to roll automatically after a short delay, following existing bot pacing.
+    - The team battle HUD must clearly show whose turn it is to roll.
+    - Highlight the current rolling player's card/slot in the team battle HUD and/or player panel.
+    - After each roll, keep the partial results visible and move to the next player.
+    - Resolve win/loss only after all required players have rolled.
+  - Controls:
+    - Host mode: the main roll button should belong to the current human roller.
+    - Phone mode: if the current roller is a phone-controlled player, that phone should get the roll action; other phones should not be able to roll for them.
+    - If the current roller is a bot, no human roll prompt should block the flow.
+  - Do not change:
+    - Team battle reward/loss rules.
+    - Monster target/strength formulas, including recent `Сила монстров` setting behavior.
+    - Ordinary individual monster battle rules.
+    - Final boss PvP battle rules.
+    - VS field rules unless the same generic helper must be touched safely.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source checks:
+      - shared/team battle no longer auto-rolls all human players in one pass;
+      - current roller state exists and advances player by player;
+      - bot rollers still auto-resolve;
+      - reward/loss logic still waits for all rolls.
+    - Browser smoke if environment allows:
+      - trigger `Сплочение` with 2+ human players;
+      - confirm first human must press roll;
+      - confirm second human must press roll separately;
+      - confirm HUD highlights current roller and preserves previous results;
+      - confirm final result appears only after all rolls;
+      - smoke `Бой за старт` if easy to force;
+      - no console errors.
+  - Handback:
+    - Updated `project-memory/updates.md`.
+    - Added context handback to `project-memory/inbox/for-gd.md`.
+    - Marked this task done in `project-memory/inbox/for-dev.md`.
+    - Sent GD context handback only; no QA gate.
+  - Completed:
+    - Added a per-contender roll prompt before each `Сплочение` roll.
+    - Added a per-contender roll prompt before each `Бой за старт` roll.
+    - Human contenders now press `Бросить кубик` one by one.
+    - Bot contenders use the existing `autoFor` bot pacing and do not block the flow.
+    - Existing team HUD `rollingPlayerId` highlighting remains active while waiting for that player and while rolling.
+    - Previous roll results remain in the HUD; win/loss still resolves only after the full team loop completes.
+    - Phone roll actions are scoped to the current rolling player through the existing action prompt owner.
+    - Team rewards, losses, target formulas, monster-strength setting behavior, individual monster battles, final boss PvP, and VS were not changed.
+  - Checks completed:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check -- src/game.js index.html project-memory/updates.md project-memory/inbox/for-gd.md project-memory/inbox/for-dev.md`.
+    - Static/source checks for per-player shared battle prompts, current roller state, bot auto-resolve via `autoFor`, and final result after all rolls.
+  - Not run:
+    - Browser smoke/manual team battle flow; local server binding has been failing in this sandbox with `EPERM`.
+
+- DONE SETTINGS 2026-06-12 04:36 - Replace `Проходить все` with monster strength dropdown:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by `Dev 3` at 2026-06-12 04:36; context handback added for GD.
+  - Context:
+    - User asked to remove the settings checkbox `Проходить все`.
+    - In its place, add a dropdown `Сила монстров`.
+    - Screenshot shows this is in the settings panel near `Скорость ботов`, `Сразу открывать карты`, `Показывать контур хода`, and `Играть с телефонами`.
+    - QA is not involved unless the user explicitly asks.
+  - Required UI:
+    - Remove/hide the `Проходить все` checkbox from the settings UI.
+    - Add a select/dropdown titled `Сила монстров`.
+    - Options:
+      - `Стандартные`: current monster strength behavior.
+      - `Сильные`: every ordinary monster after the first one has `+2` strength; the first ordinary monster stays at force `6`.
+    - Use existing settings styling and layout.
+    - Persist the setting the same way other local game settings persist, if settings persistence already exists.
+  - Gameplay:
+    - `Стандартные`: no balance changes.
+    - `Сильные`: keep the first ordinary monster at force `6`; add `+2` strength to later ordinary monster encounters.
+    - Apply the modifier wherever ordinary monster strength is shown/calculated, including closed monster fights, opened portal/monster labels if they show current strength, monster battle HUD, card/event monster fights that use the ordinary monster-strength resolver, logs, and bot scoring where monster risk/reward is evaluated.
+    - Do not apply this setting to PvP/VS fights or Joe/Shop/card-only choices.
+    - Do not change the final boss bonus formula or boss-per-opponent bonus unless the existing code treats final boss as the same monster-strength resolver; if ambiguous, keep final boss unchanged and mention it in handback.
+  - Migration/cleanup:
+    - If `Проходить все` has saved/local storage state, ignore or safely retire it without breaking older saved settings.
+    - Remove stale player-facing `Проходить все` text from the UI.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source checks:
+      - no visible settings label `Проходить все`;
+      - settings include `Сила монстров`, `Стандартные`, `Сильные`;
+      - strong mode keeps the first ordinary monster at force `6` and adds `+2` to later ordinary monster strength;
+      - standard mode matches existing behavior.
+    - Browser smoke if environment allows:
+      - open settings and confirm dropdown replaces checkbox;
+      - start game with `Стандартные`, confirm monster strength matches old values;
+      - start game with `Сильные`, confirm a monster shown/fought has +2 strength;
+      - confirm no console errors.
+  - Handback:
+    - Updated `project-memory/updates.md`.
+    - Added context handback to `project-memory/inbox/for-gd.md`.
+    - Marked this task done in `project-memory/inbox/for-dev.md`.
+    - Sent GD context handback only; no QA gate.
+  - Checks completed:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check`.
+    - Static/source checks for removed visible `Проходить все`, new `Сила монстров` dropdown, first ordinary monster force `6`, and later strong-mode ordinary monster `+2`.
+
+- DONE CHOICE UI 2026-06-12 04:27 - Add board-view button to blocking choice prompts:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by `Dev 1` at 2026-06-12 04:27; GD addendum included; context handback added for GD.
+  - Context:
+    - User screenshot shows the `Хорошо` card `Контроль кубика: ход` choice prompt covering the board while the player must choose a die change.
+    - User asked: `Добавь сюда кнопку просмотра поля`.
+    - `Dev 2` is stalled; `Dev 3` just handled Event text. Keep this UI task with `Dev 1`, who recently worked on transient UI reset.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - Before showing the large `Контроль кубика` value-change popup, show a compact header/top action choice:
+      - `Поменять значение`: opens the large value-change popup.
+      - `Не менять`: resolves immediately and does not show the large popup.
+    - This pre-choice should live in the top/header action area shown by the user's arrow, not as another large modal over the board.
+    - Add a clear `Просмотр поля` / `Поле` button to blocking host choice prompts where the board can matter before choosing.
+    - Primary target is the large card/action prompt used after choosing `Поменять значение` for `Контроль кубика`, as in the screenshot.
+    - Prefer implementing it for the shared blocking choice/action prompt component so similar card decisions also get the same affordance.
+    - Clicking the button must not choose an option, resolve the prompt, cancel the card, or clear pending state.
+    - It should temporarily let the player inspect the board, then return to the same choice with all options unchanged.
+  - UX notes:
+    - The prompt may hide/minimize while board view is active.
+    - Show an obvious `Вернуться к выбору` control while the prompt is hidden/minimized.
+    - The button should be visually secondary and must not compete with the actual choice buttons.
+    - Keep the UI readable on desktop and mobile widths.
+  - Do not change:
+    - Card rules/effects.
+    - Dice-control math.
+    - Choice ordering, keyboard shortcuts, or option hotkeys.
+    - Board placement, decks, cards, or controller protocol unless a tiny phone snapshot update is required for consistency.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - trigger `Контроль кубика`;
+      - confirm header/top action first offers `Поменять значение` and `Не менять`;
+      - choose `Не менять` and confirm the large value-change popup never appears;
+      - trigger again, choose `Поменять значение`, and confirm the value-change popup appears;
+      - confirm `Просмотр поля` is visible in that popup;
+      - click `Просмотр поля`, inspect board, then return to the same choice;
+      - choose an option afterwards and confirm the original flow still resolves correctly;
+      - confirm no stale hidden prompt remains after `Новая игра`;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Send GD context handback only; no QA gate.
+
+- DONE NEW GAME UI RESET 2026-06-12 03:58 - Clear stale transient UI on new game:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by `Dev 1` at 2026-06-12 03:58; context handback added for GD.
+  - Context:
+    - User reported that after pressing `Новая игра`, card UI from the previous game remains on screen.
+    - Screenshot shows a stale card reveal/action prompt over the fresh start board.
+    - GD source read: `newGame()` rebuilds `state` and clears some resolvers/timers, but does not visibly hard-clear all transient DOM UI such as `eventToast`.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - Starting a new game must leave no transient UI from the previous game on screen.
+    - Audit and clear all similar UI/state leftovers, not only the visible card reveal.
+    - New game should show only the fresh board/start state, empty TADAM slots, correct player cards, and no stale popups/overlays/animations.
+  - Must clear/reset on `newGame()`:
+    - card reveal / action prompt / event toast (`#eventToast`), including classes, inline `top`, innerHTML, hide/fade timers, and click-to-continue state;
+    - choice panel (`#choicePanel`) and any pending board/card choices;
+    - final/enemy/vs/unity battle HUD (`#finalBattleHud`);
+    - dice animation layers (`.dice-throw-layer`), dice rolling class, dice value/phone dice preview;
+    - board transient overlays such as walk path outlines, portal preview outlines, choice/preview outlines, and highlighted pending paths;
+    - pending Shop/pre-roll/card-choice/board-choice state and resolvers;
+    - bot action timer and phone/controller card preview/action snapshot if present.
+  - Implementation notes:
+    - Prefer a single helper such as `clearTransientUiForNewGame()` / `resetTransientUi()` called at the start of `newGame()` before the fresh `render()`.
+    - Reuse existing cleanup helpers where safe, but ensure cleanup is immediate, not delayed by fade timers.
+    - If `hideEventToast()` only fades asynchronously, add an immediate hard-hide path/helper for new game reset.
+    - Make stale async resolvers/timers harmless after reset; a pending old prompt must not reappear or resolve into the new game.
+    - Do not remove persistent settings UI, selected board/player/bot settings, log panel state, fullscreen state, or saved history.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source checks:
+      - `newGame()` calls a hard transient-UI cleanup path;
+      - cleanup handles `eventToast`, `choicePanel`, `finalBattleHud`, dice layers, board preview outlines, pending resolvers/timers, and phone preview/dice state.
+    - Browser smoke if environment allows:
+      - reveal a Good/Bad/Event/TADAM/Shop card, press `Новая игра`, confirm no old card remains;
+      - open a choice panel, press `Новая игра`, confirm it disappears;
+      - start/leave visible dice animation or roll context if possible, press `Новая игра`, confirm no stale dice layer/context remains;
+      - show battle/final battle HUD if possible, press `Новая игра`, confirm it is hidden;
+      - confirm new game still starts normally and no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Send GD context handback only; no QA gate.
+
+- DONE CHAOS PORTAL NEAREST 2026-06-12 02:51 - Shop/Good outcomes use true nearest field:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by `Dev 1` at 2026-06-12 02:51; context handback added for GD.
+  - Context:
+    - User noticed `Портал хаоса` seems to send `3-4` and `5` to the nearest matching field ahead first, and only searches backward if there is no matching field ahead.
+    - Source check confirms current `chaosPortalOptions(...)` uses `nearestForwardEventCell(...) || nearestEventCell(...)` for `shop` and `good`.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - `Портал хаоса` result `3-4`: send the player to the truly nearest `Лавка Джо` field by route distance, whether it is ahead or behind.
+    - `Портал хаоса` result `5`: send the player to the truly nearest `Хорошо` field by route distance, whether it is ahead or behind.
+    - Do not prefer forward fields for these two outcomes.
+    - If two matching fields are exactly equally distant, use forward as the tie-breaker.
+    - Keep `1-2` as backward to nearest monster/portal and `6` as forward to nearest monster/portal.
+    - Teleport remains instant: fields between portal and destination do not trigger.
+  - Implementation notes:
+    - Likely area: `chaosPortalOptions(...)`, `nearestForwardEventCell(...)`, `nearestEventCell(...)`.
+    - Remove the forward-first fallback for `shop` and `good`; use a helper that sorts by absolute route distance first, then forward tie-break.
+    - Update any prompt/result text only if needed; current player-facing wording already says `к ближайшей Лавке Джо` / `к ближайшему Хорошо`.
+  - Do not change:
+    - `Портал хаоса` dice bands;
+    - monster/portal directional behavior for `1-2` and `6`;
+    - board placement;
+    - ordinary portal mechanics;
+    - destination field effect behavior after teleport.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Static/source check: `shop` and `good` chaos portal options no longer call/use forward-first lookup.
+    - Browser smoke if environment allows:
+      - put player where nearest `Лавка Джо` is behind and a farther one is ahead; roll/force `3-4`, confirm destination is behind nearest;
+      - put player where nearest `Хорошо` is behind and a farther one is ahead; roll/force `5`, confirm destination is behind nearest;
+      - confirm `1-2` still goes backward to monster/portal and `6` still goes forward;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Send GD context handback only; no QA gate.
+
+- DONE EVENT TEXT 2026-06-12 04:10 - Update `Портальный обмен` no-field-effects text:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by `Dev 3` at 2026-06-12 04:10; context handback added for GD.
+  - Context:
+    - User asked to change the Event card text for the position-swap Event.
+    - Current card is `event/portal-swap` / `Портальный обмен`.
+    - Art/UI just updated card face layout/assets; do not revert or overwrite visual changes.
+    - Previous owner was `Dev 2`; treat this as a fresh implementation task and do not wait for Dev 2.
+    - QA is not involved unless the user explicitly asks.
+  - Required text:
+    - Description must become exactly:
+      - `Поменяйся местами с любым игроком. Эффекты полей не применяются`
+    - Keep title `Портальный обмен`.
+    - Keep card id `portal-swap`, effect `event-portal-swap`, count `2`.
+    - No final period.
+  - Sync:
+    - Update Google Sheet `Cards Config` / `event`.
+    - Update `src/cards.config.js`.
+    - Update `cards-google-sheet.csv`.
+  - Behavior check:
+    - Confirm the current `Портальный обмен` mechanic swaps positions without applying destination field effects.
+    - If the mechanic already does this, do not change behavior.
+    - If any player-facing popup/summary repeats the old wording, update it to match the new rule meaning without changing mechanics.
+  - Verification:
+    - `node --check src/cards.config.js`.
+    - `node --check src/game.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - local config, CSV, and Google Sheet all contain the new description;
+      - no stale player-facing `Выбери любого другого игрока и поменяйся с ним местами` remains for this card;
+      - no final period.
+    - Browser smoke if environment allows:
+      - reveal `Портальный обмен` and confirm card face text is updated;
+      - use the Event and confirm swapped destination fields do not trigger;
+      - no console errors.
+  - Handback:
+    - Updated `project-memory/updates.md`.
+    - Added context handback to `project-memory/inbox/for-gd.md`.
+    - Sent GD context handback only; no QA gate.
+  - Checks completed:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check`.
+    - Google Sheet readback confirmed `event!A8:N8`.
+
+- DONE TADAM STACKING 2026-06-12 01:38 - Apply all active field TADAM effects:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by `Dev 3` at 2026-06-12 01:38; context handback added for GD.
+  - Context:
+    - User reported that if two active TADAM cards say `Красные поля двигают на 5 клеток назад`, only one copy triggers.
+    - Expected rule: all active TADAM cards that match the field/effect should trigger, including duplicate copies.
+    - Dev 1 portal text and Dev 2 Black Market rework are complete; keep this task focused on TADAM field-effect stacking.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - Active TADAM field effects must stack.
+    - If two `red-field` move effects with `steps: -5` are active, a red field should move the player `10` steps back total, or otherwise apply two sequential `-5` effects with the same final result.
+    - If multiple active TADAM cards affect the same field, all should resolve:
+      - duplicate move effects stack;
+      - duplicate draw effects draw once per active copy;
+      - mixed effects for the same field all resolve in active TADAM order.
+    - Apply the same stacking principle to both red and green field TADAM effects, not only `red-back`.
+    - Preserve base field effects: green still gives `+3` coins before TADAM effects; red still gives `-3` coins before TADAM effects.
+  - Implementation notes:
+    - Likely issue: `resolveGreenField(...)` / `resolveRedField(...)` use `activeFieldEffect(...)`, which returns only the first matching TADAM effect.
+    - There is already an `activeTadamEffects(type)` helper that returns all matching effects.
+    - Update field labels/tooltips if they currently show only one active field TADAM effect; labels should represent stacked effects clearly enough, e.g. `-3 монеты + -10 шагов` or multiple draw rewards.
+    - Preserve current `state.tadams` ordering and newest-left visual rendering. Effect resolution order should use stored active-card order unless a local pattern already defines a better rule.
+  - Do not change:
+    - TADAM deck counts/card data;
+    - visible TADAM slot ordering;
+    - active TADAM limit/discard lifecycle;
+    - non-field TADAM effects unless they already correctly stack through `activeTadamEffects(...)`;
+    - ordinary red/green base field effects.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Static/source checks:
+      - red/green field resolution no longer uses a single `activeFieldEffect(...)` path that drops duplicates;
+      - duplicate `red-back` active effects stack to `-10` movement;
+      - duplicate draw effects draw multiple cards.
+    - Browser smoke if environment allows:
+      - force two active `red-back` TADAM cards and land on red: player moves 10 steps back, not 5;
+      - force two active red draw-Bad TADAM cards and land on red: player draws 2 Bad cards;
+      - force mixed red move + red draw TADAM cards: both resolve;
+      - repeat at least one green-field stacked case;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Send GD context handback only; no QA gate.
+
+- DONE PORTAL POPUP TEXT 2026-06-12 01:13 - Use Portal labels in portal destination popup:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by `Dev 1` at 2026-06-12 01:13; context handback added for GD.
+  - Context:
+    - User asked to change portal popup option text from `Монстр 1`, `Монстр 2`, etc. to `Портал 1`, `Портал 2`, etc.
+    - Dev 2 is currently assigned to Black Market rework.
+    - Dev 3 has completed final-battle balance; keep this portal text fix with Dev 1 to avoid interrupting Dev 2.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - In the open-portal destination popup, labels for portal choices must read `Портал 1`, `Портал 2`, etc.
+    - Do not change ordinary closed monster labels/tooltips; closed monsters may still be `Монстр N`.
+    - Do not change portal mechanics, available destination list, preview outlines, movement, route order, or Chaos Portal behavior unless it uses the same open-portal choice labels and needs the same display fix.
+  - Implementation notes:
+    - Likely area: `choosePortalDestination(...)` currently maps opened portal doors with `label: door.label`, and door labels may be `Монстр N`.
+    - Prefer deriving the portal number from the existing door label/id/ordering so `Монстр 1` becomes `Портал 1`, `Монстр 2` becomes `Портал 2`, etc.
+    - Keep destination note like `клетка X-Y` unchanged unless necessary.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Static/source check that portal destination choices no longer show `Монстр N` labels for open portals.
+    - Browser smoke if environment allows:
+      - open at least two portals;
+      - enter a portal;
+      - confirm popup options are `Портал 1`, `Портал 2`, etc.;
+      - confirm closed monster labels elsewhere are unchanged;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Send GD context handback only; no QA gate.
+
+- DONE FINAL BATTLE BALANCE 2026-06-12 01:12 - Boss gets +3 per opposing player:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by `Dev 3` at 2026-06-12 01:12; context handback added for GD.
+  - Context:
+    - User asked to change final battle boss starting bonus from `+1 к силе за каждого игрока против него` to `+3 к силе за каждого игрока против него`.
+    - Dev 3 just worked on final battle roll highlighting, so keep this task with the same final-battle owner.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - In final battle, before boss rolls, boss gets `+3` force for each opposing player.
+    - Example: 3 challengers means boss starts with `+9`.
+    - This opponent bonus is applied once before boss dice rolls, not repeated per boss roll.
+    - Boss dice rolls still add dice + normal boss bonuses per roll as before.
+    - Update player-facing log/HUD/formula/history text so it says/reflects `+3 за каждого противника` or equivalent, not `+1`.
+  - Do not change:
+    - number of boss rolls;
+    - player/challenger scoring;
+    - final battle winner logic besides the changed boss force value;
+    - ordinary monster battles, `Сплочение`, `Бой за старт`, or VS.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Static/source check: boss opponent bonus uses `challengers.length * 3`.
+    - Browser smoke if environment allows:
+      - final battle with 3 challengers shows boss starting opponent bonus `+9`;
+      - boss final force includes that `+9` once;
+      - no stale `+1 за противников` text remains in final-battle UI/log/history;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Send GD context handback only; no QA gate.
+
+- DONE BLACK MARKET REWORK 2026-06-12 01:15 - Exchange Shop cards for rewards:
+  - Owner: `Dev 2`.
+  - Dispatch status: completed by `Dev 2` at 2026-06-12 01:15; context handback added for GD.
+  - Context:
+    - User asked to replace current `Черный рынок` deals.
+    - Current old contract is coin-payment deals; replace it with owned `Лавка Джо` card exchange deals.
+    - Dev 2 has the freshest Black Market/card lifecycle context.
+    - QA is not involved unless the user explicitly asks.
+  - New rule text:
+    - `Поменяй 1 карту Лавка Джо на +2 к силе, 2 карты на 30 монет, 3 карты на +10 к силе в следующем бою с монстром и 30 шагов вперед`
+  - Required behavior:
+    - When a player lands on `Черный рынок`, show all exchange options even if the player lacks enough owned Shop cards.
+    - Options:
+      - exchange 1 owned face-up `Лавка Джо` card: gain permanent `+2 к силе`;
+      - exchange 2 owned face-up `Лавка Джо` cards: gain `30` coins;
+      - exchange 3 owned face-up `Лавка Джо` cards: gain one-use `+10 к силе` in the next monster battle and move `30` steps forward.
+      - `Уйти`: no exchange.
+    - Unavailable exchange options remain visible but disabled with a clear reason, e.g. `Нужно 2 карты Лавки Джо`.
+    - Human player chooses which owned Shop card(s) to exchange.
+    - Bot chooses exchange cards automatically, preferring least valuable face-up Shop cards.
+    - Exchanged owned Shop cards are removed from inventory and do not return to the physical Shop deck/discard.
+    - Face-down Shop cards from `flip-shop-down` cannot be exchanged until bought back/face-up.
+    - For the 3-card option:
+      - set/refresh the existing next-monster bonus to `+10`;
+      - then move the player 30 steps forward using normal forward movement/landing behavior, so the destination field resolves normally.
+    - If player already has a next-monster bonus and chooses the 3-card option, refresh/set it to `+10`; do not stack above `+10`.
+  - UI/text updates:
+    - Update Black Market choice labels, notes, tooltip/field-effect text, active-player role text, bot choice scoring labels, and controller/phone choice rendering if needed.
+    - Remove old player-facing deal text for:
+      - `Карта Лавки Джо + Событие`;
+      - `Тайная тренировка + Событие`;
+      - coin costs `5/10/15`;
+      - old `Зелье ярости` purchase copy.
+    - The persistent next-monster bonus chip can keep using the existing `Зелье ярости`/rage wording if that is the current shared UI label, but logs for the market should describe the new exchange reward.
+  - Bot scoring:
+    - Prefer 1-card `+2 к силе` if the bot has low-value Shop cards and strength is useful soon.
+    - Prefer 2-card `30 монет` if bot is coin-poor or cards are low-value.
+    - Prefer 3-card `+10 next monster + 30 steps` when a hard monster/final push is relevant and the bot has enough low-value Shop cards.
+    - Do not choose disabled options.
+  - Do not change:
+    - Black Market board placement/icon;
+    - Joe Shop physical deck lifecycle;
+    - Shop card definitions;
+    - unrelated fields/cards;
+    - `nextMonsterBattleBonus` consumption rules outside the new exchange source.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source checks:
+      - Black Market no longer subtracts coins for deals;
+      - unavailable options are visible but disabled;
+      - exchanged Shop cards are removed from inventory only;
+      - face-down Shop cards are excluded from exchange eligibility;
+      - old player-facing Black Market coin-cost strings are gone.
+    - Browser smoke if environment allows:
+      - 0 Shop cards: all exchange options visible and disabled, `Уйти` works;
+      - 1 face-up Shop card: 1-card option works and grants permanent `+2 к силе`;
+      - 2 face-up Shop cards: 2-card option removes 2 cards and grants `30` coins;
+      - 3 face-up Shop cards: 3-card option removes 3 cards, sets next-monster `+10`, moves 30 forward, and resolves landing;
+      - face-down Shop card is not selectable/exchangeable;
+      - bot can resolve the field;
+      - no console errors.
+  - Handback:
+    - Completed in `project-memory/updates.md`.
+    - Context handback added to `project-memory/inbox/for-gd.md`.
+    - GD context handback only; no QA gate.
+  - Dev 2 result:
+    - Replaced old coin-payment Black Market deals with face-up owned Shop-card exchanges.
+    - Added always-visible disabled options with `Нужно N карт Лавки Джо` reasons.
+    - Implemented exchange rewards:
+      - 1 face-up Shop card -> permanent `+2 к силе`;
+      - 2 face-up Shop cards -> `30` coins;
+      - 3 face-up Shop cards -> set/refresh next-monster bonus to `+10`, then move 30 forward with normal landing resolution.
+    - Human players choose the exact face-up Shop cards; bots sacrifice least valuable face-up Shop cards.
+    - Exchanged owned Shop cards are removed from inventory only and do not return to Shop deck/discard.
+    - Face-down Shop cards are excluded until bought back.
+    - Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`, static Black Market contract scan, and browser host smoke.
+    - Full manual playthrough of every exchange branch was not run.
+
+- ACTIVE FINAL BATTLE ROLL HIGHLIGHT 2026-06-12 00:56 - Animate and highlight current roller:
+  - Owner: `Dev 3`.
+  - Dispatch status: assigned by `GD` at 2026-06-12 00:56.
+  - Context:
+    - User reported final battle starts with dice animation/highlight still attached to the last active player instead of the player currently rolling.
+    - Dev 2 is currently assigned to `ACTIVE EVENT CARDS 2026-06-12 00:52`; keep this task narrowly scoped and preserve Dev 2's ongoing work.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - During final battle, every dice animation and highlighted battle card must belong to the current roller.
+    - Challenger rolls:
+      - before each challenger roll, set final battle progress so that challenger is the rolling player;
+      - highlight/animate that challenger's final-battle card;
+      - after the roll resolves, clear the rolling state or mark the card complete without leaving a stale active highlight.
+    - Boss rolls:
+      - before each boss roll, set final battle progress so that the boss player is the rolling player;
+      - highlight/animate the boss card/side during the roll;
+      - the dice player label must name the boss player, not the last active turn player.
+    - Waiting/prompt states:
+      - do not keep animation/highlight on the last active player while waiting for final-battle prompts.
+      - normal turn active-card highlight outside final battle must remain unchanged.
+  - Implementation notes:
+    - Inspect `resolveFinalBattle(...)`, `rollFinalBattlePower(...)`, `renderFinalBattleProgress(...)`, dice label rendering, and any `currentPlayer()` fallback used during final-battle dice animation.
+    - Prefer using `state.finalBattleProgress.rollingPlayerId` as the source of truth during final battle.
+    - If the boss side currently cannot receive `is-rolling` styling, add the minimal class/rendering support needed.
+    - Do not change final-battle math, scoring, rewards, history export, boss bonus rules, or non-final battle dice behavior.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - start a final battle where the boss is not the last active turn player;
+      - confirm each challenger roll shows dice animation and card highlight on that challenger;
+      - confirm each boss roll shows dice animation and highlight on the boss card/side;
+      - confirm no stale highlight remains on the last active player at final-battle start or between rolls;
+      - confirm ordinary movement/battle roll highlights still work;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Send GD context handback only; no QA gate.
+
+- DONE EVENT CARDS 2026-06-12 01:01 - Add 5 new `Событие` cards:
+  - Owner: `Dev 2`.
+  - Dispatch status: completed by `Dev 2` at 2026-06-12 01:01; context handback added for GD.
+  - Context:
+    - User requested the new Event pack from the reference screenshot.
+    - Dev 1 completed `flip-shop-down` at 2026-06-12 00:31, so the previous conflict blocker is gone.
+    - Google Sheet `Cards Config` is canonical; sync Google Sheet, `src/cards.config.js`, and `cards-google-sheet.csv`.
+    - QA is not involved unless the user explicitly asks.
+  - Add 5 new cards:
+    - Deck: `event`.
+    - Count: `2` each.
+    - These are ordinary Event cards, not artifacts: no icons.
+    - Player-facing `title`, `shortTitle`, and `description` must not end with final periods.
+  - New cards:
+    - `unity-start` / `Бой за старт`:
+      - `Общий бой с монстром. При победе все игроки получают 10 монет. При проигрыше все игроки отправляются на старт`.
+    - `shop-redistribution` / `Перетасовка Лавки`:
+      - `Все игроки без карт Лавка Джо берут по 1 карте Лавка Джо. Затем все игроки сбрасывают по 1 карте Лавка Джо. Замешай сброшенные карты и раздай по одной каждому игроку`.
+    - `fate-draw` / `Кубик судьбы`:
+      - `Брось кубик: 1-2 - тащи карту Плохо, 3-4 - тащи карту Хорошо, 5-6 - тащи карту Лавка Джо`.
+    - `triple-tadam` / `Три ТАДАМ`:
+      - `Тащи 3 карты Тадам`.
+    - `mass-good-bad` / `Общий жребий`:
+      - `Брось кубик: 1-3 - все игроки берут по карте Плохо, 4-6 - все игроки берут по карте Хорошо`.
+  - Required behavior:
+    - `Бой за старт`:
+      - Use the same shared-battle HUD pattern as `Сплочение`.
+      - On win, every player gains `10` coins.
+      - On loss, move every player to the start cell without triggering the start-cell effect.
+    - `Перетасовка Лавки`:
+      - First, every player with no owned `Лавка Джо` cards draws 1 free Shop card through the finite Shop deck lifecycle.
+      - Then every player with at least 1 owned Shop card chooses 1 owned Shop card to put into the shared shuffle pool.
+      - Human players choose their card; bots choose the least valuable owned Shop card using existing Shop scoring.
+      - Shuffle the pooled owned cards and deal them one by one to players in order starting from the active player.
+      - If fewer pooled cards than players exist, deal as many as exist and log the shortage clearly.
+      - Redistributed cards become normal face-up owned Shop cards.
+    - `Кубик судьбы`:
+      - Roll 1d6 using the existing random-choice roll context UI.
+      - 1-2: active player draws and resolves 1 `Плохо`.
+      - 3-4: active player draws and resolves 1 `Хорошо`.
+      - 5-6: active player receives 1 free `Лавка Джо` via the finite Shop deck lifecycle.
+    - `Три ТАДАМ`:
+      - Active player draws 3 TADAM cards sequentially through current `drawTadamCard` / TADAM lifecycle.
+      - Preserve current visible TADAM slot order and active-card limit/discard behavior.
+    - `Общий жребий`:
+      - Roll 1d6 using the existing random-choice roll context UI.
+      - 1-3: every player draws and fully resolves 1 `Плохо`, in order from the active player.
+      - 4-6: every player draws and fully resolves 1 `Хорошо`, in order from the active player.
+  - Integration constraints:
+    - Preserve all recent Bad/Good card implementations, including pending statuses, `flip-shop-down`, face-down Shop behavior, finite deck/discard reshuffle, `Двойное Плохо`, and `Пропуск Хорошо`.
+    - Use central deck draw paths whenever possible so reveal UI, phone preview, logs, discard reshuffle, and pending-card triggers continue to work.
+    - Bump host/card-config cache keys if imports or loaded files change.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - all 5 Event IDs exist in local config, CSV, and Google Sheet `Cards Config` / `event`;
+      - every new Event card has `count: 2`;
+      - no player-facing final periods;
+      - no artifact `icon` field on these 5 cards.
+    - Browser smoke if environment allows:
+      - reveal all 5 new Event cards;
+      - `Бой за старт`: win gives everyone 10, loss sends everyone to start without start effect;
+      - `Перетасовка Лавки`: no-Shop players first get Shop cards, then chosen Shop cards shuffle and redistribute;
+      - `Кубик судьбы`: all three result bands draw the correct deck/reward;
+      - `Три ТАДАМ`: 3 sequential TADAM draws work;
+      - `Общий жребий`: all-player Bad and Good branches resolve in order;
+      - no console errors.
+  - Handback:
+    - Completed in `project-memory/updates.md`.
+    - Context handback added to `project-memory/inbox/for-gd.md`.
+    - GD context handback only; no QA gate.
+  - Dev 2 result:
+    - Added all 5 Event cards to `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `event!A11:N15`.
+    - Implemented `Бой за старт`, `Перетасовка Лавки`, `Кубик судьбы`, `Три ТАДАМ`, and `Общий жребий`.
+    - Preserved recent Good/Bad pending statuses and Dev 1 `flip-shop-down` / face-down Shop behavior.
+    - Bumped host/card-config cache keys to `20260612-0418`.
+    - Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`, static local/CSV checks, Google Sheet readback, and browser host smoke.
+    - Full manual playthrough of every new Event effect branch was not run.
+
+- DONE BAD CARDS WAVE 3 2026-06-12 00:04 - `flip-shop-down` face-down Shop cards:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by `Dev 1` at 2026-06-12 00:31; context handback added for GD.
+  - Context:
+    - This is wave 3 of the next `Плохо` pack.
+    - Wave 1 is complete: data + `poorest-steals-shop` / `bad-die-choice`.
+    - Wave 2 is complete: pending Bad statuses.
+    - Good pack is complete: 9 new Good cards and held Good statuses.
+    - Current local temporary state: `flip-shop-down` exists in card data but remains local `count: 0`.
+    - Sheet/CSV already contain `flip-shop-down` with `count: 2`.
+    - QA is not involved unless the user explicitly asks.
+  - Target card:
+    - Deck: `bad`.
+    - ID: `flip-shop-down`.
+    - Title/description:
+      - `Переверни 2 свои карты Лавка Джо лицом вниз. При посещении клетки Лавка Джо можешь выкупать перевернутые карты по 5 монет за каждую`.
+    - Set local `src/cards.config.js` count from temporary `0` to `2` only after implementation is complete.
+  - Required behavior:
+    - On draw:
+      - Flip up to 2 owned face-up Shop cards belonging to the active player.
+      - If player has fewer than 2 face-up Shop cards, flip all available face-up Shop cards.
+      - If player has no face-up Shop cards, log clearly and do nothing.
+      - Human may choose which owned Shop cards to flip; bot should flip least valuable face-up Shop cards using existing Shop scoring.
+    - Face-down Shop cards:
+      - Stay in `player.items` as owned cards.
+      - Are visually shown as face-down/disabled owned Shop cards in host player cards and phone/controller snapshot if current owned items are shown there.
+      - Can be removed by existing owned-card discard/steal effects.
+      - Do not provide passive bonuses while face-down:
+        - no step bonus;
+        - no battle bonus;
+        - no coin gain bonus;
+        - no optional extra die.
+      - Do not count toward final Shop score while face-down.
+      - Still count as owned `Лавка Джо` for effects that explicitly count owned cards/cards in inventory unless effect code naturally uses active bonuses. For `joe-debt`, count face-down cards as owned cards.
+    - Buyback on `Лавка Джо` cell:
+      - When a player visits a Shop cell, before the normal Shop offer flow, if they have face-down Shop cards, offer to buy back any/all of them at `5` coins each.
+      - Human chooses cards one by one or via multi-choice UI; bot buys back cards worth buying based on existing Shop scoring and available coins.
+      - Buying back flips the owned card face-up; it does not draw from or discard to physical Shop deck.
+      - After buyback choice, continue the normal `resolveShop(player)` flow.
+      - If player has no coins or refuses, normal Shop flow still continues.
+  - Integration constraints:
+    - Preserve all Dev 2 Good pack and Dev 3 Bad pending status changes.
+    - Do not alter physical Shop deck/discard lifecycle for face-down owned-card state.
+    - Do not change canonical Sheet/CSV counts unless fixing a mismatch; they should already have `count: 2`.
+    - Keep card text without final period.
+    - Bump host/card-config cache keys if `src/game.js` / `src/cards.config.js` imports change.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - `flip-shop-down` is local `count: 2`;
+      - all other new Bad Wave 1/2 cards remain active as intended;
+      - Sheet/CSV still have `flip-shop-down` with `count: 2`;
+      - passive bonus helpers ignore face-down Shop cards;
+      - final Shop score ignores face-down Shop cards.
+    - Browser smoke if environment allows:
+      - reveal `flip-shop-down`;
+      - flip 0, 1, and 2 Shop cards cases;
+      - verify face-down cards do not grant bonuses;
+      - visit Shop and buy back at 5 each before normal Shop offer;
+      - verify discard/steal can remove face-down cards;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Send GD context handback only; no QA gate.
+
+- DONE GOOD CARDS 2026-06-11 23:37 - Add 9 new `Хорошо` cards:
+  - Owner: `Dev 2`.
+  - Dispatch status: completed by `Dev 2` at 2026-06-11 23:37; context handback added for GD.
+  - Context:
+    - User requested the new `Хорошо` pack from the reference screenshot.
+    - Bad Wave 2 has now been implemented by Dev 3; use the fresh pending-status patterns and do not overwrite those changes.
+    - Bad Wave 3 / `flip-shop-down` is still not started; do not implement it in this task.
+    - QA is not involved unless the user explicitly asks.
+  - Add 9 new cards:
+    - Deck: `good`.
+    - Count: `2` each.
+    - Sync:
+      - Google Sheet `Cards Config`, tab `good`;
+      - `src/cards.config.js`;
+      - `cards-google-sheet.csv`.
+    - Player-facing `title`, `shortTitle`, and `description` must not end with final periods.
+  - New cards:
+    - `field-shield` / `Защитный знак`:
+      - `Оставь эту карту себе. Когда остановился на клетке, можешь не применять её эффект, а сбросить эту карту`.
+    - `bad-gift` / `Плохой подарок`:
+      - `Выбери игрока, он берет карту Плохо`.
+    - `green-path` / `Зеленая тропа`:
+      - `Передвинься вперед до ближайшего зеленого поля`.
+    - `second-chance` / `Второй шанс`:
+      - `Оставь эту карту себе. При проигрыше в битве с монстром можешь сбросить эту карту и проатаковать ещё раз`.
+    - `strength-potion` / `Зелье силы`:
+      - `Оставь эту карту себе. В битве с монстром можешь сбросить эту карту и получить +3 к силе`.
+    - `speed-potion` / `Зелье скорости`:
+      - `Оставь эту карту себе. Можешь сбросить в начале хода и получить +5 к шагам на этот ход`.
+    - `dice-control` / `Контроль кубика`:
+      - `Оставь эту карту себе. После броска кубиков можешь поменять значение на одном кубике на любое другое и сбросить эту карту`.
+    - `backward-reversal` / `Разворот`:
+      - `Оставь эту карту себе. Когда двигаешься назад, можешь сбросить эту карту и вместо этого передвинуться на столько же шагов вперед`.
+    - `coin-tribute` / `Сбор монет`:
+      - `Все игроки отдают тебе по 3 монеты (5 при игре вдвоем)`.
+  - Required behavior:
+    - Held Good cards:
+      - Cards with `Оставь эту карту себе` must not discard immediately.
+      - Store as visible player statuses/badges, using/aligning with the fresh pending-card status patterns from Bad Wave 2.
+      - Discard the held source card to `good` discard only when the effect triggers.
+      - Multiple copies stack and resolve one at a time unless specified otherwise.
+    - `field-shield`:
+      - When player stops on a normal cell, before applying that cell effect, player may discard one copy to skip the cell effect.
+      - May skip ordinary fields including Good/Bad/Event/Shop/Red/Green/etc.
+      - Does not skip finish/final battle and does not cancel an already-started battle/effect.
+      - Bot should use it against harmful fields and usually not use it against beneficial fields.
+    - `bad-gift`:
+      - Active player chooses another player.
+      - Target immediately draws and resolves one `Плохо` card through the central finite Bad deck path.
+      - Existing `Двойное Плохо` / next-bad hooks should behave naturally for the target.
+    - `green-path`:
+      - Move strictly forward along current route to nearest `green` field.
+      - After landing, resolve that green field effect.
+      - If no green field exists ahead, do not move and log clearly.
+    - `second-chance`:
+      - Applies to individual ordinary/final monster gate battles after a loss.
+      - Player may discard one copy and immediately repeat the same monster battle.
+      - Does not apply to `Сплочение` or final PvP boss battle.
+    - `strength-potion`:
+      - In a monster battle, player may discard one copy to gain `+3` strength for that roll.
+      - Applies to ordinary monster gate, final monster gate, and `Сплочение`.
+      - Does not apply to final PvP boss battle.
+    - `speed-potion`:
+      - At the beginning of own turn, before normal roll/pre-roll choices, player may discard one copy to get `+5` steps for this turn only.
+      - Bonus applies only to that turn's dice-based movement.
+      - Multiple copies may exist, but only one copy can be used per turn.
+    - `dice-control`:
+      - After any own dice roll and before applying its result, player may discard one copy to change one die to any value `1-6`.
+      - Applies to own movement rolls, monster rolls, event/random-choice rolls, and tie/auction-style rolls where the player is rolling for themselves.
+      - Recalculate the roll result from the modified dice before applying the effect.
+      - Do not allow changing other players' dice.
+    - `backward-reversal`:
+      - Before a numeric backward movement resolves, player may discard one copy and move the same number of steps forward instead.
+      - Forward replacement should use normal forward movement behavior and landing as a forward move would.
+      - Works for card/effect backward movement and ordinary backward movement from effects.
+    - `coin-tribute`:
+      - Each other player transfers coins to active player.
+      - Amount is `3` per other player, or `5` when only 2 players are in the game.
+      - Transfer is capped by each payer's available coins.
+      - Do not apply coin-gain bonus to the recipient; use direct transfer semantics, not reward semantics.
+  - Do not:
+    - Do not implement Bad Wave 3 / `flip-shop-down`.
+    - Do not change existing Good/Bad/Event/TADAM/Shop cards except for integration hooks required by these new Good effects.
+    - Do not change board placement, finite deck lifecycle, final PvP boss rules, or unrelated phone protocol.
+    - Do not involve QA.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - all 9 Good cards exist in local config, CSV, and Google Sheet with `count: 2`;
+      - no player-facing card text ends with a final period;
+      - held Good cards do not silently discard before trigger.
+    - Browser smoke if environment allows:
+      - reveal all 9 new Good cards;
+      - verify field skip, target Bad draw, green move, monster retry, +3 potion, +5 turn boost, dice change, backward reversal, and coin tribute;
+      - no console errors.
+  - Handback:
+    - Completed in `project-memory/updates.md`.
+    - Context handback added to `project-memory/inbox/for-gd.md`.
+    - GD context handback only; no QA gate.
+  - Dev 2 result:
+    - Added all 9 Good cards to `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `good!A13:N21`.
+    - Implemented held Good status flow and trigger-time discard for `field-shield`, `second-chance`, `strength-potion`, `speed-potion`, `dice-control`, and `backward-reversal`.
+    - Implemented immediate effects for `bad-gift`, `green-path`, and `coin-tribute`.
+    - Preserved Dev 3 Bad Wave 2 changes and left `flip-shop-down` deferred with local `count: 0`.
+    - Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`, static card/CSV checks, and browser host smoke.
+    - Full manual playthrough of every new effect was not run.
+
+- ACTIVE BAD CARDS WAVE 2 2026-06-11 23:03 - Pending Bad statuses:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent to `Dev 3` at 2026-06-11 23:03.
+  - Context:
+    - This is wave 2 of the next 9-card `Плохо` pack.
+    - Wave 1 is complete: Dev 2 added data and implemented `poorest-steals-shop` / `bad-die-choice`.
+    - Current intentional temporary divergence:
+      - Google Sheet `Cards Config` and `cards-google-sheet.csv` have all 9 new rows with `count: 2`.
+      - In `src/cards.config.js`, deferred wave 2/3 cards currently have local temporary `count: 0` so they cannot draw before handlers exist.
+    - Do not start wave 3 / `flip-shop-down`.
+    - QA is not involved unless the user explicitly asks.
+  - Implement and locally activate these 6 pending Bad cards:
+    - `self-monster-minus3`: `Оставь эту карту себе. В следующей битве с монстром получи -3 к силе и сбрось эту карту`.
+    - `skip-next-good`: `Оставь эту карту себе. Вместо того чтобы в следующий раз тащить карту Хорошо, сбрось эту карту`.
+    - `next-turn-pay-or-skip`: `Оставь эту карту себе. В начале следующего хода выбери: заплатить 15 монет или пропустить ход. Затем сбрось эту карту`.
+    - `monster-sixes-to-ones`: `Оставь эту карту себе. В следующей битве с монстром все выброшенные 6 превращаются в 1. После боя сбрось эту карту`.
+    - `block-next-coins`: `Оставь эту карту себе. В следующий раз, когда ты должен получить монеты, вместо этого сбрось эту карту`.
+    - `monster-rematch`: `Оставь эту карту себе. В битве с монстром, если ты победил, сбрось эту карту и сразись ещё раз. Получи награду только за вторую победу`.
+  - Local config activation:
+    - Set these 6 cards to local `count: 2` in `src/cards.config.js` after implementing handlers.
+    - Keep `flip-shop-down` local `count: 0` for wave 3.
+    - Keep `poorest-steals-shop` and `bad-die-choice` at local `count: 2`.
+    - Keep Sheet/CSV unchanged except for correction if you find a mismatch; they should already have all 9 cards at `count: 2`.
+  - Pending status requirements:
+    - Cards with `Оставь эту карту себе` must not discard immediately when drawn.
+    - Store them on the affected player, show them as visible statuses/badges in host UI like `Сглаз` / `Двойное Плохо`, and include them in phone snapshot if current status badges are mirrored there.
+    - When a pending Bad card triggers, remove one matching copy and discard it to the `bad` discard pile.
+    - Multiple copies stack as separate pending cards and should resolve one at a time unless specified otherwise.
+  - Effect behavior:
+    - `self-monster-minus3`:
+      - Next monster battle gets `-3` strength and consumes one copy.
+      - Applies to ordinary monster gates, final monster gate, and `Сплочение`.
+      - Does not apply to the final PvP boss battle.
+    - `monster-sixes-to-ones`:
+      - In the next monster battle, all dice results of `6` on that player's roll become `1` before total force is calculated.
+      - Applies to ordinary monster gates, final monster gate, and `Сплочение`.
+      - Does not apply to the final PvP boss battle.
+      - Consume one copy after that battle roll.
+    - `skip-next-good`:
+      - Intercepts the next `drawAndApplyCard(player, "good")` before drawing from finite Good deck.
+      - No Good card is drawn, revealed, discarded, or consumed.
+      - Consume one pending copy and log clearly.
+    - `next-turn-pay-or-skip`:
+      - At the beginning of that player's next own turn, before normal roll/pre-roll choices, consume one copy.
+      - Player chooses:
+        - pay 15 coins;
+        - skip turn.
+      - If player has fewer than 15 coins, pay option is disabled/unavailable; bot should choose skip unless it can pay.
+      - If skip is chosen, turn ends cleanly without rolling/moving/card actions.
+      - If multiple copies are held, only one triggers per own turn.
+    - `block-next-coins`:
+      - Intercepts the next positive coin gain for that player.
+      - The coin gain becomes 0 and one copy is consumed.
+      - Do not consume on zero/negative coin changes.
+      - This should block the whole positive gain including Shop coin bonus; no coin float/history gain should be recorded for the blocked gain.
+    - `monster-rematch`:
+      - Applies only to individual monster/final-monster gate battles, not to `Сплочение`.
+      - If the player wins the next individual monster battle:
+        - consume one copy;
+        - do not grant reward, dice bonus, monster opening, final-boss transition, TADAM monster-hunt reward, or other win reward for that first victory;
+        - immediately repeat the battle against the same monster.
+      - Only the second victory resolves normally and grants normal rewards/results.
+      - If the first battle is lost, consume nothing unless current GD card text forces otherwise; default is it remains for the next victory in a monster battle.
+  - Do not:
+    - Do not implement `flip-shop-down`.
+    - Do not change `poorest-steals-shop` or `bad-die-choice` unless needed for integration safety.
+    - Do not change Sheet/CSV counts except to fix a discovered mismatch.
+    - Do not change board placement, unrelated cards, shop face-down model, final PvP boss battle, or phone protocol beyond status snapshot display.
+    - Do not involve QA.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - the 6 wave-2 cards are local `count: 2`;
+      - `flip-shop-down` remains local `count: 0`;
+      - all 9 new rows remain `count: 2` in Sheet/CSV;
+      - no player-facing text ends with a final period.
+    - Browser smoke if environment allows:
+      - reveal each wave-2 pending Bad card and confirm visible status appears;
+      - trigger and clear `skip-next-good` without consuming Good deck;
+      - trigger and clear `block-next-coins`;
+      - trigger `next-turn-pay-or-skip` pay and skip branches;
+      - trigger monster `-3` and sixes-to-ones in a monster battle or `Сплочение`;
+      - trigger rematch on individual monster victory and confirm reward only after second victory;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Send GD context handback only; no QA gate.
+
+- DONE BAD CARDS WAVE 1 2026-06-11 22:54 - Next Bad pack data and simple effects:
+  - Owner: `Dev 2`.
+  - Dispatch status: implemented by `Dev 2` at 2026-06-11 23:02; GD context handback sent; QA not involved.
+  - Context:
+    - This is wave 1 of a 3-wave split for the next `Плохо` pack.
+    - Do not start wave 2/3 work in this task.
+    - QA is not involved unless the user explicitly asks.
+  - User-approved coordination:
+    - Wave 1 / `Dev 2`: data for all 9 cards + simple effects.
+    - Wave 2 / `Dev 3`: pending Bad statuses.
+    - Wave 3 / `Dev 1` or `Dev 2`: face-down `Лавка Джо`.
+    - Do not run wave 2 and wave 3 simultaneously because both touch player status/inventory display.
+  - Add all 9 new cards to canonical data:
+    - Deck: `bad`.
+    - Count: `2` each.
+    - Sync:
+      - Google Sheet `Cards Config`, tab `bad`;
+      - `src/cards.config.js`;
+      - `cards-google-sheet.csv`.
+    - Player-facing `title`, `shortTitle`, and `description` must not end with final periods.
+  - New card IDs/text:
+    - `poorest-steals-shop`: `Игрок с наименьшим количеством монет забирает у тебя карту Лавка Джо по своему выбору`.
+    - `bad-die-choice`: `Брось кубик. 1-2: отойди на 8 шагов назад. 3-4: потеряй 8 монет. 5-6: выбери игрока, он решает, какой из этих двух штрафов ты получишь`.
+    - `self-monster-minus3`: `Оставь эту карту себе. В следующей битве с монстром получи -3 к силе и сбрось эту карту`.
+    - `skip-next-good`: `Оставь эту карту себе. Вместо того чтобы в следующий раз тащить карту Хорошо, сбрось эту карту`.
+    - `next-turn-pay-or-skip`: `Оставь эту карту себе. В начале следующего хода выбери: заплатить 15 монет или пропустить ход. Затем сбрось эту карту`.
+    - `monster-sixes-to-ones`: `Оставь эту карту себе. В следующей битве с монстром все выброшенные 6 превращаются в 1. После боя сбрось эту карту`.
+    - `flip-shop-down`: `Переверни 2 свои карты Лавка Джо лицом вниз. При посещении клетки Лавка Джо можешь выкупать перевернутые карты по 5 монет за каждую`.
+    - `block-next-coins`: `Оставь эту карту себе. В следующий раз, когда ты должен получить монеты, вместо этого сбрось эту карту`.
+    - `monster-rematch`: `Оставь эту карту себе. В битве с монстром, если ты победил, сбрось эту карту и сразись ещё раз. Получи награду только за вторую победу`.
+  - Implement in wave 1:
+    - `poorest-steals-shop`:
+      - If active player has no owned Shop cards, log no effect.
+      - Among other players, find the player with the fewest coins.
+      - Tie-break: order from active player onward using existing table/turn order helper.
+      - That poorest player chooses one owned Shop card from active player and takes it.
+      - Human chooser selects card; bot chooser picks highest-value card using existing Shop scoring if possible.
+      - Moving the owned Shop item between players must not touch physical Shop deck/discard.
+      - Record shop-card history for both affected players if current helpers support it.
+    - `bad-die-choice`:
+      - Roll 1d6 with existing random-choice roll context pattern.
+      - `1-2`: active player moves 8 steps backward; do not resolve landing field.
+      - `3-4`: active player loses 8 coins through existing coin helper.
+      - `5-6`: active player chooses another player; chosen player chooses which penalty active player receives:
+        - back 8;
+        - lose 8 coins.
+      - Bots should choose sensible/default options without blocking.
+  - Deferred to wave 2:
+    - `self-monster-minus3`.
+    - `skip-next-good`.
+    - `next-turn-pay-or-skip`.
+    - `monster-sixes-to-ones`.
+    - `block-next-coins`.
+    - `monster-rematch`.
+  - Deferred to wave 3:
+    - `flip-shop-down`.
+  - Important partial-state constraint:
+    - Because `createDeckCopies()` makes every `count > 0` card drawable, do not leave the local playable game in a silently broken state.
+    - Preferred safe approach:
+      - sync all 9 cards to Google Sheet/CSV with `count: 2`;
+      - implement and locally activate only the 2 wave-1 playable cards in `src/cards.config.js` until wave 2/3 are ready;
+      - clearly document any temporary local/Sheet divergence in handback.
+    - Alternative acceptable approach:
+      - add all 9 locally with `count: 2`, but explicitly implement safe temporary handlers for deferred effect types that keep the game from silently discarding/ignoring the card and mark the repo as partial/not product-complete.
+    - Do not present wave 1 as product-complete for the whole 9-card pack.
+  - Do not:
+    - Do not implement pending status cards in this task.
+    - Do not implement face-down Shop cards in this task.
+    - Do not change existing cards, board placement, deck lifecycle, unrelated UI, final battle, or phone protocol.
+    - Do not involve QA.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static check:
+      - Google Sheet/CSV contain all 9 new card rows with `count: 2`;
+      - local playable config does not allow unimplemented cards to resolve silently;
+      - no player-facing card text ends with final period.
+    - Browser smoke:
+      - reveal and resolve `poorest-steals-shop`;
+      - reveal and resolve all branches of `bad-die-choice`;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Send GD context handback only; no QA gate.
+  - Dev 2 handback:
+    - Added all 9 Wave 1 Bad-pack cards to Google Sheet `Cards Config` / `bad` and `cards-google-sheet.csv` with `count: 2`.
+    - Added all 9 cards to `src/cards.config.js`.
+    - Local playable config intentionally activates only:
+      - `poorest-steals-shop` with `count: 2`;
+      - `bad-die-choice` with `count: 2`.
+    - Deferred local cards intentionally use temporary `count: 0` so they are not drawable before Wave 2/3 handlers exist:
+      - `self-monster-minus3`;
+      - `skip-next-good`;
+      - `next-turn-pay-or-skip`;
+      - `monster-sixes-to-ones`;
+      - `flip-shop-down`;
+      - `block-next-coins`;
+      - `monster-rematch`.
+    - Fixed `createDeckCopies()` so explicit `count: 0` produces 0 physical copies instead of falling back to 1.
+    - Implemented `poorest-steals-shop`:
+      - active player must have owned Shop cards;
+      - poorest other player is chosen by fewest coins, tie-broken by table order from active onward;
+      - human thief chooses a card; bot thief takes highest-value card by Shop scoring;
+      - owned item transfers between inventories without touching Shop deck/discard.
+    - Implemented `bad-die-choice`:
+      - rolls 1d6 with roll-context UI;
+      - 1-2 moves active player 8 steps back without landing effects;
+      - 3-4 removes 8 coins;
+      - 5-6 active chooses another player, then that player chooses the penalty.
+    - Bumped host/card-config cache keys to `20260611-0414`.
+    - Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+    - Static checks passed for local config/CSV; live Sheet readback confirmed `bad!A13:N21`.
+    - Browser smoke loaded `http://localhost:5173/` with `src/game.js?v=20260611-0414`, board present, no console errors.
+    - Not fully run: manual browser playthrough of both playable cards and every `bad-die-choice` branch.
+
+- DONE BAD CARDS 2026-06-11 21:04 - Add 8 new `Плохо` cards:
+  - Owner: `Dev 2`.
+  - Dispatch status: implemented by `Dev 2` at 2026-06-11 21:25; GD context handback sent; QA not involved.
+  - User request:
+    - Add 8 new `Плохо` cards.
+    - Each new card has `count: 2`.
+    - Sync canonical Google Sheet `Cards Config`, local `src/cards.config.js`, and `cards-google-sheet.csv`.
+    - Art/UI is not needed.
+    - QA is not involved unless the user explicitly asks.
+  - New cards:
+    - `joe-debt`: `Потеряй 2 монеты за каждую свою Лавку Джо`.
+    - `back-to-red`: `Отодвинься назад, до ближайшего красного поля. Эффект поля срабатывает`.
+    - `small-scare`: `Легкий испуг - ничего не происходит`.
+    - `discard-shop`: `Сбрось одну карту Лавка Джо`.
+    - `back-to-player`: `Отойди назад до ближайшего игрока. Если ты последний, потеряй 5 монет`.
+    - `others-gain5`: `Все игроки, кроме тебя, получают 5 монет`.
+    - `others-shop-offer`: `Все игроки, кроме тебя, тащат карту Лавка Джо и могут купить её за 5 монет`.
+    - `leaders-back5`: `Все игроки, кроме последнего, делают 5 шагов назад`.
+  - Text/data rules:
+    - Player-facing `title`, `shortTitle`, and `description` must not end with a final period.
+    - Keep all 8 cards in deck `bad`.
+    - Use `count: 2` for every new card.
+    - Use concise names/titles in Russian; IDs above are required.
+  - Required behavior:
+    - `joe-debt`:
+      - Lose `2 * player.items.length` coins.
+      - Use existing coin helper so coin history/floats stay consistent.
+      - If player has 0 Shop cards, no coin change; log clearly that there is no loss.
+    - `back-to-red`:
+      - Move strictly backward along current route to the nearest `red` field.
+      - After landing, that field's effect must resolve.
+      - If no red field exists behind the player, do not move and log the result.
+      - Reuse the existing backward landing pattern where possible, e.g. `movePlayerSteps(..., { resolveBackwardLanding: true })`.
+    - `small-scare`:
+      - No state change.
+      - Log/toast a clear harmless result.
+    - `discard-shop`:
+      - If the active player has owned Shop cards, remove exactly one.
+      - Human player chooses which owned `Лавка Джо` card to discard.
+      - Bot discards the least valuable card using current shop scoring heuristics if available.
+      - Removed owned card does not return to the physical Shop deck/discard; it is an owned item copy leaving inventory.
+      - If no owned Shop cards, log that nothing is discarded.
+    - `back-to-player`:
+      - Find the nearest other player strictly behind the active player by route progress.
+      - If found, move active player to that player's cell.
+      - Do not resolve the destination field for this card.
+      - If no player is behind active player, active player loses 5 coins.
+    - `others-gain5`:
+      - Every player except active player gains 5 coins through existing coin helper.
+    - `others-shop-offer`:
+      - Every player except active player, in table/order from active player onward, draws/reveals 1 physical Shop card and may buy it for 5 coins.
+      - If player buys: pay 5, add owned Shop item, record shop cards, then return the source physical card to Shop discard/stock according to existing lifecycle.
+      - If player refuses or cannot pay: source card returns to Shop discard/stock.
+      - If Shop deck cannot provide a card, log clearly and continue to next player.
+      - Use existing finite Shop deck helpers and card reveal UI patterns.
+    - `leaders-back5`:
+      - Determine last-place player(s) before moving anyone.
+      - Last-place means minimum route progress; if multiple players tie for last, all tied players are exempt.
+      - Every other player moves 5 steps backward.
+      - Do not resolve landing fields for these backward moves.
+  - Do not:
+    - Do not change existing `Плохо` card IDs/counts/effects unless strictly needed for integration.
+    - Do not change Good/Event/TADAM/Shop cards.
+    - Do not change board placement, deck lifecycle, dice math, bot personalities beyond choosing/discarding these new card effects, phone protocol, or unrelated UI.
+    - Do not involve QA.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static check:
+      - local config, CSV, and Google Sheet `Cards Config` tab `bad` contain all 8 new cards with `count: 2`;
+      - no player-facing card text ends with a final period.
+    - Browser smoke if environment allows:
+      - reveal each new Bad card;
+      - verify `joe-debt` with 0, 1, and multiple Shop cards;
+      - verify `back-to-red` lands on nearest red behind and triggers the red effect;
+      - verify `discard-shop` removes exactly one owned Shop card;
+      - verify `back-to-player` moves to nearest player behind, and last player loses 5 coins;
+      - verify `others-gain5` and `others-shop-offer` affect non-active players only;
+      - verify `leaders-back5` exempts all players tied for last;
+      - no browser console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Send GD context handback only; no QA gate.
+  - Dev 2 handback:
+    - Added all 8 new `bad` cards to `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `bad`.
+    - Implemented new effects:
+      - `joe-debt` loses `2 * owned Shop cards`.
+      - `back-to-red` moves strictly backward to nearest red and resolves that field.
+      - `small-scare` logs no-op.
+      - `discard-shop` removes one owned Shop item; bot uses least-valuable scoring.
+      - `back-to-player` moves to nearest player behind or loses 5 if last.
+      - `others-gain5` gives all non-active players 5 coins.
+      - `others-shop-offer` gives each other player a physical Shop offer with buy/refuse lifecycle.
+      - `leaders-back5` exempts all tied last-place players and moves everyone else 5 back without landing effects.
+    - Bumped cache keys to `20260611-0413`.
+    - Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+    - Static checks passed for local config/CSV; live Sheet readback confirmed `bad!A5:N12`.
+    - Browser smoke loaded `http://localhost:5173/` with `src/game.js?v=20260611-0413`, board present, no console errors.
+    - Not fully run: per-card manual browser playthrough for all 8 effects.
+
 - DONE FINAL BATTLE UI/RULE CLARITY 2026-06-09 21:58 - Boss force display flow:
   - Owner: `Dev 3`.
   - Dispatch status: implemented by `Dev 3` at 2026-06-09 22:05; GD context handback sent; QA not involved.

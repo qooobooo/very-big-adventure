@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Очень Большая Бродилка — веб-прототип</title>
-    <link rel="stylesheet" href="./styles.css?v=20260609-0404" />
+    <link rel="stylesheet" href="./styles.css?v=20260612-0425" />
   </head>
   <body data-ui-style="classic">
     <main class="app-shell">
@@ -103,9 +103,12 @@
                 </label>
                 <button id="exactMoveBtn" class="secondary" type="button">Идти</button>
               </div>
-              <label class="cheat-toggle">
-                <input id="passThroughMode" type="checkbox" />
-                <span>Проходить все</span>
+              <label class="settings-select">
+                <span>Сила монстров</span>
+                <select id="monsterStrengthMode">
+                  <option value="standard" selected>Стандартные</option>
+                  <option value="strong">Сильные</option>
+                </select>
               </label>
               <label class="settings-select">
                 <span>Скорость ботов</span>
@@ -192,6 +195,6 @@
 
     </main>
 
-    <script type="module" src="./src/game.js?v=20260609-0412"></script>
+    <script type="module" src="./src/game.js?v=20260612-0425"></script>
   </body>
 </html>

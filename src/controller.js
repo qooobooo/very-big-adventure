@@ -450,10 +450,11 @@ function controllerShopCardsMarkup(items = []) {
     const count = Math.max(1, Number(item.count) || 1);
     const label = item.shortTitle || item.title || "Карта";
     const countText = count > 1 ? ` x${count}` : "";
-    const title = `${item.title || label}${countText}`;
+    const faceDown = Boolean(item.faceDown);
+    const title = `${item.title || label}${countText}${faceDown ? " лицом вниз" : ""}`;
     return `
-      <span class="controller-shop-card" title="${escapeAttribute(title)}">
-        ${escapeHtml(label)}${count > 1 ? `<b class="controller-shop-count">x${count}</b>` : ""}
+      <span class="controller-shop-card ${faceDown ? "is-face-down" : ""}" title="${escapeAttribute(title)}">
+        ${escapeHtml(label)}${count > 1 ? `<b class="controller-shop-count">x${count}</b>` : ""}${faceDown ? `<b class="controller-shop-count">↓</b>` : ""}
       </span>
     `;
   }).join("");

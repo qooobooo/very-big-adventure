@@ -2414,6 +2414,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   min-height: 20px;
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   max-width: 100%;
   padding: 2px 7px;
   border: 1px solid rgba(255, 247, 232, 0.14);
@@ -2423,6 +2424,21 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   font-size: 0.64rem;
   line-height: 1;
   white-space: nowrap;
+}
+
+.score-shop small.shop-face-down,
+.controller-shop-card.is-face-down {
+  border-style: dashed;
+  color: rgba(255, 236, 205, 0.62);
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0 4px, transparent 4px 8px),
+    rgba(32, 28, 26, 0.34);
+  filter: saturate(0.55);
+}
+
+.score-shop small.shop-face-down em {
+  font-style: normal;
+  color: #ffd978;
 }
 
 .play-area {
@@ -3357,6 +3373,11 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 }
 
 .vs-battle-card.is-rolling {
+  border-color: rgba(255, 241, 174, 0.9);
+  animation: vs-battle-card-pulse 820ms ease-in-out infinite;
+}
+
+.final-battle-side.is-rolling {
   border-color: rgba(255, 241, 174, 0.9);
   animation: vs-battle-card-pulse 820ms ease-in-out infinite;
 }
@@ -5092,7 +5113,7 @@ body.is-game-fullscreen .app-shell > * {
 
 .tadam-slot.is-filled {
   border: 1px solid rgba(255, 236, 166, 0.54);
-  background: url("./assets/cards/tadam_front.png?v=20260525-0190") center / cover no-repeat;
+  background: url("./assets/cards/tadam_front.png?v=20260612-0420") center / cover no-repeat;
   box-shadow:
     0 12px 20px rgba(0, 0, 0, 0.28),
     0 0 0 1px rgba(0, 0, 0, 0.42);
@@ -5588,6 +5609,11 @@ body.is-game-fullscreen .app-shell > * {
   white-space: nowrap;
 }
 
+.card-text-nowrap {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 .event-toast-copy .player-name {
   color: color-mix(in srgb, var(--player-color) 52%, #fffbe8 48%);
 }
@@ -5655,7 +5681,7 @@ button.event-card-preview:focus-visible {
 }
 
 .good-card-reveal.is-revealed .good-card-preview {
-  --card-art: url("./assets/cards/good_front.png?v=20260524-1720");
+  --card-art: url("./assets/cards/good_front.png?v=20260612-0420");
 }
 
 .bad-card-reveal.is-hidden .bad-card-preview {
@@ -5663,7 +5689,7 @@ button.event-card-preview:focus-visible {
 }
 
 .bad-card-reveal.is-revealed .bad-card-preview {
-  --card-art: url("./assets/cards/bad_front.png?v=20260524-2322");
+  --card-art: url("./assets/cards/bad_front.png?v=20260612-0420");
 }
 
 .tadam-card-reveal.is-hidden .tadam-card-preview {
@@ -5671,7 +5697,7 @@ button.event-card-preview:focus-visible {
 }
 
 .tadam-card-reveal.is-revealed .tadam-card-preview {
-  --card-art: url("./assets/cards/tadam_front.png?v=20260525-0190");
+  --card-art: url("./assets/cards/tadam_front.png?v=20260612-0420");
 }
 
 .event-card-reveal.is-hidden .event-card-preview {
@@ -5679,21 +5705,22 @@ button.event-card-preview:focus-visible {
 }
 
 .event-card-reveal.is-revealed .event-card-preview {
-  --card-art: url("./assets/cards/event_front.png?v=20260607-0372");
+  --card-art: url("./assets/cards/event_front.png?v=20260612-0420");
 }
 
 .good-card-text,
 .bad-card-text,
-.tadam-card-text,
-.event-card-text {
+.tadam-card-text {
   position: absolute;
-  left: 14%;
-  right: 14%;
-  top: 62%;
-  bottom: 10%;
+  left: 10%;
+  right: 10%;
+  top: 49%;
+  bottom: 7.5%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: clamp(4px, 0.64vw, 8px);
   color: #3a210f;
   font-weight: 900;
   line-height: 1.08;
@@ -5703,40 +5730,96 @@ button.event-card-preview:focus-visible {
 
 .good-card-text span,
 .bad-card-text span,
-.tadam-card-text span,
+.tadam-card-text span {
+  display: block;
+  color: #2c1709;
+  max-width: 100%;
+  max-height: none;
+  overflow: visible;
+  font-size: clamp(0.64rem, 1.42vw, 0.92rem);
+  line-height: 1.08;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+  text-wrap: balance;
+}
+
+.bad-card-text,
+.tadam-card-text {
+  top: 50%;
+}
+
+.good-card-text.is-dense,
+.bad-card-text.is-dense,
+.tadam-card-text.is-dense {
+  left: 9.5%;
+  right: 9.5%;
+  top: 47%;
+  bottom: 6.8%;
+  gap: clamp(5px, 0.78vw, 9px);
+  justify-content: space-evenly;
+}
+
+.shop-card-text.is-dense {
+  left: 6.5%;
+  right: 6.5%;
+  top: 47%;
+  bottom: 6.8%;
+  gap: clamp(5px, 0.78vw, 9px);
+  justify-content: space-evenly;
+}
+
+.good-card-text.is-long,
+.bad-card-text.is-long,
+.tadam-card-text.is-long,
+.shop-card-text.is-long {
+  left: 9%;
+  right: 9%;
+  top: 43%;
+  bottom: 6.2%;
+  gap: clamp(4px, 0.58vw, 7px);
+  justify-content: space-evenly;
+}
+
+.good-card-text.is-dense span,
+.bad-card-text.is-dense span,
+.tadam-card-text.is-dense span,
+.shop-card-text.is-dense span {
+  font-size: clamp(0.58rem, 1.24vw, 0.86rem);
+  line-height: 1.06;
+}
+
+.good-card-text.is-long span,
+.bad-card-text.is-long span,
+.tadam-card-text.is-long span,
+.shop-card-text.is-long span {
+  font-size: clamp(0.52rem, 1.08vw, 0.78rem);
+  line-height: 1.04;
+}
+
+.event-card-text {
+  position: absolute;
+  left: 9%;
+  right: 9%;
+  top: 45%;
+  bottom: 6.2%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 1.15vw, 13px);
+  color: #3a210f;
+  font-weight: 900;
+  line-height: 1.08;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 239, 174, 0.72);
+}
+
 .event-card-text span,
 .event-card-text strong {
   display: block;
   color: #2c1709;
-  max-height: 100%;
-  overflow: hidden;
-  font-size: clamp(0.58rem, 1.22vw, 0.78rem);
-  line-height: 1.08;
-  overflow-wrap: anywhere;
-}
-
-.good-card-text.is-dense,
-.good-card-text.is-long {
-  left: 12%;
-  right: 12%;
-  display: flex;
-  flex-direction: column;
-}
-
-.good-card-text.is-dense {
-  top: 58%;
-  bottom: 7%;
-  gap: clamp(3px, 0.45vw, 6px);
-}
-
-.good-card-text.is-long {
-  top: 55%;
-  bottom: 6%;
-  gap: clamp(2px, 0.32vw, 4px);
-}
-
-.good-card-text.is-dense span,
-.good-card-text.is-long span {
+  max-width: 100%;
   max-height: none;
   overflow: visible;
   overflow-wrap: break-word;
@@ -5745,22 +5828,12 @@ button.event-card-preview:focus-visible {
   text-wrap: balance;
 }
 
-.good-card-text.is-dense span {
-  font-size: clamp(0.5rem, 0.98vw, 0.66rem);
-  line-height: 1.05;
-}
-
-.good-card-text.is-long span {
-  font-size: clamp(0.34rem, 0.64vw, 0.48rem);
-  line-height: 1.02;
-}
-
 .bad-card-text span {
-  font-size: clamp(0.56rem, 1.14vw, 0.76rem);
+  font-size: clamp(0.62rem, 1.34vw, 0.88rem);
 }
 
 .tadam-card-text span {
-  font-size: clamp(0.52rem, 1.04vw, 0.7rem);
+  font-size: clamp(0.6rem, 1.28vw, 0.84rem);
 }
 
 .event-card-artifact-icon {
@@ -5772,23 +5845,10 @@ button.event-card-preview:focus-visible {
   vertical-align: -0.24em;
 }
 
-.tadam-card-text {
-  left: 13%;
-  right: 13%;
-  top: 64%;
-  bottom: 9%;
-}
-
 .event-card-text {
-  left: 12.5%;
-  right: 12.5%;
-  top: 58%;
-  bottom: 8%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(9px, 1.25vw, 14px);
+  top: 44%;
+  bottom: 6%;
+  gap: clamp(8px, 1.1vw, 12px);
 }
 
 .event-card-text .event-card-title {
@@ -5798,7 +5858,7 @@ button.event-card-preview:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(0.72rem, 1.26vw, 0.92rem);
+  font-size: clamp(0.7rem, 1.32vw, 0.96rem);
   line-height: 1.06;
   overflow-wrap: break-word;
   word-break: normal;
@@ -5822,8 +5882,8 @@ button.event-card-preview:focus-visible {
 .event-card-text .event-card-description-line {
   max-width: 100%;
   max-height: none;
-  font-size: clamp(0.43rem, 0.8vw, 0.58rem);
-  line-height: 1.1;
+  font-size: clamp(0.48rem, 0.92vw, 0.66rem);
+  line-height: 1.08;
   overflow: visible;
   overflow-wrap: break-word;
   word-break: normal;
@@ -5839,13 +5899,13 @@ button.event-card-preview:focus-visible {
 }
 
 .event-card-text.is-dense {
-  top: 56%;
-  bottom: 7.5%;
-  gap: clamp(6px, 0.95vw, 10px);
+  top: 42.5%;
+  bottom: 5.8%;
+  gap: clamp(6px, 0.9vw, 10px);
 }
 
 .event-card-text.is-dense .event-card-title {
-  font-size: clamp(0.68rem, 1.18vw, 0.84rem);
+  font-size: clamp(0.66rem, 1.2vw, 0.86rem);
 }
 
 .event-card-text.is-dense .event-card-description {
@@ -5853,14 +5913,14 @@ button.event-card-preview:focus-visible {
 }
 
 .event-card-text.is-dense .event-card-description-line {
-  font-size: clamp(0.4rem, 0.72vw, 0.53rem);
+  font-size: clamp(0.44rem, 0.8vw, 0.58rem);
   line-height: 1.04;
 }
 
 .event-card-text.is-long {
-  top: 54%;
-  bottom: 7%;
-  gap: clamp(4px, 0.72vw, 8px);
+  top: 41.5%;
+  bottom: 5.5%;
+  gap: clamp(4px, 0.7vw, 8px);
 }
 
 .event-card-text.is-long .event-card-title {
@@ -5872,7 +5932,7 @@ button.event-card-preview:focus-visible {
 }
 
 .event-card-text.is-long .event-card-description-line {
-  font-size: clamp(0.36rem, 0.64vw, 0.48rem);
+  font-size: clamp(0.4rem, 0.7vw, 0.52rem);
   line-height: 1.02;
 }
 
@@ -5941,18 +6001,20 @@ button.shop-card-preview.is-selected {
 }
 
 .shop-card-reveal.is-revealed .shop-card-preview {
-  --shop-card-art: url("./assets/cards/shop_front.png?v=20260524-1738");
+  --shop-card-art: url("./assets/cards/shop_front.png?v=20260612-0420");
 }
 
 .shop-card-text {
   position: absolute;
-  left: 14%;
-  right: 14%;
-  top: 62%;
-  bottom: 10%;
+  left: 10%;
+  right: 10%;
+  top: 49%;
+  bottom: 7.5%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: clamp(4px, 0.64vw, 8px);
   color: #3a210f;
   font-weight: 900;
   line-height: 1.08;
@@ -5963,11 +6025,25 @@ button.shop-card-preview.is-selected {
 .shop-card-text span {
   display: block;
   color: #2c1709;
-  max-height: 100%;
-  overflow: hidden;
-  font-size: clamp(0.54rem, 1.08vw, 0.72rem);
+  max-width: 100%;
+  max-height: none;
+  overflow: visible;
+  font-size: clamp(0.6rem, 1.24vw, 0.84rem);
   line-height: 1.08;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+  text-wrap: pretty;
+}
+
+.good-card-text .card-text-nowrap,
+.bad-card-text .card-text-nowrap,
+.tadam-card-text .card-text-nowrap,
+.event-card-text .card-text-nowrap,
+.shop-card-text .card-text-nowrap {
+  display: inline-block;
+  width: auto;
+  white-space: nowrap;
 }
 
 .shop-card-decline {

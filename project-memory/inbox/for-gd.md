@@ -4,6 +4,598 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-06-12 04:47 - Dev 3 context handback: manual shared/team battle rolls
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE TEAM BATTLE 2026-06-12 04:37 - Manual player rolls in shared/team battles`.
+  - Completed:
+    - Added a per-contender roll prompt before each `Сплочение` team-battle roll.
+    - Added the same per-contender roll prompt before each `Бой за старт` roll.
+    - Human contenders now press `Бросить кубик` one by one instead of being auto-rolled in one pass.
+    - Bot contenders keep using the existing action prompt `autoFor` path, so they auto-resolve with current bot pacing.
+    - Existing team HUD `rollingPlayerId` highlighting remains active while waiting for the current contender and during the roll.
+    - Previous team roll results remain visible in the HUD; final win/loss is still calculated only after every contender has rolled.
+    - Phone roll actions are scoped to the current rolling contender through the existing action prompt owner.
+    - Bumped host script cache key to `20260612-0424`.
+  - Follow-up included:
+    - User asked that strong-mode first monster force should be `6`.
+    - Updated `Сила монстров` strong mode so the first ordinary monster remains force `6`, while later ordinary monsters get the `+2` modifier.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check -- src/game.js index.html project-memory/updates.md project-memory/inbox/for-gd.md project-memory/inbox/for-dev.md`
+    - Static/source checks: shared/team battles now prompt per player; current roller state advances player by player; bot rollers still auto-resolve; reward/loss logic remains after the full loop; first ordinary monster stays force `6` in strong mode.
+  - Not run:
+    - Browser smoke/manual team battle flow; local server binding has been failing in this sandbox with `EPERM`.
+  - Notes:
+    - Team battle reward/loss rules, monster target formulas, individual monster battles, final boss PvP battle, and VS field rules were not changed.
+
+- 2026-06-12 04:36 - Dev 3 context handback: monster strength settings dropdown
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE SETTINGS 2026-06-12 04:28 - Replace Проходить все with monster strength dropdown`.
+  - Completed:
+    - Removed the visible settings checkbox `Проходить все`.
+    - Added settings dropdown `Сила монстров` with options `Стандартные` and `Сильные`.
+    - Used existing `settings-select` styling/layout.
+    - Added `monsterStrengthMode` to collected game settings/history snapshots.
+    - `Стандартные` keeps existing monster strength behavior.
+    - `Сильные` keeps the first ordinary monster at force `6` and adds `+2` to later ordinary monster strength via `effectiveMonsterStrength(...)`.
+    - Ordinary monster labels, battle requirements/HUD/logs, and bot monster risk scoring already read the shared `effectiveMonsterStrength(...)` path.
+    - Final monster doors are explicitly excluded from the +2 modifier, so final boss transition monster and final PvP boss formulas are unchanged.
+    - Old `passThroughMode` now safely falls back to default behavior; no localStorage settings persistence for it was found beyond saved history snapshots.
+    - Bumped host script cache key to `20260612-0424`.
+  - Files changed by Dev 3:
+    - `index.html`
+    - `src/game.js`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check -- src/game.js index.html`
+    - Static/source checks: no visible settings label `Проходить все`; settings include `Сила монстров`, `Стандартные`, `Сильные`; strong mode keeps the first ordinary monster at force `6` and adds `+2` to later ordinary monsters.
+  - Not run:
+    - Browser smoke/manual settings check; local server binding failed in this sandbox with `EPERM` on `127.0.0.1:5173`.
+  - Notes:
+    - Board placement, deck lifecycle, PvP/VS/Joe/Shop/card-only choices, final boss bonus formula, and boss-per-opponent bonus were not changed.
+
+- 2026-06-12 04:27 - Dev 1 context handback: choice prompts board view + dice-control pre-choice
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE CHOICE UI 2026-06-12 04:18 - Add board-view button to blocking choice prompts`.
+    - Included GD addendum from 2026-06-12 04:22 for `Контроль кубика`.
+  - Completed:
+    - Added a compact top/header `Контроль кубика` decision before the large value-change popup.
+    - `Поменять значение` opens the large `6 -> N` value-change prompt.
+    - `Не менять` resolves immediately and does not open the large prompt.
+    - Removed the large prompt's old `Не менять` option so the big prompt is now only for actual value changes.
+    - Added `Просмотр поля` to the shared blocking card-choice prompt.
+    - `Просмотр поля` switches to board preview without choosing/canceling; the existing roll button state returns as `К выбору`.
+    - Kept pending card choice state intact while previewing the board.
+    - Added phone-controller actions for the new dice-control pre-choice (`Поменять значение` / `Не менять`) so phone players can continue the same flow.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+    - Browser smoke on `http://localhost:5173`: page loaded, board/turn actions/choice panel exist, no console errors.
+    - Static source check: `maybeUseDiceControl(...)` now asks header intent before `chooseDiceControl(...)`; `renderChoicePanel()` adds `Просмотр поля`; preview toggles `pendingCardChoice.previewField` without resolving.
+  - Not run:
+    - Full manual card-trigger scenario for `Контроль кубика`; no deterministic dev hook was used.
+
+- 2026-06-12 04:16 - Art/UI 2 context handback: preview-only `steps` icon candidate
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - User request:
+    - Make a steps icon candidate.
+    - Do not wire/upload it.
+    - Iteration 1: remove the arrow and replace footprints with an even road/path.
+    - Iteration 2: remove the road/path too; leave only the boot with a movement effect.
+  - Completed:
+    - Created/updated `assets/icons/steps_candidate_512.png`.
+    - Current composition: leather boot with a golden motion/speed swirl effect.
+    - Removed the arrow, footprint marks, and road/path.
+    - Added visual preview `outputs/steps-icon-candidate-preview.png`.
+  - Asset status:
+    - preview-only / not wired.
+  - Checks passed:
+    - PNG dimension and alpha/corner transparency validation.
+    - Small tile-size visual preview.
+    - `git diff --check`.
+
+- 2026-06-12 04:10 - Dev 3 context handback: `Портальный обмен` no-field-effects text
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE EVENT TEXT 2026-06-12 04:03 - Update Портальный обмен no-field-effects text`.
+  - Completed:
+    - Updated Event card `portal-swap` / `Портальный обмен` description to exactly `Поменяйся местами с любым игроком. Эффекты полей не применяются`.
+    - Kept title `Портальный обмен`, id `portal-swap`, effect `event-portal-swap`, and count `2`.
+    - Synced Google Sheet `Cards Config` / `event!N8`.
+    - Synced local `src/cards.config.js`.
+    - Synced local `cards-google-sheet.csv`.
+    - Updated `Портальный обмен` choice summary/log copy to mention that field effects are not applied.
+    - Bumped host/card-config cache keys to `20260612-0421`.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `git diff --check -- src/game.js src/cards.config.js cards-google-sheet.csv index.html`
+    - Google Sheet readback: `event!A8:N8` contains the updated description.
+    - Static source check: `resolveEventPortalSwap(...)` swaps `position` values directly and does not call `resolveLanding(...)`, so destination field effects are not applied.
+  - Not run:
+    - Browser smoke/manual card reveal; local server binding failed in this sandbox with `EPERM` on `127.0.0.1:5173`.
+  - Notes:
+    - Art/UI card face layout/assets were not touched.
+    - No gameplay behavior change was needed.
+
+- 2026-06-12 03:58 - Dev 1 context handback: new game transient UI reset
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE NEW GAME UI RESET 2026-06-12 03:53 - Clear stale transient UI on new game`.
+  - Completed:
+    - Added `resetTransientUi()` and call it at the start of `newGame()` before building fresh game state.
+    - Hard-clears `#eventToast` immediately, including action prompt / roll-context classes, inline `top`, HTML, and fade timers.
+    - Clears `#choicePanel`.
+    - Clears `#finalBattleHud` for final/enemy/VS/Unity battle HUD leftovers.
+    - Removes `.dice-throw-layer`, clears dice rolling class/value, and clears phone dice preview/timer.
+    - Removes board transient overlays: walk path outlines, portal preview outlines, and landing highlight.
+    - Clears pending Shop/pre-roll/card-choice/board-choice state and resolvers.
+    - Clears bot action timer, action prompt resolvers/options, phone card preview, and battle progress state.
+    - Added `transientUiResetToken` guard in `animateDice(...)` so stale dice animations stop writing UI after a new game reset.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+    - Static/source check: `newGame()` calls the hard cleanup path before state rebuild.
+    - Static/source check: cleanup covers event toast, choice panel, battle HUD, dice layers, board overlays, pending resolvers/state, bot/phone timers, and phone preview/dice state.
+    - Static/source check: `animateDice(...)` is guarded by reset token.
+    - Browser smoke: loaded `http://localhost:5173`, pressed `Новая игра`, confirmed event toast hidden, choice panel hidden, final battle HUD hidden, dice layers `0`, walk/portal overlays `0`, board ready, and no console errors.
+  - Not fully run:
+    - Forced stale DOM injection smoke; Browser evaluate is read-only and blocked direct DOM mutation.
+    - Manual natural stale card reveal / battle HUD reproduction flow.
+
+- 2026-06-12 02:51 - Dev 1 context handback: Chaos Portal nearest Shop/Good
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE CHAOS PORTAL NEAREST 2026-06-12 02:48 - Shop/Good outcomes use true nearest field`.
+  - Completed:
+    - Changed `chaosPortalOptions(...)` so result `3-4` uses `nearestEventCell(currentCell, "shop")` directly instead of forward-first lookup.
+    - Changed result `5` so it uses `nearestEventCell(currentCell, "good")` directly instead of forward-first lookup.
+    - Updated `nearestEventCell(...)` to sort by absolute route distance and tie-break exactly equal distances toward the forward route position.
+    - Left `1-2` backward monster/portal and `6` forward monster/portal behavior unchanged.
+    - Did not change dice bands, board placement, ordinary portals, movement, or instant teleport behavior.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+    - Static/source check: Chaos Portal `shop` and `good` options no longer use `nearestForwardEventCell(...)`.
+    - Static/source check: `nearestEventCell(...)` sorts by absolute distance and forward tie-break.
+    - Static/source check: monster/portal directional options still call backward/forward `nearestMonsterOrPortalOption(...)`.
+  - Not run:
+    - Browser/manual Chaos Portal destination smoke.
+
+- 2026-06-12 01:38 - Dev 3 context handback: stacked red/green TADAM field effects
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE TADAM STACKING 2026-06-12 01:32 - Apply all active field TADAM effects`.
+  - Completed:
+    - Updated `resolveGreenField(...)` and `resolveRedField(...)` so they apply all matching active TADAM effects through `activeTadamEffects(...)`.
+    - Added sequential `applyFieldEffects(...)` wrapper to preserve stored active TADAM order.
+    - Duplicate move effects now stack by resolving each active copy; two `red-field` `steps: -5` copies move the player 10 steps back total.
+    - Duplicate draw effects now draw once per active copy.
+    - Mixed move/draw red or green field effects now all resolve.
+    - Updated bot field scoring to sum all matching active field TADAM effects.
+    - Updated red/green field labels to summarize stacked move totals and multiple draw effects.
+    - Bumped host script cache key to `20260612-0420`.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check -- src/game.js index.html`
+    - Static/source check: red/green field resolution no longer uses single `activeFieldEffect(...)`; it uses `activeTadamEffects(...)`, and labels/scoring also aggregate all matching field effects.
+  - Not run:
+    - Browser smoke/manual stacked-TADAM playthrough; local server binding failed in this sandbox with `EPERM` on `127.0.0.1:5173`.
+  - Notes:
+    - Base green `+3` coins and base red `-3` coins still happen before TADAM effects.
+    - TADAM card data/counts, visible slot order, active TADAM limit/discard lifecycle, and non-field TADAM behavior were not changed.
+
+- 2026-06-12 01:15 - Dev 2 context handback: Black Market exchange rework
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE BLACK MARKET REWORK 2026-06-12 01:06 - Exchange Shop cards for rewards`.
+  - Completed:
+    - Replaced old coin-payment `Черный рынок` deals with owned face-up Shop-card exchanges.
+    - All three exchange options stay visible and become disabled with a reason when the player lacks enough face-up `Лавка Джо` cards.
+    - Added rewards:
+      - 1 face-up Shop card -> permanent `+2 к силе`.
+      - 2 face-up Shop cards -> `30` coins.
+      - 3 face-up Shop cards -> set/refresh next-monster bonus to `+10`, then move `30` steps forward with normal landing resolution.
+    - Human players choose exact face-up owned Shop cards for exchange.
+    - Bots choose least valuable face-up owned Shop cards and do not choose disabled options.
+    - Exchanged owned Shop cards are removed from inventory only and do not return to the physical Shop deck/discard.
+    - Face-down Shop cards from `flip-shop-down` are excluded from exchange eligibility until bought back.
+    - Updated Black Market field tooltip/effect text and bot field scoring.
+  - Files changed by Dev 2:
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static Black Market contract scan: no old coin-cost deal strings, no Black Market coin subtraction, disabled options present, face-down cards excluded, inventory-only removal, no deck discard, 3-card option sets `+10` and moves `30`.
+    - Browser smoke: host loaded at `http://localhost:5173/` with `src/game.js?v=20260612-0419`, board and score strip present, no console errors captured.
+  - Not run:
+    - Full manual/browser playthrough for 0/1/2/3 card exchange branches, face-down exclusion, and bot exchange branch.
+  - Notes:
+    - Black Market placement/icon, Shop deck lifecycle, Shop card definitions, and unrelated fields/cards were not intentionally changed.
+
+- 2026-06-12 01:13 - Dev 1 context handback: portal popup labels
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE PORTAL POPUP TEXT 2026-06-12 01:10 - Use Portal labels in portal destination popup`.
+  - Completed:
+    - Added `openPortalChoiceLabel(...)` in `src/game.js`.
+    - Open-portal destination popup choices now display `Портал 1`, `Портал 2`, etc. when the underlying door label is `Монстр 1`, `Монстр 2`, etc.
+    - Underlying `door.label` values were not changed, so closed monster labels/tooltips/logs remain `Монстр N`.
+    - Portal destination list, preview outlines, movement, route order, portal mechanics, and Chaos Portal behavior were not changed.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+    - Static/source check: open portal choices use `openPortalChoiceLabel(door)`.
+    - Static/source check: `openPortalChoiceLabel(...)` converts `Монстр N` to `Портал N`.
+    - Static/source check: monster battle `door.label` text remains present.
+  - Not run:
+    - Browser/manual smoke with opened portals.
+
+- 2026-06-12 01:12 - Dev 3 context handback: final battle boss +3 per opponent
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE FINAL BATTLE BALANCE 2026-06-12 01:06 - Boss gets +3 per opposing player`.
+  - Completed:
+    - Changed final battle boss start/opponent bonus from `challengers.length` to `challengers.length * 3`.
+    - Boss start bonus is still applied once before boss rolls and still accumulates with the sum of boss roll totals.
+    - Updated final battle prompt/log/final-force breakdown text to say/reflect `+3 за каждого противника`.
+    - Added `opponentBonusPerPlayer` to final battle history summary force data and updated new history force text to show the per-opponent value.
+    - Bumped host script cache key to `20260612-0419`.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check -- src/game.js index.html`
+    - Static/source check: `bossOpponentBonus` uses `challengers.length * 3`; no `+1 ... противник` / old `за противников` final-battle text remains in `src/game.js`.
+  - Not run:
+    - Browser smoke/manual final-battle playthrough; local server binding failed in this sandbox with `EPERM` on `127.0.0.1:5173`.
+  - Notes:
+    - Boss roll count, player/challenger scoring, ordinary monster battles, `Сплочение`, `Бой за старт`, and VS were not changed.
+    - Winner logic changes only through the intended higher `bossForce`.
+
+- 2026-06-12 01:08 - Dev 3 context handback: final battle current-roller highlight
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE FINAL BATTLE ROLL HIGHLIGHT 2026-06-12 00:56 - Animate and highlight current roller`.
+  - Completed:
+    - Added final-battle rolling state tracking through `state.finalBattleProgress.rollingPlayerId` / `isRolling`.
+    - Score-strip and map-token active highlight now use the final-battle rolling player while final battle is active.
+    - When final battle is waiting without a current roller, the highlight no longer falls back to the last normal active player.
+    - Challenger prompts and rolls set the challenger as current final-battle roller, then clear the rolling state after the roll resolves.
+    - Boss prompts and boss-roll animations set the boss as current final-battle roller, then clear the rolling state after each boss roll resolves.
+    - Final HUD challenger side / boss side receives `is-rolling` during actual dice animation.
+    - Bumped stylesheet cache key to `20260612-0418`.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `styles.css`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check -- src/game.js styles.css index.html`
+  - Not run:
+    - Browser smoke/manual final-battle playthrough; local server binding failed in this sandbox with `EPERM` on `127.0.0.1:5173`.
+  - Notes:
+    - Final battle math, scoring, rewards, history export, boss bonus rules, and ordinary roll highlights outside final battle were not changed.
+    - Dice animation calls still pass the actual rolling player object; boss rolls pass the boss player and boss label.
+
+- 2026-06-12 01:01 - Dev 2 context handback: Event cards pack
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE EVENT CARDS 2026-06-12 00:52 - Add 5 new Событие cards`.
+  - Completed:
+    - Added 5 ordinary Event cards with `count: 2` and no artifact icons:
+      - `unity-start` / `Бой за старт`
+      - `shop-redistribution` / `Перетасовка Лавки`
+      - `fate-draw` / `Кубик судьбы`
+      - `triple-tadam` / `Три ТАДАМ`
+      - `mass-good-bad` / `Общий жребий`
+    - Synced `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `event!A11:N15`.
+    - Implemented `Бой за старт` with the shared battle HUD pattern: win gives everyone 10 coins; loss moves everyone to start without resolving the start cell.
+    - Implemented `Перетасовка Лавки`: no-Shop players first draw free Shop cards through finite Shop lifecycle, then each player contributes one owned Shop card, pooled cards shuffle and redeal from the active player; redistributed cards become face-up.
+    - Implemented `Кубик судьбы` with roll-context UI and central finite draw paths for Bad/Good/Shop.
+    - Implemented `Три ТАДАМ` as 3 sequential `drawTadamCard` calls.
+    - Implemented `Общий жребий` with roll-context UI and all-player Bad/Good draws in active-player order.
+    - Bumped host/card-config cache keys to `20260612-0418`.
+  - Files changed by Dev 2:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static local/CSV card checks: all 5 Event cards present, `count: 2`, no final periods, no `icon` fields, CSV column widths valid.
+    - Google Sheet readback: `event!A11:N15` contains all 5 new Event rows with `count: 2`.
+    - Browser smoke: host loaded at `http://localhost:5173/` with `src/game.js?v=20260612-0418`, board and score strip present, no console errors captured.
+  - Not run:
+    - Full manual/browser playthrough for every new Event effect branch.
+  - Notes:
+    - Recent Good/Bad pending statuses and Dev 1 `flip-shop-down` / face-down Shop behavior were preserved.
+    - `Кубик судьбы` and `Общий жребий` allow `Контроль кубика` because the active player is rolling.
+
+- 2026-06-12 00:31 - Dev 1 context handback: Bad cards Wave 3 `flip-shop-down`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE BAD CARDS WAVE 3 2026-06-12 00:04 - flip-shop-down face-down Shop cards`.
+  - Completed:
+    - Implemented `flip-shop-down` for deck `bad`.
+    - Set local `src/cards.config.js` `flip-shop-down` count from temporary `0` to `2`.
+    - On draw, the active player flips up to 2 owned face-up Shop cards face-down.
+    - Human player chooses which cards; bot chooses the least valuable face-up cards using existing Shop scoring.
+    - Face-down Shop cards remain in `player.items`, can still be discarded/stolen as owned cards, and still count for owned-card effects such as `joe-debt`.
+    - Face-down Shop cards do not provide passive step/battle/coin/extra-die bonuses.
+    - Final Shop score now ignores face-down Shop cards.
+    - Visiting a `Лавка Джо` cell now offers buyback of face-down owned Shop cards for 5 coins each before the normal Shop offer; buyback flips the owned card face-up and does not touch the physical Shop deck.
+    - Host score strip and active-player text mark face-down cards; phone snapshots/controller Shop chips also carry/display the face-down state.
+    - Bumped host/controller/cache keys to `20260612-0417`.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `src/cards.config.js`
+    - `src/controller.js`
+    - `styles.css`
+    - `index.html`
+    - `controller.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static contract scan: local `flip-shop-down` count `2`; CSV `flip-shop-down` count `2`; handler exists; buyback runs before Shop offer draw; passive bonus helpers use active face-up Shop items; final Shop score uses active face-up Shop items; phone snapshot includes `faceDown`.
+    - Browser smoke: host loaded at `http://localhost:5173/` with `styles.css?v=20260612-0417` and `src/game.js?v=20260612-0417`, board ready, no console errors.
+    - Browser smoke: controller loaded at `http://localhost:5173/controller.html` with `styles.css?v=20260612-0417` and `src/controller.js?v=20260612-0417`, no console errors.
+  - Not fully run:
+    - Manual/browser playthrough for 0/1/2 face-up Shop card flip cases.
+    - Manual/browser playthrough of buyback/refuse branches and passive-bonus before/after buyback.
+  - Notes:
+    - `cards-google-sheet.csv` and Google Sheet already had canonical `count: 2`; Dev 1 did not need to change Sheet/CSV card data for this task.
+    - No QA requested or involved.
+
+- 2026-06-11 23:37 - Dev 2 context handback: Good cards pack
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE GOOD CARDS 2026-06-11 23:23 - Add 9 new Хорошо cards`.
+  - Completed:
+    - Added 9 new `good` cards with `count: 2`: `field-shield`, `bad-gift`, `green-path`, `second-chance`, `strength-potion`, `speed-potion`, `dice-control`, `backward-reversal`, and `coin-tribute`.
+    - Synced local config, CSV, and Google Sheet `Cards Config` / `good!A13:N21`.
+    - Added visible held Good statuses on host and phone snapshots.
+    - Held Good cards now stay out of deck until their trigger resolves, then discard to the finite `good` discard pile.
+    - Implemented field shield skip, target Bad draw, nearest-green movement, monster second chance, monster/Unity strength potion, one-turn speed potion, own-roll dice control, backward movement reversal, and direct coin tribute transfers.
+    - Bumped host/card-config cache keys to `20260611-0416`.
+  - Files changed by Dev 2:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static local/CSV card checks: all 9 Good cards present, `count: 2`, no final periods, CSV column widths valid.
+    - Static guard: Dev 3 Bad Wave 2 cards remain `count: 2`; `flip-shop-down` remains `count: 0`.
+    - Browser smoke: host loaded at `http://localhost:5173/` with `src/game.js?v=20260611-0416`, board present, no console errors captured.
+  - Not run:
+    - Full manual/browser playthrough for every new Good effect.
+  - Notes:
+    - Dev 3's pending Bad status implementation was preserved.
+    - `dice-control` is intentionally limited to own rolls; Joe Game's house die is not treated as a player's own die.
+    - CSV quoting was corrected for two existing comma-containing fields without changing card text.
+
+- 2026-06-11 23:32 - Dev 3 context handback: Bad cards Wave 2 pending statuses
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE BAD CARDS WAVE 2 2026-06-11 23:03 - Pending Bad statuses`.
+  - Completed:
+    - Implemented visible pending Bad status storage for "Оставь эту карту себе" Bad cards.
+    - Activated local `count: 2` for:
+      - `self-monster-minus3`
+      - `skip-next-good`
+      - `next-turn-pay-or-skip`
+      - `monster-sixes-to-ones`
+      - `block-next-coins`
+      - `monster-rematch`
+    - Kept `flip-shop-down` deferred for Wave 3 with local `count: 0`.
+    - Added score-strip/active-player status text and phone snapshot data for pending Bad cards.
+    - Added trigger/discard flow so each pending Bad copy resolves one at a time and then goes to the `bad` discard pile.
+    - Added Good draw interception for `skip-next-good` before finite Good deck draw.
+    - Added positive coin gain interception for `block-next-coins` with no blocked-gain history/float.
+    - Added beginning-of-turn pay-or-skip choice for `next-turn-pay-or-skip`.
+    - Added monster roll modifiers for `self-monster-minus3` and `monster-sixes-to-ones` in ordinary monster gates, final monster gate, and `Сплочение`.
+    - Added individual monster/final-monster rematch flow for `monster-rematch` before reward/opening/final boss transition.
+    - Bumped card config import cache key to `20260611-0415`.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `src/cards.config.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `git diff --check -- src/game.js src/cards.config.js`
+  - Not run:
+    - Browser smoke/manual playthrough; local server binding failed in this sandbox with `EPERM` on both `0.0.0.0:5173` and `127.0.0.1:5173`.
+  - Notes:
+    - Sheet/CSV were already at canonical `count: 2` for all 9 new Bad rows; Dev 3 did not change them.
+    - Final PvP boss battle roll math was not changed.
+    - No QA requested or involved.
+
+- 2026-06-11 23:02 - Dev 2 context handback: Bad cards Wave 1 data/simple effects
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE BAD CARDS WAVE 1 2026-06-11 22:54 - Next Bad pack data and simple effects`.
+  - Completed:
+    - Added all 9 Wave 1 Bad-pack cards to Google Sheet `Cards Config` / `bad` and `cards-google-sheet.csv` with `count: 2`.
+    - Added all 9 cards to `src/cards.config.js`.
+    - Implemented playable effects for `poorest-steals-shop` and `bad-die-choice`.
+    - Fixed `createDeckCopies()` so explicit `count: 0` remains non-drawable.
+    - Bumped host/card-config cache keys to `20260611-0414`.
+  - Important temporary divergence:
+    - Sheet/CSV are canonical pack data: all 9 cards have `count: 2`.
+    - Local playable config activates only `poorest-steals-shop` and `bad-die-choice` with `count: 2`.
+    - Deferred Wave 2/3 cards are present locally with temporary `count: 0` so they cannot draw and silently no-op before their handlers exist.
+  - Deferred local `count: 0` cards:
+    - `self-monster-minus3`
+    - `skip-next-good`
+    - `next-turn-pay-or-skip`
+    - `monster-sixes-to-ones`
+    - `flip-shop-down`
+    - `block-next-coins`
+    - `monster-rematch`
+  - Files changed by Dev 2:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static local check: Wave 1 playable cards local `count: 2`; deferred cards local `count: 0`; CSV all 9 new rows have `count: 2`; no final periods in local player-facing text.
+    - Google Sheet readback: `Cards Config` / `bad!A13:N21` contains all 9 Wave 1 rows with `count: 2`.
+    - Browser smoke: `http://localhost:5173/` loaded `src/game.js?v=20260611-0414`, board present, console errors empty.
+  - Not fully run:
+    - Full manual browser playthrough of `poorest-steals-shop` and all `bad-die-choice` branches.
+  - Notes:
+    - Did not start Wave 2 pending statuses or Wave 3 face-down Shop.
+    - Did not change board placement, other decks, final battle, phone protocol, or unrelated UI.
+
+- 2026-06-11 21:25 - Dev 2 context handback: 8 new `Плохо` cards
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE BAD CARDS 2026-06-11 21:04 - Add 8 new Плохо cards`.
+  - Completed:
+    - Added 8 new cards to deck `bad`, each with `count: 2`: `joe-debt`, `back-to-red`, `small-scare`, `discard-shop`, `back-to-player`, `others-gain5`, `others-shop-offer`, `leaders-back5`.
+    - Synced `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `bad`.
+    - Kept player-facing card text without final periods.
+    - Implemented all requested card effects while preserving finite Shop deck lifecycle and owned Shop item behavior.
+    - Bumped host/card-config cache keys to `20260611-0413`.
+  - Files changed by Dev 2:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static local check: all 8 new `bad` IDs exist in config/CSV with `count: 2`, no final periods in `title`/`shortTitle`/`description`.
+    - Google Sheet readback: `Cards Config` / `bad!A5:N12` contains all 8 new rows with `count: 2`.
+    - Browser smoke: `http://localhost:5173/` loaded `src/game.js?v=20260611-0413`, board present, console errors empty.
+  - Not fully run:
+    - Full manual browser playthrough of every new card effect was not run.
+  - Notes:
+    - Did not change Good/Event/TADAM/Shop card data, board placement, deck lifecycle outside the requested Shop-offer interactions, dice math, phone protocol, or unrelated UI.
+
 - 2026-06-09 22:05 - Dev 3 context handback: final battle boss force display flow
   - Pipeline status:
     - Context note only under the current pipeline rule.

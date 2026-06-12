@@ -21,6 +21,8 @@ This folder is the shared mailbox for Codex chats working on "Очень Бол�
    - Art / UI handles visual assets, board presentation, and UI polish.
    - QA handles testing only when the user explicitly asks to involve QA.
    - GD should not directly implement cross-role plans unless the user explicitly asks GD to do the implementation personally or an urgent tiny documentation/memory edit is enough.
+   - GD plans and multi-role tasks must include explicit `Ownership`: which role/chat owns each part of the work.
+   - If a task is split into waves, every wave must have an assigned owner before it is sent to development.
 1. GD creates a clear implementation-ready task and sends it to the right executor:
    - Dev tasks go to `inbox/for-dev.md` and may also be sent directly to a Dev thread.
    - QA tasks go to `inbox/for-qa.md` only when the user explicitly asks to involve QA, for example says `привлеки QA`.
@@ -62,3 +64,11 @@ Use `prompts/read-news.md` when the user says "прочти новости".
 - If a card has several sentences, periods may stay between sentences, but the final sentence must have no trailing period.
 - Apply this to `Cards Config` player-facing fields such as `title`, `shortTitle`, and `description`, and keep Google Sheet, `src/cards.config.js`, and `cards-google-sheet.csv` aligned.
 - Internal config notes may keep normal punctuation unless they are displayed on a card.
+
+## Card Face Layout
+
+- Card faces should use the card area tightly: keep clean edge padding, but avoid large empty lower areas.
+- The top illustration should be compact, roughly the upper 40-45% of the face at most, so long text can stay readable.
+- Text should start around the middle of the card, fill the lower half, and keep a small bottom margin instead of floating near the top.
+- Split multi-sentence card descriptions into separate visual lines/paragraphs where possible.
+- Prefer larger readable text with balanced wrapping; avoid clipped text, one-letter wraps, and excessive shrinking.
