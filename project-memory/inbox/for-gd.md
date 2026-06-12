@@ -4,6 +4,257 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-06-12 18:28 - Dev 3 context handback: animated combat roll formula
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE BATTLE UI 2026-06-12 18:11 - Animated combat roll formula`.
+  - Completed:
+    - Added shared battle-only formula text in the common dice animation path.
+    - Formula appears after dice stop and is held briefly before/while the battle resolver commits the final force/result into HUD state.
+    - Formula format covers positive, negative, and zero bonuses:
+      - `Кубики: 6 + 4 = 10 · Бонусы: +3 · Итог: 13`
+      - `Кубики: 6 + 4 = 10 · Бонусы: -3 · Итог: 7`
+      - `Кубики: 6 + 4 = 10 · Итог: 10`
+    - Ordinary movement and non-battle event/random rolls keep the old uncluttered dice display.
+    - Ordinary monster/final monster fights use the existing `isEnemyBattle` path.
+    - VS/final boss player rolls now explicitly mark the shared player battle roll as battle-only for formula display.
+    - Team/shared monster battles continue through the monster battle roll path and show formula for the current roller while previous HUD results remain rendered.
+    - Phone/controller dice result now displays the same compact formula.
+    - Bumped host/controller CSS and script cache keys to `20260612-1811`.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `src/controller.js`
+    - `styles.css`
+    - `index.html`
+    - `controller.html`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check -- src/game.js src/controller.js styles.css index.html controller.html`
+    - Static/source checks: formula text is created only for `isBattleRoll`, `isEnemyBattle`, or `isFinalBattle`; ordinary movement/random event calls do not pass those battle flags.
+  - Not run:
+    - Browser smoke/manual battle scenarios; local server binding is blocked in this sandbox with `EPERM`.
+  - Notes:
+    - Dice math, bonus math, penalties, rewards, monster strength, final boss scoring, and deck lifecycle were not changed.
+    - Formula total is clamped at `0` for display, matching the existing battle force floor in battle result helpers.
+
+- 2026-06-12 17:34 - Dev 3 context handback: arbitrary Joe Auction bids
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE JOE AUCTION 2026-06-12 17:25 - Allow any bid amount`.
+  - Completed:
+    - Human Joe Auction bids now accept arbitrary whole-number amounts instead of only fixed multiples of `5`.
+    - Host auction prompt now includes a numeric bid form with integer `step=1`, min/max, validation text, and submit button.
+    - Pass remains available and resolves as bid `0`.
+    - Phone/controller now exposes an `auction-bid` direct numeric entry flow plus pass.
+    - Phone action payload now carries `amount` for custom auction bids.
+    - Legal bids are `0` for pass or any integer from `1` through the bidder's available coins.
+    - Non-integer, too-low, and unaffordable bids are rejected by shared validation.
+    - Bots still use simple rounded quick bids through a bot-only helper, capped by available coins.
+    - Bumped host CSS/JS cache keys to `20260612-1725`.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `src/controller.js`
+    - `styles.css`
+    - `index.html`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check -- src/game.js src/controller.js styles.css index.html project-memory/updates.md project-memory/inbox/for-gd.md project-memory/inbox/for-dev.md`
+    - Static/source checks: no human modulo-5-only bid path remains; legal `7`/`13` bid strings normalize successfully; bids above player coins are rejected; pass resolves to `0`.
+  - Not run:
+    - Browser smoke/manual Joe Auction bid flow; local server binding is blocked in this sandbox with `EPERM`.
+  - Notes:
+    - Winner logic, all-pass behavior, tie dice roll-off, winner payment, Shop deck lifecycle, and winner receiving all 3 Shop cards were not changed.
+    - Losing/pass players still pay nothing.
+
+- 2026-06-12 17:24 - Dev 1 context handback: open portal choice label
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE PORTAL LABEL 2026-06-12 17:22 - Open portal choice says Портал N`.
+  - Completed:
+    - Updated `openPortalChoiceLabel(...)` so opened portal destination options display `Портал N`.
+    - Covers both lowercase `монстр N` and uppercase `Монстр N` source labels.
+    - Existing labels that already say `Портал N` remain unchanged.
+    - Destination cell badges/options and portal movement mechanics were not changed.
+    - Bumped host script cache key to `20260612-1722`.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+    - Static check: `монстр 2 => Портал 2`, `Монстр 2 => Портал 2`, existing `Портал 3` stays `Портал 3`.
+    - Browser smoke on `http://localhost:5173`: loaded `game.js?v=20260612-1722`, board/roll button present, no console errors.
+  - Not run:
+    - Full manual open-portal prompt/movement scenario; no deterministic portal-state hook was used.
+
+- 2026-06-12 17:21 - Dev 1 context handback: aggressive bot extra dice in final monster fight
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE BOT STRATEGY 2026-06-12 17:18 - Spend extra-die Shop cards aggressively in final monster fight`.
+  - Completed:
+    - Added a final-monster-specific branch to bot `optional-extra-die` pre-roll strategy.
+    - If a bot is on a closed final monster fight and has an affordable usable extra-die Shop card, it uses the card unless the base roll is already guaranteed to beat the final monster.
+    - Face-down/disabled Shop cards remain excluded because the flow still uses `optionalExtraDieCards(...)` -> `activeShopItems(...)`.
+    - Reported case is covered: with `18` coins and three usable cards costing `5`, the bot answers yes to each card while affordable, spends `15`, and rolls `3` extra dice.
+    - Ordinary non-final monster and movement extra-die decisions still use the previous scoring formula.
+    - Bumped host script cache key to `20260612-1718`.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+    - Static/source checks: final monster branch is limited to `optional-extra-die` + `door.isFinalBoss`; ordinary path remains below it; reported state uses all three affordable cards.
+    - Browser smoke on `http://localhost:5173`: loaded `game.js?v=20260612-1718`, board/roll button present, no console errors.
+  - Not run:
+    - Full forced final-monster manual scenario; no deterministic dev hook was used.
+
+- 2026-06-12 17:11 - Dev 3 context handback: tiered monster defeat rewards
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE MONSTER LOSS REWARDS 2026-06-12 17:03 - Tiered defeat rewards by monster`.
+  - Completed:
+    - Added tiered defeat reward helpers for individual board monster losses:
+      - tier `1`: free `Лавка Джо`;
+      - tier `2`: free `Лавка Джо` + `5` coins;
+      - tier `3`: free `Лавка Джо` + `10` coins;
+      - tier `4`: free `Лавка Джо` + `20` coins.
+    - Tier lookup uses board door base `damage` ordering, with route order as tie-break, so `Сильные` modified strength does not affect reward tier.
+    - Last/final board monster with base `24` counts as tier `4`.
+    - Defeat coins use normal reward `addCoins(...)`, so Joe Shop receive-coin bonus remains active for this bank/reward gain.
+    - Free Shop reward still uses existing `drawFreeShopCard(...)` finite Shop deck lifecycle.
+    - Defeat reward is granted only after `resolveSecondChance(...)` does not retry the fight.
+    - Battle HUD outcome/log/prompt now show the tiered defeat reward.
+    - Bumped host script cache key to `20260612-1703`.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check -- src/game.js index.html project-memory/updates.md project-memory/inbox/for-gd.md project-memory/inbox/for-dev.md`
+    - Static/source checks: reward map is tier `1/2/3/4`; tier uses base door `damage`; free Shop reward uses existing helper; `resolveSecondChance(...)` runs before reward grant.
+  - Not run:
+    - Browser smoke/manual tier defeat checks; local server binding is blocked in this sandbox with `EPERM`.
+  - Notes:
+    - `monster-rematch` victory retry path was not changed.
+    - Team/shared battle losses (`Сплочение`, `Бой за старт`) and final boss PvP rewards were not changed.
+
+- 2026-06-12 16:44 - Dev 1 context handback: starting coins dropdown
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE SETTINGS 2026-06-12 16:42 - Starting coins dropdown`.
+  - Completed:
+    - Added settings dropdown `Монет на старте` using the existing `.settings-select` layout.
+    - Options are `10` and `20`; default selected value is `10`, preserving current behavior.
+    - Added `selectedStartingCoins()` with safe fallback to `10`; only explicit `20` starts players with 20 coins.
+    - `newGame()` now gives every player, including bots, the selected starting coin amount.
+    - `collectGameSettings()` now records `startingCoins`, so history/settings snapshots include the selected start amount through the existing snapshot path.
+    - Bumped host script cache key to `20260612-1642`.
+  - Files changed by Dev 1:
+    - `index.html`
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+    - Static/source checks: UI label/options exist; player initialization uses `startingCoins`; fallback/default is `10`; `startingCoins` is included in collected settings.
+    - Browser smoke on `http://localhost:5173`: `10` + `Новая игра` showed players at 10 coins; `20` + `Новая игра` showed players at 20 coins; console had no errors.
+  - Notes:
+    - Scope stayed on settings/new-game initialization.
+    - Economy transfer bonus suppression logic from Dev 3 was not touched.
+
+- 2026-06-12 16:52 - Dev 3 context handback: no receive-coin bonus on player transfers
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE ECONOMY FIX 2026-06-12 16:39 - No receive-coin bonus on player-to-player transfers`.
+  - Completed:
+    - Added `addCoins(player, amount, { skipReceiveBonus })`.
+    - Default `addCoins(...)` behavior is unchanged, so normal bank/reward gains still trigger the Joe Shop receive-coin bonus.
+    - `stealCoins(...)` now credits the receiver with `skipReceiveBonus: true`.
+    - This covers shared transfer paths for chosen steal, chosen give, `Равновесие`, `Сбор монет`, TADAM `jump-steal`, and TADAM `land-steal`.
+    - Buying a Shop card from another player now pays the owner with `skipReceiveBonus: true`.
+    - Transfer logs still use exact transfer amounts (`taken`, `given`, or `cost`) and do not include the Joe bonus.
+    - Bumped host script cache key to `20260612-0427`.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check -- src/game.js index.html project-memory/updates.md project-memory/inbox/for-gd.md project-memory/inbox/for-dev.md`
+    - Static/source checks: transfer paths suppress the receive-coin bonus; non-transfer reward paths still allow it; transfer logs report actual amounts.
+  - Not run:
+    - Browser smoke/manual transfer/reward check; local server binding is still blocked in this sandbox with `EPERM`.
+  - Notes:
+    - VS pot and Joe Auction bank payments were not changed; they remain bank/pot flows, not direct player-to-player transfer bonus cases.
+
+- 2026-06-12 16:43 - Dev 3 context handback: strong monsters affect last monster
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE SETTINGS FIX 2026-06-12 16:37 - Strong monsters affect last monster`.
+  - Completed:
+    - Removed the `isFinalBoss` exclusion from `ordinaryMonsterStrengthBonus(...)`.
+    - In `Сильные` mode, the last/final board monster door now gets the same `+2` strength modifier as other non-first monsters.
+    - Expected visible/fight value is now base `24` -> `26`.
+    - In `Стандартные` mode, that monster remains `24`.
+    - The first ordinary monster still stays force `6` in `Сильные` mode.
+    - Bumped host script cache key to `20260612-0426`.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check -- src/game.js index.html project-memory/updates.md project-memory/inbox/for-gd.md project-memory/inbox/for-dev.md`
+    - Static/source checks: no `isFinalBoss` exclusion remains in `ordinaryMonsterStrengthBonus(...)`; final board monster goes through `effectiveMonsterStrength(...)`; standard mode still has no strong modifier.
+  - Not run:
+    - Browser smoke/manual last-monster check; local server binding is still blocked in this sandbox with `EPERM`.
+  - Notes:
+    - Final boss PvP/opponent bonus formula was not changed.
+    - Existing labels/tooltips/HUD/logs/bot scoring use `effectiveMonsterStrength(...)`, so the corrected final board monster value should be consistent across display, fight calculation, and bot risk.
+
 - 2026-06-12 04:47 - Dev 3 context handback: manual shared/team battle rolls
   - Pipeline status:
     - Context note only under the current pipeline rule.
@@ -52,7 +303,7 @@ For game-design tasks related to "Очень Большая Бродилка" in
     - `Стандартные` keeps existing monster strength behavior.
     - `Сильные` keeps the first ordinary monster at force `6` and adds `+2` to later ordinary monster strength via `effectiveMonsterStrength(...)`.
     - Ordinary monster labels, battle requirements/HUD/logs, and bot monster risk scoring already read the shared `effectiveMonsterStrength(...)` path.
-    - Final monster doors are explicitly excluded from the +2 modifier, so final boss transition monster and final PvP boss formulas are unchanged.
+    - Follow-up rework at 2026-06-12 16:43 changed the final board monster door to receive the +2 modifier; final PvP boss formulas remain unchanged.
     - Old `passThroughMode` now safely falls back to default behavior; no localStorage settings persistence for it was found beyond saved history snapshots.
     - Bumped host script cache key to `20260612-0424`.
   - Files changed by Dev 3:

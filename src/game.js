@@ -57,6 +57,7 @@ const ui = {
   settingsPanel: document.querySelector("#settingsPanel"),
   settingsToggle: document.querySelector("#settingsToggle"),
   showWalkPath: document.querySelector("#showWalkPath"),
+  startingCoins: document.querySelector("#startingCoins"),
   turnActions: document.querySelector("#turnActions"),
   uiStyle: document.querySelector("#uiStyle"),
   usePhoneControllers: document.querySelector("#usePhoneControllers"),
@@ -530,6 +531,7 @@ function newGame() {
   applyBoardConfig(ui.boardSelect?.value || "field2");
   const playerCount = Number(ui.playerCount.value);
   const botCount = selectedBotCount(playerCount);
+  const startingCoins = selectedStartingCoins();
   const doors = {};
   for (const door of activeBoardConfig.doors) {
     doors[door.id] = { ...door, openedBy: [] };
@@ -567,7 +569,7 @@ function newGame() {
       ...hero,
       battleBonus: 0,
       bot: index >= playerCount - botCount,
-      coins: 10,
+      coins: startingCoins,
       diceBonus: 0,
       id: index,
       items: [],
@@ -698,6 +700,7 @@ function collectGameSettings() {
     monsterStrengthMode: monsterStrengthMode(),
     playerCount,
     showWalkPath: Boolean(ui.showWalkPath?.checked),
+    startingCoins: selectedStartingCoins(),
     uiStyle: selectedUiStyle(),
   };
 }
@@ -979,6 +982,11 @@ function selectedBotCount(playerCount = Number(ui.playerCount?.value) || 2) {
   return Math.max(0, Math.min(playerCount, count));
 }
 
+function selectedStartingCoins() {
+  const value = Number(ui.startingCoins?.value);
+  return value === 20 ? 20 : 10;
+}
+
 function syncBotCountOptions() {
   if (!ui.botCount) return;
 
@@ -1078,7 +1086,7 @@ function monsterStrengthMode() {
 }
 
 function ordinaryMonsterStrengthBonus(door) {
-  return !door?.isFinalBoss && !isFirstOrdinaryMonsterDoor(door) && monsterStrengthMode() === "strong" ? 2 : 0;
+  return door && !isFirstOrdinaryMonsterDoor(door) && monsterStrengthMode() === "strong" ? 2 : 0;
 }
 
 function isFirstOrdinaryMonsterDoor(door) {
@@ -1104,6 +1112,25 @@ function monsterStrengthText(door) {
   if (rage) parts.push(`ярость ${rage}`);
   if (!parts.length) return String(effective);
   return `${effective} (база ${door.damage} + ${parts.join(" + ")})`;
+}
+
+function monsterDefeatTier(door) {
+  if (!door) return 1;
+  const doors = state?.doors ? Object.values(state.doors) : (boardDoorConfigs[activeBoardConfig?.id] || doorConfigs);
+  const orderedDoors = doors
+    .filter((item) => item && Number.isFinite(Number(item.damage)))
+    .sort((a, b) => (Number(a.damage) || 0) - (Number(b.damage) || 0) || (routeIndex.get(a.enemyCell) ?? 0) - (routeIndex.get(b.enemyCell) ?? 0));
+  const index = orderedDoors.findIndex((item) => item.id === door.id);
+  return clamp(index + 1 || 1, 1, 4);
+}
+
+function monsterDefeatCoinReward(door) {
+  return [0, 0, 5, 10, 20][monsterDefeatTier(door)] || 0;
+}
+
+function monsterDefeatRewardText(door) {
+  const coins = monsterDefeatCoinReward(door);
+  return coins > 0 ? `Лавка Джо + ${coinAmount(coins)}` : "Лавка Джо";
 }
 
 function chanceThresholdScore(before, after, scale = 1) {
@@ -1193,6 +1220,12 @@ function chooseBotPreRoll(player, card) {
   const nextDice = currentDice + effect.dice;
   const coinsAfter = player.coins - effect.cost;
   const door = cellEvents[player.position] === "enemy" ? doorByEnemyCell(player.position) : null;
+
+  if (effect.type === "optional-extra-die" && door?.isFinalBoss && !isDoorOpenForPlayer(door, player)) {
+    const target = effectiveMonsterStrength(door);
+    const guaranteedWithoutExtra = currentDice + playerMonsterBattleBonus(player) >= target;
+    return !guaranteedWithoutExtra;
+  }
 
   let payScore = -6;
   let declineScore = 0;
@@ -1547,7 +1580,7 @@ function chooseBotAuctionBid(player, offer = []) {
   const leader = leadingPlayer();
   const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
   const gate = monsterGatePressure(player);
-  const affordableBids = auctionBidOptions(player);
+  const affordableBids = botAuctionBidOptions(player);
   const options = affordableBids.map((bid) => {
     if (bid === 0) {
       const passScore = player.coins < 5
@@ -2320,6 +2353,7 @@ function phoneDiceRollSnapshot() {
   return {
     bonus: roll.bonus || 0,
     count: roll.count || (Array.isArray(roll.rolls) ? roll.rolls.length : 0),
+    formula: roll.formula || "",
     label: roll.label || "",
     playerId: roll.playerId ?? null,
     rolling: Boolean(roll.rolling),
@@ -2329,13 +2363,14 @@ function phoneDiceRollSnapshot() {
   };
 }
 
-function setPhoneDiceRoll({ bonus = 0, label = "", player = null, rolling = false, rolls = [], total = null } = {}) {
+function setPhoneDiceRoll({ bonus = 0, formula = "", label = "", player = null, rolling = false, rolls = [], total = null } = {}) {
   if (!state) return;
   window.clearTimeout(phoneDiceRollClearTimer);
   const visibleRolls = rolling ? [] : rolls;
   state.phoneDiceRoll = {
     bonus,
     count: rolls.length || 1,
+    formula,
     label,
     playerId: player?.id ?? currentPlayer()?.id ?? null,
     rolling,
@@ -2410,6 +2445,32 @@ function phoneActionsForPlayer(player) {
   }
 
   if (state.pendingCardChoice?.playerId === player.id && !state.pendingCardChoice.previewField) {
+    if (state.pendingCardChoice.kind === "joe-auction-bid") {
+      const limits = auctionBidLimits(player);
+      return [
+        {
+          contextKicker: plainText(state.pendingCardChoice.kicker || ""),
+          contextSummary: plainText(state.pendingCardChoice.summary || ""),
+          contextTitle: plainText(state.pendingCardChoice.title || ""),
+          id: "pass",
+          kind: "auction-bid",
+          label: "Пас",
+          note: "0 монет",
+        },
+        {
+          contextKicker: plainText(state.pendingCardChoice.kicker || ""),
+          contextSummary: plainText(state.pendingCardChoice.summary || ""),
+          contextTitle: plainText(state.pendingCardChoice.title || ""),
+          disabled: limits.max < limits.min,
+          id: "custom",
+          kind: "auction-bid",
+          label: "Ставка",
+          max: limits.max,
+          min: limits.min,
+          note: limits.max >= limits.min ? `${limits.min}-${limits.max} монет` : "нет монет",
+        },
+      ];
+    }
     return state.pendingCardChoice.choices.map((choice) => ({
       contextKicker: plainText(state.pendingCardChoice.kicker || ""),
       contextSummary: plainText(state.pendingCardChoice.summary || ""),
@@ -2750,6 +2811,8 @@ function handlePhoneControllerAction(message) {
     resolveDiceControlIntent(action.id === "change");
   } else if (action.kind === "shop") {
     resolveShopChoice(action.id === "decline" ? null : action.id);
+  } else if (action.kind === "auction-bid") {
+    resolveAuctionBidPhoneAction(player, action);
   } else if (action.kind === "card-choice") {
     resolveCardChoice(action.id);
   } else if (action.kind === "board-choice") {
@@ -2757,6 +2820,21 @@ function handlePhoneControllerAction(message) {
   } else if (action.kind === "prompt-choice") {
     actionPromptChoiceResolver?.(action.id);
   }
+}
+
+function resolveAuctionBidPhoneAction(player, action) {
+  if (state.pendingCardChoice?.kind !== "joe-auction-bid" || state.pendingCardChoice.playerId !== player.id) {
+    publishPhoneSnapshot({ force: true });
+    return;
+  }
+  const choice = action.id === "pass" ? "pass" : action.amount;
+  const bid = normalizeAuctionBidChoice(player, choice);
+  if (bid === null) {
+    log(`Телефон ${playerName(player)} отправил недоступную ставку аукциона. Она отклонена.`);
+    publishPhoneSnapshot({ force: true });
+    return;
+  }
+  resolveCardChoice(String(bid));
 }
 
 function stopPhoneRoomEvents() {
@@ -3364,6 +3442,9 @@ function renderChoicePanel() {
         onClick: () => resolveCardChoice(choice.id),
       });
     }
+    if (pending.kind === "joe-auction-bid") {
+      appendAuctionBidInput(buttons, pending);
+    }
     if (cardChoiceCanPreviewField(pending)) {
       appendChoiceButton(buttons, {
         className: "field-map-preview",
@@ -3726,6 +3807,50 @@ function renderChoiceDialog({ bodyHtml = "", buttonsClass = "", kind, kicker, ti
   return buttons;
 }
 
+function appendAuctionBidInput(buttons, pending) {
+  const player = state.players.find((item) => item.id === pending.playerId);
+  const limits = auctionBidLimits(player);
+  const wrapper = document.createElement("form");
+  wrapper.className = "auction-bid-input";
+
+  const label = document.createElement("label");
+  label.textContent = "Своя ставка";
+  const input = document.createElement("input");
+  input.inputMode = "numeric";
+  input.max = String(limits.max);
+  input.min = String(limits.min);
+  input.placeholder = limits.max >= limits.min ? `${limits.min}-${limits.max}` : "нет монет";
+  input.step = "1";
+  input.type = "number";
+  input.value = limits.max >= limits.min ? String(limits.min) : "";
+  input.disabled = limits.max < limits.min;
+  label.append(input);
+
+  const message = document.createElement("span");
+  message.className = "auction-bid-validation";
+  message.textContent = limits.max >= limits.min
+    ? `Целое число от ${limits.min} до ${limits.max}`
+    : "Недостаточно монет для ставки";
+
+  const submit = document.createElement("button");
+  submit.type = "submit";
+  submit.disabled = input.disabled;
+  submit.textContent = "Поставить";
+
+  wrapper.append(label, submit, message);
+  wrapper.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const bid = normalizeAuctionBidChoice(pending.playerId, input.value);
+    if (bid === null || bid === 0) {
+      message.textContent = auctionBidValidationText(player, input.value);
+      input.focus();
+      return;
+    }
+    resolveCardChoice(String(bid));
+  });
+  buttons.append(wrapper);
+}
+
 function appendChoiceButton(buttons, { className = "", disabled = false, label, note, noteClass = "", onClick }) {
   const button = document.createElement("button");
   button.className = `choice-button ${className}`.trim();
@@ -3807,6 +3932,13 @@ function resolveDiceControlIntent(wantsChange) {
 
 function resolveCardChoice(choiceId) {
   if (!state.cardChoiceResolver) return;
+  if (state.pendingCardChoice?.kind === "joe-auction-bid") {
+    const bid = normalizeAuctionBidChoice(state.pendingCardChoice.playerId, choiceId);
+    if (bid === null) return;
+    state.cardChoiceResolver(bid);
+    render();
+    return;
+  }
   const choice = state.pendingCardChoice?.choices.find((item) => String(item.id) === String(choiceId));
   if (choice?.disabled) return;
   state.cardChoiceResolver(choiceId);
@@ -4216,11 +4348,13 @@ async function resolveEnemyBattle(player) {
     return resolveEnemyBattle(player);
   }
 
+  const defeatCoins = monsterDefeatCoinReward(door);
+  const defeatReward = monsterDefeatRewardText(door);
   state.enemyBattleProgress = {
     bonus,
     enemyForce: requiredStrength,
     isFinalBoss: Boolean(door.isFinalBoss),
-    outcome: `Враг побеждает. ${player.name} возвращается на старт и получает Лавку Джо`,
+    outcome: `Враг побеждает. ${player.name} возвращается на старт. Награда за поражение: ${defeatReward}`,
     playerForce: damage,
     playerId: player.id,
     rolled,
@@ -4231,13 +4365,17 @@ async function resolveEnemyBattle(player) {
   render();
   pulseTile(player.position);
   log(
-    `${playerName(player)} не побеждает врага: ${formatRoll(rolls)}${bonusText}. Игрок возвращается на старт и получает карту <strong>Лавка Джо</strong>.`,
+    `${playerName(player)} не побеждает врага: ${formatRoll(rolls)}${bonusText}. Игрок возвращается на старт. Награда за поражение: <strong>${defeatReward}</strong>.`,
   );
   await showActionPrompt(
-    `${playerName(player)} не побеждает врага: ${formatRoll(rolls)}${bonusText}. Возврат на <strong>старт</strong>. Получает карту <strong>Лавка Джо</strong>.`,
+    `${playerName(player)} не побеждает врага: ${formatRoll(rolls)}${bonusText}. Возврат на <strong>старт</strong>. Награда за поражение: <strong>${defeatReward}</strong>.`,
     { autoFor: player },
   );
   clearEnemyBattleHud();
+  if (defeatCoins > 0) {
+    addCoins(player, defeatCoins);
+    render();
+  }
   await drawFreeShopCard(player, "получает карту Лавка Джо за возвращение на старт");
   return { isFinalBoss: Boolean(door.isFinalBoss), resolved: true, winner: "enemy" };
 }
@@ -5039,7 +5177,7 @@ async function rollPlayerBattlePower(player, animate, { label = "", isFinalBattl
   if (animate) {
     state.dice = null;
     render();
-    await animateDice(rolls, { bonus, label, player, isFinalBattle });
+    await animateDice(rolls, { bonus, label, player, isBattleRoll: true, isFinalBattle });
   }
   const total = Math.max(0, rolled + bonus);
   state.dice = total;
@@ -6800,7 +6938,7 @@ async function resolveBuyShopCardFromPlayer(player, cost) {
 
   const [card] = target.items.splice(cardIndex, 1);
   addCoins(player, -cost);
-  addCoins(target, cost);
+  addCoins(target, cost, { skipReceiveBonus: true });
   player.items.push(card);
   recordShopCards(player);
   recordEffectReceived(target, player);
@@ -7715,7 +7853,7 @@ function auctionBidderOrder(activePlayer) {
 }
 
 async function chooseAuctionBid(player, offer) {
-  const choices = auctionBidOptions(player).map((bid) => ({
+  const choices = auctionQuickBidOptions(player).map((bid) => ({
     id: bid,
     label: formatAuctionBid(bid),
     note: bid === 0 ? "без оплаты" : `${coinAmount(bid)} если победишь`,
@@ -7731,7 +7869,7 @@ async function chooseAuctionBid(player, offer) {
     summary: `${playerChoiceBadge(player)} делает закрытую ставку. Монеты сейчас: ${coinAmount(player.coins)}. Проигравшие и пасующие не платят.`,
     title: "Сделай ставку",
   });
-  return Number(choice) || 0;
+  return normalizeAuctionBidChoice(player.id, choice) ?? 0;
 }
 
 async function resolveJoeAuctionTie(players, bid) {
@@ -7790,8 +7928,50 @@ async function resolveJoeAuctionTie(players, bid) {
   return tied;
 }
 
-function auctionBidOptions(player) {
-  return [0, 5, 10, 15, 20].filter((bid) => bid === 0 || player.coins >= bid);
+function auctionBidLimits(player) {
+  const coins = Math.max(0, Math.floor(Number(player?.coins) || 0));
+  return {
+    max: coins,
+    min: coins > 0 ? 1 : 0,
+  };
+}
+
+function isLegalAuctionBid(player, bid) {
+  const limits = auctionBidLimits(player);
+  return Number.isInteger(bid) && (bid === 0 || (bid >= limits.min && bid <= limits.max));
+}
+
+function normalizeAuctionBidChoice(playerOrId, choiceId) {
+  const player = typeof playerOrId === "object"
+    ? playerOrId
+    : state.players.find((item) => item.id === Number(playerOrId));
+  if (!player) return null;
+  if (choiceId === "pass" || choiceId === "decline" || choiceId === 0 || choiceId === "0") return 0;
+  const text = String(choiceId ?? "").trim();
+  if (!/^\d+$/.test(text)) return null;
+  const bid = Number(text);
+  return isLegalAuctionBid(player, bid) ? bid : null;
+}
+
+function auctionBidValidationText(player, value) {
+  const limits = auctionBidLimits(player);
+  const text = String(value ?? "").trim();
+  if (!/^\d+$/.test(text)) return "Ставка должна быть целым числом";
+  const bid = Number(text);
+  if (bid < limits.min) return `Минимальная ставка: ${limits.min}`;
+  if (bid > limits.max) return `У игрока только ${limits.max} монет`;
+  return "";
+}
+
+function auctionQuickBidOptions(player) {
+  const limits = auctionBidLimits(player);
+  const quickBids = [0, 5, 10, 15, 20, limits.max]
+    .filter((bid) => bid === 0 || isLegalAuctionBid(player, bid));
+  return [...new Set(quickBids)];
+}
+
+function botAuctionBidOptions(player) {
+  return auctionQuickBidOptions(player);
 }
 
 function formatAuctionBid(bid) {
@@ -8065,8 +8245,8 @@ async function movePlayerSteps(player, steps, { resolveBackwardLanding = false }
   }
 }
 
-function addCoins(player, amount) {
-  const bonus = amount > 0 ? playerCoinBonus(player) : 0;
+function addCoins(player, amount, { skipReceiveBonus = false } = {}) {
+  const bonus = amount > 0 && !skipReceiveBonus ? playerCoinBonus(player) : 0;
   const total = amount + bonus;
   if (total > 0 && consumePendingBadCard(player, "block-next-coins")) {
     log(`${playerName(player)} сбрасывает <strong>Блок монет</strong>: получение <strong>${coinAmount(total)}</strong> отменено.`, {
@@ -8104,7 +8284,7 @@ function stealCoins(fromPlayer, toPlayer, amount) {
     recordCoinDelta(fromPlayer, -taken);
     showCoinFloat(fromPlayer, -taken);
   }
-  addCoins(toPlayer, taken);
+  addCoins(toPlayer, taken, { skipReceiveBonus: true });
   return taken;
 }
 
@@ -8505,8 +8685,8 @@ function choosePortalDestination(player, currentDoor, remaining) {
 
 function openPortalChoiceLabel(door) {
   const label = door?.label || "Портал";
-  const match = String(label).match(/^Монстр\s+(.+)$/u);
-  return match ? `Портал ${match[1]}` : label.replace(/^Монстр/u, "Портал");
+  const match = String(label).match(/^монстр\s+(.+)$/iu);
+  return match ? `Портал ${match[1]}` : label.replace(/^монстр/iu, "Портал");
 }
 
 function portalPreviewEndCells() {
@@ -9615,14 +9795,19 @@ function syncRollEventPromptViewport() {
   }
 }
 
-async function animateDice(rollsOrResult, { bonus = 0, label = "", player = null, isEnemyBattle = false, isFinalBattle = false } = {}) {
+async function animateDice(
+  rollsOrResult,
+  { bonus = 0, label = "", player = null, isBattleRoll = false, isEnemyBattle = false, isFinalBattle = false } = {}
+) {
   const resetToken = transientUiResetToken;
   const rolls = Array.isArray(rollsOrResult) ? rollsOrResult : [rollsOrResult];
   const result = rolls.reduce((sum, value) => sum + value, 0);
-  const caption = diceResultCaption(rolls, bonus);
+  const showBattleFormula = Boolean(isBattleRoll || isEnemyBattle || isFinalBattle);
+  const formula = showBattleFormula ? battleRollFormulaText(rolls, bonus) : "";
+  const caption = showBattleFormula ? "" : diceResultCaption(rolls, bonus);
   const playerLabel = dicePlayerLabel(player, label);
-  setPhoneDiceRoll({ bonus, label, player, rolling: true, rolls });
-  const throwPromise = animateDiceOnBoard(rolls, { caption, playerLabel, isEnemyBattle, isFinalBattle });
+  setPhoneDiceRoll({ bonus, formula, label, player, rolling: true, rolls });
+  const throwPromise = animateDiceOnBoard(rolls, { caption, formula, playerLabel, isEnemyBattle, isFinalBattle });
   ui.diceValue.classList.add("rolling");
   ui.diceValue.textContent = "-";
   const startedAt = performance.now();
@@ -9640,11 +9825,11 @@ async function animateDice(rollsOrResult, { bonus = 0, label = "", player = null
   }
   ui.diceValue.textContent = result;
   ui.diceValue.classList.remove("rolling");
-  setPhoneDiceRoll({ bonus, label, player, rolling: false, rolls, total: result + bonus });
+  setPhoneDiceRoll({ bonus, formula, label, player, rolling: false, rolls, total: result + bonus });
   await throwPromise;
 }
 
-async function animateDiceOnBoard(rolls, { caption = "", playerLabel = null, isEnemyBattle = false, isFinalBattle = false } = {}) {
+async function animateDiceOnBoard(rolls, { caption = "", formula = "", playerLabel = null, isEnemyBattle = false, isFinalBattle = false } = {}) {
   if (!boardEl || !rolls.length) return;
 
   boardEl.querySelectorAll(".dice-throw-layer").forEach((layer) => layer.remove());
@@ -9706,9 +9891,17 @@ async function animateDiceOnBoard(rolls, { caption = "", playerLabel = null, isE
     captionEl.innerHTML = caption;
     layer.append(captionEl);
   }
+  let formulaEl = null;
+  if (formula) {
+    formulaEl = document.createElement("span");
+    formulaEl.className = "dice-roll-formula";
+    formulaEl.textContent = formula;
+    layer.append(formulaEl);
+  }
 
   boardEl.append(layer);
   await sleep(960);
+  formulaEl?.classList.add("is-visible");
   await sleep(813);
   layer.classList.add("leaving");
   await sleep(280);
@@ -9729,6 +9922,17 @@ function diceResultCaption(rolls, bonus = 0) {
   if (!bonus) return "";
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   return `${rolls.join(" + ")} ${bonus > 0 ? "+" : "-"} ${Math.abs(bonus)} бонус = <strong>${rolled + bonus}</strong>`;
+}
+
+function battleRollFormulaText(rolls, bonus = 0) {
+  const rolled = rolls.reduce((sum, value) => sum + value, 0);
+  const normalizedBonus = Number(bonus) || 0;
+  const total = Math.max(0, rolled + normalizedBonus);
+  const diceText = rolls.join(" + ");
+  const bonusText = normalizedBonus
+    ? ` · Бонусы: ${normalizedBonus > 0 ? "+" : ""}${normalizedBonus}`
+    : "";
+  return `Кубики: ${diceText} = ${rolled}${bonusText} · Итог: ${total}`;
 }
 
 function rotationDegrees(value) {

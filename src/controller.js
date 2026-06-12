@@ -585,6 +585,7 @@ function diceFaceDots(value) {
 }
 
 function diceRollResultText(roll) {
+  if (!roll.rolling && roll.formula) return roll.formula;
   if (!Array.isArray(roll.rolls) || !roll.rolls.length) return "Бросок завершен.";
   const rolled = roll.rolls.reduce((sum, value) => sum + Number(value || 0), 0);
   const bonus = Number(roll.bonus || 0);
@@ -642,6 +643,12 @@ function renderActions(actions, { diceRoll = null, shakeAction = null } = {}) {
     return;
   }
 
+  const auctionBidAction = actions.find(isAuctionBidCustomAction);
+  if (auctionBidAction) {
+    renderControllerAuctionBid(actions, auctionBidAction);
+    return;
+  }
+
   const hasSinglePrimaryAction = actions.length === 1 && isFullControllerPrimaryAction(actions[0]);
   for (const action of actions) {
     const button = document.createElement("button");
@@ -670,6 +677,11 @@ function renderBigButtonAction(player, activePlayer, actions, shakeAction, diceR
   ui.actions.innerHTML = "";
   if (diceRoll) {
     ui.actions.append(createPhoneDiceRollStage(diceRoll, { big: true }));
+    return;
+  }
+  const auctionBidAction = actions.find(isAuctionBidCustomAction);
+  if (auctionBidAction) {
+    renderControllerAuctionBid(actions, auctionBidAction);
     return;
   }
   const model = bigButtonActionModel(actions);
@@ -710,6 +722,56 @@ function renderBigButtonAction(player, activePlayer, actions, shakeAction, diceR
   }
 
   ui.actions.append(stage);
+}
+
+function renderControllerAuctionBid(actions, bidAction) {
+  const passAction = actions.find((action) => actionKind(action) === "auction-bid" && String(action.id) === "pass");
+  const wrapper = document.createElement("form");
+  wrapper.className = "controller-auction-bid-stage";
+
+  const context = bigChoiceContext(actions);
+  const min = Math.max(1, Number(bidAction.min) || 1);
+  const max = Math.max(0, Number(bidAction.max) || 0);
+  wrapper.innerHTML = `
+    <div class="controller-detail-copy">
+      ${context.kicker ? `<span>${escapeHtml(context.kicker)}</span>` : ""}
+      <b>${escapeHtml(context.title || "Аукцион Джо")}</b>
+      ${context.summary ? `<small>${escapeHtml(context.summary)}</small>` : ""}
+    </div>
+    <label class="controller-auction-bid-input">
+      <span>Ставка</span>
+      <input type="number" inputmode="numeric" min="${escapeAttribute(min)}" max="${escapeAttribute(max)}" step="1" ${max < min ? "disabled" : ""} value="${max >= min ? escapeAttribute(min) : ""}" placeholder="${max >= min ? `${min}-${max}` : "нет монет"}">
+    </label>
+    <small class="controller-auction-bid-hint">${max >= min ? `Целое число от ${min} до ${max}` : "Недостаточно монет для ставки"}</small>
+    <button class="controller-action is-full-primary" type="submit" ${max < min ? "disabled" : ""}>
+      <b>Поставить</b>
+      <small>${escapeHtml(bidAction.note || "")}</small>
+    </button>
+  `;
+  const input = wrapper.querySelector("input");
+  const hint = wrapper.querySelector(".controller-auction-bid-hint");
+  wrapper.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const amount = Number(input?.value);
+    if (!Number.isInteger(amount) || amount < min) {
+      if (hint) hint.textContent = `Минимальная ставка: ${min}`;
+      input?.focus();
+      return;
+    }
+    if (amount > max) {
+      if (hint) hint.textContent = `У игрока только ${max} монет`;
+      input?.focus();
+      return;
+    }
+    sendControllerAction({ ...bidAction, amount }, null);
+  });
+
+  if (passAction) wrapper.append(createBigCancelButton(passAction, null));
+  ui.actions.append(wrapper);
+}
+
+function isAuctionBidCustomAction(action) {
+  return actionKind(action) === "auction-bid" && String(action.id) === "custom";
 }
 
 function renderBigSplitChoice(player, model) {
@@ -1052,7 +1114,9 @@ function shakeHintText({ canShake, permissionNeeded, permissionDenied, secureCon
 }
 
 function actionPayload(action) {
-  return { id: action.id, kind: actionKind(action) || "action" };
+  const payload = { id: action.id, kind: actionKind(action) || "action" };
+  if (action.amount !== undefined) payload.amount = action.amount;
+  return payload;
 }
 
 function actionKind(action) {

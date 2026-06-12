@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Очень Большая Бродилка — веб-прототип</title>
-    <link rel="stylesheet" href="./styles.css?v=20260612-0425" />
+    <link rel="stylesheet" href="./styles.css?v=20260612-1811" />
   </head>
   <body data-ui-style="classic">
     <main class="app-shell">
@@ -111,6 +111,13 @@
                 </select>
               </label>
               <label class="settings-select">
+                <span>Монет на старте</span>
+                <select id="startingCoins">
+                  <option value="10" selected>10</option>
+                  <option value="20">20</option>
+                </select>
+              </label>
+              <label class="settings-select">
                 <span>Скорость ботов</span>
                 <select id="botSpeed">
                   <option value="standard" selected>Стандартно</option>
@@ -195,6 +202,6 @@
 
     </main>
 
-    <script type="module" src="./src/game.js?v=20260612-0425"></script>
+    <script type="module" src="./src/game.js?v=20260612-1811"></script>
   </body>
 </html>

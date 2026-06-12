@@ -20,6 +20,516 @@ Open questions:
 - ...
 ```
 
+## 2026-06-12 18:33 - Art/UI
+
+Changed:
+- Adjusted all card face art to better match the user reference: icons are slightly larger and placed a bit lower than the previous compact pass.
+- Preserved the clean parchment face without the strange inner backing/panel.
+- Bumped card-face asset cache keys to `20260612-1800`; the stylesheet itself is already cache-bumped by Dev to `20260612-1811`.
+- Added an updated preview sheet for the bigger/lower art pass.
+
+Files:
+- `assets/cards/good_front.png`
+- `assets/cards/bad_front.png`
+- `assets/cards/tadam_front.png`
+- `assets/cards/event_front.png`
+- `assets/cards/shop_front.png`
+- `styles.css`
+- `outputs/card_faces_art_bigger_lower_preview.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual asset/layout only; no card effects/text/rules, gameplay, decks, dice, saves, or protocol changed.
+- Checks passed: PNG dimensions/load validation, `git diff --check`.
+- Per user preference, no GD/QA handback was sent for this direct user task.
+
+Open questions:
+- None.
+
+## 2026-06-12 18:28 - Dev 3
+
+Changed:
+- Implemented `ACTIVE BATTLE UI 2026-06-12 18:11 - Animated combat roll formula`.
+- Added a shared battle-only compact formula in the common dice animation path.
+- Formula appears after dice stop and is held briefly before/while the battle result is committed to HUD state.
+- Formula covers positive, negative, and zero bonuses, e.g. `Кубики: 6 + 4 = 10 · Бонусы: +3 · Итог: 13`.
+- Ordinary movement and non-battle random/event rolls remain uncluttered.
+- VS/final boss player rolls now explicitly mark the shared player battle roll as battle-only for formula display.
+- Ordinary monster, final monster, `Сплочение`, and `Бой за старт` use existing battle dice paths and show formula for the current roller.
+- Phone/controller dice result now displays the same compact formula.
+- Bumped host/controller CSS and script cache keys to `20260612-1811`.
+- Sent GD a context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check -- src/game.js src/controller.js styles.css index.html controller.html`.
+- Static/source checks passed: formula text is created only for `isBattleRoll`, `isEnemyBattle`, or `isFinalBattle`; ordinary movement/random event calls do not pass those flags.
+- Browser smoke was not run because this sandbox rejects local server binding with `EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-12 18:11 - GD
+
+Changed:
+- Added `ACTIVE BATTLE UI 2026-06-12 18:11 - Animated combat roll formula`.
+- Assigned owner `Dev 3`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- During all battle dice animations, show a compact formula like `Кубики: 6 + 4 = 10 · Бонусы: +3 · Итог: 13`.
+- Scope includes ordinary monsters, final monster/boss, VS, and team battles.
+- Ordinary movement/random-event rolls should stay uncluttered.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-12 17:50 - Art/UI
+
+Changed:
+- Restored the card face art placement/scale to the compact reference arrangement requested by the user.
+- Replaced the briefly lowered art pass on all face PNGs.
+- Bumped card-face asset cache keys to `20260612-1750`.
+- Added an updated reference-position preview sheet.
+
+Files:
+- `assets/cards/good_front.png`
+- `assets/cards/bad_front.png`
+- `assets/cards/tadam_front.png`
+- `assets/cards/event_front.png`
+- `assets/cards/shop_front.png`
+- `styles.css`
+- `index.html`
+- `outputs/card_faces_reference_position_preview.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual asset/layout only; no card effects/text/rules, gameplay, decks, dice, saves, or protocol changed.
+- Checks passed: PNG dimensions/load validation, `git diff --check`.
+- Per user preference, no GD/QA handback was sent for this direct user task.
+
+Open questions:
+- None.
+
+## 2026-06-12 17:40 - Art/UI
+
+Changed:
+- Moved the small baked card-face art slightly lower on all face PNGs to add more top padding.
+- Preserved the current smaller art scale and clean no-backing parchment look.
+- Bumped card-face asset cache keys to `20260612-1740`.
+- Added an updated preview sheet for the lowered small-art card faces.
+
+Files:
+- `assets/cards/good_front.png`
+- `assets/cards/bad_front.png`
+- `assets/cards/tadam_front.png`
+- `assets/cards/event_front.png`
+- `assets/cards/shop_front.png`
+- `styles.css`
+- `index.html`
+- `outputs/card_faces_small_art_lower_preview.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual asset/layout only; no card effects/text/rules, gameplay, decks, dice, saves, or protocol changed.
+- Checks passed: PNG dimensions/load validation, `git diff --check`.
+- Per user preference, no GD/QA handback was sent for this direct user task.
+
+Open questions:
+- None.
+
+## 2026-06-12 17:34 - Dev 3
+
+Changed:
+- Implemented `ACTIVE JOE AUCTION 2026-06-12 17:25 - Allow any bid amount`.
+- Human Joe Auction bids now validate arbitrary whole-number amounts instead of only fixed multiples of `5`.
+- Host auction prompt now has a numeric bid form with integer `step=1`, min/max, validation text, and submit button.
+- Phone/controller now has an `auction-bid` direct numeric entry flow plus pass.
+- Phone action payload now carries `amount` for custom auction bids.
+- Legal bids are `0` for pass or any integer from `1` through the bidder's available coins.
+- Bots still use simple rounded quick bids through a bot-only helper, capped by available coins.
+- Winner logic, all-pass behavior, tie dice roll-off, winner payment, and winner receiving all 3 Shop cards were not changed.
+- Losing/pass players still pay nothing.
+- Bumped host CSS/JS cache keys to `20260612-1725`.
+- Sent GD a context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Quick bid buttons remain for convenience, but the host and phone both have direct numeric entry for arbitrary integer bids.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check -- src/game.js src/controller.js styles.css index.html project-memory/updates.md project-memory/inbox/for-gd.md project-memory/inbox/for-dev.md`.
+- Static/source checks passed: no human modulo-5-only bid path remains; legal `7`/`13` bid strings normalize successfully; bids above player coins are rejected; pass resolves to `0`.
+- Browser smoke was not run because this sandbox rejects local server binding with `EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-12 17:30 - Art/UI
+
+Changed:
+- Reduced the baked art size on all card face PNGs back toward the smaller layout requested by the user.
+- Kept the clean parchment face without the strange inner backing/panel.
+- Bumped card-face asset cache keys to `20260612-1725`.
+- Added an updated preview sheet for the small-art/no-backing card faces.
+
+Files:
+- `assets/cards/good_front.png`
+- `assets/cards/bad_front.png`
+- `assets/cards/tadam_front.png`
+- `assets/cards/event_front.png`
+- `assets/cards/shop_front.png`
+- `styles.css`
+- `index.html`
+- `outputs/card_faces_small_art_no_backing_preview.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual asset/layout only; no card rules/effects/text, gameplay, decks, dice, bots, saves, or phone protocol changed.
+- Checks passed: PNG dimensions/load validation, `node --check src/game.js`, `git diff --check`.
+- Per user preference, no GD/QA handback was sent for this direct user task.
+
+Open questions:
+- None.
+
+## 2026-06-12 17:25 - GD
+
+Changed:
+- Added `ACTIVE JOE AUCTION 2026-06-12 17:25 - Allow any bid amount`.
+- Assigned owner `Dev 3`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Joe Auction bids should allow any legal whole-number coin amount, not only multiples of `5`.
+- Pass/winner/3-card reward rules should stay the same.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-12 17:24 - Dev 1
+
+Changed:
+- Completed `ACTIVE PORTAL LABEL 2026-06-12 17:22 - Open portal choice says Портал N`.
+- Updated the open-portal destination label helper so both `монстр N` and `Монстр N` display as `Портал N`.
+- Preserved destination cells/options/mechanics; only the choice label text changes.
+- Bumped host script cache key to `20260612-1722`.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+- Static check confirmed `монстр 2 => Портал 2`, `Монстр 2 => Портал 2`, and existing `Портал 3` remains unchanged.
+- Browser smoke passed on `http://localhost:5173`: page loaded with `game.js?v=20260612-1722`, board/roll button present, no console errors.
+- Full manual open-portal prompt was not forced.
+
+Open questions:
+- None.
+
+## 2026-06-12 17:22 - GD
+
+Changed:
+- Added `ACTIVE PORTAL LABEL 2026-06-12 17:22 - Open portal choice says Портал N`.
+- Assigned owner `Dev 1`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Open-portal destination choices must say `Портал N` with a capital `П`, not `монстр N`.
+- Mechanics and destination options must not change.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-12 17:21 - Dev 1
+
+Changed:
+- Completed `ACTIVE BOT STRATEGY 2026-06-12 17:18 - Spend extra-die Shop cards aggressively in final monster fight`.
+- Added a final-monster-specific bot rule for `optional-extra-die` Shop cards:
+  - If a bot is fighting the final monster, has an affordable usable extra-die card, and the base roll is not already guaranteed to win, the bot uses the card.
+  - Because pre-roll cards are processed one by one, the reported `18 coins + 3 cards costing 5` case now uses all 3 cards and spends 15 coins.
+- Ordinary non-final monster/movement extra-die strategy remains on the previous scoring formula.
+- Bumped host script cache key to `20260612-1718`.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+- Browser smoke passed on `http://localhost:5173`: page loaded with `game.js?v=20260612-1718`, board/roll button present, no console errors.
+- Full forced final-monster scenario was not run; static/source check confirms the reported case resolves to 3 uses while affordable.
+
+Open questions:
+- None.
+
+## 2026-06-12 17:18 - GD
+
+Changed:
+- Added `ACTIVE BOT STRATEGY 2026-06-12 17:18 - Spend extra-die Shop cards aggressively in final monster fight`.
+- Assigned owner `Dev 1`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- In final monster fights, bots should not hoard coins when usable `extra-die` Shop cards substantially improve their chance to win.
+- Reported case `18 coins + 3 extra-die cards` must result in using all three and spending `15` coins.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-12 17:16 - Art/UI
+
+Changed:
+- Removed the strange baked inner backing from card faces by restoring the clean parchment face PNGs for `Хорошо`, `Плохо`, `TADAM`, `Событие`, and `Лавка Джо`.
+- Bumped card-face asset cache keys so the browser reloads the clean no-backing versions.
+- Kept the card text punctuation fix so coin/dice icons stay attached to following punctuation instead of leaving a comma on a separate line.
+- Added a quick visual preview contact sheet for checking all clean card faces together.
+
+Files:
+- `assets/cards/good_front.png`
+- `assets/cards/bad_front.png`
+- `assets/cards/tadam_front.png`
+- `assets/cards/event_front.png`
+- `assets/cards/shop_front.png`
+- `styles.css`
+- `index.html`
+- `src/game.js`
+- `outputs/card_faces_no_backing_preview.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout only: no card effects, rules, decks, balance, dice, bots, saves, or protocols changed.
+- Checks passed: PNG dimensions/load validation, `node --check src/game.js`.
+- Per user preference, no GD/QA handback was sent for this direct user task.
+
+Open questions:
+- None.
+
+## 2026-06-12 17:11 - Dev 3
+
+Changed:
+- Implemented `ACTIVE MONSTER LOSS REWARDS 2026-06-12 17:03 - Tiered defeat rewards by monster`.
+- Added monster defeat reward helpers with map: tier `1` -> free `Лавка Джо`, tier `2` -> free `Лавка Джо` + `5` coins, tier `3` -> free `Лавка Джо` + `10` coins, tier `4` -> free `Лавка Джо` + `20` coins.
+- Tier lookup uses board door base `damage` ordering, with route order as tie-break, so `Сильные` mode does not change reward tier.
+- Last/final board monster with base `24` counts as tier `4`.
+- Defeat coins use normal reward `addCoins(...)`, so Joe Shop receive-coin bonus still applies to this bank/reward gain.
+- Free Shop card reward still uses existing `drawFreeShopCard(...)` finite Shop deck lifecycle.
+- Defeat reward is granted only after `resolveSecondChance(...)` does not retry the fight.
+- Battle HUD outcome/log/prompt now show the tiered defeat reward.
+- Bumped host script cache key to `20260612-1703`.
+- Sent GD a context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- `monster-rematch` victory retry path was not changed.
+- Team/shared battle losses (`Сплочение`, `Бой за старт`) and final boss PvP rewards were not changed.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check -- src/game.js index.html project-memory/updates.md project-memory/inbox/for-gd.md project-memory/inbox/for-dev.md`.
+- Static/source checks passed for reward map, base-damage tier lookup, existing free Shop helper, and retry-before-reward ordering.
+- Browser smoke was not run because this sandbox rejects local server binding with `EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-12 17:03 - GD
+
+Changed:
+- Added `ACTIVE MONSTER LOSS REWARDS 2026-06-12 17:03 - Tiered defeat rewards by monster`.
+- Assigned owner `Dev 3`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Monster defeat rewards now scale by monster tier: `1 -> Лавка Джо`, `2 -> Лавка Джо + 5`, `3 -> Лавка Джо + 10`, `4 -> Лавка Джо + 20`.
+- Tier is based on monster identity/order, not modified strength.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-12 16:44 - Dev 1
+
+Changed:
+- Completed `ACTIVE SETTINGS 2026-06-12 16:42 - Starting coins dropdown`.
+- Added settings dropdown `Монет на старте` with options `10` and `20`; default remains `10`.
+- New game initialization now gives every player/bot the selected starting coin amount.
+- Added safe fallback so missing/unknown values resolve to `10`.
+- Included `startingCoins` in collected game settings/history snapshot path.
+- Bumped host script cache key to `20260612-1642`.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+- Browser smoke passed on `http://localhost:5173`: selecting `10` then `Новая игра` showed players at 10 coins; selecting `20` then `Новая игра` showed players at 20 coins; no console errors.
+- Scope stayed on settings/new-game initialization; economy transfer bonus logic was not touched.
+
+Open questions:
+- None.
+
+## 2026-06-12 16:52 - Dev 3
+
+Changed:
+- Implemented `ACTIVE ECONOMY FIX 2026-06-12 16:39 - No receive-coin bonus on player-to-player transfers`.
+- Added `addCoins(player, amount, { skipReceiveBonus })` so direct transfers can suppress only the Joe Shop receive-coin bonus.
+- `stealCoins(...)` now credits the receiver with `skipReceiveBonus: true`.
+- Covered transfer cards/effects that use `stealCoins(...)`: chosen steal, chosen give, `Равновесие`, `Сбор монет`, TADAM `jump-steal`, and TADAM `land-steal`.
+- Buying a Shop card from another player now pays the owner without triggering the owner's receive-coin bonus.
+- Normal bank/reward gains still use default `addCoins(...)`, so the receive-coin bonus still applies to ordinary positive gains.
+- Bumped host script cache key to `20260612-0427`.
+- Sent GD a context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- VS pot and Joe Auction bank payments were not changed; they are still treated as bank/pot flows rather than direct player-to-player receive-bonus transfers.
+- Transfer logs still report exact `taken` / `given` / `cost` amounts.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check -- src/game.js index.html project-memory/updates.md project-memory/inbox/for-gd.md project-memory/inbox/for-dev.md`.
+- Static/source checks passed: transfer paths suppress the receive-coin bonus; non-transfer reward paths still allow it.
+- Browser smoke was not run because this sandbox still rejects local server binding with `EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-12 16:42 - GD
+
+Changed:
+- Added `ACTIVE SETTINGS 2026-06-12 16:42 - Starting coins dropdown`.
+- Assigned owner `Dev 1`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Add `Монет на старте` setting with dropdown values `10` and `20`.
+- New game should give every human/bot player the selected starting coins.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-12 16:43 - Dev 3
+
+Changed:
+- Implemented `ACTIVE SETTINGS FIX 2026-06-12 16:37 - Strong monsters affect last monster`.
+- Removed the `isFinalBoss` exclusion from `ordinaryMonsterStrengthBonus(...)`.
+- `Сильные` mode now applies `+2` to the last/final board monster door, so base `24` displays/fights as `26`.
+- `Стандартные` mode keeps that monster at `24`.
+- The first ordinary monster still stays at force `6` in `Сильные` mode.
+- Bumped host script cache key to `20260612-0426`.
+- Sent GD a context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- The final boss PvP/opponent bonus formula was not changed.
+- Existing labels/tooltips/HUD/logs/bot scoring use `effectiveMonsterStrength(...)`, so the final board monster gets the corrected value consistently.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check -- src/game.js index.html project-memory/updates.md project-memory/inbox/for-gd.md project-memory/inbox/for-dev.md`.
+- Static/source checks passed: no `isFinalBoss` exclusion remains in `ordinaryMonsterStrengthBonus(...)`; strong mode converts the final board monster's `24` to `26`; standard mode remains base `24`.
+- Browser smoke was not run because this sandbox still rejects local server binding with `EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-12 16:39 - GD
+
+Changed:
+- Added `ACTIVE ECONOMY FIX 2026-06-12 16:39 - No receive-coin bonus on player-to-player transfers`.
+- Assigned owner `Dev 3`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- The Shop-card bonus `Когда получаешь монеты получай на 2 больше` must not trigger when coins are transferred between players.
+- It should still apply to ordinary rewards/gains from non-player sources.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-12 16:37 - GD
+
+Changed:
+- Added `ACTIVE SETTINGS FIX 2026-06-12 16:37 - Strong monsters affect last monster`.
+- Assigned owner `Dev 3`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- In `Сильные` mode, the last/strongest board monster must be `26`, not `24`.
+- This corrects the previous intentional exclusion of final monster doors from the monster-strength modifier.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
 ## 2026-06-12 04:42 - Art/UI
 
 Changed:
@@ -98,7 +608,7 @@ Changed:
 - Added dropdown options `Стандартные` and `Сильные` using existing `settings-select` styling.
 - Added `monsterStrengthMode` to collected game settings/history snapshots.
 - `Сильные` mode keeps the first ordinary monster at force `6` and adds `+2` to later ordinary monster strength through `effectiveMonsterStrength(...)`.
-- Excluded final monster doors from the new +2 modifier; final boss battle formulas and boss-per-opponent bonus were not changed.
+- Follow-up rework at 2026-06-12 16:43 changed the final board monster door to receive the +2 modifier; final boss battle formulas and boss-per-opponent bonus remain unchanged.
 - Retired visible `Проходить все` UI; the old pass-through helper now safely falls back to default behavior.
 - Bumped host script cache key to `20260612-0424`.
 - Sent GD a context handback only; QA was not involved.

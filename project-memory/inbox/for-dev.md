@@ -4,6 +4,437 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- DONE BATTLE UI 2026-06-12 18:28 - Animated combat roll formula:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by `Dev 3` at 2026-06-12 18:28; context handback added for GD.
+  - Context:
+    - User asked: `Во время битвы анимацией показывать суммирование результатов броска и бонусов`.
+    - GD/user-confirmed scope: all battle modes, not only monster fights.
+    - Preferred motion: short compact formula, not a long step-by-step tutorial animation.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - During battle dice animation, show a compact formula after dice stop and before/when final force is written into the battle HUD.
+    - Formula examples:
+      - Bonus: `Кубики: 6 + 4 = 10 · Бонусы: +3 · Итог: 13`.
+      - Penalty: `Кубики: 6 + 4 = 10 · Бонусы: -3 · Итог: 7`.
+      - No bonus: `Кубики: 6 + 4 = 10 · Итог: 10`.
+    - Apply to all battle modes:
+      - ordinary monster fight;
+      - final monster / becoming boss;
+      - final boss battle;
+      - VS;
+      - team/shared battles `Сплочение` and `Бой за старт`.
+    - For VS and team battles, the formula belongs to the current rolling player; previous player results must stay visible.
+  - Implementation guidance:
+    - Prefer using the shared `animateDice(rolls, { bonus, ... })` path with a battle-only option/context, instead of duplicating formula logic per battle.
+    - Keep ordinary movement and non-battle random events uncluttered; do not show the battle formula there.
+    - Do not change dice math, bonus math, penalties, monster strength, rewards, or combat outcomes.
+    - The formula can appear in the current player's HUD card as a small transient line and/or in the board dice layer, as long as it does not overlap dice faces.
+    - Phone/controller dice result should also show a clear `кубики + бонус = итог` formula or equivalent compact text.
+    - Support positive, negative, and zero bonuses.
+  - UX constraints:
+    - Keep it readable on desktop and mobile.
+    - Avoid large overlays that cover the battlefield HUD.
+    - Respect existing battle HUD current-roller highlighting.
+    - Animation should feel like a quick sum reveal, not a blocking extra prompt.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - ordinary monster battle with and without bonus;
+      - final monster / boss battle;
+      - VS with at least 2 players;
+      - `Сплочение` or `Бой за старт`;
+      - a negative bonus case such as `Сглаз`;
+      - confirm ordinary movement does not show the battle formula;
+      - confirm no console errors.
+  - Handback:
+    - Updated `project-memory/updates.md`.
+    - Added context handback to `project-memory/inbox/for-gd.md`.
+    - Marked this task done in `project-memory/inbox/for-dev.md`.
+    - Sent GD context handback only; no QA gate.
+  - Completed:
+    - Added shared battle-only formula text in the common dice animation path.
+    - Formula appears after dice stop and is held briefly before the battle resolver writes the final force/result into the HUD.
+    - Formula format covers positive, negative, and zero bonuses, for example `Кубики: 6 + 4 = 10 · Бонусы: +3 · Итог: 13`.
+    - Ordinary movement and non-battle event rolls keep the old uncluttered dice display.
+    - Ordinary monster/final monster fights use the existing `isEnemyBattle` path.
+    - VS/final boss rolls now explicitly mark the shared player battle roll as battle-only for formula display.
+    - Team/shared monster battles continue through the monster battle roll path and show the formula for the current roller while previous HUD results remain rendered.
+    - Phone/controller dice result now displays the same compact formula.
+    - Bumped host/controller CSS and script cache keys to `20260612-1811`.
+  - Checks completed:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check -- src/game.js src/controller.js styles.css index.html controller.html`.
+    - Static/source checks: `animateDice(...)` only creates formula text for `isBattleRoll`, `isEnemyBattle`, or `isFinalBattle`; ordinary movement/random event calls do not pass these battle flags.
+  - Not run:
+    - Browser smoke/manual battle scenarios; local server binding is blocked in this sandbox with `EPERM`.
+
+- DONE JOE AUCTION 2026-06-12 17:34 - Allow any bid amount:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by `Dev 3` at 2026-06-12 17:34; context handback added for GD.
+  - Context:
+    - User asked: `В аукционе сделать возможность любой ставки, а не только кратной 5`.
+    - Current Joe Auction bidding appears limited to increments/multiples of 5.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - In `Аукцион Лавки Джо`, players must be able to bid any whole number of coins, not only amounts divisible by 5.
+    - Valid bid amount:
+      - integer;
+      - at least the minimum currently required by the auction rules;
+      - not more than the bidder's available coins.
+    - Preserve pass behavior.
+    - Preserve winner logic: last remaining/highest bidder wins all 3 revealed Shop cards, and only the winner pays according to current auction rules.
+    - Losing/pass players keep their coins, as currently intended.
+  - UI/controls:
+    - Host UI should offer an input/stepper/controls that allow arbitrary integer bids, not only `+5` steps.
+    - Phone/controller UI must also allow arbitrary integer bids or an equivalent direct amount entry.
+    - Keep quick buttons if useful, but they must not be the only way to bid.
+    - Disabled/validation messages should be clear for too-low, non-integer, or unaffordable bids.
+  - Bot behavior:
+    - Bots may still choose rounded/simple bid amounts if desired, but game rules must accept non-multiple-of-5 bids from humans.
+    - Do not make bots bid more than their coins.
+  - Do not change:
+    - Joe Auction field placement/icon.
+    - Shop deck lifecycle / 3 revealed cards.
+    - Winner receives all 3 cards.
+    - Tie dice behavior if still used by the current implementation.
+    - Other Shop/Black Market buying rules.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source checks:
+      - no modulo-5 restriction remains for human Joe Auction bids;
+      - arbitrary integer bid like `7` or `13` is accepted when legal;
+      - bid cannot exceed available coins;
+      - pass still works.
+    - Browser smoke if environment allows:
+      - trigger Joe Auction;
+      - place bid `7` and confirm it is accepted;
+      - place bid `13` and confirm it is accepted;
+      - attempt bid above coins and confirm it is blocked;
+      - confirm winner pays and receives all 3 Shop cards;
+      - no console errors.
+  - Handback:
+    - Updated `project-memory/updates.md`.
+    - Added context handback to `project-memory/inbox/for-gd.md`.
+    - Marked this task done in `project-memory/inbox/for-dev.md`.
+    - Sent GD context handback only; no QA gate.
+  - Completed:
+    - Replaced human Joe Auction fixed bid-only flow with legal arbitrary integer bid validation.
+    - Host auction prompt now includes a numeric bid form with `min`, `max`, integer `step=1`, validation text, and a submit button.
+    - Pass remains available as `0`.
+    - Phone/controller now exposes an `auction-bid` action with direct numeric entry and pass.
+    - Phone payload now sends `amount` for custom auction bids.
+    - Validation accepts integer bids from `1` through the bidder's current coins and blocks non-integer, too-low, and unaffordable bids.
+    - Bots still use simple rounded quick bids through a bot-only helper and cannot bid more than their coins.
+    - Winner, all-pass, tie roll-off, winner payment, and 3-card Shop reward logic were not changed.
+    - Losing/pass players still pay nothing.
+    - Bumped host CSS/JS cache keys to `20260612-1725`.
+  - Checks completed:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check -- src/game.js src/controller.js styles.css index.html project-memory/updates.md project-memory/inbox/for-gd.md project-memory/inbox/for-dev.md`.
+    - Static/source checks: no human modulo-5-only bid path remains; `normalizeAuctionBidChoice(...)` accepts legal integer bids like `7`/`13`; bids cannot exceed available coins; pass still resolves to `0`.
+  - Not run:
+    - Browser smoke/manual Joe Auction bid flow; local server binding is blocked in this sandbox with `EPERM`.
+
+- DONE PORTAL LABEL 2026-06-12 17:24 - Open portal choice says `Портал N`:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by `Dev 1` at 2026-06-12 17:24; context handback added for GD.
+  - Context:
+    - User screenshot shows an open-portal prompt `Куда переместиться?`.
+    - The destination option currently says `монстр 2`.
+    - User clarified this is wrong: the player is moving to a portal, not to a monster, so it must say `Портал 2`.
+    - The word must start with a capital letter: `Портал`, not `портал`.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - In open-portal destination prompts, destination choices for opened monster doors/portals must display `Портал N`.
+    - Example: current wrong `монстр 2` -> correct `Портал 2`.
+    - Preserve the destination cell badge such as `клетка 36`.
+    - Apply to all equivalent open-portal destination choice labels, including host and phone/controller views if they share or duplicate label text.
+  - Scope guard:
+    - Do not rename closed monsters before they are opened.
+    - Do not change board mechanics, portal movement, route order, destination options, preview outlines, or monster/portal state.
+    - Do not change Chaos Portal dice text unless it uses this same wrong destination option label in a prompt.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source check: the open-portal prompt label path uses `Портал N`, not `монстр N` / `Монстр N`.
+    - Browser smoke if environment allows:
+      - land on/open an already opened portal prompt;
+      - confirm destination option says `Портал 2` with capital `П`;
+      - confirm portal movement still works;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Send GD context handback only; no QA gate.
+
+- DONE BOT STRATEGY 2026-06-12 17:21 - Spend extra-die Shop cards aggressively in final monster fight:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by `Dev 1` at 2026-06-12 17:21; context handback added for GD.
+  - Context:
+    - User observed `Выдра` fought the final monster with `18` coins and three Shop cards `Перед броском кубиков можешь заплатить 5 монет и кинуть на 1 кубик больше`.
+    - The bot used none of them, even though in a final monster fight there is little/no value in saving coins and the win chance increase is high.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - Bot strategy for final monster fights must use `extra-die` Shop cards much more aggressively.
+    - In a final monster fight, if a bot has usable `extra-die` cards and enough coins, it should spend coins on extra dice when doing so materially improves win chance.
+    - With the reported state (`18` coins, 3 usable `extra-die` cards costing 5 each), the bot should use all 3 cards and spend 15 coins before rolling.
+    - Do not require the bot to preserve coins for future turns once it is in the final monster fight and a win is plausible/high-value.
+  - Decision guidance:
+    - Prefer a simple deterministic rule over a fragile simulation:
+      - In final monster fights, use as many usable `extra-die` cards as affordable, up to all available copies, unless victory is already guaranteed without them.
+      - If there is already a helper estimating win chance, using it is fine, but the reported case must resolve to using all three cards.
+    - For ordinary non-final monster fights, keep existing bot spending conservatism unless a shared helper must be adjusted safely.
+    - Face-down/disabled Shop cards must not be usable.
+  - Scope guard:
+    - Do not change human choice flow for `extra-die`.
+    - Do not change Shop card text/counts/effects.
+    - Do not change final boss PvP/opponent bonus formula, monster strengths, or reward rules.
+    - Do not change player-to-player coin transfer bonus behavior.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source checks:
+      - bot final monster pre-roll strategy considers all affordable usable `extra-die` cards;
+      - reported state `18 coins + 3 extra-die` leads to 3 uses / 15 coins spent;
+      - ordinary monster spending behavior is not broadly loosened unless intentionally noted.
+    - Browser/manual smoke if environment allows:
+      - create/force bot with 18 coins and 3 `extra-die` cards at final monster;
+      - confirm bot spends 15 and rolls 3 extra dice;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Send GD context handback only; no QA gate.
+
+- DONE MONSTER LOSS REWARDS 2026-06-12 17:11 - Tiered defeat rewards by monster:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by `Dev 3` at 2026-06-12 17:11; context handback added for GD.
+  - Context:
+    - User rule: `В зависимости от какого монстра поражение - разное количество пораженческих наград: 1 - Лавка Джо, 2 - Лавка Джо + 5 монет, 3 - Лавка Джо + 10 монет, 4 - Лавка Джо + 20 монет`.
+    - This changes the reward/compensation after losing an ordinary board monster fight.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - On defeat against monster tier/number `1`: player receives `1` free `Лавка Джо` card.
+    - On defeat against monster tier/number `2`: player receives `1` free `Лавка Джо` card and `5` coins.
+    - On defeat against monster tier/number `3`: player receives `1` free `Лавка Джо` card and `10` coins.
+    - On defeat against monster tier/number `4`: player receives `1` free `Лавка Джо` card and `20` coins.
+    - Monster tier should be based on the board monster identity/order/base tier, not current modified strength; `Сильные` mode does not change the tier.
+    - The last/strongest board monster counts as tier `4`.
+  - Reward details:
+    - `Лавка Джо` reward is free and should use the existing finite Shop deck / discard lifecycle for free Shop rewards.
+    - If Shop deck availability is low, use existing graceful behavior for fewer/no available Shop cards.
+    - Coin reward is a bank/reward coin gain, not a player-to-player transfer; it should follow the normal coin reward path and keep existing Shop-card receive-coin bonus behavior if that bonus applies to rewards.
+  - Scope guard:
+    - Apply to individual ordinary board monster defeats.
+    - Do not change victory rewards unless the existing defeat helper also names them and must be clarified.
+    - Do not change team/shared battle loss rules for `Сплочение` / `Бой за старт` unless they currently call the exact same individual monster-defeat reward helper; if touched, call it out.
+    - Do not change final boss PvP battle rewards.
+    - Preserve retry/prevention cards such as `Второй шанс`, `monster-rematch`, and related pending statuses: defeat reward should be granted only after the final resolved defeat, not before a retry that may still change the outcome.
+  - UI/logging:
+    - Logs and battle result text should show the actual defeat reward, e.g. `Лавка Джо + 10 монет`.
+    - If there is a battle HUD defeat summary, update it to match the tiered reward.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source checks:
+      - defeat rewards are mapped `1 -> Shop`, `2 -> Shop + 5`, `3 -> Shop + 10`, `4 -> Shop + 20`;
+      - tier lookup is independent of strong monster modifier;
+      - free Shop reward uses existing finite Shop deck helper;
+      - retry cards do not grant defeat reward before the final defeat.
+    - Browser smoke if environment allows:
+      - force/observe defeats against monster tiers 1-4 and confirm rewards/logs;
+      - confirm strong monster mode keeps the same reward tier;
+      - no console errors.
+  - Handback:
+    - Updated `project-memory/updates.md`.
+    - Added context handback to `project-memory/inbox/for-gd.md`.
+    - Marked this task done in `project-memory/inbox/for-dev.md`.
+    - Sent GD context handback only; no QA gate.
+  - Completed:
+    - Added tier helpers for monster defeat rewards:
+      - tier `1`: free `Лавка Джо`;
+      - tier `2`: free `Лавка Джо` + `5` coins;
+      - tier `3`: free `Лавка Джо` + `10` coins;
+      - tier `4`: free `Лавка Джо` + `20` coins.
+    - Tier is based on board door base `damage` ordering, with route order as tie-break, so `Сильные` strength modifiers do not change the reward tier.
+    - Last/final board monster with base `24` is tier `4`.
+    - Defeat coins use normal reward `addCoins(...)`, so reward coin bonuses still apply.
+    - Free Shop card still uses existing `drawFreeShopCard(...)` finite Shop deck lifecycle.
+    - Defeat reward is granted only after `resolveSecondChance(...)` declines/does not trigger.
+    - `monster-rematch` victory retry path was not changed.
+    - Team/shared battles and final boss PvP were not changed.
+    - Battle HUD outcome/log/prompt now mention the tiered defeat reward.
+    - Bumped host script cache key to `20260612-1703`.
+  - Checks completed:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check -- src/game.js index.html project-memory/updates.md project-memory/inbox/for-gd.md project-memory/inbox/for-dev.md`.
+    - Static/source checks for reward map, base-damage tier lookup, existing free Shop helper, and retry-before-reward ordering.
+  - Not run:
+    - Browser smoke/manual tier defeat checks; local server binding is still blocked in this sandbox with `EPERM`.
+
+- DONE SETTINGS 2026-06-12 16:44 - Starting coins dropdown:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by `Dev 1` at 2026-06-12 16:44; context handback added for GD.
+  - Context:
+    - User asked: `Сделать настройку "Монет на старте" с выпадающим списком: 10 и 20`.
+    - The selected value should define how many coins every player receives when a new game starts.
+    - `Dev 3` is working on economy transfer bonus suppression; this task should stay focused on settings/new-game initialization to avoid conflict.
+    - QA is not involved unless the user explicitly asks.
+  - Required UI:
+    - Add a settings dropdown labeled `Монет на старте`.
+    - Options:
+      - `10`
+      - `20`
+    - Default should preserve current behavior. If current starting coins are `10`, default to `10`.
+    - Use existing settings select styling and layout.
+    - Persist the setting the same way other settings persist, if local settings persistence exists.
+  - Gameplay:
+    - On `Новая игра` / game start, every player starts with the selected amount of coins.
+    - `10`: all players start with `10`.
+    - `20`: all players start with `20`.
+    - This should apply to human players and bots equally.
+    - Do not alter coin rewards, card effects, saved history scoring, or in-progress games.
+  - Compatibility:
+    - Existing saves/settings without this option should fall back safely to `10`.
+    - Include the selected value in game settings/history snapshot if other settings are already recorded there.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source checks:
+      - settings include `Монет на старте`, `10`, `20`;
+      - new player initialization reads the selected setting;
+      - fallback/default is `10`.
+    - Browser smoke if environment allows:
+      - set `10`, start new game, confirm all players have 10 coins;
+      - set `20`, start new game, confirm all players have 20 coins;
+      - confirm no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Send GD context handback only; no QA gate.
+
+- DONE ECONOMY FIX 2026-06-12 16:52 - No receive-coin bonus on player-to-player transfers:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by `Dev 3` at 2026-06-12 16:52; context handback added for GD.
+  - Context:
+    - User rule: when coins are stolen or otherwise transferred from one player to another, the receiver must not get extra coins from the Shop card `Когда получаешь монеты получай на 2 больше`.
+    - The bonus should apply to coin gains from the bank/rewards, not to player-to-player transfers.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - Any direct transfer of coins from player A to player B must preserve the transferred amount exactly.
+    - The receiver's `+2 when receiving coins` Shop-card bonus must not trigger on transfers.
+    - The payer/loser must not lose extra coins because the receiver has the bonus.
+    - The bonus should still trigger for normal positive coin gains from non-player sources where it currently should apply: field rewards, card rewards, monster rewards, event rewards, etc.
+  - Transfer cases to audit:
+    - Good/Bad/Event cards that steal coins from a chosen/richest/poorest player.
+    - Cards that make the active player give coins to another player.
+    - `Сбор монет` / tribute-style effects where other players give coins to active player.
+    - `Равновесие` / redistribution-style effects if implemented as transfer.
+    - VS/pot/auction flows only if they currently transfer coins directly between players; do not change bank/pot reward semantics unless needed.
+    - Any shared helper such as `stealCoins`, `transferCoins`, `addCoins`, or similar.
+  - Implementation guidance:
+    - Prefer a central explicit transfer helper or an `addCoins(..., { skipReceiveBonus: true })` style option for transfer receivers.
+    - Do not solve this by removing the Shop-card bonus globally.
+    - Keep logs honest: log the actual transferred amount, not amount plus bonus.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source checks:
+      - transfer paths suppress the receive-coin bonus;
+      - non-transfer coin reward paths still allow the bonus;
+      - steal/give/tribute logs use actual transfer amounts.
+    - Browser smoke if environment allows:
+      - give receiver the `+2 when receiving coins` Shop card;
+      - perform a steal/give transfer of `5`, confirm receiver gets exactly `5`;
+      - perform a normal reward of `5`, confirm receiver gets `7`;
+      - no console errors.
+  - Handback:
+    - Updated `project-memory/updates.md`.
+    - Added context handback to `project-memory/inbox/for-gd.md`.
+    - Marked this task done in `project-memory/inbox/for-dev.md`.
+    - Sent GD context handback only; no QA gate.
+  - Completed:
+    - Added `addCoins(player, amount, { skipReceiveBonus })`.
+    - Normal positive rewards still use default `addCoins(...)` and keep the Shop-card receive bonus.
+    - `stealCoins(...)` now credits the receiver with `{ skipReceiveBonus: true }`, covering Good/Bad/Event/TADAM transfers that use the shared steal/transfer path.
+    - Buying a Shop card from another player now pays the owner with `{ skipReceiveBonus: true }`.
+    - Transfer logs still use the exact `taken` / `given` / `cost` amount, not amount plus Joe bonus.
+    - VS pot/auction-bank semantics were not changed; they are still bank/pot flows, not direct player-to-player receive-bonus transfers.
+    - Bumped host script cache key to `20260612-0427`.
+  - Checks completed:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check -- src/game.js index.html project-memory/updates.md project-memory/inbox/for-gd.md project-memory/inbox/for-dev.md`.
+    - Static/source checks: transfer paths through `stealCoins(...)` suppress receive bonus; buy-card owner payment suppresses receive bonus; ordinary rewards still use default `addCoins(...)`.
+  - Not run:
+    - Browser smoke/manual transfer/reward check; local server binding is still blocked in this sandbox with `EPERM`.
+
+- DONE SETTINGS FIX 2026-06-12 16:43 - Strong monsters affect last monster:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by `Dev 3` at 2026-06-12 16:43; context handback added for GD.
+  - Context:
+    - User reported: `У сильных монстров последний монстр должен быть 26, сейчас 24`.
+    - Previous `Сила монстров` implementation intentionally excluded final monster doors from the `+2` modifier.
+    - That exclusion is wrong for the last/strongest monster on the board: in `Сильные` mode, base `24` must display/fight as `26`.
+    - QA is not involved unless the user explicitly asks.
+  - Required behavior:
+    - In `Сильные` monster strength mode, the last/strongest monster on the board must get the same `+2` strength modifier as other ordinary monsters.
+    - Expected visible value: `24` base -> `26` in strong mode.
+    - `Стандартные` mode must still show/fight it as `24`.
+    - Apply consistently to display labels/tooltips, battle HUD target, logs, bot scoring/risk, and the actual fight calculation.
+  - Scope guard:
+    - This is about the last/strongest board monster/final monster door strength.
+    - Do not change the final boss PvP/opponent bonus formula unless the existing code directly derives it from this same monster-door strength; if touched, call it out clearly in handback.
+    - Do not change other monster base strengths or the `+2` amount.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source checks:
+      - no code path excludes the last/final monster door from `Сильные`;
+      - strong mode converts the `24` monster to `26`;
+      - standard mode remains `24`.
+    - Browser smoke if environment allows:
+      - set `Сила монстров` to `Сильные`;
+      - confirm the last monster displays/fights at `26`;
+      - switch to `Стандартные` and confirm it is `24`;
+      - no console errors.
+  - Handback:
+    - Updated `project-memory/updates.md`.
+    - Added context handback to `project-memory/inbox/for-gd.md`.
+    - Marked this task done in `project-memory/inbox/for-dev.md`.
+    - Sent GD context handback only; no QA gate.
+  - Completed:
+    - Removed the `isFinalBoss` exclusion from `ordinaryMonsterStrengthBonus(...)`.
+    - `Сильные` mode now gives the last/final board monster door the same `+2` modifier as other non-first monsters.
+    - First ordinary monster still remains force `6`.
+    - Standard mode remains unchanged.
+    - Final boss PvP/opponent bonus formula was not changed.
+    - Bumped host script cache key to `20260612-0426`.
+  - Checks completed:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check -- src/game.js index.html project-memory/updates.md project-memory/inbox/for-gd.md project-memory/inbox/for-dev.md`.
+    - Static/source checks: no `isFinalBoss` exclusion remains in `ordinaryMonsterStrengthBonus(...)`; final board monster goes through `effectiveMonsterStrength(...)`; standard mode still has no strong modifier.
+  - Not run:
+    - Browser smoke/manual last-monster check; local server binding is still blocked in this sandbox with `EPERM`.
+
 - DONE TEAM BATTLE 2026-06-12 04:47 - Manual player rolls in shared/team battles:
   - Owner: `Dev 3`.
   - Dispatch status: completed by `Dev 3` at 2026-06-12 04:47; context handback added for GD.
