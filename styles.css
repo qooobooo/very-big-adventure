@@ -24,6 +24,8 @@
   --tile-fantasy-border-dark: #2b180c;
   --tile-fantasy-border-light: #c18a4b;
   --board-gap-art: url("./assets/backgrounds/forest_rocks_gap_1254.png");
+  --card-face-width: clamp(158px, 24vw, 218px);
+  --card-face-gap: clamp(10px, 2vw, 18px);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -277,6 +279,45 @@ h2 {
 
 .settings-select select {
   width: 100%;
+}
+
+.reference-toggle-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid rgba(255, 247, 232, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.reference-toggle-panel > strong {
+  color: var(--gold-2);
+  font-size: 0.84rem;
+  line-height: 1.15;
+}
+
+.reference-toggle-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.reference-toggle {
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 8px;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.reference-toggle.is-active {
+  border-color: rgba(255, 214, 125, 0.72);
+  color: #ffe9a9;
+  background:
+    linear-gradient(180deg, rgba(255, 217, 125, 0.22), rgba(255, 217, 125, 0.08)),
+    rgba(126, 86, 26, 0.28);
+  box-shadow: 0 0 0 2px rgba(216, 169, 71, 0.12), 0 10px 24px rgba(0, 0, 0, 0.18);
 }
 
 .modifier-control-row {
@@ -2338,6 +2379,28 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   white-space: nowrap;
 }
 
+.score-event-badge {
+  flex: 0 0 auto;
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 2px 7px;
+  border: 1px solid rgba(255, 211, 105, 0.52);
+  border-radius: 999px;
+  color: #fff2c8;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.18), transparent 32%),
+    linear-gradient(135deg, rgba(113, 76, 21, 0.82), rgba(48, 35, 16, 0.88));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 10px rgba(255, 188, 63, 0.22);
+  font-size: 0.64rem;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .score-artifact-badge img {
   width: 16px;
   height: 16px;
@@ -2481,6 +2544,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 
 .board-panel,
 .side-panel > section,
+.reference-panel,
 .log-panel,
 .history-panel,
 .test-panel {
@@ -2773,6 +2837,28 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 .pre-roll-action button:hover {
   border-color: rgba(255, 215, 125, 0.9);
   box-shadow: 0 0 0 2px rgba(255, 215, 125, 0.16);
+}
+
+.post-roll-target-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.post-roll-target-legend::before {
+  content: "";
+  width: 0.72em;
+  height: 0.72em;
+  border: 2px solid rgba(112, 231, 255, 0.92);
+  border-radius: 4px;
+  box-shadow: 0 0 6px rgba(92, 222, 255, 0.44);
+}
+
+.post-roll-target-legend.boosted::before {
+  border-color: rgba(255, 211, 82, 0.94);
+  box-shadow: 0 0 6px rgba(255, 204, 65, 0.5);
 }
 
 .map-wrap {
@@ -3967,6 +4053,64 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   pointer-events: none;
 }
 
+.card-choice-preview-outline {
+  position: absolute;
+  inset: 6%;
+  z-index: 6;
+  border: 2px solid rgba(255, 217, 100, 0.84);
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 1px rgba(57, 37, 10, 0.18),
+    0 0 12px rgba(255, 194, 64, 0.42),
+    inset 0 0 12px rgba(255, 217, 102, 0.18);
+  pointer-events: none;
+}
+
+.post-roll-target-outline {
+  position: absolute;
+  inset: 3%;
+  z-index: 8;
+  display: grid;
+  place-items: end center;
+  border: 3px solid rgba(112, 231, 255, 0.92);
+  border-radius: 9px;
+  box-shadow:
+    0 0 0 1px rgba(21, 54, 72, 0.28),
+    0 0 14px rgba(92, 222, 255, 0.54),
+    inset 0 0 12px rgba(92, 222, 255, 0.2);
+  pointer-events: none;
+}
+
+.post-roll-target-outline.is-boosted {
+  inset: 9%;
+  border-color: rgba(255, 211, 82, 0.94);
+  box-shadow:
+    0 0 0 1px rgba(74, 51, 10, 0.26),
+    0 0 15px rgba(255, 204, 65, 0.56),
+    inset 0 0 12px rgba(255, 219, 91, 0.22);
+}
+
+.post-roll-target-outline.is-combined {
+  border-color: rgba(255, 230, 116, 0.96);
+  box-shadow:
+    0 0 0 2px rgba(112, 231, 255, 0.84),
+    0 0 16px rgba(255, 218, 92, 0.58),
+    inset 0 0 14px rgba(112, 231, 255, 0.2);
+}
+
+.post-roll-target-outline b {
+  margin: 0 2px 2px;
+  padding: 2px 4px;
+  border-radius: 999px;
+  color: #241404;
+  background: rgba(255, 247, 214, 0.9);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+  font-size: clamp(0.42rem, 0.7vw, 0.56rem);
+  font-weight: 950;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .tile-icon-shop {
   width: 82%;
   height: 82%;
@@ -4138,6 +4282,38 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   opacity: 0.92;
   pointer-events: none;
   animation: portal-gate-spin 1800ms linear infinite;
+}
+
+.golden-marker {
+  position: absolute;
+  left: 3px;
+  bottom: 3px;
+  z-index: 7;
+  min-width: 15px;
+  height: 15px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(255, 248, 210, 0.92);
+  border-radius: 999px;
+  color: #513100;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.72), transparent 34%),
+    linear-gradient(180deg, #ffe796, #d99a2a);
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.34),
+    0 0 9px rgba(255, 207, 87, 0.5);
+  font-size: 0.43rem;
+  font-weight: 950;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.board[data-board-id="field2"] .golden-marker {
+  left: 2px;
+  bottom: 2px;
+  min-width: 12px;
+  height: 12px;
+  font-size: 0.36rem;
 }
 
 .tile-portal-active .tile-icon {
@@ -5098,10 +5274,176 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 }
 
 .side-panel > section,
+.reference-panel,
 .log-panel,
 .history-panel,
 .test-panel {
   padding: 16px;
+}
+
+.reference-panel[hidden] {
+  display: none;
+}
+
+.reference-sections {
+  display: grid;
+  gap: 14px;
+}
+
+.reference-section {
+  display: grid;
+  gap: 9px;
+}
+
+.reference-section h3 {
+  margin: 0;
+  color: var(--gold-2);
+  font-size: 0.9rem;
+  line-height: 1.15;
+}
+
+.reference-card-grid {
+  --reference-card-cell-width: calc(var(--card-face-width) + 24px);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--reference-card-cell-width)), var(--reference-card-cell-width)));
+  align-items: start;
+  justify-content: start;
+  gap: 12px;
+}
+
+.reference-card-item {
+  min-width: 0;
+  width: var(--reference-card-cell-width);
+  max-width: 100%;
+  display: grid;
+  gap: 7px;
+  place-items: center;
+  padding: 12px;
+  border: 1px solid rgba(255, 247, 232, 0.12);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.reference-card-count {
+  justify-self: end;
+  padding: 2px 7px;
+  border: 1px solid rgba(255, 214, 125, 0.42);
+  border-radius: 999px;
+  color: #ffe9a9;
+  background:
+    linear-gradient(180deg, rgba(68, 48, 20, 0.96), rgba(34, 26, 16, 0.96));
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
+  font-size: 0.7rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.reference-card-item .card-face-stage {
+  width: var(--card-face-width);
+  max-width: none;
+  pointer-events: none;
+}
+
+.card-face-stage.is-inert button.good-card-preview,
+.card-face-stage.is-inert button.bad-card-preview,
+.card-face-stage.is-inert button.tadam-card-preview,
+.card-face-stage.is-inert button.event-card-preview,
+.card-face-stage.is-inert button.shop-card-preview {
+  cursor: default;
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(0, 0, 0, 0.38);
+}
+
+.reference-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.reference-item {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(255, 247, 232, 0.12);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.reference-card-item:has(.reference-card-icon),
+.reference-field-item:has(.reference-field-icon) {
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: start;
+}
+
+.reference-item-copy {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.reference-item-title {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.reference-item-title strong {
+  min-width: 0;
+  color: var(--ink);
+  font-size: 0.86rem;
+  line-height: 1.22;
+  overflow-wrap: anywhere;
+}
+
+.reference-item-title span {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border: 1px solid rgba(255, 214, 125, 0.24);
+  border-radius: 999px;
+  color: var(--gold-2);
+  background: rgba(216, 169, 71, 0.1);
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.reference-item p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.32;
+  overflow-wrap: anywhere;
+}
+
+.reference-card-icon,
+.reference-field-icon .tile-icon-image {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.reference-field-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+}
+
+.reference-field-tile {
+  width: 34px;
+  height: 34px;
+  display: block;
+  border-radius: 7px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 112% 112%;
 }
 
 body.is-game-fullscreen .log-panel,
@@ -5334,12 +5676,24 @@ body.is-game-fullscreen .app-shell > * {
 .event-toast.action-prompt:has(.tadam-card-reveal),
 .event-toast.action-prompt:has(.event-card-reveal),
 .event-toast.action-prompt:has(.shop-card-reveal) {
-  width: auto;
+  width: min(1220px, calc(100% - 36px));
   min-height: 0;
   padding: 0;
   border: 0;
   background: transparent;
   box-shadow: none;
+  justify-items: center;
+}
+
+.event-toast.action-prompt:has(.good-card-reveal) .event-toast-copy,
+.event-toast.action-prompt:has(.bad-card-reveal) .event-toast-copy,
+.event-toast.action-prompt:has(.tadam-card-reveal) .event-toast-copy,
+.event-toast.action-prompt:has(.event-card-reveal) .event-toast-copy,
+.event-toast.action-prompt:has(.shop-card-reveal) .event-toast-copy {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  text-align: center;
 }
 
 .event-toast.action-prompt.roll-event-prompt,
@@ -5677,8 +6031,48 @@ body.is-game-fullscreen .app-shell > * {
   white-space: nowrap;
 }
 
+.card-face-stage .coin-amount,
+.card-face-stage .dice-amount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18em;
+  vertical-align: -0.12em;
+  white-space: nowrap;
+}
+
+.card-face-stage .coin-amount b,
+.card-face-stage .dice-amount b {
+  display: inline;
+  line-height: 1;
+}
+
+.card-face-stage .coin-icon,
+.card-face-stage .dice-icon {
+  flex: 0 0 auto;
+  width: 0.92em;
+  height: 0.92em;
+  margin-left: 0.08em;
+  vertical-align: -0.12em;
+}
+
+.card-face-stage .card-text-nowrap {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  white-space: nowrap;
+}
+
 .event-toast-copy .player-name {
   color: color-mix(in srgb, var(--player-color) 52%, #fffbe8 48%);
+}
+
+.card-face-stage {
+  --reveal-card-width: var(--card-face-width);
+  width: auto;
+  max-width: 100%;
+  display: grid;
+  place-items: center;
 }
 
 .good-card-reveal,
@@ -5689,7 +6083,7 @@ button.event-card-preview,
 button.bad-card-preview,
 button.tadam-card-preview,
 button.shop-card-preview {
-  --reveal-card-width: clamp(158px, 24vw, 218px);
+  --reveal-card-width: var(--card-face-width);
 }
 
 .good-card-reveal,
@@ -5791,9 +6185,9 @@ button.event-card-preview:focus-visible {
   text-shadow: 0 1px 0 rgba(255, 239, 174, 0.72);
 }
 
-.good-card-text span,
-.bad-card-text span,
-.tadam-card-text span {
+.good-card-text > span,
+.bad-card-text > span,
+.tadam-card-text > span {
   display: block;
   color: #2c1709;
   max-width: 100%;
@@ -5844,18 +6238,18 @@ button.event-card-preview:focus-visible {
   justify-content: space-evenly;
 }
 
-.good-card-text.is-dense span,
-.bad-card-text.is-dense span,
-.tadam-card-text.is-dense span,
-.shop-card-text.is-dense span {
+.good-card-text.is-dense > span,
+.bad-card-text.is-dense > span,
+.tadam-card-text.is-dense > span,
+.shop-card-text.is-dense > span {
   font-size: clamp(0.58rem, 1.24vw, 0.86rem);
   line-height: 1.06;
 }
 
-.good-card-text.is-long span,
-.bad-card-text.is-long span,
-.tadam-card-text.is-long span,
-.shop-card-text.is-long span {
+.good-card-text.is-long > span,
+.bad-card-text.is-long > span,
+.tadam-card-text.is-long > span,
+.shop-card-text.is-long > span {
   font-size: clamp(0.52rem, 1.08vw, 0.78rem);
   line-height: 1.04;
 }
@@ -5878,8 +6272,8 @@ button.event-card-preview:focus-visible {
   text-shadow: 0 1px 0 rgba(255, 239, 174, 0.72);
 }
 
-.event-card-text span,
-.event-card-text strong {
+.event-card-text > span,
+.event-card-text > strong {
   display: block;
   color: #2c1709;
   max-width: 100%;
@@ -5891,21 +6285,20 @@ button.event-card-preview:focus-visible {
   text-wrap: balance;
 }
 
-.bad-card-text span {
+.bad-card-text > span {
   font-size: clamp(0.62rem, 1.34vw, 0.88rem);
 }
 
-.tadam-card-text span {
+.tadam-card-text > span {
   font-size: clamp(0.6rem, 1.28vw, 0.84rem);
 }
 
 .event-card-artifact-icon {
-  width: clamp(18px, 4.5vw, 30px);
-  height: clamp(18px, 4.5vw, 30px);
-  display: inline-block;
-  margin-right: 0.35em;
+  width: 100%;
+  height: 100%;
+  display: block;
+  margin: 0;
   object-fit: contain;
-  vertical-align: -0.24em;
 }
 
 .event-card-text {
@@ -5945,8 +6338,8 @@ button.event-card-preview:focus-visible {
 .event-card-text .event-card-description-line {
   max-width: 100%;
   max-height: none;
-  font-size: clamp(0.48rem, 0.92vw, 0.66rem);
-  line-height: 1.08;
+  font-size: inherit;
+  line-height: inherit;
   overflow: visible;
   overflow-wrap: break-word;
   word-break: normal;
@@ -5976,8 +6369,8 @@ button.event-card-preview:focus-visible {
 }
 
 .event-card-text.is-dense .event-card-description-line {
-  font-size: clamp(0.44rem, 0.8vw, 0.58rem);
-  line-height: 1.04;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 .event-card-text.is-long {
@@ -5995,23 +6388,30 @@ button.event-card-preview:focus-visible {
 }
 
 .event-card-text.is-long .event-card-description-line {
-  font-size: clamp(0.4rem, 0.7vw, 0.52rem);
-  line-height: 1.02;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 .shop-card-reveal {
+  width: fit-content;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex-wrap: nowrap;
-  gap: clamp(10px, 2vw, 18px);
+  gap: var(--card-face-gap);
+  margin-inline: auto;
 }
 
 .shop-card-row {
   display: flex;
-  flex-wrap: nowrap;
-  gap: clamp(10px, 2vw, 18px);
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--card-face-gap);
+  margin-inline: auto;
 }
 
 button.shop-card-preview {
@@ -6085,7 +6485,7 @@ button.shop-card-preview.is-selected {
   text-shadow: 0 1px 0 rgba(255, 239, 174, 0.72);
 }
 
-.shop-card-text span {
+.shop-card-text > span {
   display: block;
   color: #2c1709;
   max-width: 100%;
@@ -6105,6 +6505,190 @@ button.shop-card-preview.is-selected {
 .event-card-text .card-text-nowrap,
 .shop-card-text .card-text-nowrap {
   display: inline-block;
+  width: auto;
+  white-space: nowrap;
+}
+
+.good-card-text,
+.bad-card-text,
+.tadam-card-text,
+.event-card-text,
+.shop-card-text {
+  --card-face-title-row: clamp(22px, 4.2vw, 32px);
+  --card-face-title-size: clamp(0.62rem, 1.12vw, 0.82rem);
+  --card-face-description-size: clamp(0.52rem, 1.02vw, 0.74rem);
+  --card-face-description-gap: clamp(2px, 0.32vw, 5px);
+  --card-face-description-line-height: 1.06;
+  left: 9%;
+  right: 9%;
+  top: 42.5%;
+  bottom: 6%;
+  display: grid;
+  grid-template-rows: var(--card-face-title-row) minmax(0, 1fr);
+  align-content: start;
+  align-items: start;
+  justify-items: center;
+  justify-content: stretch;
+  gap: clamp(4px, 0.52vw, 7px);
+}
+
+.good-card-text.is-dense,
+.bad-card-text.is-dense,
+.tadam-card-text.is-dense,
+.event-card-text.is-dense,
+.shop-card-text.is-dense {
+  --card-face-title-row: clamp(21px, 3.8vw, 29px);
+  --card-face-title-size: clamp(0.58rem, 1vw, 0.76rem);
+  --card-face-description-size: clamp(0.46rem, 0.86vw, 0.64rem);
+  --card-face-description-gap: clamp(1px, 0.24vw, 4px);
+  --card-face-description-line-height: 1.04;
+  left: 9%;
+  right: 9%;
+  top: 42.5%;
+  bottom: 5.8%;
+  gap: clamp(3px, 0.42vw, 6px);
+  justify-content: stretch;
+}
+
+.good-card-text.is-long,
+.bad-card-text.is-long,
+.tadam-card-text.is-long,
+.event-card-text.is-long,
+.shop-card-text.is-long {
+  --card-face-title-row: clamp(20px, 3.5vw, 27px);
+  --card-face-title-size: clamp(0.54rem, 0.88vw, 0.68rem);
+  --card-face-description-size: clamp(0.4rem, 0.72vw, 0.54rem);
+  --card-face-description-gap: clamp(1px, 0.18vw, 3px);
+  --card-face-description-line-height: 1.02;
+  left: 8.5%;
+  right: 8.5%;
+  top: 42.5%;
+  bottom: 5.4%;
+  gap: clamp(2px, 0.32vw, 5px);
+  justify-content: stretch;
+}
+
+.good-card-text.has-card-face-icon,
+.bad-card-text.has-card-face-icon,
+.tadam-card-text.has-card-face-icon,
+.event-card-text.has-card-face-icon,
+.shop-card-text.has-card-face-icon {
+  --card-face-icon-row: clamp(22px, 4.2vw, 30px);
+  --card-face-description-size: clamp(0.46rem, 0.86vw, 0.62rem);
+  --card-face-description-gap: clamp(1px, 0.22vw, 3px);
+  --card-face-description-line-height: 1.03;
+  grid-template-rows: var(--card-face-title-row) var(--card-face-icon-row) minmax(0, 1fr);
+  gap: clamp(2px, 0.28vw, 4px);
+}
+
+.good-card-text.has-card-face-icon.is-dense,
+.bad-card-text.has-card-face-icon.is-dense,
+.tadam-card-text.has-card-face-icon.is-dense,
+.event-card-text.has-card-face-icon.is-dense,
+.shop-card-text.has-card-face-icon.is-dense {
+  --card-face-icon-row: clamp(20px, 3.6vw, 27px);
+  --card-face-description-size: clamp(0.42rem, 0.76vw, 0.56rem);
+  --card-face-description-gap: clamp(1px, 0.18vw, 3px);
+}
+
+.good-card-text.has-card-face-icon.is-long,
+.bad-card-text.has-card-face-icon.is-long,
+.tadam-card-text.has-card-face-icon.is-long,
+.event-card-text.has-card-face-icon.is-long,
+.shop-card-text.has-card-face-icon.is-long {
+  --card-face-icon-row: clamp(14px, 3vw, 24px);
+  --card-face-description-size: clamp(0.36rem, 0.66vw, 0.5rem);
+  --card-face-description-gap: 1px;
+  --card-face-description-line-height: 1;
+  gap: clamp(1px, 0.22vw, 3px);
+}
+
+.good-card-text > .card-face-title,
+.bad-card-text > .card-face-title,
+.tadam-card-text > .card-face-title,
+.event-card-text > .card-face-title,
+.shop-card-text > .card-face-title {
+  grid-row: 1;
+  align-self: start;
+  width: 100%;
+  max-height: var(--card-face-title-row);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  color: #2b1608;
+  font-size: var(--card-face-title-size);
+  font-weight: 950;
+  line-height: 1.02;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.good-card-text > .card-face-icon,
+.bad-card-text > .card-face-icon,
+.tadam-card-text > .card-face-icon,
+.event-card-text > .card-face-icon,
+.shop-card-text > .card-face-icon {
+  grid-row: 2;
+  align-self: center;
+  justify-self: center;
+  width: var(--card-face-icon-row);
+  height: var(--card-face-icon-row);
+  display: grid;
+  place-items: center;
+}
+
+.good-card-text > .card-face-description,
+.bad-card-text > .card-face-description,
+.tadam-card-text > .card-face-description,
+.event-card-text > .card-face-description,
+.shop-card-text > .card-face-description {
+  grid-row: 2;
+  align-self: stretch;
+  width: 100%;
+  min-height: 0;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--card-face-description-gap);
+  color: #2c1709;
+  font-size: var(--card-face-description-size);
+  font-weight: 900;
+  line-height: var(--card-face-description-line-height);
+  overflow: visible;
+}
+
+.good-card-text.has-card-face-icon > .card-face-description,
+.bad-card-text.has-card-face-icon > .card-face-description,
+.tadam-card-text.has-card-face-icon > .card-face-description,
+.event-card-text.has-card-face-icon > .card-face-description,
+.shop-card-text.has-card-face-icon > .card-face-description {
+  grid-row: 3;
+}
+
+.good-card-text > .card-face-description > span,
+.bad-card-text > .card-face-description > span,
+.tadam-card-text > .card-face-description > span,
+.event-card-text > .card-face-description > span,
+.shop-card-text > .card-face-description > span {
+  display: block;
+  max-width: 100%;
+  max-height: none;
+  overflow: visible;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+  text-wrap: balance;
+}
+
+.card-face-stage .card-text-nowrap {
+  display: inline-flex;
+  align-items: center;
   width: auto;
   white-space: nowrap;
 }
@@ -6140,6 +6724,11 @@ button.shop-card-decline:focus-visible {
 }
 
 @media (max-width: 640px) {
+  :root {
+    --card-face-width: clamp(118px, 31vw, 148px);
+    --card-face-gap: 8px;
+  }
+
   .history-summary,
   .history-final-head,
   .history-final-force,
@@ -6154,19 +6743,19 @@ button.shop-card-decline:focus-visible {
   .bad-card-reveal,
   .tadam-card-reveal,
   .event-card-reveal {
-    --reveal-card-width: clamp(118px, 31vw, 148px);
+    --reveal-card-width: var(--card-face-width);
   }
 
   .shop-card-reveal {
-    gap: 8px;
+    gap: var(--card-face-gap);
   }
 
   .shop-card-row {
-    gap: 8px;
+    gap: var(--card-face-gap);
   }
 
   button.shop-card-preview {
-    --reveal-card-width: clamp(118px, 31vw, 148px);
+    --reveal-card-width: var(--card-face-width);
   }
 
   .shop-card-decline {
@@ -7049,6 +7638,7 @@ body[data-ui-style="tabletop"] .app-shell {
 
 body[data-ui-style="tabletop"] .board-panel,
 body[data-ui-style="tabletop"] .side-panel > section,
+body[data-ui-style="tabletop"] .reference-panel,
 body[data-ui-style="tabletop"] .log-panel,
 body[data-ui-style="tabletop"] .history-panel,
 body[data-ui-style="tabletop"] .test-panel {
@@ -7297,6 +7887,7 @@ body[data-ui-style="tabletop"] .score-bonus,
 body[data-ui-style="tabletop"] .score-battle-bonus,
 body[data-ui-style="tabletop"] .score-rage-bonus,
 body[data-ui-style="tabletop"] .score-artifact-badge,
+body[data-ui-style="tabletop"] .score-event-badge,
 body[data-ui-style="tabletop"] .score-shop small {
   border-color: rgba(43, 28, 12, 0.34);
   color: var(--ink);
@@ -7466,6 +8057,7 @@ body[data-ui-style="tabletop"]::before {
 
 body[data-ui-style="tabletop"] .board-panel,
 body[data-ui-style="tabletop"] .side-panel > section,
+body[data-ui-style="tabletop"] .reference-panel,
 body[data-ui-style="tabletop"] .log-panel,
 body[data-ui-style="tabletop"] .history-panel,
 body[data-ui-style="tabletop"] .test-panel {
@@ -7760,6 +8352,7 @@ body[data-ui-style="tabletop"] .score-bonus,
 body[data-ui-style="tabletop"] .score-battle-bonus,
 body[data-ui-style="tabletop"] .score-rage-bonus,
 body[data-ui-style="tabletop"] .score-artifact-badge,
+body[data-ui-style="tabletop"] .score-event-badge,
 body[data-ui-style="tabletop"] .score-shop small {
   border-color: color-mix(in srgb, var(--player-color) 34%, rgba(218, 172, 83, 0.34));
   color: #fff4d4;
@@ -8146,6 +8739,7 @@ body[data-ui-style="tabletop"] .winner-card {
   }
 
   .side-panel > section,
+  .reference-panel,
   .log-panel,
   .history-panel,
   .test-panel {

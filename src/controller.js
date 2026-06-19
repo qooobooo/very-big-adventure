@@ -3,7 +3,7 @@ const roomStorageKey = "very-big-adventure.controller-room";
 const playerStorageKey = "very-big-adventure.controller-player";
 const defaultControllerMode = "full";
 const controllerModes = new Set([defaultControllerMode, "big-button"]);
-const bigChoiceActionKinds = new Set(["board-choice", "card-choice", "preroll", "prompt-choice", "shop"]);
+const bigChoiceActionKinds = new Set(["board-choice", "card-choice", "move-farther", "move-reroll", "preroll", "prompt-choice", "shop"]);
 const shakeThreshold = 14;
 const shakeSettleMs = 420;
 

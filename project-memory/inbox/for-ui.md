@@ -4,6 +4,87 @@ For UI/UX and art-asset tasks related to "Очень Большая Бродил
 
 ## Open Items
 
+- DONE 2026-06-19 00:45 - Align settings reference card faces with in-game card layout:
+  - Owner: `Art / UI 2`.
+  - Status:
+    - Completed by `Art / UI 2`.
+    - Follow-up 2026-06-19 01:25: fixed nested coin/dice icon wrapping parity after user screenshot; settings card text now keeps icon amounts inline through the shared card-face CSS.
+    - Follow-up 2026-06-19 02:27: moved Event artifact icons below the fixed title row, kept titles plain text, and tightened long artifact cards on mobile.
+    - Handback sent to GD as context only.
+    - QA was not involved.
+  - Dispatch status: queued by GD at 2026-06-19 00:14; sent to Art/UI 2. QA is not involved unless the user explicitly asks.
+  - Context:
+    - User compared an in-game revealed card face with the same card in the settings reference and pointed out that the layouts differ.
+    - The in-game revealed card is the visual source of truth.
+    - Dev 1 already implemented full-size non-overlapping reference cards, but visual parity still needs Art/UI attention.
+  - Goal:
+    - Cards shown in settings under `Показать карты и поля` must visually match the same revealed cards in gameplay.
+    - Same proportions, text block position, font sizing, line breaks as close as possible, art placement, and card-face spacing.
+    - Keep the current non-overlap grid and small gaps between cards.
+  - Reference screenshots from user:
+    - In-game target layout: `/var/folders/yp/35z7sz997knfqcpjlg4nvv400000gn/T/codex-clipboard-82cab1f0-1235-4d0b-9962-bb5a3db3568d.png`
+    - Settings layout that differs: `/var/folders/yp/35z7sz997knfqcpjlg4nvv400000gn/T/codex-clipboard-9e80a203-98f8-4800-9e56-090824814895.png`
+  - Scope:
+    - Adjust visual/CSS/layout for settings reference card faces.
+    - It is okay to edit `styles.css`, and if absolutely needed tiny reference-rendering classes in `src/game.js`, but do not change game rules or card data.
+    - Good/Bad/Shop/TADAM/Event reference cards should all inherit the same visual metrics as their gameplay revealed-card counterparts.
+    - `Поля` reference can remain as-is unless its styles are accidentally affected.
+  - Important constraints:
+    - Do not change card configs, card text, art assets, deck lifecycle, gameplay reveal/apply behavior, phone controller behavior, settings values, or game rules.
+    - Reference cards remain informational only; clicking them must not trigger gameplay.
+    - Do not reintroduce overlap/clipping; cards must keep their own grid cells and visible gaps.
+    - Preserve unrelated local changes and untracked assets.
+  - Verification:
+    - `node --check src/game.js` if `src/game.js` is touched.
+    - `git diff --check`.
+    - Browser visual smoke if environment allows:
+      - open settings, toggle `Лавка Джо`, compare `buy-shop-card` style against in-game revealed card;
+      - text position/line wrapping/art placement should match the in-game card as closely as possible;
+      - spot-check `Хорошо`, `Плохо`, `Тадам!`, and `События`;
+      - cards do not overlap and remain full-size with small gaps;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Send GD context handback only; no QA gate.
+
+- DONE 2026-06-15 01:56 - Artifact icons for `Меч Героя` and `Анти-Плохо`:
+  - Owner: `Art / UI 2`.
+  - Status:
+    - Completed by `Art / UI 2`.
+    - Handback sent to GD as context only.
+    - QA was not involved.
+  - Dispatch status: assigned by GD at 2026-06-15 01:45; QA is not involved unless the user explicitly asks.
+  - Context:
+    - User requested 2 new Event cards that are artifacts.
+    - Current artifact contract: Event cards with `icon` metadata are persistent player artifacts.
+    - Dev 3 will implement after the current Event-card task and needs these exact PNGs.
+  - Expected assets:
+    - `assets/icons/artifact_hero_sword_512.png`
+    - `assets/icons/artifact_anti_bad_512.png`
+  - Format:
+    - Transparent PNG.
+    - 512x512.
+    - Clean readable silhouette for small artifact chips and Event card face icon.
+    - Match current fantasy board-game icon style and existing `assets/icons/artifact_magic_wallet_512.png`.
+  - Visual direction:
+    - `Меч Героя`: heroic enchanted sword, bright enough to read as a powerful combat artifact; avoid looking like an ordinary monster/weapon tile.
+    - `Анти-Плохо`: protective charm/ward against Bad cards, visually related to protection from `Плохо` but not identical to the Bad-card icon; readable as a defensive artifact.
+  - Constraints:
+    - Visual-only task.
+    - Do not change gameplay code, card configs, board placement, rules, or unrelated assets.
+    - Preserve unrelated local changes and untracked `outputs/`.
+  - Verification:
+    - Confirm both PNGs are 512x512 RGBA with transparency.
+    - Check they remain readable at small chip/card-icon size.
+    - `git diff --check`.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Send GD context handback only; no QA gate.
+
 - DONE 2026-06-09 02:14 - `Игра Джо` tile icon:
   - Owner: `Art / UI 2`.
   - Status:

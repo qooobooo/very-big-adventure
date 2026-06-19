@@ -4,6 +4,820 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-06-19 02:27 - Art/UI 2 context handback: Artifact icons under card title
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - User request:
+    - On cards like `Волшебный кошель`, `Меч Героя`, and `Анти-Плохо`, place the artifact icon under the title.
+    - Keep spacing clean.
+    - Respect the README rule: do not render dice/coin icons inside card titles.
+  - Completed:
+    - Moved optional card-face icons out of the `<strong class="card-face-title">` row into a separate centered `.card-face-icon` row below title.
+    - Kept the title row fixed so titles do not jump between cards.
+    - Let Event description lines inherit shared card-face typography, removing older Event-only font-size overrides that caused narrow-layout overflow.
+    - Tightened the long-card artifact icon row and gaps on mobile so `Волшебный кошель` fits at `390x844`.
+    - Bumped host CSS/JS cache keys to `20260619-0227`.
+  - Files changed by Art/UI 2:
+    - `src/game.js`
+    - `styles.css`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `git diff --check`
+  - Browser smoke:
+    - Loaded `http://127.0.0.1:5173/` for the updated card-face layout, then bumped host cache keys to `20260619-0227`.
+    - Opened settings reference sections `События` and `Плохо`.
+    - Verified `Волшебный кошель`, `Меч Героя`, and `Анти-Плохо`: icon row is below title, centered, and before description.
+    - Verified card titles contain no `img`, `.coin-icon`, or `.dice-icon`; `Кубик судьбы` and `Кубик неприятностей` remain plain text in title.
+    - Desktop and `390x844` mobile audit: no text/icon overflow and no browser console errors.
+  - Notes:
+    - UI/layout-only; no card configs/texts, gameplay rules, deck lifecycle, phone/controller behavior, balance, or art assets changed.
+    - This supersedes the earlier context note that said `Кубик` title text rendered as a dice icon; the current project rule is plain-text titles only.
+
+- 2026-06-19 02:05 - Dev 1 context handback: Joe Shop prompt centering
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - User request:
+    - Joe Shop card display drifted away from the board center; restore centered display.
+    - Offers can now sometimes show 3 Joe Shop cards, and those should also stay centered.
+  - Completed:
+    - Centered card action prompts with card-face reveals by making the prompt copy/stage occupy the available prompt width and center its contents.
+    - Updated Joe Shop reveal rows to `fit-content` + `margin-inline: auto` + centered wrapping flex layout.
+    - This keeps 2-card offers centered and lets 3-card offers center as one row when they fit or wrap centered on narrower screens.
+    - Bumped host CSS/JS cache keys to `20260619-0202`.
+  - Files changed by Dev 1:
+    - `styles.css`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+  - Browser smoke:
+    - Loaded `http://127.0.0.1:5173/` with `styles.css?v=20260619-0202`.
+    - Triggered a real 2-card `Лавка Джо` prompt via exact movement.
+    - Measured board center, map center, toast center, and card-row center all at `350px`.
+    - Browser console error check after smoke: no errors.
+  - Notes:
+    - No Shop card data, rules, deck lifecycle, card behavior, dice, phones, route, or balance were changed.
+    - The 3-card offer case is covered by the same centered/wrapping row CSS; no forced 3-card runtime prompt was used in browser smoke.
+
+- 2026-06-19 01:56 - Art/UI 2 context handback: Titles on all revealed card faces
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - User request:
+    - Add `title` to all card faces like Event cards.
+    - Keep layout attractive with clean spacing, no overlap, and make title stay in one fixed position instead of jumping from card to card.
+  - Completed:
+    - Added visible titles to revealed Good, Bad, TADAM, and Shop card faces from existing artistic card `title` values.
+    - Kept Event title/body structure and connected it to shared `card-face-title` / `card-face-description` classes.
+    - Added a shared card-face text renderer that uses `title || shortTitle || deck fallback` for title and only body fields for the description.
+    - Reworked card-face layout so title is in a fixed top grid row; dense/long variants shrink type and gaps but do not move title vertically.
+    - Bumped host CSS/JS cache keys to `20260619-0156`.
+    - Added a fixed-title-position rule to `project-memory/README.md`.
+  - Files changed by Art/UI 2:
+    - `src/game.js`
+    - `styles.css`
+    - `index.html`
+    - `project-memory/README.md`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `git diff --check`
+  - Browser smoke:
+    - Loaded `http://127.0.0.1:5173/` with `styles.css?v=20260619-0156` and `game.js?v=20260619-0156`.
+    - Desktop settings reference: Good/Bad/Shop/TADAM/Event all showed titles, no overflow, no missing titles, reference cards inert, fixed title Y `130px`.
+    - Long-card spot checks passed: `Торговый перехват`, `Разворот`, `Реванш монстра`, `Закрытая лавка`, `Дуэль на клетке`, `Темная взятка`, `Переброс маршрута`, `Перетасовка Лавки`, `Волшебный кошель`.
+    - Mobile `390x844`: all reference decks kept fixed title Y `72px`, no overflow.
+  - Notes:
+    - No card configs/texts, gameplay rules, deck lifecycle, phone controller behavior, settings values, or art assets were intentionally changed.
+    - `Кубик неприятностей` keeps the Event-style title iconization: `Кубик` renders as the dice icon, so text extraction shows only `неприятностей`.
+
+- 2026-06-19 01:43 - Dev 3 context handback: Joe Shop copy counts
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE SHOP COUNTS 2026-06-19 01:39 - Update Joe Shop card copy counts`.
+  - Completed:
+    - Updated only `count` values for all 15 `Лавка Джо` cards.
+    - Synced `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `shop`.
+    - New physical Shop deck total is `60`.
+    - Left current artistic titles, shortTitles, descriptions, effects, ids, order, rules, UI, and assets unchanged.
+  - Final counts:
+    - `battle-plus`: `8`.
+    - `step-plus`: `8`.
+    - `green-fields-plus5`: `6`.
+    - `monster-strength-plus3`: `4`.
+    - `pre-roll-step-plus5`: `4`.
+    - `monster-bribe-plus1`: `3`.
+    - `duplicate-dice-reward`: `3`.
+    - `tadam-income`: `3`.
+    - `shop-choice-3-cost-3`: `3`.
+    - `shop-unlimited-buy`: `3`.
+    - `turn-strength-buy`: `3`.
+    - `turn-steps-buy`: `3`.
+    - `start-strength`: `3`.
+    - `reroll-one-move-die`: `3`.
+    - `move-one-farther`: `3`.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - Google Sheet `Cards Config` / `shop`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static local config and CSV readback: required Shop counts exactly match the task and total `60`.
+    - Google Sheet readback `shop!A1:N20`: required Shop counts exactly match the task and total `60`.
+
+- 2026-06-19 01:38 - Art/UI 2 context handback: Black Market icon redraw
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - User request:
+    - Redraw the `Черный рынок` icon in the game style, with minimum elements, readable on a small screen, no purple color.
+    - Good style/readability references: `Большой привал`, `Очень плохо`, `Портал хаоса`.
+  - Completed:
+    - Replaced the active `assets/icons/black_market_ultra_simple_512.png` with a new market-stall icon: dark stall, large gold coin, bundled item for sale.
+    - Kept the composition simple and high-contrast for small board cells.
+    - Avoided purple/violet/magenta/blue palette; used black cloth, warm wood, gold, and amber.
+    - Bumped `blackMarketIconSrc` cache key in `src/game.js` to `20260619-0138`.
+  - Files changed by Art/UI 2:
+    - `assets/icons/black_market_ultra_simple_512.png` — 512x512 PNG RGBA, transparent, status: `wired`.
+    - `src/game.js`
+    - `outputs/black_market_redraw_chroma_512.png`
+    - `outputs/black_market_redraw_alpha_512.png`
+    - `outputs/black_market_redraw_final_512.png`
+    - `outputs/black_market_redraw_small_preview.png`
+    - `outputs/black_market_before_redraw_20260619_0128.png`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - Final active PNG: `512x512 RGBA`, transparent corners, alpha bbox `(27, 25, 485, 487)`.
+    - Pixel audit: `0` purple-like pixels, `0` chroma-green pixels.
+    - `node --check src/game.js`
+    - `git diff --check`
+  - Notes:
+    - Visual/cache-only pass; no gameplay rules, card data, balance, or controller behavior changed.
+
+- 2026-06-19 01:26 - Dev 3 context handback: Artistic card titles
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE CARD TITLES 2026-06-19 01:15 - Add artistic titles where titles are still effect text`.
+  - Completed:
+    - Updated GD-provided artistic `title` values for 61 Good, Bad, TADAM, and Shop cards.
+    - Synced `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` tabs `good`, `bad`, `tadam`, and `shop`.
+    - Left Event card titles unchanged.
+    - Left descriptions, effects, counts, ids, deck membership, icons, rules, and behavior unchanged.
+    - Left existing compact Shop `shortTitle` values unchanged because they are not old long rule-title duplicates.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - Google Sheet `Cards Config` / `good`, `bad`, `tadam`, `shop`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static local config readback: 61 expected titles and no final periods in `title`, `shortTitle`, or `description`.
+    - Static CSV readback: 61 expected titles and no final periods in `title`, `shortTitle`, or `description`.
+    - Google Sheet readback passed for all updated tabs.
+  - Browser smoke:
+    - Not completed in this environment: local server bind is sandbox-denied and `file://` navigation is blocked by Browser policy.
+
+- 2026-06-19 01:25 - Art/UI 2 context handback: Card text icon parity follow-up
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - User feedback:
+    - Settings reference cards still differed from gameplay: a Good card split `Получи 8🪙.` into a broken order in the reference card.
+  - Completed:
+    - Fixed the shared card-face CSS so nested `.coin-amount`, `.dice-amount`, and `.card-text-nowrap` wrappers stay inline inside `.card-face-stage`.
+    - Changed Good/Bad/TADAM/Shop/Event card text line rules to target only direct child line spans instead of every descendant `span`.
+    - Bumped host CSS cache key to `20260619-0122`.
+    - Added the direct-child/inline-icon rule to `project-memory/README.md` so future new cards keep settings/gameplay layout parity without manual reference tuning.
+  - Files changed by Art/UI 2:
+    - `styles.css`
+    - `index.html`
+    - `project-memory/README.md`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `git diff --check`
+  - Browser smoke:
+    - Loaded `http://127.0.0.1:5173/`.
+    - Target Good card `Получи 8...15` in settings now renders with `Получи 8🪙.` intact on the first visual line and 2 total visual lines.
+    - All toggled reference decks (`Хорошо`, `Плохо`, `Лавка Джо`, `Тадам!`, `События`) kept card-face coin/dice amounts inline and reference buttons inert.
+  - Notes:
+    - No card configs/texts, gameplay rules, deck lifecycle, phone controller behavior, settings values, or art assets were intentionally changed.
+
+- 2026-06-19 01:16 - Dev 3 context handback: Post-roll Joe Shop cards and movement target highlight
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE SHOP CARDS 2026-06-19 01:06 - Add 2 post-roll Joe Shop cards and movement target highlight`.
+  - Completed:
+    - Added `reroll-one-move-die` and `move-one-farther` to `Лавка Джо`, both `count: 2`.
+    - Synced `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `shop`.
+    - Updated Shop physical total to `40`.
+    - Implemented `reroll-one-move-die` as owner-turn-only post-movement-roll action:
+      - active face-up owned copies only;
+      - each copy can be used once per owner turn;
+      - pay `3` coins and choose one movement die to reroll;
+      - reroll happens before `Контроль кубика`, duplicate-dice reward, and movement.
+    - Implemented `move-one-farther` as owner-turn-only post-roll movement action:
+      - active face-up owned copies only;
+      - each copy can be used once per owner turn;
+      - pay `3` coins to add `+1` step after rerolls/dice control/duplicate rewards are finalized and before movement starts.
+    - Added host turn-action UI and phone controller actions for both post-roll choices.
+    - Added bot heuristics for buying/using both new cards.
+    - Added two-color target-cell overlays during `move-one-farther` choice:
+      - blue/cyan for `Без карты`;
+      - gold for `С картой +1`;
+      - combined outline if both targets are the same.
+    - Target highlights clear when the choice resolves because pending state is cleared and tile overlays rerender.
+    - Bumped host/controller CSS/JS cache keys to `20260619-0116`.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`
+    - `src/game.js`
+    - `src/controller.js`
+    - `cards-google-sheet.csv`
+    - `index.html`
+    - `controller.html`
+    - `styles.css`
+    - Google Sheet `Cards Config` / `shop`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static local config/CSV readback: 15 Shop rows, total count `40`, both new ids present with `count: 2`, no final periods.
+    - Google Sheet readback `shop!A1:N18`: 15 Shop rows, both new cards present with `count: 2`, total count `40`.
+  - Browser smoke:
+    - Not completed in this environment: local server bind is sandbox-denied and Browser policy blocks `file://` navigation.
+
+- 2026-06-19 01:10 - Art/UI 2 context handback: Guaranteed settings/gameplay card-face parity
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - User request:
+    - Cards still differed between gameplay and settings.
+    - Make layout guaranteed to match and make future new cards appear in settings with full layout parity automatically.
+  - Completed:
+    - Added shared `cardFaceStageMarkup(...)` wrapper for card faces.
+    - Added `cardFaceMarkupForDeck(...)` as the single deck-to-card-face renderer used by settings reference cards.
+    - Updated gameplay Good/Bad/Shop/TADAM/Event reveal prompts and Shop choice prompts to use the same shared card-face stage.
+    - Updated settings reference deck rendering to use the same shared card-face path, with inert buttons only for click safety.
+    - Moved card-face sizing into shared CSS variables `--card-face-width` and `--card-face-gap`.
+    - Changed reference card grid sizing to derive from the shared card-face width, removing reference-only card-face sizing.
+    - Added a project rule in `project-memory/README.md`: no reference-only card-face layout/sizing; new cards in existing decks should enter settings via the shared renderer automatically.
+    - Bumped host CSS/JS cache keys to `20260619-0110`.
+  - Files changed by Art/UI 2:
+    - `src/game.js`
+    - `styles.css`
+    - `index.html`
+    - `project-memory/README.md`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `git diff --check`
+  - Browser smoke:
+    - Loaded `http://127.0.0.1:5173/` with `styles.css?v=20260619-0110` and `game.js?v=20260619-0110`.
+    - `Лавка Джо` reference: 15 cards, shared `.card-face-stage`, inert buttons, card/stage width `218px`, no console errors.
+    - Screenshot target Good-card text case was found in `Хорошо` reference: shared `.card-face-stage`, inert buttons, card/stage width `218px`, no console errors.
+  - Notes:
+    - No card configs/texts, gameplay rules, deck lifecycle, phone controller behavior, settings values, or art assets were intentionally changed.
+    - Recovery note: a malformed local search command clobbered `src/game.js` during this pass. The file was restored by replaying 88 post-HEAD `src/game.js` patch diffs from local Codex session logs onto `HEAD:src/game.js`; the restored file has `11806` lines, keeps the Dev 3 `cards.config.js?v=20260619-0105` import, and passed `node --check src/game.js`.
+
+- 2026-06-19 01:00 - Dev 3 context handback: Joe Shop deck replacement
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE SHOP DECK 2026-06-19 00:39 - Replace Joe Shop deck with new 36-card list`.
+  - Completed:
+    - Replaced playable `Лавка Джо` deck with 13 card ids / 36 physical copies.
+    - Synced `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `shop`.
+    - Removed old playable `coin-plus` / `passive-coin-bonus` and `extra-die` / `optional-extra-die` from card data.
+    - Neutralized stale runtime hooks for old receive-coin and extra-die effects so they no longer affect gameplay if stale cards remain in state.
+    - Implemented new Shop hooks:
+      - passive `+1` strength and `+2` steps with updated counts;
+      - green fields give owner extra `+5` coins;
+      - owner may pay `5` before individual monster roll for `+3` strength;
+      - owner may pay `5` before movement roll for `+5` steps this turn;
+      - other players may repeatedly pay `3` before another player's individual monster fight to add `+1` monster strength, with active fighter excluded;
+      - duplicate movement dice let owner choose `+5` coins or `+5` forward steps;
+      - owners gain `3` coins when any TADAM card is played;
+      - ordinary Joe Shop can offer 3 cards for fixed 3 coins;
+      - ordinary Joe Shop can allow repeated purchases until decline/no coins/no offers;
+      - once per owner turn, pre-roll permanent `+1` strength for `10` coins or `+2` steps for `10` coins;
+      - returning/landing on Start during play grants permanent `+1` strength per active copy.
+    - Kept Shop offer/count/cost modifiers scoped to ordinary Joe Shop, not Auction, Black Market, or free Shop rewards.
+    - Bumped host `game.js` and card config cache keys to `20260619-0105`.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`
+    - `src/game.js`
+    - `cards-google-sheet.csv`
+    - `index.html`
+    - Google Sheet `Cards Config` / `shop`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static local config/CSV readback: 13 Shop rows, total count `36`, no final periods, no stale `coin-plus` / `extra-die`.
+    - Google Sheet readback `shop!A1:N16`: 13 new Shop rows present; old playable rows cleared.
+  - Browser smoke:
+    - Not completed in this environment: sandbox denied binding a local HTTP server, and Browser policy blocked `file://` navigation.
+
+- 2026-06-19 00:45 - Art/UI 2 context handback: Settings reference card face alignment
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE ART/UI 2026-06-19 00:14 - Align settings reference card faces with in-game card layout`.
+  - Completed:
+    - Adjusted settings reference card CSS so `Хорошо`, `Плохо`, `Лавка Джо`, `Тадам!`, and `События` reuse the same revealed-card width metric as gameplay.
+    - Stopped reference cells from stretching or compressing card faces, which keeps text block width, wrapping, art placement, and inner spacing closer to the in-game revealed card.
+    - Kept the full-size non-overlapping reference grid with small gaps and normal-flow `xN` badges.
+    - Kept `Поля` reference unchanged.
+    - Bumped the host CSS cache key to `20260619-0045`.
+    - Did not change card configs, card text, art assets, gameplay rules, reveal/apply behavior, phone controller behavior, or settings values.
+  - Files changed by Art/UI 2:
+    - `index.html`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `git diff --check`
+  - Browser smoke:
+    - Not completed in this session: Playwright Chromium is missing from the local cache, so browser launch failed before visual inspection.
+    - `src/game.js` was not touched, so `node --check src/game.js` was not required for this pass.
+
+- 2026-06-19 00:08 - Dev 1 context handback: Full-size settings reference cards and green/red field previews
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE SETTINGS REFERENCE REWORK 2026-06-18 23:58 - Full-size non-overlapping card reference`, including the 2026-06-19 00:01 follow-up.
+  - Completed:
+    - Reworked `Показать карты и поля` card sections so `Хорошо`, `Плохо`, `Лавка Джо`, `Тадам!`, and `События` render full-size revealed gameplay card faces instead of compact thumbnails.
+    - Removed the reference-specific thumbnail sizing; reference cards now keep full card proportions and get their own grid cells with 16px gaps.
+    - Moved `xN` count badges into normal flow above each card face so they remain visible without covering card text.
+    - Kept reference cards informational only; they are not wired to draw/reveal/apply/discard actions.
+    - Kept `Поля` as a field-type reference, not card faces and not coordinates.
+    - Added green/red field previews using board tile classes (`tile-green` / `tile-red`).
+    - Fixed green/red effect rendering so coin markup renders as coin icons/text instead of visible raw `<span ...>` HTML.
+    - Bumped host CSS/JS cache keys to `20260619-0002`.
+  - Files changed by Dev 1:
+    - `index.html`
+    - `src/game.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+  - Browser smoke:
+    - Loaded `http://127.0.0.1:5173/` with `styles.css?v=20260619-0002` and `game.js?v=20260619-0002`.
+    - Desktop: Good/Bad/Shop/TADAM/Event cards render as full-size 218px-wide revealed cards, 4 per row, with 16px visible gaps and no horizontal/vertical overlap.
+    - Desktop: `xN` badges are visible and do not overlap card faces.
+    - Mobile 390x844: Good reference wraps to 1 column, card face is 158x221, rows are tall enough, page scrolls vertically, and there are no overlaps.
+    - `Поля`: 19 unique field types, no coordinate list; green/red rows have tile previews, rendered coin icons, and no raw HTML text.
+    - Click safety: clicking a reference card keeps the action popup hidden, does not add log entries, and does not change visible reference state.
+    - Console errors: none.
+
+- 2026-06-18 23:49 - Dev 1 context handback: Settings phone toggle and visual reference cards
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Tasks:
+    - `ACTIVE SETTINGS UI FOLLOW-UP 2026-06-18 23:45 - Move phone mode toggle beside walk-path toggle`.
+    - `ACTIVE SETTINGS REFERENCE VISUALS 2026-06-18 23:48 - Show cards as card images in settings reference`.
+  - Completed:
+    - Moved `Играть с телефонами` into the right-hand slot beside `Показывать контур хода`.
+    - Kept `Показать карты и поля` below that row.
+    - Preserved the same `#usePhoneControllers` input, phone room panel, phone controls, and JS listeners.
+    - Changed card reference sections from text-only rows to compact revealed card faces/thumbnails.
+    - Reused existing gameplay card face helpers for `Хорошо`, `Плохо`, `Лавка Джо`, `Тадам!`, and `События`.
+    - Kept `xN` count as a small badge on each reference card.
+    - Event artifact icons render through the existing Event card face markup.
+    - Reference card thumbnails are informational only; they are not wired to draw/reveal/apply/discard behavior.
+    - Kept `Поля` as the existing unique field-type reference with no coordinate list.
+  - Files changed by Dev 1:
+    - `index.html`
+    - `src/game.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+  - Browser smoke:
+    - Loaded `http://127.0.0.1:5173/`.
+    - Confirmed `Играть с телефонами` is to the right of `Показывать контур хода`, while `Показать карты и поля` remains below.
+    - Confirmed `Играть с телефонами` still shows/hides phone room controls.
+    - Confirmed all card reference categories render revealed card faces/thumbnails, not text-only rows.
+    - Confirmed Good/Bad/Shop/TADAM/Event sections have card previews and `xN` badges; Event artifact icons render.
+    - Confirmed clicking a reference thumbnail leaves the card/action popup hidden, does not add log entries, and does not change visible reference state.
+    - Confirmed `Поля` still shows 19 unique field types and no coordinate list.
+    - Console errors: none.
+
+- 2026-06-18 23:31 - Dev 1 context handback: Settings card and field reference block
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE SETTINGS REFERENCE 2026-06-18 23:23 - Add card and field reference block`.
+  - Completed:
+    - Added a new settings block `Показать карты и поля`.
+    - Added independent toggle buttons for `Хорошо`, `Плохо`, `Лавка Джо`, `Тадам!`, `События`, and `Поля`.
+    - Active buttons now highlight and switch `aria-pressed` between `true` and `false`; repeated clicks hide the same section, and multiple sections can stay open.
+    - Added `#referencePanel` between settings and `Хроника`; it hides when nothing is selected and visually matches Chronicle/log panel width.
+    - Card sections render unique configured cards from `cardConfig`, with title, player-facing text, `xN`, and Event artifact icons when present.
+    - `Поля` renders unique field types only, including base/special fields and existing field icons where available.
+    - Bumped host CSS/JS cache keys to `20260618-2323`.
+  - Files changed by Dev 1:
+    - `index.html`
+    - `src/game.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+  - Browser smoke:
+    - Loaded `http://127.0.0.1:5173/`.
+    - Confirmed the settings block appears; toggles open/close independently; active highlight and `aria-pressed` are correct; multiple categories can stay open; reference panel sits before `Хроника` and width-matches it.
+    - Confirmed card lists show title/text/`xN`, Event artifact icons render, and `Поля` shows 19 unique field types with no coordinate list.
+    - Console errors: none.
+
+- 2026-06-18 23:29 - Dev 3 context handback: Active player token animation during turn choices
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `WAITING ACTIVE TOKEN UI 2026-06-18 23:25 - Keep active player token animation during all turn choices`.
+  - Completed:
+    - Updated `isPlayerTurnActive(player)` so pending turn-choice states no longer remove `turn-active` from the active player's map token.
+    - The active token now remains eligible for `.map-token.turn-active:not(.moving)` during pending pre-roll/card/choice/dice-control/shop decision states.
+    - Preserved the final battle guard so normal active-turn token animation stays suppressed while final battle current-roller/highlight logic is active.
+    - Did not change rules, prompts, movement, dice results, bot behavior, score-card highlights, or settings/reference UI.
+    - Dev 1's settings reference UI changes were already present in the working tree; Dev 3 preserved them and did not touch the reference panel code/styles.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+    - Static/source check: `isPlayerTurnActive(...)` no longer references `pendingPreRoll`, `pendingDiceControl`, `pendingShop`, `pendingChoice`, or `pendingCardChoice`, while keeping active-player, finished-state, and final-battle checks.
+  - Browser smoke:
+    - Loaded `http://127.0.0.1:5173/`.
+    - Observed `game.js?v=20260618-2323`, 225 board tiles, 2 score cards, roll button present, and one active `.map-token.turn-active` for the active player.
+    - Console errors: none.
+    - Forced scenario smoke for extra-die, dice-control, Shop, portal/path choice, movement, and final battle was not run.
+
+- 2026-06-18 23:03 - Dev 1 context handback: Settings UI modifier order and block swap
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE SETTINGS UI 2026-06-18 22:59 - Reorder modifier presets and swap settings blocks`.
+  - Completed:
+    - Reordered `Шаги` modifier buttons to `-5`, `+5`, `-50`, `+50`.
+    - Reordered `Сила` modifier buttons to `-5`, `+5`, `-50`, `+50`.
+    - Moved `Пройти` input + `Идти` button above the modifier rows, into the former top settings position.
+    - Moved `Поле` and `UI` selects lower, into the former exact-move area before `Сила монстров`.
+    - Kept existing ids, data attributes, button values, and control options unchanged.
+  - Files changed by Dev 1:
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+    - Browser smoke on `http://127.0.0.1:5173/`: settings panel opened, order/block placement matched the task, console errors: none.
+
+- 2026-06-15 02:18 - Dev 3 context handback: Event artifacts `Меч Героя` and `Анти-Плохо`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE EVENT ARTIFACTS 2026-06-15 02:07 - Add Меч Героя and Анти-Плохо`.
+  - Completed:
+    - Added Event cards `hero-sword` / `Меч Героя` and `anti-bad` / `Анти-Плохо`, both `count: 1`, with icon metadata.
+    - Synced `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `event!A20:N21`.
+    - `Меч Героя` draw flow: active player fights monster strength 6 with exactly 1 die plus current battle-force bonuses; win grants the artifact and keeps the Event card out of Event discard; loss discards normally.
+    - `Меч Героя` passive: each rolled 6 by owner gives +3 force per six in monster fights, final monster door, VS, final boss PvP, same-cell duel, and team/shared Event battles.
+    - `Анти-Плохо` draw flow: poorest player is selected via existing lowest-coins tie-break; human chooses exact 2 face-up Shop cards; bot pays the least valuable 2; paid cards are removed from inventory only and not returned to Shop deck/discard.
+    - `Анти-Плохо` passive: ordinary `Плохо` field gives owner 5 coins instead of drawing Bad; `Очень Плохо` and Bad draws from other card/event sources are unchanged.
+    - Artifact chips render through the existing `playerArtifacts(...)` path for host score/status and phone snapshots.
+    - Persistent Event artifact discard logic now keeps new icon artifacts out of discard only after successful acquisition; failure/refusal discards normally.
+    - Bumped host/card config cache keys to `20260615-0207`.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source checks for `resolveEventHeroSword`, `resolveEventAntiBad`, `heroSwordCombatBonus`, `resolveAntiBadFieldReplacement`, and preserved `monster-bribe` active-fighter exclusion.
+    - Static local readback: config/CSV show both Event artifacts with `count: 1`, icon paths, exact descriptions, and no final periods.
+    - Google Sheet readback: `event!A20:N21` shows both Event artifacts with `count: 1`, icon paths in notes, and exact descriptions.
+  - Browser smoke:
+    - Loaded `http://127.0.0.1:5173/` after reload.
+    - Observed `game.js?v=20260615-0207`, 225 board tiles, 2 player score cards, roll button and new game button present.
+    - Console errors: none.
+    - Full forced scenarios for artifact win/loss/payment/refusal/ordinary Bad field replacement were not run.
+
+- 2026-06-15 02:03 - Dev 3 context handback: Monster Bribe excludes active fighter
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE TADAM REWORK 2026-06-15 01:59 - Monster Bribe excludes active fighter`.
+  - Completed:
+    - Updated `resolveMonsterBribes(player, door, baseStrength)` so payment prompts are only offered to other human players with enough coins.
+    - Active fighter is excluded by `participant.id !== player.id` and never sees a `Подкуп монстра` pay/skip prompt for their own monster battle.
+    - If no other human player can pay, the function resolves without prompts and without strength bonus.
+    - Preserved stacking: every active `monster-bribe` copy can still trigger.
+    - Preserved 2-player rule: each payment still gives monster `+2`.
+    - Bots still auto-decline by staying out of human prompts.
+    - Updated `tadam/monster-bribe` title and description to exactly `Перед битвой с монстром другие игроки могут заплатить 3 монеты: монстр +1 к силе`.
+    - Synced local `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `tadam!A20:N20`.
+    - Bumped host/card config cache keys to `20260615-0159`.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source check: `resolveMonsterBribes` excludes the active fighter.
+    - Static local readback: id/effect/count/cost/amount unchanged and exact new text present.
+    - Google Sheet readback: `tadam!A20:N20` shows exact new text, id `monster-bribe`, effect `monster-bribe`, amount `1`, cost `3`, count `2`.
+  - Browser smoke:
+    - Loaded `http://127.0.0.1:5173/` after reload.
+    - Observed `game.js?v=20260615-0159`, 225 board tiles, 2 player score cards, roll button present.
+    - Console errors: none.
+    - Forced prompt scenario for active fighter/other payer/2-player +2 was not run.
+  - Next:
+    - `WAITING EVENT ARTIFACTS 2026-06-15 01:45 - Add Меч Героя and Анти-Плохо` can be started next; Art/UI 2 icon files are present.
+
+- 2026-06-15 01:56 - Art/UI 2 context handback: artifact icons for `Меч Героя` and `Анти-Плохо`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE ART/UI 2026-06-15 01:45 - Artifact icons for Меч Героя and Анти-Плохо`.
+  - Completed:
+    - Created `assets/icons/artifact_hero_sword_512.png`.
+    - Created `assets/icons/artifact_anti_bad_512.png`.
+    - `Меч Героя`: enchanted heroic sword with silver blade, gold guard, blue gem, and magic aura.
+    - `Анти-Плохо`: protective purple-gold ward/amulet blocking a dark cursed card silhouette, visually related to Bad protection without copying the existing `Плохо` chest icon.
+    - Added combined readability preview `outputs/artifact-icons-0615-preview.png`.
+  - Asset status:
+    - visual-only / not wired.
+  - Checks passed:
+    - Both PNGs are 512x512 RGBA with transparent corners.
+    - Small chip/card-face preview.
+    - `git diff --check`.
+  - Notes:
+    - Art/UI 2 did not change gameplay code, card config, board placement, rules, or unrelated assets.
+    - Dev 3 can use these exact PNG paths for the waiting artifact implementation task.
+
+- 2026-06-15 01:55 - Dev 1 context handback: Poorest start coins to 3
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE TADAM TEXT/BALANCE 2026-06-15 01:53 - Poorest start coins to 3`.
+  - Completed:
+    - Updated `tadam/poorest-start-coins` title and description to exactly `Игрок с наименьшим количеством монет в начале хода получает 3 монеты`.
+    - Changed effect amount/runtime amount from `5` to `3`.
+    - Kept id `poorest-start-coins`, effect type `poorest-start-coins`, and count `2`.
+    - Synced Google Sheet `Cards Config` / `tadam!A11:N11`, local `src/cards.config.js`, and local `cards-google-sheet.csv`.
+    - Bumped `src/game.js` card config import cache key and host script cache key to `20260615-0153`.
+  - Files changed by Dev 1:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static local readback: config/CSV show amount `3`, count `2`, exact text.
+    - Google Sheet readback: `tadam!A11:N11` shows amount `3`, count `2`, exact text.
+  - Not run:
+    - Browser forced scenario smoke; this was a data/balance text change and the existing Wave 2 hook reads `effect.amount`.
+
+- 2026-06-15 01:47 - Dev 3 context handback: Event Cards 4-card pack
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE EVENT CARDS 2026-06-15 01:40 - Add 4 new Event cards`.
+  - Completed:
+    - Added 4 Event cards to local config, CSV, and Google Sheet `Cards Config` / `event!A16:N19`.
+    - Cards: `golden-markers`, `rich-tax`, `monster-banner`, `winner-takes-all`; all have `count: 2`, no artifact icons, and no final periods.
+    - `golden-markers`: places 5 visible route-cell coin markers; human player uses existing field-preview/card-choice UI, bot chooses forward route cells; marker collection gives 10 coins before the normal landed field effect and removes the marker; markers clear on new game.
+    - `rich-tax`: resolves players from the active player; players with `20+` coins draw/resolve one `Плохо`, others gain 5 coins.
+    - `monster-banner`: stays with owner as visible Event status; active copies stack `+2` to ordinary/final monster door strength; owner victory over an individual monster/final monster door draws `Хорошо`, then the Event card goes to Event discard.
+    - `winner-takes-all`: all players manually roll 1d6 + current step bonuses; tied leaders reroll until one winner; winner receives `Хорошо`, one free `Лавка Джо`, then `ТАДАМ`.
+    - Added board coin marker styling and player Event status badge styling.
+    - Preserved Dev 1 TADAM Wave 2 shared hooks in `src/game.js`.
+    - Fixed the parallel-work browser error noted by Dev 1: `goldenMarkerCells` now exists and local reload has no console errors.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `styles.css`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static local readback: all 4 Event ids exist with `count: 2`; no final periods in player-facing text.
+    - Google Sheet readback: `event!A16:N19` contains the 4 new Event rows with `count: 2`.
+  - Browser smoke:
+    - Loaded `http://127.0.0.1:5173/` after reload.
+    - Observed `game.js?v=20260615-0142`, `styles.css?v=20260615-0142`, 225 board tiles, 2 player score cards, roll button present.
+    - Console errors: none.
+    - Full forced scenario smoke for every new Event branch was not run.
+  - Next queued task:
+    - `WAITING EVENT ARTIFACTS 2026-06-15 01:45 - Add Меч Героя and Анти-Плохо` remains waiting.
+    - Checked filesystem: `assets/icons/artifact_hero_sword_512.png` and `assets/icons/artifact_anti_bad_512.png` are not present yet, so Dev 3 did not start artifact implementation.
+
+- 2026-06-15 01:42 - Dev 1 context handback: TADAM Pack Wave 2 non-battle hooks
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE TADAM PACK WAVE 2 2026-06-15 01:36 - Non-battle TADAM hooks after Dev 3`.
+  - Completed:
+    - Implemented `last-good-start`: at the start of turn, any player tied for last by route draws one `Хорошо` per active copy.
+    - Implemented `poorest-start-coins`: at the start of turn, any player tied for fewest coins gains stacked coin amount.
+    - Implemented `last-step-plus`: at the start of turn, any player tied for last by route gets stacked turn-only step bonus before ordinary pre-roll actions.
+    - Start-of-turn eligibility is snapshotted before those TADAM effects resolve, so a Good draw/coin gain in the same start-turn package does not remove eligibility for the other start-turn effects.
+    - Implemented `shop-discount` / `shop-surcharge`: ordinary Joe Shop price is `5 + stacked modifiers`, minimum `0`.
+    - Joe Auction, Black Market, face-down Shop buyback, and player-to-player Shop purchases keep their existing prices.
+    - Host and phone pending Shop labels use the modified ordinary Joe Shop price.
+    - Implemented `portal-bad`: after ordinary open-portal movement and after `Портал хаоса`, player draws one `Плохо` per active copy.
+    - `Портальный обмен` is not hooked as portal movement.
+    - Implemented `green-extra-coins` and `red-extra-loss`: base green/red coin effects get stacked extra coin gain/loss, and field labels reflect the current total.
+    - Implemented `good-cashout`: after revealing a `Хорошо` card, player chooses to apply it normally or discard it for stacked coins.
+    - Implemented `bad-consolation`: after resolving each `Плохо` card, player gains stacked consolation coins.
+    - Bumped host script cache key to `20260615-0142`.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source checks: all Wave 2 TADAM ids are present in local config/CSV and have runtime hooks.
+  - Browser smoke:
+    - Loaded a local Wave 2 build at `http://localhost:5173`, board and roll button present.
+    - The dev-log capture surfaced a `ReferenceError: goldenMarkerCells is not defined` during parallel Dev 3 Event-pack work, so I did not count this as a clean no-console/full scenario browser verification for Wave 2.
+  - Coordination / overlap:
+    - Dev 1 edited `src/game.js`, which Dev 3 is also touching for the active Event pack.
+    - Dev 1 did not edit Event card data, `src/cards.config.js`, or `cards-google-sheet.csv`.
+
+- 2026-06-15 01:36 - Dev 3 context handback: TADAM Pack Wave 1 data + battle hooks
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE TADAM PACK WAVE 1 2026-06-15 01:04 - Add 13 TADAM cards and battle hooks`.
+  - Completed:
+    - Added all 13 new TADAM cards to `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `tadam!A9:N21`.
+    - Preserved `tadam/monster-hunt` balance from the previous Dev 3 task: amount `10`, description `За победу над монстром игрок получает 10 монет`.
+    - All 13 new cards have `count: 2` and no final periods in player-facing title/description.
+    - Implemented `same-cell-duel`: active copies stack; battle triggers after stopping and before landed cell effect; target ties use existing die selector; winner chooses up to 10 coins or one face-up Shop card; old `land-steal` still resolves after the landed cell effect.
+    - Implemented `monster-bribe`: active copies stack; before individual monster/final monster door roll, each human player may pay `3`; each payment adds `+1` monster strength or `+2` in 2-player games; bots auto-decline; team/shared battles, VS, and final boss PvP are not affected.
+    - Implemented `rich-weakness` through shared `playerCombatBonus(...)`: each active copy gives `-2` force to players with `20+` coins across monster fights, final monster, final boss, VS, and team/shared battle rolls.
+    - Bumped `src/game.js` import cache for `cards.config.js` and host `index.html` game script cache to `20260615-0104`.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Google Sheet:
+    - Spreadsheet: `Cards Config`
+    - Tab/ranges: `tadam!A8:N21`
+    - Readback confirmed `monster-hunt` remains amount `10`.
+    - Readback confirmed all 13 new TADAM rows are present with `count: 2`.
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check -- src/game.js src/cards.config.js cards-google-sheet.csv index.html project-memory/updates.md project-memory/inbox/for-dev.md project-memory/inbox/for-gd.md`
+    - CSV parse check: all rows have 14 columns.
+    - Static config/CSV check: all 13 new card ids exist with `count: 2`; no final period in title/description.
+    - Static source check: `resolveSameCellDuels`, `resolveMonsterBribes`, and `richWeaknessPenalty` are present and wired.
+  - Not run:
+    - Browser smoke/manual same-cell duel, monster bribe, rich weakness scenarios; local server binding is blocked in this sandbox with `EPERM`.
+  - Notes:
+    - Dev 1 Wave 2 can now start from the ready inbox item: `READY TADAM PACK WAVE 2 2026-06-15 01:36 - Non-battle TADAM hooks after Dev 3`.
+    - Dev 2 is not involved.
+    - Active TADAM limit, deck/discard lifecycle, card face assets/layout, VS field rules, team battle rules, and final boss PvP rules were not intentionally changed beyond `rich-weakness` applying through shared battle force.
+
+- 2026-06-15 00:52 - Dev 3 context handback: TADAM monster victory reward 10
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE TADAM BALANCE 2026-06-15 00:39 - Monster victory reward 15 to 10`.
+  - Completed:
+    - Updated `tadam/monster-hunt` player-facing description to exactly `За победу над монстром игрок получает 10 монет`.
+    - Changed `monster-win-coins` effect amount from `15` to `10`.
+    - Runtime already awards this TADAM through `effect.amount`, so monster victory reward from active `monster-hunt` is now `10`.
+    - Synced local `src/cards.config.js`, local `cards-google-sheet.csv`, and Google Sheet `Cards Config` tab `tadam`, row `8`.
+    - Kept id `monster-hunt`, title `Охота на монстра`, effect type `monster-win-coins`, and count `2`.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Google Sheet:
+    - Spreadsheet: `Cards Config`
+    - Tab/range: `tadam!A8:N8`
+    - Readback confirmed row values: `monster-hunt`, amount `10`, count `2`, description `За победу над монстром игрок получает 10 монет`.
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `git diff --check -- src/cards.config.js cards-google-sheet.csv project-memory/updates.md project-memory/inbox/for-dev.md project-memory/inbox/for-gd.md`
+    - Static/source checks: local config and CSV show `monster-win-coins` amount `10`; stale `monster-win-coins,15` / `получает 15 монет` for this card is gone; player-facing text has no final period.
+  - Not run:
+    - Browser smoke/manual TADAM reveal + monster win; this sandbox previously blocks local server binding with `EPERM`.
+  - Notes:
+    - No other TADAM cards, monster base win rewards, monster loss rewards, Shop/coin bonus behavior, or card face assets/layout were changed.
+
 - 2026-06-12 18:28 - Dev 3 context handback: animated combat roll formula
   - Pipeline status:
     - Context note only under the current pipeline rule.

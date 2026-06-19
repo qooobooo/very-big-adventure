@@ -72,3 +72,7 @@ Use `prompts/read-news.md` when the user says "прочти новости".
 - Text should start around the middle of the card, fill the lower half, and keep a small bottom margin instead of floating near the top.
 - Split multi-sentence card descriptions into separate visual lines/paragraphs where possible.
 - Prefer larger readable text with balanced wrapping; avoid clipped text, one-letter wraps, and excessive shrinking.
+- Gameplay revealed cards and settings reference cards must share the same `cardFaceStageMarkup(...)` / `cardFaceMarkupForDeck(...)` path and CSS variables (`--card-face-width`, `--card-face-gap`). Do not add reference-only card-face sizing or manual per-card reference layout; new cards in existing decks should appear in settings through the same renderer automatically.
+- Card text CSS must target visual text lines as direct children (`> span`) and keep nested icon wrappers such as `.coin-amount`, `.dice-amount`, and `.card-text-nowrap` inline inside `.card-face-stage`; descendant-wide `span` rules can break settings/gameplay parity.
+- Revealed card titles must stay in a fixed top row inside the card text block; dense/long card variants may shrink title/body type and gaps, but must not move the title vertically from card to card.
+- Card face titles must stay plain text: do not run coin/dice/step/strength icon replacement inside titles. If a title concept includes an icon-like word, write it out as text, for example `Кубик судьбы`; keep coin/dice icons for descriptions and rules text only.

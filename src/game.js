@@ -1,4 +1,4 @@
-import { cardConfig } from "./cards.config.js?v=20260612-0421";
+import { cardConfig } from "./cards.config.js?v=20260619-0116";
 import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260531-0271";
 
 const boardEl = document.querySelector("#board");
@@ -51,6 +51,7 @@ const ui = {
   phoneRoomUrl: document.querySelector("#phoneRoomUrl"),
   phoneRoomUrlHint: document.querySelector("#phoneRoomUrlHint"),
   playerCount: document.querySelector("#playerCount"),
+  referencePanel: document.querySelector("#referencePanel"),
   rollBtn: document.querySelector("#rollBtn"),
   roundTitle: document.querySelector("#roundTitle"),
   saveHistoryBtn: document.querySelector("#saveHistoryBtn"),
@@ -301,6 +302,7 @@ let routeCells;
 let routeIndex;
 let routeNext;
 let cellEvents;
+const visibleReferenceSections = new Set();
 
 const eventToastVisibleMs = 3000;
 const eventToastFadeMs = 800;
@@ -320,11 +322,13 @@ const coinIconSrc = "./assets/icons/coin.png?v=20260524-0155";
 const diceIconSrc = "./assets/icons/dice.png?v=20260524-0305";
 const enemyIconSrc = "./assets/icons/enemy_512.png";
 const magicWalletIconSrc = "./assets/icons/artifact_magic_wallet_512.png";
+const heroSwordIconSrc = "./assets/icons/artifact_hero_sword_512.png";
+const antiBadIconSrc = "./assets/icons/artifact_anti_bad_512.png";
 const finalEnemyIconSrc = "./assets/icons/final_enemy.png?v=20260525-0146";
-const blackMarketIconSrc = "./assets/icons/black_market_ultra_simple_512.png?v=20260609-0409";
+const blackMarketIconSrc = "./assets/icons/black_market_ultra_simple_512.png?v=20260619-0138";
 const chaosPortalIconSrc = "./assets/icons/chaos_portal_1254.png?v=20260601-0276";
 const eventIconSrc = "./assets/icons/event_quest_512.png";
-const joeAuctionIconSrc = "./assets/icons/joe_auction_512.png?v=20260609-0401";
+const joeAuctionIconSrc = "./assets/icons/joe_auction_512.png?v=20260619-0120";
 const portalIconSrc = "./assets/icons/portal_1254.png?v=20260530-0222";
 const vsIconSrc = "./assets/icons/vs_1254.png?v=20260531-0233";
 const eventIcons = {
@@ -545,6 +549,7 @@ function newGame() {
     doors,
     enemyBattleProgress: null,
     eventMonsterRage: 0,
+    goldenMarkers: [],
     eventDepth: 0,
     finalBattle: null,
     finalBattleProgress: null,
@@ -560,6 +565,8 @@ function newGame() {
     pendingCardChoice: null,
     pendingChoice: null,
     pendingDiceControl: null,
+    pendingMoveDieReroll: null,
+    pendingMoveOneFarther: null,
     phoneCardPreview: null,
     phoneDiceRoll: null,
     pendingPreRoll: null,
@@ -571,6 +578,7 @@ function newGame() {
       bot: index >= playerCount - botCount,
       coins: startingCoins,
       diceBonus: 0,
+      eventCards: [],
       id: index,
       items: [],
       nextMonsterBattleBonus: 0,
@@ -585,6 +593,10 @@ function newGame() {
     round: 1,
     tadams: [],
     artifacts: {
+      antiBadCard: null,
+      antiBadOwnerId: null,
+      heroSwordCard: null,
+      heroSwordOwnerId: null,
       magicWalletOwnerId: null,
     },
     turns: 0,
@@ -627,6 +639,8 @@ function resetTransientUi() {
   state.pendingCardChoice = null;
   state.pendingChoice = null;
   state.pendingDiceControl = null;
+  state.pendingMoveDieReroll = null;
+  state.pendingMoveOneFarther = null;
   state.pendingPreRoll = null;
   state.pendingShop = null;
   state.phoneCardPreview = null;
@@ -674,7 +688,7 @@ function clearDiceThrowLayers() {
 }
 
 function clearBoardTransientOverlays() {
-  boardEl?.querySelectorAll(".walk-path-outline, .portal-preview-outline").forEach((outline) => outline.remove());
+  boardEl?.querySelectorAll(".walk-path-outline, .portal-preview-outline, .card-choice-preview-outline").forEach((outline) => outline.remove());
   boardEl?.querySelectorAll(".tile-landing").forEach((tile) => tile.classList.remove("tile-landing"));
 }
 
@@ -734,6 +748,7 @@ function recordPlayerMoved(player, cell = player?.position) {
   const history = playerHistory(player);
   if (!history || !cell) return;
   history.cellsPassed += 1;
+  if (cell === startCell) resolveStartStrengthReward(player);
 }
 
 function recordPlayerStopped(player, cell = player?.position) {
@@ -800,6 +815,8 @@ async function rollAndMove({ animate = true } = {}) {
     state.pendingCardChoice ||
     state.pendingChoice ||
     state.pendingDiceControl ||
+    state.pendingMoveDieReroll ||
+    state.pendingMoveOneFarther ||
     state.pendingPreRoll ||
     state.pendingShop
   ) {
@@ -818,8 +835,11 @@ async function rollAndMove({ animate = true } = {}) {
       return;
     }
 
+    await resolveStartTurnTadamEffects(player);
     applyTurnStartArtifacts(player);
     await resolveSpeedPotionStart(player);
+    await resolveTurnShopBuys(player);
+    await resolvePreRollShopStepBoosts(player, animate);
     const extraDice = await chooseExtraDie(player, animate);
     state.isAnimating = animate;
     state.movingPlayerId = animate ? player.id : null;
@@ -830,9 +850,12 @@ async function rollAndMove({ animate = true } = {}) {
     recordDiceThrown(player, rolls.length);
     const bonus = playerStepBonus(player);
     if (animate) await animateDice(rolls, { bonus, player });
+    rolls = await resolveMoveDieRerolls(player, rolls, animate);
     rolls = await maybeUseDiceControl(player, rolls, { mode: "movement", title: "Контроль кубика: ход" });
     const rolled = rolls.reduce((sum, value) => sum + value, 0);
-    const totalSteps = rolled + bonus;
+    const duplicateSteps = await resolveDuplicateDiceRewards(player, rolls);
+    const fartherSteps = await resolveMoveOneFarther(player, rolled + bonus + duplicateSteps, animate);
+    const totalSteps = rolled + bonus + duplicateSteps + fartherSteps;
     state.dice = totalSteps;
     state.walkPath = animate && ui.showWalkPath?.checked ? buildWalkPath(player, totalSteps) : [];
     renderTileStates();
@@ -875,6 +898,8 @@ async function rollAndMove({ animate = true } = {}) {
 
     state.isAnimating = false;
     state.movingPlayerId = null;
+    state.pendingMoveDieReroll = null;
+    state.pendingMoveOneFarther = null;
     state.walkPath = [];
     pulseTile(player.position);
     log(`${playerName(player)} бросает <strong>${formatRoll(rolls)}</strong>${totalSteps !== rolled ? ` и идет на ${totalSteps}` : ""}.`);
@@ -1081,6 +1106,21 @@ function monsterRageBonus() {
   return Math.max(0, Number(state?.eventMonsterRage) || 0);
 }
 
+function eventStatusCards(player) {
+  return Array.isArray(player?.eventCards) ? player.eventCards : [];
+}
+
+function activeEventStatusCards(type = null) {
+  if (!state?.players?.length) return [];
+  return state.players.flatMap((player) => eventStatusCards(player))
+    .filter((card) => !type || card.effect?.type === type);
+}
+
+function monsterBannerBonus() {
+  return activeEventStatusCards("event-monster-banner")
+    .reduce((sum, card) => sum + Math.max(0, Number(card.effect?.amount) || 2), 0);
+}
+
 function monsterStrengthMode() {
   return ui.monsterStrengthMode?.value === "strong" ? "strong" : "standard";
 }
@@ -1100,16 +1140,24 @@ function isFirstOrdinaryMonsterDoor(door) {
 
 function effectiveMonsterStrength(door) {
   if (!door) return 0;
-  return Math.max(0, (Number(door.damage) || 0) + ordinaryMonsterStrengthBonus(door) + monsterRageBonus());
+  return Math.max(0, (Number(door.damage) || 0) + ordinaryMonsterStrengthBonus(door) + monsterRageBonus() + monsterBannerBonus());
 }
 
 function monsterStrengthText(door) {
-  const effective = effectiveMonsterStrength(door);
+  return monsterBattleStrengthText(door);
+}
+
+function monsterBattleStrengthText(door, bribeBonus = 0) {
+  if (!door) return "0";
+  const effective = effectiveMonsterStrength(door) + Math.max(0, Number(bribeBonus) || 0);
   const rage = monsterRageBonus();
   const strongBonus = ordinaryMonsterStrengthBonus(door);
+  const bannerBonus = monsterBannerBonus();
   const parts = [];
   if (strongBonus) parts.push(`сильные +${strongBonus}`);
   if (rage) parts.push(`ярость ${rage}`);
+  if (bannerBonus) parts.push(`знамя +${bannerBonus}`);
+  if (bribeBonus) parts.push(`подкуп +${bribeBonus}`);
   if (!parts.length) return String(effective);
   return `${effective} (база ${door.damage} + ${parts.join(" + ")})`;
 }
@@ -1192,7 +1240,13 @@ function shopDuplicatePenalty(player, card) {
   if (copies <= 0) return 0;
   if (effectType === "passive-step-bonus") return [0, 8, 28, 50, 72][Math.min(copies, 4)] || 72;
   if (effectType === "passive-battle-bonus") return [0, 4, 9, 16, 24][Math.min(copies, 4)] || 24;
-  if (effectType === "optional-extra-die") return [0, 7, 18, 30, 42][Math.min(copies, 4)] || 42;
+  if (effectType === "green-fields-plus5") return [0, 6, 16, 30, 46][Math.min(copies, 4)] || 46;
+  if (["monster-strength-plus3", "pre-roll-step-plus5", "turn-strength-buy", "turn-steps-buy"].includes(effectType)) {
+    return [0, 5, 14, 26, 40][Math.min(copies, 4)] || 40;
+  }
+  if (["monster-bribe-plus1", "shop-choice-3-cost-3", "shop-unlimited-buy", "start-strength", "reroll-one-move-die", "move-one-farther"].includes(effectType)) {
+    return [0, 4, 11, 20, 32][Math.min(copies, 4)] || 32;
+  }
   return 5 * copies;
 }
 
@@ -1215,17 +1269,19 @@ function chooseBotPreRoll(player, card) {
   const effect = card?.effect;
   if (!effect || player.coins < effect.cost) return false;
 
+  if (effect.type === "pre-roll-step-plus5") {
+    const coinsAfter = player.coins - effect.cost;
+    if (coinsAfter < 5) return false;
+    const leader = leadingPlayer();
+    const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+    return lag > 8 || finalDistance(player) <= 28 || player.coins >= 18;
+  }
+
   const personality = botPersonality(player);
   const currentDice = totalDiceForPlayer(player);
   const nextDice = currentDice + effect.dice;
   const coinsAfter = player.coins - effect.cost;
   const door = cellEvents[player.position] === "enemy" ? doorByEnemyCell(player.position) : null;
-
-  if (effect.type === "optional-extra-die" && door?.isFinalBoss && !isDoorOpenForPlayer(door, player)) {
-    const target = effectiveMonsterStrength(door);
-    const guaranteedWithoutExtra = currentDice + playerMonsterBattleBonus(player) >= target;
-    return !guaranteedWithoutExtra;
-  }
 
   let payScore = -6;
   let declineScore = 0;
@@ -1399,7 +1455,7 @@ function resourceScaledPortalRiskAdjustment(player, cell, { projected = false } 
   if (event === "very-bad") return (24 * coinComfort - 48 * lowCoinFear) * weight / personality.risk;
   if (event === "green") return 4 * weight;
   if (event === "good") return 6 * weight;
-  if (event === "shop" && player.coins >= 5) return 5 * weight * personality.shop;
+  if (event === "shop" && player.coins >= joeShopCardCost()) return 5 * weight * personality.shop;
   return 0;
 }
 
@@ -1536,24 +1592,66 @@ function scoreShopCard(player, card) {
       if (gate.hardGate) score += 22 * personality.battle;
       if (gate.failedAttempts > 0) score += Math.min(22, gate.failedAttempts * 5) * personality.battle;
     }
-  } else if (card.id === "coin-plus" || effect.type === "passive-coin-bonus") {
-    score = phase === "early" ? 28 : phase === "mid" ? 18 : 8;
-    score *= personality.economy;
-  } else if (card.id === "extra-die" || effect.type === "optional-extra-die") {
-    score = 22 * personality.risk;
+  } else if (effect.type === "green-fields-plus5") {
+    score = (phase === "early" ? 24 : phase === "mid" ? 18 : 10) * personality.economy;
+    if (nearbyInterestingCells(player, 12).score > 0) score += 4;
+  } else if (effect.type === "monster-strength-plus3") {
+    score = 16 * personality.battle;
     if (gate) {
-      const afterChance = estimateWinChance(gate.dice + (effect.dice || 1), gate.bonus, gate.target);
-      score += winChanceDeltaScore(gate.chance, afterChance, gate.weight) * 0.75 * personality.battle;
-      if (gate.chance < 0.6 && afterChance >= 0.35) score += 8 * gate.weight * personality.risk;
+      const afterChance = estimateWinChance(gate.dice, gate.bonus + (effect.amount || 3), gate.target);
+      score += winChanceDeltaScore(gate.chance, afterChance, gate.weight) * 0.9 * personality.battle;
     }
     if (player.coins <= 7) score -= 10 * personality.economy;
-    if (player.coins >= 15) score += 5;
+  } else if (effect.type === "pre-roll-step-plus5") {
+    const leader = leadingPlayer();
+    const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+    score = (18 + Math.min(14, Math.max(0, lag * 0.25))) * personality.progress;
+    if (finalDistance(player) <= 30) score += 10 * personality.progress;
+    if (player.coins <= 7) score -= 8 * personality.economy;
+  } else if (effect.type === "monster-bribe-plus1") {
+    score = (state.players.length > 1 ? 13 : 2) * personality.chaos;
+    if (gate?.pressure > 0.65) score -= 8 / personality.risk;
+  } else if (effect.type === "duplicate-dice-reward") {
+    score = (totalDiceForPlayer(player) >= 2 ? 22 : 12) * Math.max(personality.economy, personality.progress);
+    if (playerDiceBonus(player) >= 1) score += 5;
+  } else if (effect.type === "reroll-one-move-die") {
+    score = (totalDiceForPlayer(player) >= 2 ? 19 : 13) * personality.risk;
+    if (player.coins >= 12) score += 5 * personality.economy;
+    if (finalDistance(player) <= 30) score += 6 * personality.progress;
+  } else if (effect.type === "move-one-farther") {
+    const leader = leadingPlayer();
+    const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+    score = (17 + Math.min(10, Math.max(0, lag * 0.2))) * personality.progress;
+    if (finalDistance(player) <= 24) score += 8 * personality.progress;
+  } else if (effect.type === "tadam-income") {
+    score = (phase === "early" ? 24 : phase === "mid" ? 18 : 8) * personality.economy;
+  } else if (effect.type === "shop-choice-3-cost-3") {
+    score = (phase === "early" ? 26 : 20) * personality.shop;
+    if (player.coins >= 6) score += 6 * personality.economy;
+  } else if (effect.type === "shop-unlimited-buy") {
+    score = (player.coins >= 12 ? 22 : 10) * personality.shop;
+    if (phase === "early") score += 6;
+  } else if (effect.type === "turn-strength-buy") {
+    score = 18 * personality.battle;
+    if (gate) {
+      const afterChance = estimateWinChance(gate.dice, gate.bonus + (effect.amount || 1), gate.target);
+      score += winChanceDeltaScore(gate.chance, afterChance, gate.weight) * 0.55 * personality.battle;
+    }
+    if (player.coins >= 15) score += 6;
+  } else if (effect.type === "turn-steps-buy") {
+    const leader = leadingPlayer();
+    const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+    score = (16 + Math.min(12, Math.max(0, lag * 0.22))) * personality.progress;
+    if (player.coins >= 15) score += 6;
+  } else if (effect.type === "start-strength") {
+    score = (phase === "early" ? 20 : 12) * personality.battle;
+    if (gate?.hardGate) score += 6 * personality.battle;
   } else {
     score = 12;
   }
 
   score -= shopDuplicatePenalty(player, card);
-  score -= coinReservePenalty(player, player.coins - 5, {
+  score -= coinReservePenalty(player, player.coins - joeShopCardCost(player), {
     critical: (card.id === "battle-plus" || effect.type === "passive-battle-bonus") && gate?.pressure > 0.65,
   }) * 0.45;
   return score * personality.shop;
@@ -1562,11 +1660,12 @@ function scoreShopCard(player, card) {
 function scoreShopDecline(player, offer = []) {
   const personality = botPersonality(player);
   const gate = monsterGatePressure(player);
+  const cost = joeShopCardCost(player);
   let score = player.coins <= 4 ? 52 : player.coins <= 7 ? 30 : player.coins < 10 ? 18 : player.coins > 15 ? 4 : 10;
   if (finalDistance(player) <= 8) score += 8;
   const bestCardScore = Math.max(0, ...offer.map((card) => scoreShopCard(player, card)));
-  if (player.coins - 5 < 5) score += 22 * personality.economy;
-  else if (player.coins - 5 < 10 && bestCardScore < 42) score += 12 * personality.economy;
+  if (player.coins - cost < 5) score += 22 * personality.economy;
+  else if (player.coins - cost < 10 && bestCardScore < 42) score += 12 * personality.economy;
   if (gate?.pressure > 0.75 && !offer.some((card) => card.effect?.type === "passive-battle-bonus")) {
     score += 16 * personality.economy;
   }
@@ -1741,7 +1840,7 @@ function scoreCellForBot(player, cell, context = {}) {
   ) * 0.72;
   else if (event === "tadam") score += 10 + 3 * personality.chaos;
   else if (event === "event") score += 15 + 2 * personality.chaos;
-  else if (event === "shop") score += player.coins >= 5 ? 16 * personality.shop : -4;
+  else if (event === "shop") score += player.coins >= joeShopCardCost() ? 16 * personality.shop : -4;
   else if (event === "black-market") score += Math.max(
     scoreBlackMarketChoice(player, "strength"),
     scoreBlackMarketChoice(player, "coins"),
@@ -1903,6 +2002,18 @@ function runBotAction() {
     return;
   }
 
+  if (state.pendingMoveDieReroll && isBotPlayerId(state.pendingMoveDieReroll.playerId)) {
+    const player = state.players.find((item) => item.id === state.pendingMoveDieReroll.playerId);
+    resolveMoveDieRerollChoice(chooseBotMoveDieReroll(player, state.pendingMoveDieReroll.rolls, state.pendingMoveDieReroll.cost));
+    return;
+  }
+
+  if (state.pendingMoveOneFarther && isBotPlayerId(state.pendingMoveOneFarther.playerId)) {
+    const player = state.players.find((item) => item.id === state.pendingMoveOneFarther.playerId);
+    resolveMoveOneFartherChoice(chooseBotMoveOneFarther(player, state.pendingMoveOneFarther.currentSteps, state.pendingMoveOneFarther.cost));
+    return;
+  }
+
   if (state.pendingShop && isBotPlayerId(state.pendingShop.playerId)) {
     const player = state.players.find((item) => item.id === state.pendingShop.playerId);
     resolveShopChoice(chooseBotShopCard(player, state.pendingShop.offer, { allowDecline: true }));
@@ -1939,6 +2050,8 @@ function runBotAction() {
     !state.pendingCardChoice &&
     !state.pendingChoice &&
     !state.pendingDiceControl &&
+    !state.pendingMoveDieReroll &&
+    !state.pendingMoveOneFarther &&
     !state.pendingPreRoll &&
     !state.pendingShop
   ) {
@@ -1950,6 +2063,7 @@ function render() {
   renderBoard();
   renderScores();
   renderModifierPlayerStatus();
+  renderReferencePanel();
   renderTurn();
   renderChoicePanel();
   renderFinalBattleHud();
@@ -1989,6 +2103,7 @@ function renderModifierPlayerStatus() {
 function renderBoard() {
   if (boardEl.dataset.ready !== "true") buildBoardShell();
   renderEnemyLocks();
+  renderGoldenMarkers();
   renderTileStates();
   renderTokens();
 }
@@ -2083,7 +2198,7 @@ function renderEnemyLocks() {
 
 function renderTileStates() {
   boardEl.querySelectorAll(".tile-landing").forEach((tile) => tile.classList.remove("tile-landing"));
-  boardEl.querySelectorAll(".walk-path-outline, .portal-preview-outline").forEach((outline) => outline.remove());
+  boardEl.querySelectorAll(".walk-path-outline, .portal-preview-outline, .card-choice-preview-outline, .post-roll-target-outline").forEach((outline) => outline.remove());
 
   if (state.walkPath?.length) {
     const finalCell = state.walkPath[state.walkPath.length - 1];
@@ -2101,10 +2216,51 @@ function renderTileStates() {
     renderPortalPreviewOutlines();
   }
 
+  if (choiceFieldPreviewActive()) {
+    renderCardChoicePreviewOutlines();
+  }
+
+  renderPostRollTargetOutlines();
+
   if (!state.landingCell) return;
 
   const tile = boardEl.querySelector(`[data-cell="${state.landingCell}"]`);
   if (tile) tile.classList.add("tile-landing");
+}
+
+function renderPostRollTargetOutlines() {
+  const pending = state?.pendingMoveOneFarther;
+  if (!pending) return;
+  const targets = pending.normalCell === pending.boostedCell
+    ? [{ cell: pending.normalCell, className: "is-combined", label: "Без карты / С картой +1" }]
+    : [
+      { cell: pending.normalCell, className: "is-normal", label: "Без карты" },
+      { cell: pending.boostedCell, className: "is-boosted", label: "С картой +1" },
+    ];
+  for (const target of targets) {
+    const tile = boardEl.querySelector(`[data-cell="${target.cell}"]`);
+    if (!tile) continue;
+    const outline = document.createElement("span");
+    outline.className = `post-roll-target-outline ${target.className}`;
+    outline.title = `${target.label}: клетка ${cellLabel(target.cell)}`;
+    outline.append(Object.assign(document.createElement("b"), { textContent: target.label }));
+    tile.append(outline);
+  }
+}
+
+function renderGoldenMarkers() {
+  boardEl.querySelectorAll(".golden-marker").forEach((marker) => marker.remove());
+  for (const cell of goldenMarkerCells()) {
+    const tile = boardEl.querySelector(`[data-cell="${cell}"]`);
+    if (!tile) continue;
+
+    const marker = document.createElement("span");
+    marker.className = "golden-marker";
+    marker.title = "Золотая метка: 10 монет";
+    marker.setAttribute("aria-label", marker.title);
+    marker.textContent = "10";
+    tile.append(marker);
+  }
 }
 
 function renderPortalPreviewOutlines() {
@@ -2116,6 +2272,23 @@ function renderPortalPreviewOutlines() {
     const outline = document.createElement("span");
     outline.className = "portal-preview-outline";
     outline.title = `${label}: финиш хода`;
+    tile.append(outline);
+  }
+}
+
+function renderCardChoicePreviewOutlines() {
+  const pending = state?.pendingCardChoice;
+  if (!pending?.previewField) return;
+  for (const choice of pending.choices || []) {
+    const cell = choice.cell || choice.id;
+    if (!routeIndex.has(cell)) continue;
+
+    const tile = boardEl.querySelector(`[data-cell="${cell}"]`);
+    if (!tile) continue;
+
+    const outline = document.createElement("span");
+    outline.className = "card-choice-preview-outline";
+    outline.title = choice.note || choice.label || `Клетка ${cellLabel(cell)}`;
     tile.append(outline);
   }
 }
@@ -2176,11 +2349,7 @@ function isPlayerTurnActive(player) {
   return (
     player.id === state.activePlayer &&
     !state.finished &&
-    !state.finalBattleProgress &&
-    !state.pendingCardChoice &&
-    !state.pendingChoice &&
-    !state.pendingDiceControl &&
-    !state.pendingPreRoll
+    !state.finalBattleProgress
   );
 }
 
@@ -2201,6 +2370,7 @@ function renderScores() {
     const badExtraStatus = nextBadExtraDrawStatus(player);
     const pendingBadStatus = pendingBadStatusText(player, true);
     const pendingGoodStatus = pendingGoodStatusText(player, true);
+    const eventStatus = eventStatusText(player, true);
     const stepBonus = playerStepBonus(player);
     const card = document.createElement("article");
     card.className = `score-card ${player.id === highlightedPlayerId() ? "active" : ""}`;
@@ -2220,6 +2390,7 @@ function renderScores() {
           ${badExtraStatus ? `<span class="score-curse-bonus" title="Следующая карта Плохо даст еще одну">${nextBadExtraDrawText(badExtraStatus, true)}</span>` : ""}
           ${pendingBadStatus ? `<span class="score-curse-bonus" title="${escapeHtml(pendingBadStatus.title)}">${pendingBadStatus.label}</span>` : ""}
           ${pendingGoodStatus ? `<span class="score-battle-bonus" title="${escapeHtml(pendingGoodStatus.title)}">${pendingGoodStatus.label}</span>` : ""}
+          ${eventStatus ? `<span class="score-event-badge" title="${escapeHtml(eventStatus.title)}">${eventStatus.label}</span>` : ""}
           ${playerArtifactBadges(player)}
         </span>
       </div>
@@ -2427,13 +2598,49 @@ function phoneActionsForPlayer(player) {
     ];
   }
 
+  if (state.pendingMoveDieReroll?.playerId === player.id) {
+    return [
+      ...state.pendingMoveDieReroll.rolls.map((value, index) => ({
+        id: String(index),
+        kind: "move-reroll",
+        label: `Кубик ${index + 1}`,
+        note: `${value} -> ?`,
+      })),
+      {
+        id: "skip",
+        kind: "move-reroll",
+        label: "Не перебрасывать",
+        note: "оставить бросок",
+      },
+    ];
+  }
+
+  if (state.pendingMoveOneFarther?.playerId === player.id) {
+    const sameTarget = state.pendingMoveOneFarther.normalCell === state.pendingMoveOneFarther.boostedCell;
+    return [
+      {
+        id: "pay",
+        kind: "move-farther",
+        label: "+1 шаг",
+        note: sameTarget ? "цель не изменится" : `клетка ${cellLabel(state.pendingMoveOneFarther.boostedCell)}`,
+      },
+      {
+        id: "skip",
+        kind: "move-farther",
+        label: "Без карты",
+        note: `клетка ${cellLabel(state.pendingMoveOneFarther.normalCell)}`,
+      },
+    ];
+  }
+
   if (state.pendingShop?.playerId === player.id) {
+    const cost = state.pendingShop.cost ?? joeShopCardCost();
     return [
       ...state.pendingShop.offer.map((card) => ({
         id: card.id,
         kind: "shop",
         label: cardDisplayText(card),
-        note: "5 монет",
+        note: `${cost} монет`,
       })),
       {
         id: "decline",
@@ -2809,6 +3016,10 @@ function handlePhoneControllerAction(message) {
     resolvePreRollChoice(action.id === "yes");
   } else if (action.kind === "dice-control-intent") {
     resolveDiceControlIntent(action.id === "change");
+  } else if (action.kind === "move-reroll") {
+    resolveMoveDieRerollChoice(action.id);
+  } else if (action.kind === "move-farther") {
+    resolveMoveOneFartherChoice(action.id);
   } else if (action.kind === "shop") {
     resolveShopChoice(action.id === "decline" ? null : action.id);
   } else if (action.kind === "auction-bid") {
@@ -3251,7 +3462,45 @@ function playerArtifacts(player) {
       title: "Волшебный кошель",
     });
   }
+  if (state.artifacts.heroSwordOwnerId === player.id) {
+    artifacts.push({
+      hint: "каждая 6 в бою дает +3 силы",
+      icon: heroSwordIconSrc,
+      id: "hero-sword",
+      shortTitle: "6:+3",
+      title: "Меч Героя",
+    });
+  }
+  if (state.artifacts.antiBadOwnerId === player.id) {
+    artifacts.push({
+      hint: "обычное Плохо дает 5 монет",
+      icon: antiBadIconSrc,
+      id: "anti-bad",
+      shortTitle: "Плохо +5",
+      title: "Анти-Плохо",
+    });
+  }
   return artifacts;
+}
+
+function eventStatusCardLabel(card) {
+  if (card?.effect?.type === "event-monster-banner") return "Знамя";
+  return card?.shortTitle || card?.title || "Событие";
+}
+
+function eventStatusText(player) {
+  const cards = eventStatusCards(player);
+  if (!cards.length) return null;
+  const counts = cards.reduce((map, card) => {
+    const label = eventStatusCardLabel(card);
+    map.set(label, (map.get(label) || 0) + 1);
+    return map;
+  }, new Map());
+  const labels = [...counts.entries()].map(([label, count]) => `${label}${count > 1 ? ` x${count}` : ""}`);
+  return {
+    label: labels.join(", "),
+    title: cards.map((card) => card.title).join("\n"),
+  };
 }
 
 function applyTurnStartArtifacts(player) {
@@ -3287,6 +3536,42 @@ function transferMagicWallet(target, reason = "") {
   return true;
 }
 
+function grantHeroSwordArtifact(target, card) {
+  if (!target || !state?.artifacts) return false;
+  state.artifacts.heroSwordOwnerId = target.id;
+  state.artifacts.heroSwordCard = card || state.artifacts.heroSwordCard || null;
+  log(`${playerName(target)} получает артефакт <strong>Меч Героя</strong>.`, { toast: true });
+  render();
+  return true;
+}
+
+function grantAntiBadArtifact(target, card) {
+  if (!target || !state?.artifacts) return false;
+  state.artifacts.antiBadOwnerId = target.id;
+  state.artifacts.antiBadCard = card || state.artifacts.antiBadCard || null;
+  log(`${playerName(target)} получает артефакт <strong>Анти-Плохо</strong>.`, { toast: true });
+  render();
+  return true;
+}
+
+function hasHeroSwordArtifact(player) {
+  return Boolean(player && state?.artifacts?.heroSwordOwnerId === player.id);
+}
+
+function hasAntiBadArtifact(player) {
+  return Boolean(player && state?.artifacts?.antiBadOwnerId === player.id);
+}
+
+function heroSwordCombatBonus(player, rolls) {
+  if (!hasHeroSwordArtifact(player)) return 0;
+  const sixes = (rolls || []).filter((value) => value === 6).length;
+  const bonus = sixes * 3;
+  if (bonus > 0) {
+    log(`${playerName(player)} использует <strong>Меч Героя</strong>: ${sixes} шестёрок дают <strong>+${bonus}</strong> к силе.`, { toast: true });
+  }
+  return bonus;
+}
+
 function groupedShopItems(items) {
   const groups = new Map();
   for (const item of items) {
@@ -3313,12 +3598,33 @@ function activeShopItems(player) {
   return (player?.items || []).filter((item) => !isShopItemFaceDown(item));
 }
 
+function activeShopEffectItems(player, type) {
+  return activeShopItems(player).filter((item) => item.effect?.type === type);
+}
+
+function hasActiveShopEffect(player, type) {
+  return activeShopEffectItems(player, type).length > 0;
+}
+
+function activeShopEffectAmount(player, type, field = "amount") {
+  return activeShopEffectItems(player, type)
+    .reduce((sum, item) => sum + (Number(item.effect?.[field]) || 0), 0);
+}
+
 function faceDownShopItems(player) {
   return (player?.items || []).filter(isShopItemFaceDown);
 }
 
 function cardDisplayText(card) {
-  return card.description || card.text || card.effectText || card.body || card.title || "";
+  return cardBodyText(card) || card.title || "";
+}
+
+function cardBodyText(card) {
+  return card?.description || card?.text || card?.effectText || card?.body || "";
+}
+
+function cardFaceTitleText(card, fallbackTitle = "Карта") {
+  return card?.title || card?.shortTitle || fallbackTitle;
 }
 
 function renderTurn() {
@@ -3338,13 +3644,15 @@ function renderTurn() {
   const pendingBadRoleText = pendingBadText ? ` ${pendingBadText.label}.` : "";
   const pendingGoodText = pendingGoodStatusText(player);
   const pendingGoodRoleText = pendingGoodText ? ` ${pendingGoodText.label}.` : "";
+  const eventText = eventStatusText(player);
+  const eventRoleText = eventText ? ` События: ${eventText.label}.` : "";
   const artifactText = playerArtifacts(player).length ? ` Артефакты: ${playerArtifacts(player).map((artifact) => artifact.title).join(", ")}.` : "";
   const monsterRageText = monsterRageBonus() ? ` Ярость монстров: +${monsterRageBonus()}.` : "";
   if (ui.activePlayerRole) {
-    ui.activePlayerRole.innerHTML = iconizeHtml(`Клетка ${cellLabel(player.position)}. ${player.coins} монет.${itemText}${rageText}${curseText}${badExtraText}${pendingBadRoleText}${pendingGoodRoleText}${artifactText}${monsterRageText}`);
+    ui.activePlayerRole.innerHTML = iconizeHtml(`Клетка ${cellLabel(player.position)}. ${player.coins} монет.${itemText}${rageText}${curseText}${badExtraText}${pendingBadRoleText}${pendingGoodRoleText}${eventRoleText}${artifactText}${monsterRageText}`);
   }
   ui.fieldEffect.innerHTML = fieldEffectText(player.position);
-  ui.turnActions.className = `turn-actions ${state.pendingPreRoll || state.pendingDiceControl ? "pending-action" : ""}`.trim();
+  ui.turnActions.className = `turn-actions ${state.pendingPreRoll || state.pendingDiceControl || state.pendingMoveDieReroll || state.pendingMoveOneFarther ? "pending-action" : ""}`.trim();
   ui.turnActions.innerHTML = turnActionsText(player);
   ui.diceValue.textContent = state.dice ?? "-";
   ui.rollBtn.innerHTML = iconizeHtml(
@@ -3369,6 +3677,8 @@ function renderTurn() {
           state.isAnimating ||
           Boolean(state.pendingCardChoice) ||
           (Boolean(state.pendingChoice) && !portalPreviewActive()) ||
+          Boolean(state.pendingMoveDieReroll) ||
+          Boolean(state.pendingMoveOneFarther) ||
           Boolean(state.pendingPreRoll) ||
           Boolean(state.pendingDiceControl) ||
           Boolean(state.pendingShop))));
@@ -3381,6 +3691,189 @@ function renderMonsterRageIndicator() {
   ui.monsterRageIndicator.textContent = rage > 0 ? `Ярость монстров +${rage}` : "";
 }
 
+function renderReferencePanel() {
+  const buttons = document.querySelectorAll("[data-reference-toggle]");
+  buttons.forEach((button) => {
+    const sectionId = button.dataset.referenceToggle;
+    const isActive = visibleReferenceSections.has(sectionId);
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+
+  if (!ui.referencePanel) return;
+  const sections = [...visibleReferenceSections]
+    .map((sectionId) => {
+      if (sectionId === "fields") return renderReferenceFields();
+      const title = referenceDeckTitles[sectionId];
+      return title ? renderReferenceDeck(sectionId, title) : "";
+    })
+    .filter(Boolean);
+
+  ui.referencePanel.hidden = sections.length === 0;
+  ui.referencePanel.innerHTML = sections.length
+    ? `
+      <div class="section-title">
+        <h2>Карты и поля</h2>
+        <span class="pill">${sections.length}</span>
+      </div>
+      <div class="reference-sections">${sections.join("")}</div>
+    `
+    : "";
+}
+
+const referenceDeckTitles = {
+  bad: "Плохо",
+  event: "События",
+  good: "Хорошо",
+  shop: "Лавка Джо",
+  tadam: "Тадам!",
+};
+
+function renderReferenceDeck(deckId, title) {
+  const cards = uniqueConfiguredCards(cardConfig[deckId] || []);
+  const items = cards
+    .map((card) => {
+      const count = Number(card.count) || 0;
+      const cardTitle = card.title || title;
+      return `
+        <article class="reference-card-item" aria-label="${escapeHtml(`${title}: ${cardTitle}`)}">
+          <span class="reference-card-count">x${count}</span>
+          ${referenceCardFaceMarkup(deckId, card, { title: cardTitle })}
+        </article>
+      `;
+    })
+    .join("");
+
+  return `
+    <section class="reference-section reference-card-section" data-reference-section="${deckId}">
+      <h3>${title}</h3>
+      <div class="reference-card-grid">${items}</div>
+    </section>
+  `;
+}
+
+function uniqueConfiguredCards(cards) {
+  const seen = new Set();
+  return cards.filter((card) => {
+    const key = card.id || card.title;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function referenceCardFaceMarkup(deckId, card, { title = "" } = {}) {
+  const markup = cardFaceMarkupForDeck(deckId, card, { revealed: true });
+  const inertMarkup = markup.replaceAll("<button ", `<button tabindex="-1" aria-disabled="true" `);
+  return cardFaceStageMarkup(inertMarkup, { inert: true, title });
+}
+
+function renderReferenceFields() {
+  const items = referenceFieldTypes
+    .map((type) => {
+      const field = referenceFieldInfo(type);
+      return `
+        <article class="reference-item reference-field-item">
+          ${field.icon ? `<span class="reference-field-icon">${field.icon}</span>` : ""}
+          <div class="reference-item-copy">
+            <div class="reference-item-title">
+              <strong>${escapeHtml(field.title)}</strong>
+            </div>
+            <p>${field.effectHtml ? iconizeHtml(field.effect) : iconizeHtml(escapeHtml(field.effect))}</p>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+
+  return `
+    <section class="reference-section" data-reference-section="fields">
+      <h3>Поля</h3>
+      <div class="reference-list reference-fields">${items}</div>
+    </section>
+  `;
+}
+
+const referenceFieldTypes = [
+  "start",
+  "finish",
+  "good",
+  "bad",
+  "very-bad",
+  "shop",
+  "tadam",
+  "event",
+  "green",
+  "red",
+  "enemy",
+  "vs",
+  "chaos-portal",
+  "joe-game",
+  "joe-auction",
+  "black-market",
+  "big-rest",
+  "dice-fortune",
+  "pay-double",
+];
+
+function referenceFieldInfo(type) {
+  const titles = {
+    bad: "Плохо",
+    "big-rest": "Большой привал",
+    "black-market": "Черный рынок",
+    "chaos-portal": "Портал хаоса",
+    "dice-fortune": "x6 кубиков",
+    enemy: "Враг",
+    event: "Событие",
+    finish: "Финиш",
+    good: "Хорошо",
+    green: "Зеленое поле",
+    "joe-auction": "Аукцион Джо",
+    "joe-game": "Игра Джо",
+    "pay-double": "Удвой монеты",
+    red: "Красное поле",
+    shop: "Лавка Джо",
+    start: "Старт",
+    tadam: "ТАДАМ!",
+    "very-bad": "Очень Плохо",
+    vs: "VS",
+  };
+  const effects = {
+    bad: "тяни карту Плохо",
+    "big-rest": "выбери: +10 монет, +1 к силе или +2 к шагам",
+    "black-market": "меняй Лавки Джо на силу, монеты или рывок к монстру",
+    "chaos-portal": "брось кубик и переместись к ближайшему событию по результату",
+    "dice-fortune": `6 бросков: 6 = +${diceFortuneCoinReward} монет, 1 = -${diceFortuneBackwardStepPenalty} шагов`,
+    enemy: "сразись с врагом и открывай путь к порталу",
+    event: "тяни карту Событие",
+    finish: "финальная битва",
+    good: "тяни карту Хорошо",
+    green: greenEffectLabel(),
+    "joe-auction": "3 карты Лавки Джо, ставки от активного игрока, победитель забирает все",
+    "joe-game": "выбери цифры, выпавший игрок получает 2 Лавки Джо",
+    "pay-double": "удвой свои монеты",
+    red: redEffectLabel(),
+    shop: `2 карты на выбор за ${joeShopCardCost()} монет`,
+    start: "начальная клетка",
+    tadam: "тяни карту ТАДАМ!",
+    "very-bad": "возьми 3 карты Плохо",
+    vs: "все скидывают по 10 монет и сражаются за банк",
+  };
+  return {
+    effect: effects[type] || "без эффекта",
+    effectHtml: type === "green" || type === "red",
+    icon: referenceFieldIcon(type),
+    title: titles[type] || type,
+  };
+}
+
+function referenceFieldIcon(type) {
+  if (type === "green" || type === "red") {
+    return `<span class="reference-field-tile tile-${type}" aria-hidden="true"></span>`;
+  }
+  return eventIcons[type] || tileIcons[type] || "";
+}
+
 function renderChoicePanel() {
   if (state.pendingPreRoll) {
     hideChoicePanel();
@@ -3389,10 +3882,11 @@ function renderChoicePanel() {
 
   if (state.pendingShop) {
     const player = state.players.find((item) => item.id === state.pendingShop.playerId) || currentPlayer();
+    const cost = state.pendingShop.cost ?? joeShopCardCost();
     const buttons = renderChoiceDialog({
       kind: "shop",
       kicker: "Лавка Джо",
-      title: "Выбери карту за 5 монет",
+      title: `Выбери карту за ${cost} монет`,
       summary: `${playerChoiceBadge(player)}: ${player.coins} монет. Можно купить одну карту или пройти мимо.`,
       buttonsClass: "shop-buttons",
     });
@@ -3401,7 +3895,7 @@ function renderChoicePanel() {
       appendChoiceButton(buttons, {
         className: "shop-choice choice-button-card",
         label: cardDisplayText(card),
-        note: coinAmount(5),
+        note: coinAmount(cost),
         onClick: () => resolveShopChoice(card.id),
       });
     }
@@ -3930,6 +4424,22 @@ function resolveDiceControlIntent(wantsChange) {
   render();
 }
 
+function resolveMoveDieRerollChoice(choiceId) {
+  if (!state.pendingMoveDieReroll?.resolver) return;
+  const resolver = state.pendingMoveDieReroll.resolver;
+  state.pendingMoveDieReroll = null;
+  resolver(choiceId);
+  render();
+}
+
+function resolveMoveOneFartherChoice(choiceId) {
+  if (!state.pendingMoveOneFarther?.resolver) return;
+  const resolver = state.pendingMoveOneFarther.resolver;
+  state.pendingMoveOneFarther = null;
+  resolver(choiceId);
+  render();
+}
+
 function resolveCardChoice(choiceId) {
   if (!state.cardChoiceResolver) return;
   if (state.pendingCardChoice?.kind === "joe-auction-bid") {
@@ -3949,6 +4459,11 @@ async function resolveLanding(player) {
   if (state.eventDepth > 5) return;
 
   recordPlayerStopped(player);
+  await resolveSameCellDuels(player);
+  if (state.finished) return;
+  await collectGoldenMarker(player);
+  if (state.finished) return;
+
   const event = cellEvents[player.position];
   if (!event) return;
 
@@ -3964,7 +4479,9 @@ async function resolveLanding(player) {
     } else if (event === "good") {
       await drawAndApplyCard(player, "good", "Хорошо");
     } else if (event === "bad") {
-      await drawAndApplyCard(player, "bad", "Плохо");
+      if (!(await resolveAntiBadFieldReplacement(player))) {
+        await drawAndApplyCard(player, "bad", "Плохо");
+      }
     } else if (event === "very-bad") {
       for (let index = 0; index < 3; index += 1) {
         await drawAndApplyCard(player, "bad", "Плохо");
@@ -4240,14 +4757,24 @@ function shopCardsWord(count) {
   return "карт Лавки Джо";
 }
 
+async function resolveAntiBadFieldReplacement(player) {
+  if (!hasAntiBadArtifact(player)) return false;
+  addCoins(player, 5);
+  const message = `${playerName(player)} использует <strong>Анти-Плохо</strong>: поле <strong>Плохо</strong> дает <strong>${coinAmount(5)}</strong> вместо карты.`;
+  render();
+  log(message, { toast: true });
+  await showActionPrompt(message, { autoFor: player });
+  return true;
+}
+
 async function resolveEnemyBattle(player) {
   const door = doorByEnemyCell(player.position);
   if (!door || isDoorOpenForPlayer(door, player)) return false;
-  const requiredStrength = effectiveMonsterStrength(door);
+  let requiredStrength = effectiveMonsterStrength(door);
 
   state.enemyBattleProgress = {
     enemyForce: requiredStrength,
-    outcome: `Нужно набрать силу ${monsterStrengthText(door)}`,
+    outcome: `Нужно набрать силу ${monsterBattleStrengthText(door)}`,
     isFinalBoss: Boolean(door.isFinalBoss),
     playerForce: 0,
     playerId: player.id,
@@ -4255,11 +4782,26 @@ async function resolveEnemyBattle(player) {
   };
   render();
   await showActionPrompt(
-    `${playerName(player)} вступает в битву. Нужно набрать силу <strong>${monsterStrengthText(door)}</strong>, чтобы ${door.isFinalBoss ? "стать боссом" : `открыть ${door.label}`}.`,
+    `${playerName(player)} вступает в битву. Нужно набрать силу <strong>${monsterBattleStrengthText(door)}</strong>, чтобы ${door.isFinalBoss ? "стать боссом" : `открыть ${door.label}`}.`,
     { autoFor: player },
   );
 
+  const bribe = await resolveMonsterBribes(player, door, requiredStrength);
+  requiredStrength += bribe.strengthBonus;
+  if (bribe.strengthBonus > 0) {
+    const bribeMessage = `<strong>Подкуп монстра</strong> усиливает монстра на <strong>+${bribe.strengthBonus}</strong>. Цель: <strong>${monsterBattleStrengthText(door, bribe.strengthBonus)}</strong>.`;
+    state.enemyBattleProgress = {
+      ...state.enemyBattleProgress,
+      enemyForce: requiredStrength,
+      outcome: bribeMessage,
+    };
+    render();
+    log(bribeMessage, { toast: true });
+    await showActionPrompt(bribeMessage, { autoFor: player });
+  }
+
   const extraDice = await chooseExtraDie(player, true);
+  const shopStrengthBonus = await resolveShopMonsterStrengthBoosts(player, "битве с монстром");
   const diceCount = totalDiceForPlayer(player, extraDice);
   let rawRolls = rollDice(diceCount);
   rawRolls = await maybeUseDiceControl(player, rawRolls, { mode: "monster", title: "Контроль кубика: битва с монстром" });
@@ -4272,7 +4814,8 @@ async function resolveEnemyBattle(player) {
   const rageBonus = consumeNextMonsterBattleBonus(player);
   const curse = consumeNextBattlePenalty(player);
   const badPenalty = consumeSelfMonsterMinus(player, "битве с монстром");
-  const bonus = baseBonus + strengthBonus + rageBonus + curse.penalty + badPenalty;
+  const heroSwordBonus = heroSwordCombatBonus(player, rolls);
+  const bonus = baseBonus + strengthBonus + shopStrengthBonus + rageBonus + curse.penalty + badPenalty + heroSwordBonus;
   if (rageBonus > 0) {
     log(`${playerName(player)} использует <strong>Зелье ярости</strong>: <strong>+${rageBonus}</strong> к этой битве с монстром. Зелье сгорает.`);
   }
@@ -4296,7 +4839,7 @@ async function resolveEnemyBattle(player) {
   state.dice = damage;
   state.isAnimating = false;
 
-  const bonusText = monsterBattleBonusFormulaText(baseBonus, rageBonus, curse.penalty, damage, badPenalty, strengthBonus);
+  const bonusText = monsterBattleBonusFormulaText(baseBonus, rageBonus, curse.penalty, damage, badPenalty, strengthBonus, heroSwordBonus, shopStrengthBonus);
   if (damage >= requiredStrength) {
     if (await resolveMonsterRematch(player, door, rolls, bonusText)) {
       clearEnemyBattleHud();
@@ -4325,6 +4868,8 @@ async function resolveEnemyBattle(player) {
         { autoFor: player },
       );
       clearEnemyBattleHud();
+      await resolveMonsterBannerVictory(player);
+      if (state.finished) return { isFinalBoss: true, resolved: true, winner: "player" };
       await resolveFinalBattle(player, true);
       return { isFinalBoss: true, resolved: true, winner: "player" };
     }
@@ -4340,6 +4885,7 @@ async function resolveEnemyBattle(player) {
       { autoFor: player },
     );
     clearEnemyBattleHud();
+    await resolveMonsterBannerVictory(player);
     return { isFinalBoss: false, resolved: true, winner: "player" };
   }
 
@@ -4362,6 +4908,7 @@ async function resolveEnemyBattle(player) {
     winner: "enemy",
   };
   player.position = startCell;
+  resolveStartStrengthReward(player);
   render();
   pulseTile(player.position);
   log(
@@ -4378,6 +4925,154 @@ async function resolveEnemyBattle(player) {
   }
   await drawFreeShopCard(player, "получает карту Лавка Джо за возвращение на старт");
   return { isFinalBoss: Boolean(door.isFinalBoss), resolved: true, winner: "enemy" };
+}
+
+async function resolveMonsterBribes(player, door, baseStrength) {
+  const effects = activeTadamEffects("monster-bribe");
+
+  const payments = [];
+  let strengthBonus = 0;
+  for (const [effectIndex, effect] of effects.entries()) {
+    const cost = Math.max(0, Number(effect.cost) || 3);
+    const baseIncrease = Math.max(1, Number(effect.amount) || 1);
+    const increase = state.players.length === 2 ? baseIncrease * 2 : baseIncrease;
+    const eligibleParticipants = state.players.filter((participant) => (
+      participant.id !== player.id && participant.coins >= cost && !isBot(participant)
+    ));
+    for (const participant of eligibleParticipants) {
+      const copyText = effects.length > 1 ? ` ${effectIndex + 1}/${effects.length}` : "";
+      const choice = await chooseCardAction({
+        choices: [
+          {
+            id: "pay",
+            label: `Заплатить ${cost}`,
+            note: `монстр +${increase}`,
+            score: 3,
+          },
+          {
+            id: "skip",
+            label: "Не платить",
+            note: "пропустить",
+            score: 8,
+          },
+        ],
+        kicker: "ТАДАМ",
+        kind: "monster-bribe",
+        playerId: participant.id,
+        summary: `${playerChoiceBadge(participant)} может заплатить ${coinAmount(cost)}, чтобы усилить монстра в битве ${playerChoiceBadge(player)}. Сейчас цель: ${baseStrength + strengthBonus}.`,
+        title: `Подкуп монстра${copyText}`,
+      });
+      if (choice !== "pay" || participant.coins < cost) continue;
+      addCoins(participant, -cost);
+      strengthBonus += increase;
+      payments.push({ cost, increase, player: participant });
+      log(`${playerName(participant)} платит <strong>${coinAmount(cost)}</strong> по ТАДАМ <strong>Подкуп монстра</strong>: монстр получает <strong>+${increase}</strong> к силе на этот бой.`);
+      render();
+    }
+  }
+
+  const shopBribeCards = state.players
+    .filter((participant) => participant.id !== player.id && !isBot(participant))
+    .flatMap((participant) => activeShopEffectItems(participant, "monster-bribe-plus1")
+      .map((card) => ({ card, participant })));
+  const promptedParticipants = new Set();
+  for (const { card, participant } of shopBribeCards) {
+    if (promptedParticipants.has(participant.id)) continue;
+    promptedParticipants.add(participant.id);
+    const effect = card.effect || {};
+    const cost = Math.max(0, Number(effect.cost) || 3);
+    const increase = Math.max(1, Number(effect.amount) || 1);
+    while (participant.coins >= cost) {
+      const choice = await chooseCardAction({
+        choices: [
+          {
+            id: "pay",
+            label: `Заплатить ${cost}`,
+            note: `монстр +${increase}`,
+            score: 3,
+          },
+          {
+            id: "skip",
+            label: "Хватит",
+            note: "не платить больше",
+            score: 8,
+          },
+        ],
+        kicker: "Лавка Джо",
+        kind: "shop-monster-bribe",
+        playerId: participant.id,
+        summary: `${playerChoiceBadge(participant)} может усилить монстра в битве ${playerChoiceBadge(player)}. Сейчас цель: ${baseStrength + strengthBonus}.`,
+        title: card.title,
+      });
+      if (choice !== "pay" || participant.coins < cost) break;
+      addCoins(participant, -cost);
+      strengthBonus += increase;
+      payments.push({ cost, increase, player: participant, source: "shop" });
+      log(`${playerName(participant)} платит <strong>${coinAmount(cost)}</strong> по <strong>Лавке Джо</strong>: монстр получает <strong>+${increase}</strong> к силе на этот бой.`);
+      render();
+    }
+  }
+
+  return { payments, strengthBonus };
+}
+
+async function resolveShopMonsterStrengthBoosts(player, contextLabel) {
+  let bonus = 0;
+  const cards = activeShopEffectItems(player, "monster-strength-plus3");
+  for (const card of cards) {
+    const effect = card.effect || {};
+    const cost = Math.max(0, Number(effect.cost) || 5);
+    const amount = Math.max(1, Number(effect.amount) || 3);
+    if (player.coins < cost) continue;
+    const shouldPay = isBot(player)
+      ? chooseBotMonsterStrengthBoost(player, cost, amount)
+      : await chooseShopMonsterStrengthBoost(player, card, cost, amount, contextLabel);
+    if (!shouldPay || player.coins < cost) continue;
+    addCoins(player, -cost);
+    bonus += amount;
+    log(`${playerName(player)} платит <strong>${coinAmount(cost)}</strong> по <strong>Лавке Джо</strong>: <strong>+${amount}</strong> силы в ${contextLabel}.`, {
+      toast: true,
+    });
+    render();
+  }
+  return bonus;
+}
+
+function chooseBotMonsterStrengthBoost(player, cost, amount) {
+  const door = doorByEnemyCell(player.position);
+  if (!door) return false;
+  const coinsAfter = player.coins - cost;
+  if (coinsAfter < 3) return false;
+  const target = effectiveMonsterStrength(door);
+  const dice = totalDiceForPlayer(player);
+  const before = estimateWinChance(dice, playerMonsterBattleBonus(player), target);
+  const after = estimateWinChance(dice, playerMonsterBattleBonus(player) + amount, target);
+  return after - before >= 0.12 || (before < 0.45 && after >= 0.45);
+}
+
+async function chooseShopMonsterStrengthBoost(player, card, cost, amount, contextLabel) {
+  const choice = await chooseCardAction({
+    choices: [
+      {
+        id: "pay",
+        label: `+${amount} силы`,
+        note: coinAmount(cost),
+        score: 18,
+      },
+      {
+        id: "skip",
+        label: "Не платить",
+        note: "оставить монеты",
+        score: 8,
+      },
+    ],
+    kicker: "Лавка Джо",
+    kind: "shop-monster-strength",
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} может заплатить ${coinAmount(cost)} и получить +${amount} силы в ${contextLabel}.`,
+    title: card.title,
+  });
+  return choice === "pay";
 }
 
 async function resolveChaosPortal(player) {
@@ -4448,6 +5143,7 @@ async function resolveChaosPortal(player) {
   });
 
   await teleportFromChaosPortal(player, destination);
+  await resolvePortalBadDraw(player, "Портал хаоса");
 }
 
 function chaosPortalPromptMarkup(player, options) {
@@ -4855,7 +5551,7 @@ async function resolveVsField(player) {
         rollingPlayerId: null,
       };
       render();
-      log(`${playerName(contender)} в VS-битве: ${formatRoll(result.rolls)}${combatBonusFormulaText(result.baseBonus, result.cursePenalty, result.total)}. Сила: <strong>${result.total}</strong>.`);
+      log(`${playerName(contender)} в VS-битве: ${formatRoll(result.rolls)}${combatBonusFormulaText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus)}. Сила: <strong>${result.total}</strong>.`);
     }
 
     const bestForce = Math.max(...roundResults.map((result) => result.total));
@@ -4950,7 +5646,7 @@ async function resolveFinalBattle(boss, animate = true) {
     setFinalBattleRoller(null);
     render();
     log(
-      `${playerName(challenger)} атакует босса: ${formatRoll(result.rolls)}${finalBonusText(result.baseBonus, result.cursePenalty, result.total)}. Сила: <strong>${result.total}</strong>.`,
+      `${playerName(challenger)} атакует босса: ${formatRoll(result.rolls)}${finalBonusText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus)}. Сила: <strong>${result.total}</strong>.`,
     );
   }
 
@@ -4993,13 +5689,14 @@ async function resolveFinalBattle(boss, animate = true) {
     setFinalBattleRoller(null);
     render();
     log(
-      `${playerName(boss)} бросает как босс ${index + 1}/${challengers.length}: ${formatRoll(result.rolls)}${finalBonusText(result.baseBonus, result.cursePenalty, result.total)}. Сила броска: <strong>${result.total}</strong>. Сила босса: <strong>${state.finalBattleProgress.bossForce}</strong>.`,
+      `${playerName(boss)} бросает как босс ${index + 1}/${challengers.length}: ${formatRoll(result.rolls)}${finalBonusText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus)}. Сила броска: <strong>${result.total}</strong>. Сила босса: <strong>${state.finalBattleProgress.bossForce}</strong>.`,
     );
   }
 
   const bossRolled = bossRollResults.reduce((sum, result) => sum + result.rolled, 0);
   const bossBonus = bossRollResults.reduce((sum, result) => sum + (result.baseBonus || 0), 0);
   const bossCursePenalty = bossRollResults.reduce((sum, result) => sum + (result.cursePenalty || 0), 0);
+  const bossHeroSwordBonus = bossRollResults.reduce((sum, result) => sum + (result.heroSwordBonus || 0), 0);
   const bossRollTotal = bossRollResults.reduce((sum, result) => sum + result.total, 0);
   const bossForce = bossOpponentBonus + bossRollTotal;
   state.finalBattleProgress.bossForce = bossForce;
@@ -5007,6 +5704,7 @@ async function resolveFinalBattle(boss, animate = true) {
     bossOpponentBonus ? `${bossOpponentBonusLabel} противники (+${bossOpponentBonusPerPlayer} каждый)` : "",
     bossRolled ? `${bossRolled} кубики` : "",
     bossBonus ? `${bossBonus} обычные бонусы` : "",
+    bossHeroSwordBonus ? `${bossHeroSwordBonus} Меч Героя` : "",
     bossCursePenalty ? `Сглаз ${bossCursePenalty}` : "",
   ].filter(Boolean).join(" + ");
   log(
@@ -5025,6 +5723,7 @@ async function resolveFinalBattle(boss, animate = true) {
     bossBonus,
     bossCursePenalty,
     bossForce,
+    bossHeroSwordBonus,
     bossOpponentBonus,
     bossOpponentBonusPerPlayer,
     bossRollResults,
@@ -5092,6 +5791,7 @@ function buildFinalBattleSummary({
   bossBonus,
   bossCursePenalty = 0,
   bossForce,
+  bossHeroSwordBonus = 0,
   bossOpponentBonus,
   bossOpponentBonusPerPlayer = 0,
   bossRollResults,
@@ -5118,7 +5818,7 @@ function buildFinalBattleSummary({
         color: player.color,
         force: isBoss
           ? {
-              bonus: bossBonus + bossCursePenalty,
+              bonus: bossBonus + bossCursePenalty + bossHeroSwordBonus,
               opponentBonus: bossOpponentBonus,
               opponentBonusPerPlayer: bossOpponentBonusPerPlayer,
               rolled: bossRolled,
@@ -5168,7 +5868,8 @@ async function rollPlayerBattlePower(player, animate, { label = "", isFinalBattl
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const baseBonus = playerCombatBonus(player);
   const curse = consumeNextBattlePenalty(player);
-  const bonus = baseBonus + curse.penalty;
+  const heroSwordBonus = heroSwordCombatBonus(player, rolls);
+  const bonus = baseBonus + curse.penalty + heroSwordBonus;
   if (curse.penalty < 0) {
     log(`${playerName(player)} сбрасывает <strong>Сглаз</strong> (${curse.cards.length}): <strong>${curse.penalty}</strong> к этой битве.`, {
       toast: true,
@@ -5182,7 +5883,7 @@ async function rollPlayerBattlePower(player, animate, { label = "", isFinalBattl
   const total = Math.max(0, rolled + bonus);
   state.dice = total;
   render();
-  return { baseBonus, bonus, cursePenalty: curse.penalty, player, rolled, rolls, total };
+  return { baseBonus, bonus, cursePenalty: curse.penalty, heroSwordBonus, player, rolled, rolls, total };
 }
 
 async function rollPlayerMonsterBattlePower(player, animate, { label = "" } = {}) {
@@ -5198,7 +5899,8 @@ async function rollPlayerMonsterBattlePower(player, animate, { label = "" } = {}
   const rageBonus = consumeNextMonsterBattleBonus(player);
   const curse = consumeNextBattlePenalty(player);
   const badPenalty = consumeSelfMonsterMinus(player, "Сплочении");
-  const bonus = baseBonus + strengthBonus + rageBonus + curse.penalty + badPenalty;
+  const heroSwordBonus = heroSwordCombatBonus(player, rolls);
+  const bonus = baseBonus + strengthBonus + rageBonus + curse.penalty + badPenalty + heroSwordBonus;
   if (rageBonus > 0) {
     log(`${playerName(player)} использует <strong>Зелье ярости</strong> в событии <strong>Сплочение</strong>: <strong>+${rageBonus}</strong>. Зелье сгорает.`);
   }
@@ -5215,11 +5917,11 @@ async function rollPlayerMonsterBattlePower(player, animate, { label = "" } = {}
   const total = Math.max(0, rolled + bonus);
   state.dice = total;
   render();
-  return { badPenalty, baseBonus, bonus, cursePenalty: curse.penalty, player, rageBonus, rolled, rolls, strengthBonus, total };
+  return { badPenalty, baseBonus, bonus, cursePenalty: curse.penalty, heroSwordBonus, player, rageBonus, rolled, rolls, strengthBonus, total };
 }
 
-function finalBonusText(baseBonus, cursePenalty, total) {
-  return combatBonusFormulaText(baseBonus, cursePenalty, total);
+function finalBonusText(baseBonus, cursePenalty, total, heroSwordBonus = 0) {
+  return combatBonusFormulaText(baseBonus, cursePenalty, total, heroSwordBonus);
 }
 
 function finalBattleScore(player, damageToBoss, position = 1) {
@@ -5277,9 +5979,377 @@ function finalDistance(player) {
   return Math.max(0, finish - current);
 }
 
+async function resolveStartTurnTadamEffects(player) {
+  if (!player || state.finished) return;
+  const wasLast = isLastByRoute(player);
+  const wasPoorest = isPoorestByCoins(player);
+  await resolveLastGoodStart(player, wasLast);
+  resolvePoorestStartCoins(player, wasPoorest);
+  resolveLastStepPlus(player, wasLast);
+}
+
+async function resolveLastGoodStart(player, wasLast) {
+  const effects = activeTadamEffects("last-good-start");
+  if (!effects.length || !wasLast) return;
+
+  for (let index = 0; index < effects.length; index += 1) {
+    log(`<strong>ТАДАМ</strong>: ${playerName(player)} последний и тянет карту <strong>Хорошо</strong> в начале хода.`, {
+      toast: true,
+    });
+    await drawAndApplyCard(player, "good", "Хорошо");
+    if (state.finished) return;
+  }
+}
+
+function resolvePoorestStartCoins(player, wasPoorest) {
+  const amount = tadamEffectAmount("poorest-start-coins");
+  if (!amount || !wasPoorest) return;
+
+  addCoins(player, amount);
+  log(`<strong>ТАДАМ</strong>: ${playerName(player)} получает ${coinAmount(amount)} в начале хода: меньше всего монет.`, {
+    toast: true,
+  });
+}
+
+function resolveLastStepPlus(player, wasLast) {
+  const steps = tadamEffectSteps("last-step-plus");
+  if (!steps || !wasLast) return;
+
+  player.turnStepBonus = (Number(player.turnStepBonus) || 0) + steps;
+  log(`<strong>ТАДАМ</strong>: ${playerName(player)} получает <strong>+${steps}</strong> к шагам на этот ход: последний игрок.`, {
+    toast: true,
+  });
+  showDiceFloat(player, steps);
+}
+
+async function resolveTurnShopBuys(player) {
+  await resolveTurnShopBuy(player, "turn-strength-buy", {
+    add: (target, amount) => addBattleBonus(target, amount),
+    label: "+1 к силе",
+    logLabel: "силу",
+    usedKey: "_turnStrengthBuyUsedAt",
+  });
+  await resolveTurnShopBuy(player, "turn-steps-buy", {
+    add: (target, amount) => addStepBonus(target, amount),
+    label: "+2 к шагам",
+    logLabel: "шаги",
+    usedKey: "_turnStepsBuyUsedAt",
+  });
+}
+
+async function resolveTurnShopBuy(player, type, config) {
+  const cards = activeShopEffectItems(player, type)
+    .filter((card) => card[config.usedKey] !== state.turns);
+  for (const card of cards) {
+    const cost = Math.max(0, Number(card.effect?.cost) || 10);
+    const amount = Math.max(1, Number(card.effect?.amount ?? card.effect?.steps) || 1);
+    if (player.coins < cost) continue;
+    const shouldPay = isBot(player)
+      ? chooseBotTurnShopBuy(player, type, cost)
+      : await chooseTurnShopBuy(player, card, cost, config.label);
+    card[config.usedKey] = state.turns;
+    if (!shouldPay || player.coins < cost) continue;
+    addCoins(player, -cost);
+    config.add(player, amount);
+    log(`${playerName(player)} платит <strong>${coinAmount(cost)}</strong> в <strong>Лавке Джо</strong> и получает <strong>${config.label}</strong>.`, {
+      toast: true,
+    });
+    render();
+  }
+}
+
+function chooseBotTurnShopBuy(player, type, cost) {
+  const coinsAfter = player.coins - cost;
+  if (coinsAfter < 5) return false;
+  const gate = monsterGatePressure(player);
+  if (type === "turn-strength-buy") return Boolean(gate?.pressure > 0.35 || finalDistance(player) <= 28);
+  const leader = leadingPlayer();
+  const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+  return lag > 10 || finalDistance(player) <= 32 || player.coins >= 22;
+}
+
+async function chooseTurnShopBuy(player, card, cost, label) {
+  const choice = await chooseCardAction({
+    choices: [
+      {
+        id: "pay",
+        label: "Заплатить",
+        note: `${coinAmount(cost)} - ${label}`,
+        score: 18,
+      },
+      {
+        id: "skip",
+        label: "Не сейчас",
+        note: "раз в ход",
+        score: 6,
+      },
+    ],
+    kicker: "Лавка Джо",
+    kind: "turn-shop-buy",
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} может заплатить ${coinAmount(cost)} и получить ${label}.`,
+    title: card.title,
+  });
+  return choice === "pay";
+}
+
+async function resolvePreRollShopStepBoosts(player, animate) {
+  if (!animate) return;
+  const cards = activeShopEffectItems(player, "pre-roll-step-plus5");
+  for (const [index, card] of cards.entries()) {
+    const effect = card.effect || {};
+    const cost = Math.max(0, Number(effect.cost) || 5);
+    if (player.coins < cost) continue;
+    const useBoost = await chooseSinglePreRollShopStepBoost(player, card, index, cards.length);
+    if (!useBoost || player.coins < cost) continue;
+    const steps = Math.max(1, Number(effect.steps) || 5);
+    addCoins(player, -cost);
+    player.turnStepBonus = (Number(player.turnStepBonus) || 0) + steps;
+    showDiceFloat(player, steps);
+    log(`${playerName(player)} платит <strong>${coinAmount(cost)}</strong> по <strong>Лавке Джо</strong>: <strong>+${steps}</strong> шагов на этот ход.`, {
+      toast: true,
+    });
+    render();
+  }
+}
+
+function chooseSinglePreRollShopStepBoost(player, card, index, total) {
+  state.pendingPreRoll = { card, index, playerId: player.id, total };
+  render();
+
+  return new Promise((resolve) => {
+    state.preRollResolver = (useBoost) => {
+      state.pendingPreRoll = null;
+      state.preRollResolver = null;
+      resolve(useBoost);
+    };
+    scheduleBotAction(botChoiceDelay("card"), { replace: true });
+  });
+}
+
+async function resolveMoveDieRerolls(player, rolls, animate) {
+  if (!animate || !Array.isArray(rolls) || !rolls.length) return rolls;
+  const cards = activeShopEffectItems(player, "reroll-one-move-die")
+    .filter((card) => card._moveDieRerollUsedAt !== state.turns);
+  let currentRolls = [...rolls];
+  for (const [index, card] of cards.entries()) {
+    const cost = Math.max(0, Number(card.effect?.cost) || 3);
+    if (player.coins < cost) continue;
+    const choice = isBot(player)
+      ? chooseBotMoveDieReroll(player, currentRolls, cost)
+      : await chooseMoveDieReroll(player, card, currentRolls, cost, index, cards.length);
+    const dieIndex = Number(choice);
+    if (!Number.isInteger(dieIndex) || dieIndex < 0 || dieIndex >= currentRolls.length || player.coins < cost) continue;
+
+    addCoins(player, -cost);
+    card._moveDieRerollUsedAt = state.turns;
+    const oldValue = currentRolls[dieIndex];
+    const newValue = d6();
+    recordDiceThrown(player, 1);
+    if (animate) {
+      state.isAnimating = true;
+      render();
+      await animateDice([newValue], { player });
+      state.isAnimating = false;
+    }
+    currentRolls = currentRolls.map((value, rollIndex) => (rollIndex === dieIndex ? newValue : value));
+    log(`${playerName(player)} платит <strong>${coinAmount(cost)}</strong> по <strong>Лавке Джо</strong> и перебрасывает кубик ${dieIndex + 1}: <strong>${oldValue}</strong> -> <strong>${newValue}</strong>. Новый бросок: <strong>${formatRoll(currentRolls)}</strong>.`, {
+      toast: true,
+    });
+    render();
+  }
+  return currentRolls;
+}
+
+function chooseMoveDieReroll(player, card, rolls, cost, index, total) {
+  state.pendingMoveDieReroll = {
+    card,
+    cost,
+    index,
+    playerId: player.id,
+    resolver: null,
+    rolls: [...rolls],
+    total,
+  };
+  render();
+  return new Promise((resolve) => {
+    state.pendingMoveDieReroll.resolver = resolve;
+  });
+}
+
+function chooseBotMoveDieReroll(player, rolls, cost = 3) {
+  if (!player || player.coins < cost || !rolls?.length) return "skip";
+  const coinsAfter = player.coins - cost;
+  if (coinsAfter < 4) return "skip";
+  const lowest = rolls.reduce((best, value, index) => (value < best.value ? { index, value } : best), { index: 0, value: rolls[0] });
+  const leader = leadingPlayer();
+  const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+  const urgency = lag > 8 || finalDistance(player) <= 24 || player.coins >= 18;
+  return lowest.value <= (urgency ? 3 : 2) ? String(lowest.index) : "skip";
+}
+
+async function resolveDuplicateDiceRewards(player, rolls) {
+  if (!hasDuplicateRoll(rolls)) return 0;
+  let extraSteps = 0;
+  const cards = activeShopEffectItems(player, "duplicate-dice-reward");
+  for (const card of cards) {
+    const amount = Math.max(1, Number(card.effect?.amount) || 5);
+    const steps = Math.max(1, Number(card.effect?.steps) || 5);
+    const choice = isBot(player)
+      ? chooseBotDuplicateDiceReward(player)
+      : await chooseDuplicateDiceReward(player, card, amount, steps);
+    if (choice === "steps") {
+      extraSteps += steps;
+      showDiceFloat(player, steps);
+      log(`${playerName(player)} получает <strong>+${steps}</strong> шагов за одинаковые кубики по <strong>Лавке Джо</strong>.`, { toast: true });
+    } else if (choice === "coins") {
+      addCoins(player, amount);
+      log(`${playerName(player)} получает <strong>${coinAmount(amount)}</strong> за одинаковые кубики по <strong>Лавке Джо</strong>.`, { toast: true });
+    }
+  }
+  if (extraSteps > 0) render();
+  return extraSteps;
+}
+
+function hasDuplicateRoll(rolls) {
+  const seen = new Set();
+  for (const value of rolls || []) {
+    if (seen.has(value)) return true;
+    seen.add(value);
+  }
+  return false;
+}
+
+function chooseBotDuplicateDiceReward(player) {
+  if (player.coins < 8) return "coins";
+  const leader = leadingPlayer();
+  const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+  return lag > 8 || finalDistance(player) <= 24 ? "steps" : "coins";
+}
+
+async function chooseDuplicateDiceReward(player, card, amount, steps) {
+  const choice = await chooseCardAction({
+    choices: [
+      {
+        id: "coins",
+        label: `Получить ${amount}`,
+        note: "монеты",
+        score: 10,
+      },
+      {
+        id: "steps",
+        label: `Пройти ${steps}`,
+        note: "вперед",
+        score: 12,
+      },
+    ],
+    kicker: "Лавка Джо",
+    kind: "duplicate-dice-reward",
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} выбросил одинаковые значения на кубиках.`,
+    title: card.title,
+  });
+  return choice === "steps" ? "steps" : "coins";
+}
+
+async function resolveMoveOneFarther(player, currentSteps, animate) {
+  if (!animate) return 0;
+  const cards = activeShopEffectItems(player, "move-one-farther")
+    .filter((card) => card._moveOneFartherUsedAt !== state.turns);
+  let extraSteps = 0;
+  for (const [index, card] of cards.entries()) {
+    const cost = Math.max(0, Number(card.effect?.cost) || 3);
+    const steps = Math.max(1, Number(card.effect?.steps) || 1);
+    if (player.coins < cost) continue;
+    const baseSteps = currentSteps + extraSteps;
+    const choice = isBot(player)
+      ? chooseBotMoveOneFarther(player, baseSteps, cost)
+      : await chooseMoveOneFarther(player, card, cost, steps, baseSteps, index, cards.length);
+    if (choice !== "pay" || player.coins < cost) continue;
+    addCoins(player, -cost);
+    card._moveOneFartherUsedAt = state.turns;
+    extraSteps += steps;
+    showDiceFloat(player, steps);
+    log(`${playerName(player)} платит <strong>${coinAmount(cost)}</strong> по <strong>Лавке Джо</strong> и идет на <strong>+${steps}</strong> шаг дальше.`, {
+      toast: true,
+    });
+    render();
+  }
+  return extraSteps;
+}
+
+function chooseMoveOneFarther(player, card, cost, steps, currentSteps, index, total) {
+  const normalCell = movementTargetCell(player, currentSteps);
+  const boostedCell = movementTargetCell(player, currentSteps + steps);
+  state.pendingMoveOneFarther = {
+    boostedCell,
+    card,
+    cost,
+    currentSteps,
+    index,
+    normalCell,
+    playerId: player.id,
+    resolver: null,
+    steps,
+    total,
+  };
+  render();
+  return new Promise((resolve) => {
+    state.pendingMoveOneFarther.resolver = resolve;
+  });
+}
+
+function chooseBotMoveOneFarther(player, currentSteps, cost = 3) {
+  if (!player || player.coins < cost) return "skip";
+  const coinsAfter = player.coins - cost;
+  if (coinsAfter < 4) return "skip";
+  const normalCell = movementTargetCell(player, currentSteps);
+  const boostedCell = movementTargetCell(player, currentSteps + 1);
+  if (normalCell === boostedCell) return "skip";
+  const progressGain = (routeIndex.get(boostedCell) ?? routeProgress(player)) - (routeIndex.get(normalCell) ?? routeProgress(player));
+  const normalScore = scoreCellForBot(player, normalCell, { movementTarget: true });
+  const boostedScore = scoreCellForBot(player, boostedCell, { movementTarget: true });
+  const leader = leadingPlayer();
+  const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+  const score = (boostedScore - normalScore) + progressGain * botPersonality(player).progress + Math.min(8, Math.max(0, lag * 0.18));
+  const closerToFinish = finalDistanceFromCell(boostedCell) < finalDistanceFromCell(normalCell);
+  return score > 1.5 || (closerToFinish && player.coins >= 12) ? "pay" : "skip";
+}
+
+function movementTargetCell(player, steps) {
+  const path = buildWalkPath(player, Math.max(0, Number(steps) || 0));
+  return path.length ? path[path.length - 1] : player.position;
+}
+
+function isLastByRoute(player) {
+  if (!player || !state?.players?.length) return false;
+  const minProgress = Math.min(...state.players.map((item) => routeProgress(item)));
+  return routeProgress(player) === minProgress;
+}
+
+function isPoorestByCoins(player) {
+  if (!player || !state?.players?.length) return false;
+  const minCoins = Math.min(...state.players.map((item) => item.coins));
+  return player.coins === minCoins;
+}
+
 async function resolveGreenField(player) {
   addCoins(player, 3);
   log(`${playerName(player)} получает <strong>3 монеты</strong> на зеленом поле.`, { toast: true });
+  const extra = tadamEffectAmount("green-extra-coins");
+  if (extra > 0) {
+    addCoins(player, extra);
+    log(`<strong>ТАДАМ</strong>: зеленое поле дает ${playerName(player)} дополнительно ${coinAmount(extra)}.`, {
+      toast: true,
+    });
+  }
+  const shopExtra = activeShopEffectAmount(player, "green-fields-plus5", "amount");
+  if (shopExtra > 0) {
+    addCoins(player, shopExtra);
+    log(`<strong>Лавка Джо</strong>: зеленое поле дает ${playerName(player)} дополнительно ${coinAmount(shopExtra)}.`, {
+      toast: true,
+    });
+  }
 
   await applyFieldEffects(player, "green-field", "зеленое поле");
 }
@@ -5287,6 +6357,13 @@ async function resolveGreenField(player) {
 async function resolveRedField(player) {
   addCoins(player, -3);
   log(`${playerName(player)} теряет <strong>3 монеты</strong> на красном поле.`, { toast: true });
+  const extraLoss = tadamEffectAmount("red-extra-loss");
+  if (extraLoss > 0) {
+    addCoins(player, -extraLoss);
+    log(`<strong>ТАДАМ</strong>: красное поле отнимает у ${playerName(player)} дополнительно ${coinAmount(extraLoss)}.`, {
+      toast: true,
+    });
+  }
 
   await applyFieldEffects(player, "red-field", "красное поле");
 }
@@ -5312,6 +6389,11 @@ async function drawAndApplyCard(player, deckId, deckName = deckLabel(deckId), { 
   if (deckName === "Хорошо") {
     log(`${playerName(player)} тянет карту <strong>${deckName}</strong>: ${card.title}`);
     await revealGoodCard(player, card);
+    if (await resolveGoodCashout(player, card)) {
+      discardResolvedCard(deckId, card);
+      return;
+    }
+    log(`${playerName(player)} применяет карту <strong>Хорошо</strong>: ${card.title}`, { toast: true });
   } else if (deckName === "Плохо") {
     log(`${playerName(player)} тянет карту <strong>${deckName}</strong>: ${card.title}`);
     await revealBadCard(player, card);
@@ -5328,14 +6410,80 @@ async function drawAndApplyCard(player, deckId, deckName = deckLabel(deckId), { 
   } finally {
     if (shouldDiscard) discardResolvedCard(deckId, card);
   }
+  if (deckId === "bad") {
+    resolveBadConsolation(player);
+  }
   if (deckId === "bad" && !skipNextBadExtraDraw) {
     await resolveNextBadExtraDraw(player);
   }
 }
 
+async function resolveGoodCashout(player, card) {
+  const amount = tadamEffectAmount("good-cashout");
+  if (!amount) return false;
+
+  const choice = await chooseCardAction({
+    choices: [
+      {
+        id: "apply",
+        label: "Применить",
+        note: cardDisplayText(card),
+        score: scoreGoodCashoutApply(player, card, amount),
+      },
+      {
+        id: "cashout",
+        label: "Сбросить",
+        note: coinAmount(amount),
+        score: scoreGoodCashoutCoins(player, amount),
+      },
+    ],
+    kicker: "ТАДАМ",
+    kind: "good-cashout",
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} тянет <strong>${card.title}</strong>. Можно применить карту или сбросить ее за ${coinAmount(amount)}.`,
+    title: "Хорошо: применить или взять монеты?",
+  });
+
+  if (choice !== "cashout") return false;
+  addCoins(player, amount);
+  log(`<strong>ТАДАМ</strong>: ${playerName(player)} сбрасывает <strong>${card.title}</strong> и получает ${coinAmount(amount)} вместо эффекта.`, {
+    toast: true,
+  });
+  return true;
+}
+
+function scoreGoodCashoutApply(player, card, amount) {
+  const effect = card?.effect || {};
+  const personality = botPersonality(player);
+  if (effect.type === "coins") return Math.max(0, Number(effect.amount) || 0) + 8 * personality.economy;
+  if (effect.type === "draw-free-shop") return 26 * personality.shop;
+  if (isPendingGoodEffect(effect.type)) return 24 * personality.chaos;
+  if (effect.type === "move" || effect.type === "green-path" || effect.type === "choose-forward-or-back") return 18 * personality.progress;
+  if (effect.type === "optional-extra-turn") return player.coins >= (effect.cost || 0) ? 20 * personality.progress : 2;
+  return 14 + Math.min(8, amount * 0.25);
+}
+
+function scoreGoodCashoutCoins(player, amount) {
+  const personality = botPersonality(player);
+  let score = amount * 1.7 * personality.economy;
+  if (player.coins < 8) score += 16 * personality.economy;
+  if (player.coins < 5) score += 10;
+  return score;
+}
+
+function resolveBadConsolation(player) {
+  const amount = tadamEffectAmount("bad-consolation");
+  if (!amount) return;
+
+  addCoins(player, amount);
+  log(`<strong>ТАДАМ</strong>: ${playerName(player)} получает ${coinAmount(amount)} после карты <strong>Плохо</strong>.`, {
+    toast: true,
+  });
+}
+
 async function revealGoodCard(player, card) {
   setPhoneCardPreview(player, "Хорошо", card, false);
-  const backPrompt = showActionPrompt(goodCardMarkup(player, card, { revealed: false }), {
+  const backPrompt = showActionPrompt(cardFaceStageMarkup(goodCardMarkup(player, card, { revealed: false })), {
     autoFor: player,
     buttonLabel: "Открыть",
   });
@@ -5349,14 +6497,13 @@ async function revealGoodCard(player, card) {
   await backPrompt;
 
   setPhoneCardPreview(player, "Хорошо", card, true);
-  const facePrompt = showActionPrompt(goodCardMarkup(player, card, { revealed: true }), {
+  const facePrompt = showActionPrompt(cardFaceStageMarkup(goodCardMarkup(player, card, { revealed: true })), {
     autoFor: player,
     buttonLabel: "Применить",
   });
   wireGoodCardClick(actionPromptResolver);
   await facePrompt;
   clearPhoneCardPreview();
-  log(`${playerName(player)} применяет карту <strong>Хорошо</strong>: ${card.title}`, { toast: true });
 }
 
 function wireGoodCardClick(resolver) {
@@ -5385,13 +6532,32 @@ function wireCardRevealClick(selector, resolver) {
   }));
 }
 
+// Gameplay reveals and settings reference cards share this wrapper so card faces keep one layout contract.
+function cardFaceStageMarkup(markup, { inert = false, title = "" } = {}) {
+  return `
+    <div class="card-face-stage${inert ? " is-inert" : ""}"${title ? ` title="${escapeHtml(title)}"` : ""}>
+      ${markup}
+    </div>
+  `;
+}
+
+function cardFaceMarkupForDeck(deckId, card, { revealed }) {
+  if (deckId === "good") return goodCardMarkup(null, card, { revealed });
+  if (deckId === "bad") return badCardMarkup(card, { revealed });
+  if (deckId === "shop") return shopCardsMarkup([card], { revealed });
+  if (deckId === "tadam") return tadamCardMarkup(card, { revealed });
+  if (deckId === "event") return eventCardMarkup(card, { revealed });
+  return "";
+}
+
 function goodCardMarkup(player, card, { revealed }) {
-  const description = cardDisplayText(card);
-  const textClass = `good-card-text ${cardFaceTextDensityClass(description)}`.trim();
+  const description = cardBodyText(card);
+  const title = cardFaceTitleText(card, "Хорошо");
+  const textClass = `good-card-text ${cardFaceTextDensityClass(description, title)}`.trim();
   const cardText = revealed
     ? `
       <span class="${textClass}">
-        ${cardFaceDescriptionMarkup(description)}
+        ${cardFaceTextMarkup(card, "good", { fallbackTitle: "Хорошо" })}
       </span>
     `
     : "";
@@ -5404,17 +6570,54 @@ function goodCardMarkup(player, card, { revealed }) {
   `;
 }
 
-function cardFaceTextDensityClass(description) {
+function cardFaceTextDensityClass(description, title = "") {
   const text = String(description || "");
-  if (text.length > 125) return "is-long";
-  if (text.length > 90) return "is-dense";
+  const lines = cardFaceDescriptionLines(text).length;
+  const score = text.length + String(title || "").length * 1.25;
+  if (score > 145 || lines >= 4) return "is-long";
+  if (score > 100 || lines >= 3) return "is-dense";
   return "";
 }
 
-function cardFaceDescriptionMarkup(description) {
+function cardFaceTextMarkup(card, deckClass, { fallbackTitle = "Карта", icon = "", descriptionLineClass = "" } = {}) {
+  const title = cardFaceTitleText(card, fallbackTitle);
+  const description = cardBodyText(card);
+  const iconMarkup = icon
+    ? `<span class="${deckClass}-card-icon card-face-icon" aria-hidden="true">${icon}</span>`
+    : "";
+  return `
+    <strong class="${deckClass}-card-title card-face-title">${cardFaceTitleMarkup(title, fallbackTitle)}</strong>
+    ${iconMarkup}
+    <span class="${deckClass}-card-description card-face-description">
+      ${cardFaceDescriptionMarkup(description, descriptionLineClass)}
+    </span>
+  `;
+}
+
+function cardFaceTitleMarkup(title, fallbackTitle = "Карта") {
+  return escapeHtml(cardFaceTitlePlainText(title, fallbackTitle));
+}
+
+function cardFaceTitlePlainText(title, fallbackTitle = "Карта") {
+  const fallback = String(fallbackTitle || "Карта");
+  const withIconWords = String(title || fallback)
+    .replace(/<img\b(?=[^>]*\bdice-icon\b)[^>]*>/gi, " кубик ")
+    .replace(/<img\b(?=[^>]*\bcoin-icon\b)[^>]*>/gi, " монеты ")
+    .replace(/🎲/g, " кубик ")
+    .replace(/[🪙💰]/g, " монеты ");
+  const text = plainText(withIconWords)
+    .replace(/\s+/g, " ")
+    .replace(/^кубик\b/iu, "Кубик")
+    .replace(/\bКонтроль кубик\b/iu, "Контроль кубика")
+    .trim();
+  return text || fallback;
+}
+
+function cardFaceDescriptionMarkup(description, lineClass = "") {
   const lines = cardFaceDescriptionLines(description);
+  const classAttribute = lineClass ? ` class="${lineClass}"` : "";
   return (lines.length ? lines : [description])
-    .map((line) => `<span>${iconizeHtml(line)}</span>`)
+    .map((line) => `<span${classAttribute}>${iconizeHtml(line)}</span>`)
     .join("");
 }
 
@@ -5426,7 +6629,7 @@ function cardFaceDescriptionLines(description) {
 
 async function revealBadCard(player, card) {
   setPhoneCardPreview(player, "Плохо", card, false);
-  const backPrompt = showActionPrompt(badCardMarkup(card, { revealed: false }), {
+  const backPrompt = showActionPrompt(cardFaceStageMarkup(badCardMarkup(card, { revealed: false })), {
     autoFor: player,
     buttonLabel: "Открыть",
   });
@@ -5435,7 +6638,7 @@ async function revealBadCard(player, card) {
   await backPrompt;
 
   setPhoneCardPreview(player, "Плохо", card, true);
-  const facePrompt = showActionPrompt(badCardMarkup(card, { revealed: true }), {
+  const facePrompt = showActionPrompt(cardFaceStageMarkup(badCardMarkup(card, { revealed: true })), {
     autoFor: player,
     buttonLabel: "Применить",
   });
@@ -5446,12 +6649,13 @@ async function revealBadCard(player, card) {
 }
 
 function badCardMarkup(card, { revealed }) {
-  const description = cardDisplayText(card);
-  const textClass = `bad-card-text ${cardFaceTextDensityClass(description)}`.trim();
+  const description = cardBodyText(card);
+  const title = cardFaceTitleText(card, "Плохо");
+  const textClass = `bad-card-text ${cardFaceTextDensityClass(description, title)}`.trim();
   const cardText = revealed
     ? `
       <span class="${textClass}">
-        ${cardFaceDescriptionMarkup(description)}
+        ${cardFaceTextMarkup(card, "bad", { fallbackTitle: "Плохо" })}
       </span>
     `
     : "";
@@ -5466,7 +6670,7 @@ function badCardMarkup(card, { revealed }) {
 
 async function revealTadamCard(player, card) {
   setPhoneCardPreview(player, "ТАДАМ", card, false);
-  const backPrompt = showActionPrompt(tadamCardMarkup(card, { revealed: false }), {
+  const backPrompt = showActionPrompt(cardFaceStageMarkup(tadamCardMarkup(card, { revealed: false })), {
     autoFor: player,
     buttonLabel: "Открыть",
   });
@@ -5475,7 +6679,7 @@ async function revealTadamCard(player, card) {
   await backPrompt;
 
   setPhoneCardPreview(player, "ТАДАМ", card, true);
-  const facePrompt = showActionPrompt(tadamCardMarkup(card, { revealed: true }), {
+  const facePrompt = showActionPrompt(cardFaceStageMarkup(tadamCardMarkup(card, { revealed: true })), {
     autoFor: player,
     buttonLabel: "Применить",
   });
@@ -5485,12 +6689,13 @@ async function revealTadamCard(player, card) {
 }
 
 function tadamCardMarkup(card, { revealed }) {
-  const description = cardDisplayText(card);
-  const textClass = `tadam-card-text ${cardFaceTextDensityClass(description)}`.trim();
+  const description = cardBodyText(card);
+  const title = cardFaceTitleText(card, "ТАДАМ");
+  const textClass = `tadam-card-text ${cardFaceTextDensityClass(description, title)}`.trim();
   const cardText = revealed
     ? `
       <span class="${textClass}">
-        ${cardFaceDescriptionMarkup(description)}
+        ${cardFaceTextMarkup(card, "tadam", { fallbackTitle: "ТАДАМ" })}
       </span>
     `
     : "";
@@ -5505,7 +6710,7 @@ function tadamCardMarkup(card, { revealed }) {
 
 async function revealEventCard(player, card) {
   setPhoneCardPreview(player, "Событие", card, false);
-  const backPrompt = showActionPrompt(eventCardMarkup(card, { revealed: false }), {
+  const backPrompt = showActionPrompt(cardFaceStageMarkup(eventCardMarkup(card, { revealed: false })), {
     autoFor: player,
     buttonLabel: "Открыть",
   });
@@ -5514,7 +6719,7 @@ async function revealEventCard(player, card) {
   await backPrompt;
 
   setPhoneCardPreview(player, "Событие", card, true);
-  const facePrompt = showActionPrompt(eventCardMarkup(card, { revealed: true }), {
+  const facePrompt = showActionPrompt(cardFaceStageMarkup(eventCardMarkup(card, { revealed: true })), {
     autoFor: player,
     buttonLabel: "Применить",
   });
@@ -5525,14 +6730,19 @@ async function revealEventCard(player, card) {
 }
 
 function eventCardMarkup(card, { revealed }) {
-  const description = cardDisplayText(card);
+  const description = cardBodyText(card);
+  const title = cardFaceTitleText(card, "Событие");
   const icon = card.icon ? `<img class="event-card-artifact-icon" src="${card.icon}" alt="" aria-hidden="true">` : "";
-  const textClass = `event-card-text ${eventCardTextDensityClass(description)}`.trim();
+  const iconClass = icon ? "has-card-face-icon" : "";
+  const textClass = `event-card-text ${eventCardTextDensityClass(description, title)} ${iconClass}`.trim();
   const cardText = revealed
     ? `
       <span class="${textClass}">
-        <strong class="event-card-title">${icon}${iconizeHtml(card.title || "Событие")}</strong>
-        ${eventCardDescriptionMarkup(description)}
+        ${cardFaceTextMarkup(card, "event", {
+          descriptionLineClass: "event-card-description-line",
+          fallbackTitle: "Событие",
+          icon,
+        })}
       </span>
     `
     : "";
@@ -5545,11 +6755,12 @@ function eventCardMarkup(card, { revealed }) {
   `;
 }
 
-function eventCardTextDensityClass(description) {
+function eventCardTextDensityClass(description, title = "") {
   const text = String(description || "");
   const lines = eventCardDescriptionLines(text).length;
-  if (text.length > 175 || lines >= 4) return "is-long";
-  if (text.length > 120 || lines >= 3) return "is-dense";
+  const score = text.length + String(title || "").length * 1.1;
+  if (score > 175 || lines >= 4) return "is-long";
+  if (score > 120 || lines >= 3) return "is-dense";
   return "";
 }
 
@@ -5570,7 +6781,7 @@ function eventCardDescriptionLines(description) {
 async function revealShopCards(cards, player = null) {
   const singleCard = cards.length === 1 ? cards[0] : null;
   if (singleCard) setPhoneCardPreview(player, "Лавка Джо", singleCard, false);
-  const backPrompt = showActionPrompt(shopCardsMarkup(cards, { revealed: false }), {
+  const backPrompt = showActionPrompt(cardFaceStageMarkup(shopCardsMarkup(cards, { revealed: false })), {
     autoFor: player,
     buttonLabel: "Открыть",
   });
@@ -5579,7 +6790,7 @@ async function revealShopCards(cards, player = null) {
   await backPrompt;
 
   if (singleCard) setPhoneCardPreview(player, "Лавка Джо", singleCard, true);
-  const facePrompt = showActionPrompt(shopCardsMarkup(cards, { revealed: true }), {
+  const facePrompt = showActionPrompt(cardFaceStageMarkup(shopCardsMarkup(cards, { revealed: true })), {
     autoFor: player,
     buttonLabel: "Далее",
   });
@@ -5588,8 +6799,8 @@ async function revealShopCards(cards, player = null) {
   if (singleCard) clearPhoneCardPreview();
 }
 
-async function revealSelectableShopCards(cards, player = null) {
-  const backPrompt = showActionPrompt(shopCardsMarkup(cards, { revealed: false }), {
+async function revealSelectableShopCards(cards, player = null, { cost = 5 } = {}) {
+  const backPrompt = showActionPrompt(cardFaceStageMarkup(shopCardsMarkup(cards, { revealed: false })), {
     autoFor: player,
     buttonLabel: "Открыть",
   });
@@ -5597,10 +6808,10 @@ async function revealSelectableShopCards(cards, player = null) {
   wireShopCardClick(backResolver);
   await backPrompt;
 
-  return chooseShopCardFromFace(cards, player);
+  return chooseShopCardFromFace(cards, player, { cost });
 }
 
-function chooseShopCardFromFace(offer, player = null) {
+function chooseShopCardFromFace(offer, player = null, { cost = 5 } = {}) {
   if (!ui.eventToast) return Promise.resolve(null);
 
   window.clearTimeout(eventToastFadeTimer);
@@ -5608,10 +6819,10 @@ function chooseShopCardFromFace(offer, player = null) {
 
   actionPromptRollContext = null;
   ui.eventToast.hidden = false;
-  ui.eventToast.innerHTML = `<div class="event-toast-copy">${shopCardsMarkup(offer, {
+  ui.eventToast.innerHTML = `<div class="event-toast-copy">${cardFaceStageMarkup(shopCardsMarkup(offer, {
     revealed: true,
     selectable: true,
-  })}</div>`;
+  }))}</div>`;
   ui.eventToast.classList.remove("fading", "quick-fading", "visible");
   ui.eventToast.classList.add("action-prompt");
   void ui.eventToast.offsetWidth;
@@ -5623,7 +6834,7 @@ function chooseShopCardFromFace(offer, player = null) {
       displayKind: "shop-card",
       id: card.id,
       label: cardDisplayText(card),
-      note: "выбрать карту",
+      note: `купить за ${cost} монет`,
     })),
     {
       id: "decline",
@@ -5665,18 +6876,18 @@ function chooseShopCardFromFace(offer, player = null) {
   });
 }
 
-function chooseRevealedShopCard(offer, player = null) {
+function chooseRevealedShopCard(offer, player = null, { cost = 5 } = {}) {
   if (!ui.eventToast) return Promise.resolve(null);
 
   window.clearTimeout(eventToastFadeTimer);
   window.clearTimeout(eventToastHideTimer);
 
   ui.eventToast.hidden = false;
-  ui.eventToast.innerHTML = `<div class="event-toast-copy">${shopCardsMarkup(offer, {
+  ui.eventToast.innerHTML = `<div class="event-toast-copy">${cardFaceStageMarkup(shopCardsMarkup(offer, {
     revealed: true,
     selectable: true,
     showDecline: true,
-  })}</div>`;
+  }))}</div>`;
   ui.eventToast.classList.remove("fading", "quick-fading", "visible");
   ui.eventToast.classList.add("action-prompt");
   void ui.eventToast.offsetWidth;
@@ -5688,7 +6899,7 @@ function chooseRevealedShopCard(offer, player = null) {
       displayKind: "shop-card",
       id: card.id,
       label: cardDisplayText(card),
-      note: "купить карту",
+      note: `купить за ${cost} монет`,
     })),
     {
       id: "decline",
@@ -5764,12 +6975,13 @@ function shopCardsMarkup(cards, { revealed, selectable = false, showDecline = fa
   const className = `shop-card-reveal ${revealed ? "is-revealed" : "is-hidden"} ${selectable ? "is-selectable" : ""}`.trim();
   const cardsMarkup = cards
     .map((card) => {
-      const description = cardDisplayText(card);
-      const textClass = `shop-card-text ${cardFaceTextDensityClass(description)}`.trim();
+      const description = cardBodyText(card);
+      const title = cardFaceTitleText(card, "Лавка Джо");
+      const textClass = `shop-card-text ${cardFaceTextDensityClass(description, title)}`.trim();
       const cardText = revealed
         ? `
           <span class="${textClass}">
-            ${cardFaceDescriptionMarkup(description)}
+            ${cardFaceTextMarkup(card, "shop", { fallbackTitle: "Лавка Джо" })}
           </span>
         `
         : "";
@@ -5891,8 +7103,20 @@ async function applyCardEffect(player, effect, source = {}) {
     await resolveEventMassGoodBad(player);
   } else if (effect.type === "event-magic-wallet") {
     await resolveEventMagicWallet(player);
+  } else if (effect.type === "event-hero-sword") {
+    return resolveEventHeroSword(player, source.card, effect);
+  } else if (effect.type === "event-anti-bad") {
+    return resolveEventAntiBad(player, source.card, effect);
   } else if (effect.type === "event-monster-rage") {
     resolveEventMonsterRage(effect.amount ?? 1);
+  } else if (effect.type === "event-golden-markers") {
+    await resolveEventGoldenMarkers(player, effect.count ?? 5, effect.amount ?? 10);
+  } else if (effect.type === "event-rich-tax") {
+    await resolveEventRichTax(player, effect.threshold ?? 20, effect.amount ?? 5);
+  } else if (effect.type === "event-monster-banner") {
+    return resolveKeepEventStatus(player, source.card);
+  } else if (effect.type === "event-winner-takes-all") {
+    await resolveEventWinnerTakesAll(player);
   }
 }
 
@@ -6539,7 +7763,7 @@ async function resolveEventUnity(player) {
       teamTotal,
     };
     render();
-    log(`${playerName(contender)} в событии <strong>Сплочение</strong>: ${formatRoll(result.rolls)}${monsterBattleBonusFormulaText(result.baseBonus, result.rageBonus, result.cursePenalty, result.total, result.badPenalty, result.strengthBonus)}. Сила: <strong>${result.total}</strong>.`);
+    log(`${playerName(contender)} в событии <strong>Сплочение</strong>: ${formatRoll(result.rolls)}${monsterBattleBonusFormulaText(result.baseBonus, result.rageBonus, result.cursePenalty, result.total, result.badPenalty, result.strengthBonus, result.heroSwordBonus)}. Сила: <strong>${result.total}</strong>.`);
   }
   const teamTotal = results.reduce((sum, result) => sum + result.total, 0);
   if (teamTotal >= monsterStrength) {
@@ -6616,7 +7840,7 @@ async function resolveEventUnityStart(player) {
       teamTotal,
     };
     render();
-    log(`${playerName(contender)} в событии <strong>Бой за старт</strong>: ${formatRoll(result.rolls)}${monsterBattleBonusFormulaText(result.baseBonus, result.rageBonus, result.cursePenalty, result.total, result.badPenalty, result.strengthBonus)}. Сила: <strong>${result.total}</strong>.`);
+    log(`${playerName(contender)} в событии <strong>Бой за старт</strong>: ${formatRoll(result.rolls)}${monsterBattleBonusFormulaText(result.baseBonus, result.rageBonus, result.cursePenalty, result.total, result.badPenalty, result.strengthBonus, result.heroSwordBonus)}. Сила: <strong>${result.total}</strong>.`);
   }
   const teamTotal = results.reduce((sum, result) => sum + result.total, 0);
   if (teamTotal >= monsterStrength) {
@@ -6636,6 +7860,7 @@ async function resolveEventUnityStart(player) {
   } else {
     for (const target of state.players) {
       target.position = startCell;
+      resolveStartStrengthReward(target);
     }
     const message = `<strong>Бой за старт</strong>: команда проигрывает ${teamTotal} против ${monsterStrength}. Все игроки отправляются на старт без эффекта клетки.`;
     state.unityBattleProgress = {
@@ -6814,10 +8039,361 @@ async function resolveEventMagicWallet(player) {
   transferMagicWallet(target, `${playerName(player)} разыгрывает событие`);
 }
 
+async function resolveEventHeroSword(player, card, effect = {}) {
+  const targetStrength = Math.max(1, Number(effect.amount) || 6);
+  await showActionPrompt(
+    `${playerName(player)} вступает в испытание <strong>Меч Героя</strong>. Нужно набрать силу <strong>${targetStrength}</strong>.`,
+    { autoFor: player, buttonLabel: "Бросить кубик" },
+  );
+
+  const result = await rollHeroSwordArtifactBattle(player, targetStrength);
+  const formulaText = combatBonusFormulaText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus);
+  if (result.total >= targetStrength) {
+    grantHeroSwordArtifact(player, card);
+    log(`${playerName(player)} побеждает в испытании <strong>Меч Героя</strong>: ${formatRoll(result.rolls)}${formulaText}. Артефакт остается у игрока.`, { toast: true });
+    await showActionPrompt(
+      `${playerName(player)} побеждает: ${formatRoll(result.rolls)}${formulaText}. Получен артефакт <strong>Меч Героя</strong>.`,
+      { autoFor: player },
+    );
+    return { discard: false };
+  }
+
+  log(`${playerName(player)} проигрывает испытание <strong>Меч Героя</strong>: ${formatRoll(result.rolls)}${formulaText}. Ничего не происходит.`, { toast: true });
+  await showActionPrompt(
+    `${playerName(player)} проигрывает: ${formatRoll(result.rolls)}${formulaText}. Артефакт не получен.`,
+    { autoFor: player },
+  );
+  return { discard: true };
+}
+
+async function rollHeroSwordArtifactBattle(player) {
+  let rolls = rollDice(1);
+  rolls = await maybeUseDiceControl(player, rolls, { mode: "event-hero-sword", title: "Контроль кубика: Меч Героя" });
+  recordDiceThrown(player, 1);
+  const rolled = rolls.reduce((sum, value) => sum + value, 0);
+  const baseBonus = playerCombatBonus(player);
+  const curse = consumeNextBattlePenalty(player);
+  const heroSwordBonus = heroSwordCombatBonus(player, rolls);
+  const bonus = baseBonus + curse.penalty + heroSwordBonus;
+  if (curse.penalty < 0) {
+    log(`${playerName(player)} сбрасывает <strong>Сглаз</strong> (${curse.cards.length}): <strong>${curse.penalty}</strong> к испытанию Меч Героя.`, {
+      toast: true,
+    });
+  }
+  state.dice = null;
+  render();
+  await animateDice(rolls, { bonus, label: "Меч Героя", player, isBattleRoll: true });
+  const total = Math.max(0, rolled + bonus);
+  state.dice = total;
+  render();
+  return { baseBonus, bonus, cursePenalty: curse.penalty, heroSwordBonus, player, rolled, rolls, total };
+}
+
+async function resolveEventAntiBad(player, card, effect = {}) {
+  const cost = Math.max(1, Number(effect.cost) || 2);
+  const target = await poorestPlayerByCoins({
+    autoFor: player,
+    reason: "Анти-Плохо: игрок с наименьшим количеством монет",
+  });
+  if (!target) return { discard: true };
+
+  const paidCards = await chooseAntiBadShopPayment(target, cost);
+  if (paidCards.length < cost) {
+    log(`${playerName(target)} не получает <strong>Анти-Плохо</strong>: нужно отдать ${cost} ${shopCardsWord(cost)} лицом вверх.`, { toast: true });
+    await showActionPrompt(
+      `${playerName(target)} не получает <strong>Анти-Плохо</strong>. Карта события уходит в сброс.`,
+      { autoFor: target },
+    );
+    return { discard: true };
+  }
+
+  log(`${playerName(target)} отдает ${paidCards.map((item) => `<strong>${shopCardTitle(item)}</strong>`).join(", ")} и получает <strong>Анти-Плохо</strong>.`, { toast: true });
+  grantAntiBadArtifact(target, card);
+  await showActionPrompt(
+    `${playerName(target)} получает артефакт <strong>Анти-Плохо</strong>. Обычная клетка <strong>Плохо</strong> теперь дает ${coinAmount(5)} вместо карты.`,
+    { autoFor: target },
+  );
+  return { discard: false };
+}
+
+async function chooseAntiBadShopPayment(player, count = 2) {
+  const available = activeShopItems(player);
+  if (available.length < count) return [];
+  const indexes = isBot(player)
+    ? chooseBotBlackMarketShopIndexes(player, count)
+    : await chooseAntiBadShopCards(player, count);
+  if (indexes.length < count) return [];
+  return removeShopItemsByIndexes(player, indexes);
+}
+
+async function chooseAntiBadShopCards(player, count = 2) {
+  const selected = [];
+  while (selected.length < count) {
+    const choices = (player.items || [])
+      .map((card, index) => ({ card, index }))
+      .filter(({ card, index }) => !isShopItemFaceDown(card) && !selected.includes(index))
+      .map(({ card, index }) => ({
+        id: String(index),
+        label: shopCardTitle(card),
+        note: cardDisplayText(card),
+        score: -scoreShopCard(player, card),
+      }));
+    choices.push({
+      id: "decline",
+      label: "Не отдавать",
+      note: "артефакт не получить",
+      score: 2,
+    });
+    const choice = await chooseCardAction({
+      choices,
+      kicker: "Событие",
+      kind: "anti-bad-payment",
+      playerId: player.id,
+      summary: `${playerChoiceBadge(player)} может отдать 2 открытые карты Лавка Джо и получить артефакт Анти-Плохо. Осталось выбрать ${count - selected.length}.`,
+      title: "Анти-Плохо",
+    });
+    if (choice === "decline") return [];
+    const index = Number(choice);
+    if (Number.isInteger(index) && !selected.includes(index)) selected.push(index);
+  }
+  return selected;
+}
+
 function resolveEventMonsterRage(amount = 1) {
   state.eventMonsterRage = monsterRageBonus() + Math.max(1, Number(amount) || 1);
   log(`<strong>Ярость монстров</strong>: все монстры получают <strong>+${monsterRageBonus()}</strong> к силе.`, { toast: true });
   render();
+}
+
+async function resolveEventGoldenMarkers(player, count = 5, amount = 10) {
+  const markerCount = Math.max(1, Number(count) || 5);
+  const reward = Math.max(0, Number(amount) || 10);
+  const placed = [];
+
+  for (let index = 0; index < markerCount; index += 1) {
+    const cell = await chooseGoldenMarkerCell(player, markerCount - index, placed);
+    if (!cell) break;
+    state.goldenMarkers = goldenMarkerCells();
+    state.goldenMarkers.push(cell);
+    placed.push(cell);
+    render();
+  }
+
+  if (!placed.length) {
+    log(`<strong>Золотые метки</strong>: не осталось свободных клеток для меток.`, { toast: true });
+    return;
+  }
+
+  log(
+    `<strong>Золотые метки</strong>: ${playerName(player)} кладет ${placed.length} меток по ${coinAmount(reward)} на клетки ${placed.map(cellLabel).join(", ")}.`,
+    { toast: true },
+  );
+}
+
+async function chooseGoldenMarkerCell(player, remaining, selectedCells = []) {
+  const candidates = availableGoldenMarkerCells(selectedCells);
+  if (!candidates.length) return null;
+  if (isBot(player)) return chooseBotGoldenMarkerCell(player, candidates);
+
+  const choices = candidates.map((cell) => ({
+    cell,
+    id: cell,
+    label: cellTitleWithLabel(cell),
+    note: `осталось меток: ${remaining}`,
+    score: scoreGoldenMarkerCell(player, cell),
+  }));
+
+  return chooseCardAction({
+    canPreviewField: true,
+    choices,
+    kicker: "Событие",
+    kind: "golden-markers",
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} выбирает разные клетки для монетных меток.`,
+    title: "Золотые метки",
+  });
+}
+
+function availableGoldenMarkerCells(extraUsedCells = []) {
+  const used = new Set([...goldenMarkerCells(), ...extraUsedCells]);
+  return routeCells
+    .map((cell) => cellKey(cell.col, cell.row))
+    .filter((cell) => cell !== startCell && !used.has(cell));
+}
+
+function chooseBotGoldenMarkerCell(player, candidates) {
+  return candidates
+    .map((cell) => ({ cell, score: scoreGoldenMarkerCell(player, cell) }))
+    .sort((a, b) => b.score - a.score || (routeIndex.get(a.cell) ?? 0) - (routeIndex.get(b.cell) ?? 0))[0]?.cell || candidates[0] || null;
+}
+
+function scoreGoldenMarkerCell(player, cell) {
+  const progress = routeIndex.get(cell) ?? routeProgress(player);
+  const delta = progress - routeProgress(player);
+  const forwardScore = delta > 0 ? Math.max(0, 34 - Math.abs(delta - 14) * 1.4) : -28;
+  const fieldScore = scoreCellForBot(player, cell, { goldenMarker: true }) * 0.35;
+  const finishPenalty = cell === finishCell ? -18 : 0;
+  return forwardScore + fieldScore + finishPenalty;
+}
+
+function goldenMarkerCells() {
+  return Array.isArray(state?.goldenMarkers) ? state.goldenMarkers : [];
+}
+
+async function collectGoldenMarker(player) {
+  const markers = goldenMarkerCells();
+  const index = markers.indexOf(player.position);
+  if (index < 0) return false;
+
+  markers.splice(index, 1);
+  state.goldenMarkers = markers;
+  const reward = 10;
+  addCoins(player, reward);
+  render();
+  const message = `${playerName(player)} снимает <strong>Золотую метку</strong> с клетки ${cellLabel(player.position)} и получает <strong>${coinAmount(reward)}</strong>.`;
+  log(message, { toast: true });
+  await showActionPrompt(message, { autoFor: player });
+  return true;
+}
+
+async function resolveEventRichTax(player, threshold = 20, amount = 5) {
+  const limit = Math.max(0, Number(threshold) || 20);
+  const reward = Math.max(0, Number(amount) || 5);
+  const order = auctionBidderOrder(player);
+  log(`<strong>Налог на богатых</strong>: игроки проверяются по очереди от ${playerName(player)}.`, { toast: true });
+
+  for (const target of order) {
+    if (target.coins >= limit) {
+      log(`${playerName(target)} имеет ${coinAmount(target.coins)} и берет карту <strong>Плохо</strong> по событию <strong>Налог на богатых</strong>.`, {
+        toast: true,
+      });
+      await drawAndApplyCard(target, "bad", "Плохо");
+      if (state.finished) return;
+    } else {
+      addCoins(target, reward);
+      log(`${playerName(target)} имеет меньше ${coinAmount(limit)} и получает <strong>${coinAmount(reward)}</strong> по событию <strong>Налог на богатых</strong>.`, {
+        toast: true,
+      });
+      render();
+    }
+  }
+}
+
+function resolveKeepEventStatus(player, card) {
+  if (!player || !card) return { discard: true };
+  player.eventCards = eventStatusCards(player);
+  player.eventCards.push(card);
+  log(`${playerName(player)} оставляет событие <strong>${card.title}</strong> у себя.`, { toast: true });
+  render();
+  return { discard: false };
+}
+
+function removeEventStatusCard(player, card) {
+  const cards = eventStatusCards(player);
+  const index = cards.findIndex((item) => item === card || item._copyId === card?._copyId);
+  if (index < 0) return null;
+  const [removed] = cards.splice(index, 1);
+  player.eventCards = cards;
+  return removed || null;
+}
+
+async function resolveMonsterBannerVictory(player) {
+  const banners = eventStatusCards(player).filter((card) => card.effect?.type === "event-monster-banner");
+  if (!banners.length) return;
+
+  for (const banner of [...banners]) {
+    log(`${playerName(player)} побеждает монстра и разыгрывает <strong>${banner.title}</strong>: берет карту <strong>Хорошо</strong>.`, {
+      toast: true,
+    });
+    await drawAndApplyCard(player, "good", "Хорошо");
+    const removed = removeEventStatusCard(player, banner);
+    if (removed) discardCardToDeck("event", removed);
+    log(`${playerName(player)} сбрасывает событие <strong>${banner.title}</strong>.`, { toast: true });
+    render();
+    if (state.finished) return;
+  }
+}
+
+async function resolveEventWinnerTakesAll(player) {
+  let contenders = [...state.players];
+  let round = 1;
+  let winner = contenders[0] || player;
+
+  while (contenders.length > 1) {
+    const results = [];
+    for (const contender of contenders) {
+      const result = await rollWinnerTakesAllPower(contender, round, contenders);
+      results.push(result);
+      if (state.finished) return;
+    }
+
+    const best = Math.max(...results.map((result) => result.total));
+    const leaders = results.filter((result) => result.total === best).map((result) => result.player);
+    if (leaders.length === 1) {
+      winner = leaders[0];
+      break;
+    }
+
+    const message = `<strong>Большой приз</strong>: ничья за первое место (${leaders.map(playerName).join(", ")}), лидеры перебрасывают.`;
+    log(message, { toast: true });
+    await showActionPrompt(message, { autoFor: player });
+    contenders = leaders;
+    round += 1;
+  }
+
+  const rewardMessage = `<strong>Большой приз</strong>: ${playerName(winner)} побеждает и получает карты <strong>Хорошо</strong>, <strong>Лавка Джо</strong> и <strong>ТАДАМ</strong>.`;
+  log(rewardMessage, { toast: true });
+  await showActionPrompt(rewardMessage, { autoFor: winner });
+  await drawAndApplyCard(winner, "good", "Хорошо");
+  if (state.finished) return;
+  await drawFreeShopCard(winner, "получает бесплатную карту Лавка Джо по событию <strong>Большой приз</strong>");
+  if (state.finished) return;
+  await drawTadamCard(winner);
+}
+
+async function rollWinnerTakesAllPower(player, round, contenders) {
+  const bonus = playerStepBonus(player);
+  const title = round > 1 ? `Большой приз: переброс ${round}` : "Большой приз";
+  const rollContext = {
+    criterion: "1 кубик + бонусы шагов. Лучший результат выигрывает",
+    kicker: "Событие",
+    outcomes: ["Победитель: Хорошо + Лавка Джо + ТАДАМ", "Ничья за первое место: переброс"],
+    participants: contenders.map(playerChoiceBadge),
+    reason: `${playerChoiceBadge(player)} бросает кубик за большой приз.`,
+    title,
+  };
+  await showActionPrompt(`${playerName(player)} бросает кубик за событие <strong>Большой приз</strong>.`, {
+    autoFor: player,
+    buttonLabel: "Бросить кубик",
+    rollContext,
+  });
+
+  let rolls = rollDice(1);
+  recordDiceThrown(player, 1);
+  state.dice = null;
+  render();
+  showRollContextStatus({
+    ...rollContext,
+    result: `${playerName(player)} бросает кубик за большой приз.`,
+  });
+  await animateDice(rolls, { bonus, label: "Большой приз", player });
+  rolls = await maybeUseDiceControl(player, rolls, { mode: "event-winner-takes-all", title: "Контроль кубика: Большой приз" });
+  const rolled = rolls[0] || 1;
+  const total = Math.max(0, rolled + bonus);
+  state.dice = total;
+  render();
+  const formula = bonus ? `${rolled} ${bonus > 0 ? "+" : "-"} ${Math.abs(bonus)} = ${total}` : String(total);
+  log(`${playerName(player)} в событии <strong>Большой приз</strong>: <strong>${formula}</strong>.`);
+  await showActionPrompt("", {
+    autoFor: player,
+    rollContext: {
+      ...rollContext,
+      participants: [`${playerChoiceBadge(player)} <strong>${formula}</strong>`],
+      result: `${playerName(player)} получает результат <strong>${total}</strong>.`,
+      title: `${title}: результат`,
+    },
+  });
+  return { bonus, player, rolled, rolls, total };
 }
 
 async function resolveOptionalExtraTurn(player, cost) {
@@ -7677,40 +9253,67 @@ async function drawTadamCard(player) {
   addCoins(player, 5);
   state.tadams.push(card);
   recordTadamPlayed();
+  resolveTadamIncomeRewards(card);
   if (state.tadams.length > 3) discardCardToDeck("tadam", state.tadams.shift());
   log(`${playerName(player)} получает <strong>${coinAmount(5)}</strong> за открытие <strong>ТАДАМ!</strong>.`, { toast: true });
   log(`${playerName(player)} применяет карту <strong>ТАДАМ!</strong>: ${card.title}`, { toast: true });
 }
 
+function resolveTadamIncomeRewards(card) {
+  for (const owner of state.players) {
+    const amount = activeShopEffectAmount(owner, "tadam-income", "amount");
+    if (!amount) continue;
+    addCoins(owner, amount);
+    log(`${playerName(owner)} получает <strong>${coinAmount(amount)}</strong> по <strong>Лавке Джо</strong> за карту <strong>ТАДАМ!</strong>: ${card.title}.`, {
+      toast: true,
+    });
+  }
+}
+
 async function resolveShop(player) {
   await resolveFaceDownShopBuyback(player);
 
-  const offer = drawCardsFromDeck("shop", 2, { uniqueIds: true });
-  if (!offer.length) {
-    log("<strong>Лавка Джо</strong>: в колоде нет доступных карт.", { toast: true });
-    return;
-  }
-  if (player.coins < 5) {
-    log(`Лавка Джо предлагает: ${offer.map((card) => card.title).join(" / ")}. У ${playerName(player)} не хватает монет.`, {
-      toast: true,
-    });
-    discardCardsToDeck("shop", offer);
-    return;
-  }
+  let boughtCount = 0;
 
-  const directChoice = await revealSelectableShopCards(offer, player);
-  const bought = directChoice || (await chooseRevealedShopCard(offer, player));
-  if (!bought) {
-    discardCardsToDeck("shop", offer);
-    log(`${playerName(player)} отказывается от карт Лавки Джо.`, { toast: true });
-    return;
-  }
+  while (true) {
+    const cost = joeShopCardCost(player);
+    const offerCount = joeShopOfferCount(player);
+    const offer = drawCardsFromDeck("shop", offerCount, { uniqueIds: true });
+    if (!offer.length) {
+      log("<strong>Лавка Джо</strong>: в колоде нет доступных карт.", { toast: true });
+      return;
+    }
+    if (player.coins < cost) {
+      log(`Лавка Джо предлагает: ${offer.map((card) => card.title).join(" / ")}. У ${playerName(player)} не хватает монет.`, {
+        toast: true,
+      });
+      discardCardsToDeck("shop", offer);
+      return;
+    }
 
-  addCoins(player, -5);
-  player.items.push(ownedShopItem(bought));
-  discardCardsToDeck("shop", offer);
-  recordShopCards(player);
-  log(`${playerName(player)} покупает в Лавке Джо: <strong>${bought.title}</strong>`, { toast: true });
+    const directChoice = await revealSelectableShopCards(offer, player, { cost });
+    const bought = directChoice || (await chooseRevealedShopCard(offer, player, { cost }));
+    if (!bought) {
+      discardCardsToDeck("shop", offer);
+      log(`${playerName(player)} отказывается от карт Лавки Джо.`, { toast: true });
+      return;
+    }
+
+    addCoins(player, -cost);
+    player.items.push(ownedShopItem(bought));
+    discardCardsToDeck("shop", offer);
+    recordShopCards(player);
+    boughtCount += 1;
+    log(`${playerName(player)} покупает в Лавке Джо за ${coinAmount(cost)}: <strong>${bought.title}</strong>`, { toast: true });
+    render();
+
+    if (!hasActiveShopEffect(player, "shop-unlimited-buy") || state.finished) return;
+    if (player.coins < joeShopCardCost(player)) {
+      log(`${playerName(player)} не может купить еще одну карту Лавки Джо: не хватает монет.`, { toast: true });
+      return;
+    }
+    if (boughtCount > 36) return;
+  }
 }
 
 async function resolveFaceDownShopBuyback(player, cost = 5) {
@@ -8164,8 +9767,8 @@ async function resolvePassThroughEnemy(player) {
   return resolveEnemyBattle(player);
 }
 
-function chooseShopCard(player, offer) {
-  state.pendingShop = { offer, playerId: player.id };
+function chooseShopCard(player, offer, { cost = joeShopCardCost() } = {}) {
+  state.pendingShop = { cost, offer, playerId: player.id };
   render();
 
   return new Promise((resolve) => {
@@ -8372,6 +9975,231 @@ async function giveToPoorestPlayer(player, amount) {
   log(`${playerName(player)} отдает самому бедному игроку ${playerName(target)} <strong>${given} монет</strong>.`);
 }
 
+async function resolveSameCellDuels(player) {
+  const effects = activeTadamEffects("same-cell-duel");
+  if (!effects.length) return;
+
+  for (const [effectIndex, effect] of effects.entries()) {
+    const candidates = state.players.filter((target) => target.id !== player.id && target.position === player.position);
+    if (!candidates.length) return;
+    const target = await resolveOnePlayerTieByDie(candidates, {
+      autoFor: player,
+      reason: "ТАДАМ: битва на одной клетке",
+    });
+    if (!target) return;
+    await resolveSameCellDuel(player, target, effect, effectIndex, effects.length);
+  }
+}
+
+async function resolveSameCellDuel(player, target, effect, effectIndex = 0, effectCount = 1) {
+  const copyText = effectCount > 1 ? ` ${effectIndex + 1}/${effectCount}` : "";
+  const title = `ТАДАМ: битва на одной клетке${copyText}`;
+  const rewardAmount = Math.max(0, Number(effect?.amount) || 10);
+  log(`${playerName(player)} останавливается на одной клетке с ${playerName(target)}. ${title}: начинается битва.`);
+  await showActionPrompt(`${playerName(player)} и ${playerName(target)} стоят на одной клетке. <strong>${title}</strong>.`, {
+    autoFor: player,
+  });
+
+  let contenders = [player, target];
+  let round = 1;
+  let winner = null;
+  state.isAnimating = true;
+  state.dice = null;
+
+  while (!winner) {
+    const roundResults = [];
+    state.vsBattleProgress = {
+      contenderIds: contenders.map((contender) => contender.id),
+      isRolling: false,
+      outcome: round > 1 ? "Переигровка: бросают игроки с ничьей" : `${title}: игроки бросают силу`,
+      pot: 0,
+      results: {},
+      rollingPlayerId: null,
+      round,
+      tiedIds: [],
+      winnerId: null,
+    };
+    render();
+
+    for (const contender of contenders) {
+      state.vsBattleProgress = {
+        ...state.vsBattleProgress,
+        isRolling: true,
+        outcome: `${playerName(contender)} бросает силу в битве на одной клетке${round > 1 ? " (переигровка)" : ""}`,
+        rollingPlayerId: contender.id,
+      };
+      render();
+      await showActionPrompt(`${playerName(contender)} бросает силу в битве на одной клетке${round > 1 ? " (переигровка)" : ""}.`, {
+        autoFor: contender,
+        buttonLabel: "Бросить кубик",
+      });
+      const result = await rollPlayerBattlePower(contender, true, { label: `ТАДАМ - ${contender.name}` });
+      roundResults.push(result);
+      state.vsBattleProgress = {
+        ...state.vsBattleProgress,
+        isRolling: false,
+        outcome: `${playerName(contender)} выбрасывает силу <strong>${result.total}</strong>`,
+        results: {
+          ...state.vsBattleProgress.results,
+          [contender.id]: result.total,
+        },
+        rollingPlayerId: null,
+      };
+      render();
+      log(`${playerName(contender)} в битве на одной клетке: ${formatRoll(result.rolls)}${combatBonusFormulaText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus)}. Сила: <strong>${result.total}</strong>.`);
+    }
+
+    const bestForce = Math.max(...roundResults.map((result) => result.total));
+    const bestResults = roundResults.filter((result) => result.total === bestForce);
+    if (bestResults.length === 1) {
+      winner = bestResults[0].player;
+      state.vsBattleProgress = {
+        ...state.vsBattleProgress,
+        isRolling: false,
+        outcome: `${playerName(winner)} побеждает в битве на одной клетке с силой <strong>${bestForce}</strong>`,
+        rollingPlayerId: null,
+        tiedIds: [],
+        winnerId: winner.id,
+      };
+      render();
+      break;
+    }
+
+    contenders = bestResults.map((result) => result.player);
+    const tiedNames = contenders.map((contender) => playerName(contender)).join(", ");
+    state.vsBattleProgress = {
+      ...state.vsBattleProgress,
+      isRolling: false,
+      outcome: `Ничья по силе <strong>${bestForce}</strong>. Переигровка: ${tiedNames}`,
+      rollingPlayerId: null,
+      tiedIds: contenders.map((contender) => contender.id),
+      winnerId: null,
+    };
+    render();
+    log(`${title}: ничья по силе <strong>${bestForce}</strong> между ${tiedNames}. Переигровка.`);
+    await showActionPrompt(`Ничья по силе <strong>${bestForce}</strong>. Переигровка: ${tiedNames}.`, {
+      autoFor: contenders.every((contender) => isBot(contender)) ? contenders[0] : null,
+    });
+    round += 1;
+  }
+
+  state.isAnimating = false;
+  state.dice = null;
+  const loser = winner.id === player.id ? target : player;
+  const message = `${playerName(winner)} побеждает ${playerName(loser)} в битве на одной клетке.`;
+  state.vsBattleProgress = {
+    ...state.vsBattleProgress,
+    outcome: message,
+    winnerId: winner.id,
+  };
+  render();
+  log(message, { toast: true });
+  await resolveSameCellDuelReward(winner, loser, rewardAmount);
+  state.vsBattleProgress = null;
+  render();
+}
+
+async function resolveSameCellDuelReward(winner, loser, rewardAmount) {
+  const faceUpEntries = faceUpShopEntries(loser);
+  const availableCoins = Math.min(rewardAmount, loser.coins);
+  const choices = [];
+  if (availableCoins > 0) {
+    choices.push({
+      id: "coins",
+      label: `Забрать ${availableCoins}`,
+      note: "монеты",
+      score: availableCoins,
+    });
+  }
+  if (faceUpEntries.length) {
+    choices.push({
+      id: "shop",
+      label: "Забрать Лавку Джо",
+      note: `${faceUpEntries.length} лицом вверх`,
+      score: availableCoins >= 10 ? 8 : 14,
+    });
+  }
+
+  if (!choices.length) {
+    const message = `${playerName(loser)} не может отдать награду за битву: нет монет и карт Лавки Джо лицом вверх.`;
+    log(message, { toast: true });
+    await showActionPrompt(message, { autoFor: winner });
+    return;
+  }
+
+  const choice = choices.length === 1
+    ? choices[0].id
+    : await chooseCardAction({
+      choices,
+      kicker: "ТАДАМ",
+      kind: "same-cell-duel-reward",
+      playerId: winner.id,
+      summary: `${playerChoiceBadge(winner)} выбирает награду у ${playerChoiceBadge(loser)} за победу в битве на одной клетке.`,
+      title: "Награда за битву",
+    });
+
+  if (choice === "shop" && await takeSameCellDuelShopCard(winner, loser)) return;
+
+  const taken = stealCoins(loser, winner, rewardAmount);
+  if (taken > 0) {
+    recordEffectReceived(loser, winner);
+    log(`${playerName(winner)} забирает у ${playerName(loser)} <strong>${coinAmount(taken)}</strong> за победу в битве на одной клетке.`, { toast: true });
+    render();
+    await showActionPrompt(`${playerName(winner)} забирает у ${playerName(loser)} <strong>${coinAmount(taken)}</strong>.`, { autoFor: winner });
+  }
+}
+
+function faceUpShopEntries(player) {
+  return (player?.items || [])
+    .map((card, index) => ({ card, index }))
+    .filter(({ card }) => !isShopItemFaceDown(card));
+}
+
+async function takeSameCellDuelShopCard(winner, loser) {
+  const entries = faceUpShopEntries(loser);
+  if (!entries.length) return false;
+  let entry = null;
+  if (isBot(winner)) {
+    entry = entries
+      .map((item) => ({ ...item, score: scoreShopCard(winner, item.card) }))
+      .sort((a, b) => b.score - a.score || a.index - b.index)[0];
+  } else {
+    const choiceIndex = await chooseSameCellDuelShopCard(winner, loser, entries);
+    entry = entries.find(({ index }) => index === choiceIndex) || null;
+  }
+  if (!entry) return false;
+
+  const [card] = loser.items.splice(entry.index, 1);
+  if (!card) return false;
+  winner.items.push(card);
+  recordShopCards(loser);
+  recordShopCards(winner);
+  recordEffectReceived(winner, loser);
+  render();
+  log(`${playerName(winner)} забирает у ${playerName(loser)} карту <strong>${shopCardTitle(card)}</strong> за победу в битве на одной клетке.`, { toast: true });
+  await showActionPrompt(`${playerName(winner)} забирает у ${playerName(loser)} карту <strong>${shopCardTitle(card)}</strong>.`, {
+    autoFor: winner,
+  });
+  return true;
+}
+
+async function chooseSameCellDuelShopCard(winner, loser, entries) {
+  const choice = await chooseCardAction({
+    choices: entries.map(({ card, index }) => ({
+      id: String(index),
+      label: shopCardTitle(card),
+      note: cardDisplayText(card),
+      score: scoreShopCard(winner, card),
+    })),
+    kicker: "ТАДАМ",
+    kind: "same-cell-duel-shop",
+    playerId: winner.id,
+    summary: `${playerChoiceBadge(winner)} выбирает Лавку Джо лицом вверх у ${playerChoiceBadge(loser)}.`,
+    title: "Забери Лавку Джо",
+  });
+  return Number(choice);
+}
+
 async function resolveJumpSteal(player) {
   const effect = activeTadamEffect("jump-steal");
   if (!effect) return;
@@ -8487,7 +10315,7 @@ function fieldEffectText(cell) {
     "joe-game": ["Игра Джо", "Выбери цифры. Выпавший игрок получает 2 Лавки Джо"],
     "pay-double": ["Удвой свои монеты", "Удвой свои монеты"],
     red: ["Красное поле", redEffectLabel()],
-    shop: ["Лавка Джо", "2 карты на выбор за 5 монет"],
+    shop: ["Лавка Джо", `2 карты на выбор за ${joeShopCardCost()} монет`],
     tadam: ["ТАДАМ!", "новое общее правило"],
     vs: ["VS", "Все скидывают по 10 монет и сражаются за банк"],
   };
@@ -8500,14 +10328,15 @@ function turnActionsText(player) {
     const card = state.pendingPreRoll.card || optionalExtraDieCards(player)[0];
     const cardTitle = card?.shortTitle || card?.title || "Карта Лавки Джо";
     const cost = card?.effect?.cost ?? 2;
-    const dice = card?.effect?.dice ?? 1;
+    const isStepBoost = card?.effect?.type === "pre-roll-step-plus5";
+    const bonus = isStepBoost ? stepBonusText(card?.effect?.steps ?? 5) : diceAmount(`+${card?.effect?.dice ?? 1}`);
     const current = state.pendingPreRoll.index + 1;
     const total = state.pendingPreRoll.total;
     return `
       <div class="pre-roll-action">
         <span>
           <b><span>${cardTitle}</span>${total > 1 ? `<em class="pre-roll-count">${current}/${total}</em>` : ""}</b>
-          <span class="pre-roll-copy">Заплати ${coinAmount(cost)}: ${diceAmount(`+${dice}`)}</span>
+          <span class="pre-roll-copy">Заплати ${coinAmount(cost)}: ${bonus}</span>
         </span>
         <div>
           <button type="button" data-preroll-choice="yes">Заплатить</button>
@@ -8527,6 +10356,44 @@ function turnActionsText(player) {
         <div>
           <button type="button" data-dice-control-choice="change">Поменять значение</button>
           <button type="button" data-dice-control-choice="keep">Не менять</button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (state.pendingMoveDieReroll?.playerId === player.id) {
+    const pending = state.pendingMoveDieReroll;
+    const cardTitle = pending.card?.shortTitle || pending.card?.title || "Переброс";
+    return `
+      <div class="pre-roll-action post-roll-action">
+        <span>
+          <b><span>${cardTitle}</span>${pending.total > 1 ? `<em class="pre-roll-count">${pending.index + 1}/${pending.total}</em>` : ""}</b>
+          <span class="pre-roll-copy">Заплати ${coinAmount(pending.cost)} и перебрось один кубик: ${formatRoll(pending.rolls || [])}</span>
+        </span>
+        <div>
+          ${(pending.rolls || []).map((value, index) => `<button type="button" data-move-reroll-choice="${index}">Кубик ${index + 1}: ${value}</button>`).join("")}
+          <button type="button" data-move-reroll-choice="skip">Не платить</button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (state.pendingMoveOneFarther?.playerId === player.id) {
+    const pending = state.pendingMoveOneFarther;
+    const sameTarget = pending.normalCell === pending.boostedCell;
+    const cardTitle = pending.card?.shortTitle || pending.card?.title || "+1 шаг";
+    return `
+      <div class="pre-roll-action post-roll-action">
+        <span>
+          <b><span>${cardTitle}</span>${pending.total > 1 ? `<em class="pre-roll-count">${pending.index + 1}/${pending.total}</em>` : ""}</b>
+          <span class="pre-roll-copy">
+            <span class="post-roll-target-legend normal">Без карты: ${cellLabel(pending.normalCell)}</span>
+            <span class="post-roll-target-legend boosted">${sameTarget ? "С картой +1: та же клетка" : `С картой +1: ${cellLabel(pending.boostedCell)}`}</span>
+          </span>
+        </span>
+        <div>
+          <button type="button" data-move-farther-choice="pay">Заплатить ${coinAmount(pending.cost)}</button>
+          <button type="button" data-move-farther-choice="skip">Без карты</button>
         </div>
       </div>
     `;
@@ -8572,17 +10439,50 @@ function turnActionsText(player) {
       </span>
     `);
   }
+  const preRollStepCards = activeShopEffectItems(player, "pre-roll-step-plus5");
+  if (preRollStepCards.length) {
+    const cost = preRollStepCards[0].effect?.cost ?? 5;
+    const steps = preRollStepCards[0].effect?.steps ?? 5;
+    const canPay = player.coins >= cost;
+    const countText = preRollStepCards.length > 1 ? `<em class="action-chip-count">x${preRollStepCards.length}</em>` : "";
+    actions.push(`
+      <span class="action-chip extra-die-action-chip ${canPay ? "" : "disabled"}">
+        <span class="action-chip-cost">${coinAmount(cost)}</span>
+        <span>${stepBonusText(steps)}</span>
+        ${countText}
+      </span>
+    `);
+  }
+  for (const [type, label] of [["turn-strength-buy", "+1 сила"], ["turn-steps-buy", "+2 шаги"]]) {
+    const cards = activeShopEffectItems(player, type).filter((card) => (
+      card[type === "turn-strength-buy" ? "_turnStrengthBuyUsedAt" : "_turnStepsBuyUsedAt"] !== state.turns
+    ));
+    if (!cards.length) continue;
+    const cost = cards[0].effect?.cost ?? 10;
+    const canPay = player.coins >= cost;
+    const countText = cards.length > 1 ? `<em class="action-chip-count">x${cards.length}</em>` : "";
+    actions.push(`
+      <span class="action-chip extra-die-action-chip ${canPay ? "" : "disabled"}">
+        <span class="action-chip-cost">${coinAmount(cost)}</span>
+        <span>${label}</span>
+        ${countText}
+      </span>
+    `);
+  }
 
   if (actions.length === 0) return '<span class="action-empty">нет действий</span>';
   return `<span class="action-label">Действия</span><div class="action-chip-list">${actions.join("")}</div>`;
 }
 
 function greenEffectLabel() {
-  return fieldEffectLabel("green-field", `+${coinAmount(3)}`);
+  const extra = tadamEffectAmount("green-extra-coins");
+  const base = extra > 0 ? `+${coinAmount(3 + extra)}` : `+${coinAmount(3)}`;
+  return fieldEffectLabel("green-field", base);
 }
 
 function redEffectLabel() {
-  return fieldEffectLabel("red-field", coinAmount(-3));
+  const extraLoss = tadamEffectAmount("red-extra-loss");
+  return fieldEffectLabel("red-field", coinAmount(-(3 + Math.max(0, extraLoss))));
 }
 
 function fieldEffectLabel(type, base) {
@@ -8640,7 +10540,21 @@ async function resolvePortalAtCurrentCell(player, { animate = true, remaining = 
     render();
     await sleep(120);
   }
+  await resolvePortalBadDraw(player, "открытый портал");
   return true;
+}
+
+async function resolvePortalBadDraw(player, sourceLabel) {
+  const count = portalBadDrawCount();
+  if (!count) return;
+
+  for (let index = 0; index < count; index += 1) {
+    log(`<strong>ТАДАМ</strong>: после перемещения через ${sourceLabel} ${playerName(player)} тянет карту <strong>Плохо</strong>.`, {
+      toast: true,
+    });
+    await drawAndApplyCard(player, "bad", "Плохо");
+    if (state.finished) return;
+  }
 }
 
 function choosePortalDestination(player, currentDoor, remaining) {
@@ -8840,6 +10754,31 @@ function activeTadamEffects(type) {
     .map((card) => card.effect);
 }
 
+function tadamEffectAmount(type) {
+  return activeTadamEffects(type)
+    .reduce((sum, effect) => sum + (Number(effect.amount) || 0), 0);
+}
+
+function tadamEffectSteps(type) {
+  return activeTadamEffects(type)
+    .reduce((sum, effect) => sum + (Number(effect.steps) || 0), 0);
+}
+
+function joeShopCardCost(player = null) {
+  if (player && hasActiveShopEffect(player, "shop-choice-3-cost-3")) return 3;
+  const baseCost = 5;
+  const modifier = tadamEffectAmount("shop-discount") + tadamEffectAmount("shop-surcharge");
+  return Math.max(0, baseCost + modifier);
+}
+
+function joeShopOfferCount(player = null) {
+  return player && hasActiveShopEffect(player, "shop-choice-3-cost-3") ? 3 : 2;
+}
+
+function portalBadDrawCount() {
+  return activeTadamEffects("portal-bad").length;
+}
+
 function activeFieldEffect(type) {
   const card = state.tadams.find((item) => item.effect?.type === type);
   return card?.effect || null;
@@ -8866,7 +10805,13 @@ function playerManualBattleBonus(player) {
 }
 
 function playerCombatBonus(player) {
-  return playerBattleBonus(player);
+  return playerBattleBonus(player) + richWeaknessPenalty(player);
+}
+
+function richWeaknessPenalty(player) {
+  if (!player || player.coins < 20) return 0;
+  return activeTadamEffects("rich-weakness")
+    .reduce((sum, effect) => sum + Math.min(0, Number(effect.amount) || -2), 0);
 }
 
 function nextBattlePenaltyCards(player) {
@@ -9123,20 +11068,23 @@ function bonusFormulaText(bonus, total) {
   return ` ${bonus > 0 ? "+" : "-"} ${Math.abs(bonus)} бонус = <strong>${total}</strong>`;
 }
 
-function combatBonusFormulaText(baseBonus, cursePenalty, total) {
+function combatBonusFormulaText(baseBonus, cursePenalty, total, heroSwordBonus = 0) {
   const parts = [];
   if (baseBonus) parts.push(`${baseBonus > 0 ? "+" : "-"} ${Math.abs(baseBonus)} бонус`);
+  if (heroSwordBonus) parts.push(`+ ${heroSwordBonus} Меч Героя`);
   if (cursePenalty) parts.push(`Сглаз ${cursePenalty}`);
   return parts.length ? ` ${parts.join(" ")} = <strong>${total}</strong>` : "";
 }
 
-function monsterBattleBonusFormulaText(baseBonus, rageBonus, cursePenaltyOrTotal, maybeTotal, badPenalty = 0, strengthBonus = 0) {
+function monsterBattleBonusFormulaText(baseBonus, rageBonus, cursePenaltyOrTotal, maybeTotal, badPenalty = 0, strengthBonus = 0, heroSwordBonus = 0, shopStrengthBonus = 0) {
   const cursePenalty = maybeTotal === undefined ? 0 : cursePenaltyOrTotal;
   const total = maybeTotal === undefined ? cursePenaltyOrTotal : maybeTotal;
   const parts = [];
   if (baseBonus) parts.push(`${baseBonus > 0 ? "+" : "-"} ${Math.abs(baseBonus)} бонус`);
   if (rageBonus) parts.push(`+ ${rageBonus} зелье ярости`);
   if (strengthBonus) parts.push(`+ ${strengthBonus} зелье силы`);
+  if (heroSwordBonus) parts.push(`+ ${heroSwordBonus} Меч Героя`);
+  if (shopStrengthBonus) parts.push(`+ ${shopStrengthBonus} Лавка Джо`);
   if (cursePenalty) parts.push(`Сглаз ${cursePenalty}`);
   if (badPenalty) parts.push(`Плохо ${badPenalty}`);
   return parts.length ? ` ${parts.join(" ")} = <strong>${total}</strong>` : "";
@@ -9160,6 +11108,15 @@ function addBattleBonus(player, amount) {
 function addStepBonus(player, amount) {
   if (!player || !Number.isFinite(amount) || amount === 0) return;
   player.stepBonus = playerManualStepBonus(player) + amount;
+}
+
+function resolveStartStrengthReward(player) {
+  const amount = activeShopEffectAmount(player, "start-strength", "amount");
+  if (!amount) return;
+  addBattleBonus(player, amount);
+  log(`${playerName(player)} возвращается на <strong>Старт</strong> и получает <strong>${battleForceText(amount)}</strong> по <strong>Лавке Джо</strong>.`, {
+    toast: true,
+  });
 }
 
 function addSelectedPlayerBattleBonus(amount) {
@@ -9202,6 +11159,8 @@ async function moveActivePlayerExactSteps() {
     state.pendingChoice ||
     state.pendingPreRoll ||
     state.pendingDiceControl ||
+    state.pendingMoveDieReroll ||
+    state.pendingMoveOneFarther ||
     state.pendingShop ||
     actionPromptResolver
   ) {
@@ -9252,13 +11211,11 @@ function totalDiceForPlayer(player, extraDice = 0) {
 }
 
 function playerCoinBonus(player) {
-  return activeShopItems(player)
-    .filter((item) => item.effect?.type === "passive-coin-bonus")
-    .reduce((sum, item) => sum + item.effect.amount, 0);
+  return 0;
 }
 
 function optionalExtraDieCards(player) {
-  return activeShopItems(player).filter((item) => item.effect?.type === "optional-extra-die");
+  return [];
 }
 
 function deckLabel(id) {
@@ -9416,7 +11373,15 @@ function discardResolvedCard(deckId, card) {
 }
 
 function isPersistentEventArtifact(card) {
-  return Boolean(card?.icon);
+  const type = card?.effect?.type;
+  if (type === "event-magic-wallet") return true;
+  const copyId = card?._copyId || card?.id;
+  const heroSwordCopyId = state?.artifacts?.heroSwordCard?._copyId || state?.artifacts?.heroSwordCard?.id;
+  const antiBadCopyId = state?.artifacts?.antiBadCard?._copyId || state?.artifacts?.antiBadCard?.id;
+  return Boolean(
+    (type === "event-hero-sword" && copyId && copyId === heroSwordCopyId) ||
+    (type === "event-anti-bad" && copyId && copyId === antiBadCopyId)
+  );
 }
 
 function discardCardsToDeck(deckId, cards) {
@@ -10066,15 +12031,29 @@ ui.uiStyle?.addEventListener("change", () => {
 });
 ui.playerCount?.addEventListener("change", syncBotCountOptions);
 ui.settingsPanel?.addEventListener("click", (event) => {
-  const button = event.target instanceof Element ? event.target.closest("[data-step-bonus-preset], [data-battle-bonus-preset]") : null;
+  const button = event.target instanceof Element
+    ? event.target.closest("[data-step-bonus-preset], [data-battle-bonus-preset], [data-reference-toggle]")
+    : null;
   if (!button) return;
 
-  if (button.dataset.stepBonusPreset) {
+  if (button.dataset.referenceToggle) {
+    toggleReferenceSection(button.dataset.referenceToggle);
+  } else if (button.dataset.stepBonusPreset) {
     addSelectedPlayerStepBonus(Number(button.dataset.stepBonusPreset));
   } else if (button.dataset.battleBonusPreset) {
     addSelectedPlayerBattleBonus(Number(button.dataset.battleBonusPreset));
   }
 });
+
+function toggleReferenceSection(sectionId) {
+  if (!sectionId) return;
+  if (visibleReferenceSections.has(sectionId)) {
+    visibleReferenceSections.delete(sectionId);
+  } else {
+    visibleReferenceSections.add(sectionId);
+  }
+  renderReferencePanel();
+}
 ui.exactMoveBtn?.addEventListener("click", () => {
   moveActivePlayerExactSteps();
 });
@@ -10133,6 +12112,16 @@ ui.turnActions.addEventListener("click", (event) => {
   const diceControlButton = target?.closest("[data-dice-control-choice]");
   if (diceControlButton) {
     resolveDiceControlIntent(diceControlButton.dataset.diceControlChoice === "change");
+    return;
+  }
+  const moveRerollButton = target?.closest("[data-move-reroll-choice]");
+  if (moveRerollButton) {
+    resolveMoveDieRerollChoice(moveRerollButton.dataset.moveRerollChoice);
+    return;
+  }
+  const moveFartherButton = target?.closest("[data-move-farther-choice]");
+  if (moveFartherButton) {
+    resolveMoveOneFartherChoice(moveFartherButton.dataset.moveFartherChoice);
   }
 });
 ui.eventToast?.addEventListener("click", (event) => {
