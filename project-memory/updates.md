@@ -20,6 +20,1358 @@ Open questions:
 - ...
 ```
 
+## 2026-06-21 13:36 - Art/UI 2
+
+Changed:
+- Added the new reference header icon asset `assets/icons/reference_cards.svg`.
+- Marked `ACTIVE 2026-06-21 13:16 - Reference cards/fields header icon` as DONE in the UI inbox.
+- Added GD context handback for the reference icon; QA was not involved.
+- Added `artifact_desr` to the local card CSV mirror and live Google Sheet `Cards Config` headers.
+- Split `event/magic-wallet` text so `description` is `Последний игрок получает артефакт` and `artifact_desr` is `Получи 5 монет в начале хода. Если тебя обгоняет игрок, передай артефакт ему`.
+- Added local `artifact_desr` values for `Меч Героя` and `Анти-Плохо`, and made the shared card-face renderer prefer explicit `artifact_desr`.
+- Bumped `src/game.js` / `src/cards.config.js` cache keys.
+
+Files:
+- `assets/icons/reference_cards.svg`
+- `src/cards.config.js`
+- `src/game.js`
+- `index.html`
+- `cards-google-sheet.csv`
+- Google Sheet `Cards Config`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Google Sheet readback passed for `event!A9:O9`: `artifact_desr` has the requested wallet artifact text.
+- Google Sheet header readback passed for `good`, `bad`, `tadam`, `shop`, and `event`: column O is `artifact_desr`.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; SVG XML parse; `git diff --check`.
+- Browser smoke was not completed because this environment blocks local port binding.
+
+Open questions:
+- None.
+
+## 2026-06-21 13:24 - Dev 1
+
+Changed:
+- Completed `ACTIVE REFERENCE HEADER PANEL 2026-06-21 13:16 - Move cards/fields reference out of settings`.
+- Removed the `Показать карты и поля` category selector from `settingsPanel`.
+- Added a separate header icon button `referenceHeaderBtn` wired to `assets/icons/reference_cards.svg`, placed between settings and phone.
+- Moved the reference category buttons into the lower reference panel and kept the reference output before `Хроника`.
+- Completed `ACTIVE FULLSCREEN LOWER SPACING 2026-06-21 13:21 - Add roll-strip-sized gap before lower panels in fullscreen`.
+- Added fullscreen-only spacing above `.lower-grid`, so `Хроника`, `История`, the reference panel, and lower content start after a control-strip-sized gap.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Did not change reference card/field effects, card configs/counts/texts, phone room behavior, fullscreen API/button behavior, board/routes, gameplay rules, or controller protocol.
+- Checks passed: `node --check src/game.js`; `git diff --check`; static/source checks for header order, settings/reference separation, category controls, reference toggle state, fullscreen-only `.lower-grid` spacing, and unchanged normal `.lower-grid` margin.
+- Browser smoke was not completed in this environment.
+- `assets/icons/reference_cards.svg` is still expected from Art/UI if not present locally; the button is wired to that path.
+
+Open questions:
+- None.
+
+## 2026-06-21 13:21 - GD
+
+Changed:
+- Added `ACTIVE FULLSCREEN LOWER SPACING 2026-06-21 13:21 - Add roll-strip-sized gap before lower panels in fullscreen` for `Dev 1`.
+- Specified that fullscreen lower panels should start after a vertical gap roughly equal to the board control strip / roll button block height.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is fullscreen layout spacing only. Normal layout, panel visibility, gameplay, phone controller, and reference behavior should remain unchanged.
+
+Open questions:
+- None.
+
+## 2026-06-21 13:16 - GD
+
+Changed:
+- Added Art/UI task `ACTIVE 2026-06-21 13:16 - Reference cards/fields header icon` for `Art / UI 2`.
+- Added Dev task `ACTIVE REFERENCE HEADER PANEL 2026-06-21 13:16 - Move cards/fields reference out of settings` for `Dev 1`.
+- Specified that `Показать карты и поля` should become a separate header icon button left of the phone button.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Art/UI 2 owns only the icon asset `assets/icons/reference_cards.svg`; Dev 1 owns the panel move and button wiring.
+
+Open questions:
+- None.
+
+## 2026-06-21 13:12 - Art/UI
+
+Changed:
+- Slightly reduced the custom infographic art on `poorest-start-coins` / `Монеты бедняку` so there is a cleaner gap between the top art and the card title.
+- Updated the card-specific `frontArt` cache key to `20260621-0343`.
+- Bumped the `cards.config.js` import and host `game.js` cache keys to `20260621-0343`.
+
+Files:
+- `assets/cards/tadam_poorest_start_coins_front.png`
+- `src/cards.config.js`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only adjustment; no TADAM rules, payout amount, deck counts, board logic, phone controller, or balance changed.
+- Other TADAM cards still use the standard `assets/cards/tadam_front.png`.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; PNG dimensions check; source scan for the single `frontArt`; `git diff --check`.
+- Per user preference, no GD/QA handback was sent.
+
+Open questions:
+- None.
+
+## 2026-06-21 03:42 - Art/UI 2
+
+Changed:
+- Added automatic artifact effect text on revealed artifact Event cards, so `Меч Героя` and `Анти-Плохо` now explain what the artifact gives after the acquisition condition.
+- Kept the artifact effect as part of the shared card-face renderer, so settings reference cards inherit the same text without separate manual layout.
+- Added compact styling for the artifact-effect line and included it in Event card density calculation.
+- Bumped `styles.css` and `src/game.js` cache keys in `index.html`.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `git diff --check`.
+- Browser smoke was not completed because this environment blocks local port binding.
+
+Open questions:
+- None.
+
+## 2026-06-21 03:32 - Art/UI
+
+Changed:
+- Added a card-specific TADAM face asset for `poorest-start-coins` / `Монеты бедняку`: `assets/cards/tadam_poorest_start_coins_front.png`.
+- Connected that asset through `frontArt` in `src/cards.config.js`, so only this card replaces the generic TADAM icon with the coin-reward infographic.
+- Kept the standard `assets/cards/tadam_front.png` path as the default for all other TADAM cards.
+- Used `+3` in the infographic to match the current card effect amount in config.
+- Bumped the `cards.config.js` import key to `20260621-0326`; the host `game.js` cache key remains on the fresher `20260621-0342` from the parallel header-control update.
+
+Files:
+- `assets/cards/tadam_poorest_start_coins_front.png`
+- `src/cards.config.js`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/config hook only; no TADAM rules, payout amount, deck counts, phone controller, board logic, or balance changed.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; PNG dimensions check; source scan that `frontArt` is only on `poorest-start-coins`; `git diff --check`.
+- Per user preference, no GD/QA handback was sent.
+
+Open questions:
+- None.
+
+## 2026-06-21 03:31 - Art/UI 2
+
+Changed:
+- Swapped the top header order of phone and settings controls so the icon group now reads phone, settings, fullscreen.
+- Moved `settingsToggle` into the shared header icon group and updated the setup-row grid for three icon buttons.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+- Browser smoke was not completed because this environment blocks local port binding.
+
+Open questions:
+- None.
+
+## 2026-06-21 03:25 - Dev 3
+
+Changed:
+- Completed `ACTIVE SHOP CHOICE CARD SPLIT 2026-06-21 03:20 - Split 3-card choice from unlimited buying`.
+- Updated `shop-choice-3-cost-3` / `Привилегия Джо` so it only gives a 3-card Joe Shop offer.
+- Changed `Привилегия Джо` shortTitle to `Выбор из 3` and description to `Во время покупок карт Лавка Джо выбирай из 3 карт`.
+- Removed fixed `cost: 3` from the card effect, CSV, and Google Sheet row.
+- Removed the runtime `joeShopCardCost(player)` override that forced this card's price to 3 coins.
+- Kept `joeShopOfferCount(player)` and `shop-unlimited-buy` behavior unchanged.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- Google Sheet `Cards Config` / `shop!A10:N10`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; `git diff --check`.
+- Static/source checks passed: player-facing local config/CSV no longer says `плати только 3 монеты`; `shop-choice-3-cost-3` still makes the ordinary Shop offer size 3 but no longer forces cost 3.
+- Google Sheet readback passed for `shop!A10:N10`: shortTitle `Выбор из 3`, empty `cost`, notes `amount offer count only; ordinary Shop price still applies`, count `3`, description `Во время покупок карт Лавка Джо выбирай из 3 карт`.
+- Browser smoke was not completed because the local server is unavailable in this environment.
+
+Open questions:
+- None.
+
+## 2026-06-21 03:20 - GD
+
+Changed:
+- Added `ACTIVE SHOP CHOICE CARD SPLIT 2026-06-21 03:20 - Split 3-card choice from unlimited buying` for `Dev 3`.
+- Clarified that `Привилегия Джо` should only make ordinary Joe Shop show 3 cards and should no longer set price to 3 coins.
+- Kept `Безлимит Джо` as the separate unlimited-buy card.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Sync local config, CSV, and Google Sheet. Do not change Joe Auction, Black Market, free Shop rewards, or finite Shop lifecycle.
+
+Open questions:
+- None.
+
+## 2026-06-21 03:24 - Art/UI 2
+
+Changed:
+- Fixed card face title iconization regression: `iconizeHtml(...)` now protects `.card-face-title` markup before replacing coin/dice words with icons.
+- Confirmed `Кубик судьбы` remains plain text in title while description text still gets dice/coin icons.
+- Bumped the `src/game.js` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+- Added a local string-level smoke check for protected title iconization.
+- Browser smoke was not completed because this environment blocks local port binding.
+
+Open questions:
+- None.
+
+## 2026-06-21 03:08 - Dev 1
+
+Changed:
+- Completed `ACTIVE FULLSCREEN FULL UI 2026-06-21 03:06 - Fullscreen should keep normal UI panels`.
+- Removed fullscreen-only hiding of `.log-panel`, `.history-panel`, and `.lower-grid`.
+- Kept fullscreen app-shell background/viewport/overflow behavior, so fullscreen can scroll with the normal UI.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- No fullscreen button/API behavior, game rules, board routes/layout, phone controller, log/history content, settings behavior, cards, deck behavior, or dice logic changed.
+- Checks passed: `node --check src/game.js`; `git diff --check`; static/source checks that fullscreen no longer hides `log-panel`, `history-panel`, or `lower-grid`, while fullscreen `app-shell` overflow remains.
+- Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-21 03:15 - Art/UI 2
+
+Changed:
+- Centered gameplay card reveal prompts within the map area instead of inheriting the regular top toast position.
+- Added card-reveal-specific `visible` and `fading` transforms so the reveal animation stays centered.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+- Browser smoke was not completed because this environment blocks local port binding.
+
+Open questions:
+- None.
+
+## 2026-06-21 03:06 - GD
+
+Changed:
+- Added `ACTIVE FULLSCREEN FULL UI 2026-06-21 03:06 - Fullscreen should keep normal UI panels` for `Dev 1`.
+- Clarified that fullscreen should preserve the normal interface, including `Хроника`, `История`, and lower UI blocks.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Current CSS hides `.log-panel`, `.history-panel`, and `.lower-grid` in fullscreen. This task should remove/override that field-only behavior without changing fullscreen button logic or gameplay.
+
+Open questions:
+- None.
+
+## 2026-06-21 03:07 - Art/UI 2
+
+Changed:
+- Set the default font mode back to `Стандартный`.
+- Updated the initial body font dataset, settings dropdown selected option, and JS fallback default.
+- Bumped the `src/game.js` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+- Browser smoke was not completed because this environment blocks local port binding.
+
+Open questions:
+- None.
+
+## 2026-06-21 03:03 - Art/UI 2
+
+Changed:
+- Replaced the `Приключение` font implementation from `Alegreya Sans SC` to `Rubik` for stronger readability.
+- Removed the old Alegreya-specific visual size compensation by resetting `font-size-adjust` for `Приключение`.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+- Browser smoke was not completed because this environment blocks local port binding.
+
+Open questions:
+- None.
+
+## 2026-06-21 02:57 - Art/UI 2
+
+Changed:
+- Moved the dice count selector from the top setup row into the settings panel.
+- Changed the main settings panel grid to 3 columns so the setting blocks sit three per row on wider layouts.
+- Updated responsive setup-row columns after removing dice count from the header row.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+- Browser smoke was not completed because this environment blocks local port binding.
+
+Open questions:
+- None.
+
+## 2026-06-21 02:45 - Art/UI 2
+
+Changed:
+- Increased the visual size of the `Приключение` font mode with `font-size-adjust`, so Alegreya Sans SC reads closer to the standard font at the same UI sizes.
+- Kept the correction scoped to `body[data-font-style="adventure"]`; `Стандартный` resets to normal font sizing.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+- Browser smoke was not completed because this environment blocks local port binding.
+
+Open questions:
+- None.
+
+## 2026-06-21 02:35 - Dev 1
+
+Changed:
+- Completed direct user follow-up for the phone settings compact block.
+- Replaced the always-visible grouped phone settings card with a separate `Настройки телефонов` button.
+- The button toggles the settings body below it inside the phone-room panel.
+- Preserved `#phoneRoomMode`, `#phoneRoomDice`, current mode options/default, and dice-hide checkbox behavior.
+- Bumped the stylesheet cache key in `index.html` to `20260621-0226`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- No phone room create/recreate behavior, room code/link/copy UI, controller mode values/defaults, dice display behavior, phone protocol, or gameplay changed.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`; static/source checks for toggle button, hidden body, preserved ids/options, JS toggle refs/listener, and mobile stack.
+- Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-21 02:39 - Art/UI 2
+
+Changed:
+- Fixed the settings header button so it keeps the SVG settings icon instead of being overwritten with text by responsive JS.
+- Kept the accessible label and tooltip as `Настройки`.
+- Bumped the `src/game.js` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+- Browser smoke was not completed because this environment blocks local port binding.
+
+Open questions:
+- None.
+
+## 2026-06-21 02:34 - Art/UI 2
+
+Changed:
+- Added the `Alegreya Sans SC` Google Font as the new `Приключение` font mode.
+- Added a `Шрифт` dropdown in settings with `Стандартный` and `Приключение`; `Приключение` is selected by default.
+- Added shared `data-font-style` switching so gameplay cards, settings reference cards, and the rest of the UI inherit the selected font from one place.
+- Added the selected font mode to collected game settings/history snapshots.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+- Browser smoke was not completed because this environment blocks local port binding (`python3 -m http.server` failed with `Operation not permitted`).
+
+Open questions:
+- None.
+
+## 2026-06-21 02:25 - Dev 3
+
+Changed:
+- Completed direct user override: monster defeat reward should give `Сила +1` instead of a Joe Shop card.
+- Updated monster defeat reward text to `Сила +1` plus the existing unchanged coin tiers.
+- Removed the monster-defeat `drawFreeShopCard(...)` reward call and replaced it with `addBattleBonus(player, 1)`.
+- Kept `resolveStartStrengthReward(player)` / `Домашний старт` separate, so any return-to-start strength bonus still logs/stacks independently.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This supersedes the 2026-06-21 02:15 Dev 3 handback that restored Joe Shop card rewards on monster defeat.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Static/source checks passed: defeat reward text is `Сила +1` plus unchanged coins; monster defeat no longer calls free Shop reward; start-strength remains separate.
+- Browser smoke was not completed because the local server is unavailable in this environment.
+
+Open questions:
+- None.
+
+## 2026-06-21 02:15 - Dev 3
+
+Changed:
+- Completed `ACTIVE MONSTER DEFEAT SHOP REWARD 2026-06-21 02:10 - Defeat reward must grant Joe Shop card, not only +1 strength`.
+- Fixed `drawFreeShopCard(player, ...)` so free Joe Shop rewards keep the drawn physical Shop card with the player instead of immediately returning it to Shop discard.
+- Preserved monster defeat coin rewards and tier text: `Лавка Джо`, `Лавка Джо + 5 монет`, `Лавка Джо + 10 монет`, `Лавка Джо + 20 монет`.
+- Confirmed `resolveStartStrengthReward(player)` remains a separate return-to-start `Домашний старт` trigger and does not replace/suppress the Joe Shop reward.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Static/source checks passed: monster defeat still calls the Shop-card reward path, coin reward path is unchanged, start-strength remains separate, and free Shop reward no longer discards the drawn card immediately after adding it to owned Shop cards.
+- Browser smoke was not completed because the local server is unavailable in this environment (`127.0.0.1:5173` unreachable; fresh `server.js` starts fail with `listen EPERM`).
+
+Open questions:
+- None.
+
+## 2026-06-21 02:10 - GD
+
+Changed:
+- Added `ACTIVE MONSTER DEFEAT SHOP REWARD 2026-06-21 02:10 - Defeat reward must grant Joe Shop card, not only +1 strength` for `Dev 3`.
+- Clarified that monster-defeat coin rewards stay unchanged; the fix is about preserving/communicating the Joe Shop card reward.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Inspect both the Shop-card reveal/grant path and the separate `Домашний старт` start-return strength trigger. Do not change Shop deck counts or defeat coin amounts.
+
+Open questions:
+- None.
+
+## 2026-06-21 02:09 - Art/UI
+
+Changed:
+- Redrew `assets/icons/settings_gear.svg` for the compact settings header button.
+- New icon uses a simpler, larger gear silhouette with dark medallion backing and warm gold face for better small-size readability.
+- Bumped the settings icon cache key in `index.html` to `20260621-0205`.
+
+Files:
+- `assets/icons/settings_gear.svg`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Icon asset/cache-only; no settings toggle behavior, layout sizing, phone room behavior, gameplay, cards, dice, or active card text work changed.
+- Checks passed: settings icon SVG/source check, `git diff --check`.
+- Per user preference, no GD/QA handback was sent for this direct user task.
+
+Open questions:
+- None.
+
+## 2026-06-21 02:08 - Art/UI 2
+
+Changed:
+- Fixed card-face description line splitting so punctuation cannot become its own visual line.
+- Added shared `mergeLeadingPunctuationLines(...)` for normal and Event card description renderers.
+- Problem case `Каждый раз, когда кто-то разыгрывает карту Тадам!, получи 3 монеты` now keeps `, получи...` attached to the previous text instead of rendering a standalone comma line.
+- Bumped host script cache key to `20260621-0126`.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI renderer-only fix; no card text, card config, rules, rewards, deck lifecycle, assets, phones, dice, or balance changed.
+- Checks passed: local text-splitting readback for `Эхо ТАДАМ!`; `node --check src/game.js`; `git diff --check`.
+- Browser smoke was not run in this pass.
+
+Open questions:
+- None.
+
+## 2026-06-21 02:07 - Dev 1
+
+Changed:
+- Completed `ACTIVE PHONE SETTINGS COMPACT BLOCK 2026-06-21 02:04 - Merge phone mode and dice display settings`.
+- Wrapped `Режим` and `Не отображать кубики` into one grouped `Настройки телефонов` block inside the phone-room panel.
+- Preserved `#phoneRoomMode`, `#phoneRoomDice`, current mode options/default, and dice-hide checkbox behavior.
+- Added desktop two-column layout inside the grouped card and mobile one-column stacking with no horizontal-scroll intent.
+- Bumped the stylesheet cache key in `index.html` to `20260621-0204`.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- No phone room create/recreate behavior, room code/link/copy UI, controller mode values/defaults, dice display behavior, phone protocol, gameplay, cards, routes, or deck logic changed.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`; static/source checks for grouped settings block, preserved ids/options/defaults, desktop two-column layout, and mobile stack override.
+- Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-21 02:04 - GD
+
+Changed:
+- Added `ACTIVE PHONE SETTINGS COMPACT BLOCK 2026-06-21 02:04 - Merge phone mode and dice display settings` for `Dev 1`.
+- Required the phone-room panel to combine `Режим` and `Не отображать кубики` into one grouped phone settings block.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is phone-room layout polish only. Do not change room lifecycle, controller mode values/defaults, dice display behavior, phone protocol, or gameplay.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:43 - Art/UI
+
+Changed:
+- Converted the `Настройки` header control from a text button into a compact icon button using `assets/icons/settings_gear.svg`.
+- Rebalanced the top settings grid so the compact settings button frees horizontal space for a wider `Новая игра` button.
+- Bumped the stylesheet cache key to `20260621-0134`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI/layout-only; settings toggle behavior, phone room behavior, reference debug actions, gameplay rules, cards, dice, and balance unchanged.
+- Checks passed: settings icon/new game stretch source check, `git diff --check`.
+- Per user preference, no GD/QA handback was sent for this direct user task.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:42 - Dev 1
+
+Changed:
+- Completed `ACTIVE REFERENCE APPLY EFFECTS 2026-06-21 01:36 - Click reference cards/fields to trigger effects`.
+- Made reference cards and field items keyboard/click activatable with `role="button"`, `tabindex="0"`, data hooks, pointer cursor, hover/focus ring, and applying state.
+- Added reference action guard so clicks are ignored while another reference effect/prompt, animation, pending choice, shop, or roll/action prompt is active.
+- Good/Bad/Event reference cards now create runtime reference copies, reveal through the existing card UI, and resolve through `applyCardEffect(...)` without drawing/removing physical deck cards.
+- Shop reference cards now grant the selected Shop item to the active player for free/debug without touching Shop deck/discard.
+- TADAM reference cards now reveal and activate through the existing active TADAM lifecycle/max-3 behavior.
+- Reference runtime copies are marked and skipped by `discardCardToDeck(...)`, so they do not pollute physical deck discard piles.
+- Field reference items now trigger supported field effects for the active player without moving them first; context-only fields such as `Старт`, `Финиш`, and `Враг` show a short log/toast instead of crashing.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- No card configs/counts/texts, Google Sheet/CSV, normal draw/shop purchase/field landing behavior, phone controller, history/autosave, dice math, routes, or balance changed.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`; static/source checks for reference data hooks, panel listeners, runtime reference copy marking, discard guard, Shop grant path, TADAM lifecycle path, field trigger path, and clickable CSS.
+- Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:37 - Art/UI
+
+Changed:
+- Darkened the `Играть с телефонами` header icon stroke and reduced its warm glow.
+- Bumped the stylesheet cache key to `20260621-0133`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- CSS-only visual tweak; no phone room behavior, controller protocol, gameplay rules, reference/debug actions, or active GD task changed.
+- Checks passed: phone icon darker source check, `git diff --check`.
+- Per user preference, no GD/QA handback was sent for this direct user task.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:36 - GD
+
+Changed:
+- Added `ACTIVE REFERENCE APPLY EFFECTS 2026-06-21 01:36 - Click reference cards/fields to trigger effects` for `Dev 1`.
+- Defined reference-panel clicks as debug/playtest actions targeting the current active player.
+- Specified that reference card clicks should not consume physical deck copies, except normal active TADAM lifecycle behavior if used.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This should reuse real effect resolvers where possible, but must not alter card configs, Google Sheet/CSV, or normal draw/shop/landing behavior.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:35 - Dev 1
+
+Changed:
+- Completed `ACTIVE BOARD CONTROL STRIP BELOW FIELD 2026-06-21 01:32 - Move board header controls under board`.
+- Moved the existing `.board-header` block below `.map-wrap` inside `.board-panel`.
+- Kept the existing dice value, current-field card, turn action chips/pending action UI, and `Бросить` button markup and ids intact.
+- Changed the base `.board-header` divider from a bottom border to a top border so it reads as a lower control strip.
+- Updated the coarse mobile board grid so the order is map first, then dice/current field/actions, then roll button.
+- Bumped the stylesheet cache key in `index.html` to `20260621-0132`.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- No gameplay rules, control text/content, dice logic, phone controller behavior, active-player animation, cards/decks, board routes/layout, history, or log behavior changed.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`; static/source checks for `.map-wrap` before `.board-header`, CSS cache bump, bottom-strip border, and mobile map-before-controls grid order.
+- Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:32 - GD
+
+Changed:
+- Added `ACTIVE BOARD CONTROL STRIP BELOW FIELD 2026-06-21 01:32 - Move board header controls under board` for `Dev 1`.
+- Specified that the current `.board-header` block should move below `.map-wrap` without changing dice, controls, phone behavior, rules, cards, or board layout.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a layout-only change. The control strip should remain functionally identical and adapt on desktop/mobile.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:26 - Art/UI 2
+
+Changed:
+- Reworked the embedded TADAM `+5` coin cue after user feedback.
+- Made the whole TADAM tile icon art larger inside the 512px canvas while keeping transparent margins.
+- Made the `+5` and coin larger relative to the full art.
+- Removed the UI-pill look: the reward cue is now chunky game-style lettering with dark ink outline, gold fill, a project coin, and burst strokes integrated into the TADAM explosion.
+- Bumped the TADAM icon URL and host script cache keys to `20260621-0118`.
+
+Files:
+- `assets/icons/tadam_512.png` — 512x512 PNG RGBA, transparent, status: `wired`.
+- `outputs/tadam_512_before_large_plus5_rework_20260621_0118.png` — previous embedded-marker version backup.
+- `outputs/tadam_512_large_plus5_preview.png` — large/small readability preview.
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual asset/cache-only pass; no TADAM reward logic, card lifecycle, active TADAM panel, movement, dice, phones, or balance changed.
+- The icon was edited by deterministic local raster compositing from the existing TADAM art and project coin asset.
+- Checks passed: PNG audit `512x512 RGBA`, transparent corners, alpha bbox `(24, 60, 488, 453)`; `node --check src/game.js`; `git diff --check`; no remaining `tile-reward-badge` / `tileRewardBadgeMarkup` references.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:24 - Dev 1
+
+Changed:
+- Completed `ACTIVE PHONE ROOM REOPEN TOAST 2026-06-21 01:21 - Do not show copy toast on simple panel reopen`.
+- Header phone button now records whether a room existed before opening the panel.
+- If the room already existed, reopening the panel reuses it and publishes a phone snapshot without copying the link or showing `Комната скопирована`.
+- First header open with no room still creates/copies and can show the single-instance toast.
+- Explicit `Скопировать ссылку` now shows the same single-instance header toast.
+- Explicit `Пересоздать комнату` now recreates, copies the new link, and can show the single-instance toast.
+- Kept room reuse/recreate contract, controller modes, clipboard/link formatting, and gameplay unchanged.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `git diff --check`; static/source checks for no-toast existing-room reopen, explicit copy toast, recreate-copy path, and retained single-instance timer behavior.
+- Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:21 - GD
+
+Changed:
+- Added `ACTIVE PHONE ROOM REOPEN TOAST 2026-06-21 01:21 - Do not show copy toast on simple panel reopen` for `Dev 1`.
+- Clarified that `Комната скопирована` should not appear when the phone panel is reopened for an already-existing room.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Preserve single-instance toast behavior, but trigger it only on actual copy/create-copy actions, not on ordinary existing-room reuse.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:16 - Dev 1
+
+Changed:
+- Completed `ACTIVE PHONE ROOM COPY TOAST 2026-06-21 01:13 - Show one Комната скопирована toast at a time`.
+- Made the phone-room header copy feedback use one fixed text source: `Комната скопирована`.
+- `setPhoneRoomHeaderFeedback()` now always reuses the existing `#phoneRoomHeaderFeedback` element, clears the old hide timer, resets visibility state, and starts a fresh 2-second timer from the latest copy action.
+- Kept create/recreate room behavior, clipboard/link selection mechanics, controller modes, room code/link formatting, and gameplay unchanged.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `git diff --check`; static/source checks for fixed toast text, single existing toast element reuse, old timer clearing, and 2-second hide timer.
+- Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:14 - Art/UI 2
+
+Changed:
+- Embedded the `+5` coin reward cue directly into the TADAM tile icon art.
+- Replaced `assets/icons/tadam_512.png` in place with a 512x512 transparent PNG that includes a gold `+5` marker and the existing project coin icon.
+- Added an image cache key for the TADAM icon URL and bumped the host script cache key to `20260621-0112`.
+- Confirmed the separate overlay `tile-reward-badge` implementation is gone from `src/game.js` / `styles.css`.
+
+Files:
+- `assets/icons/tadam_512.png` — 512x512 PNG RGBA, transparent, status: `wired`.
+- `outputs/tadam_512_before_plus5_embedded_20260621_0110.png` — previous icon backup.
+- `outputs/tadam_512_plus5_embedded_preview.png` — large/small readability preview.
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual asset/cache-only pass; no TADAM reward logic, card lifecycle, active TADAM panel, movement, dice, phones, or balance changed.
+- The icon was edited by deterministic local raster compositing, not generative redraw, to preserve the existing TADAM art.
+- Checks passed: PNG audit `512x512 RGBA` with transparent corners; `node --check src/game.js`; `git diff --check`; `rg` found no remaining `tile-reward-badge` / `tileRewardBadgeMarkup` references.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:13 - GD
+
+Changed:
+- Added `ACTIVE PHONE ROOM COPY TOAST 2026-06-21 01:13 - Show one Комната скопирована toast at a time` for `Dev 1`.
+- Required phone-room copy confirmation to reuse/refresh a single visible toast instead of stacking duplicates.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a small phone-room UI polish task only. It should not affect room creation, clipboard/link logic beyond toast timing, controller modes, or gameplay.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:12 - Dev 1
+
+Changed:
+- Completed `ACTIVE REMOVE TADAM TILE BADGES 2026-06-21 01:09 - Remove overlay +5 badges from TADAM tiles`.
+- Removed the separate overlay `+5` coin badge insertion from board tile rendering.
+- Removed the now-unused `tileRewardBadgeMarkup(...)` helper.
+- Removed `.tile-reward-badge` CSS and its field2/coin-icon sizing rules.
+- Kept normal TADAM icon rendering and kept tooltip/current-field text that mentions the 5-coin reward.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- No TADAM reward/rules, deck/card lifecycle, active TADAM panel, card faces, movement, dice, phones, or balance changed.
+- Checks passed: `node --check src/game.js`; `git diff --check`; `rg` found no remaining `tileRewardBadge` / `tile-reward-badge` / `reward-badge` references in `src/game.js` or `styles.css`.
+- Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:09 - GD
+
+Changed:
+- Added `ACTIVE REMOVE TADAM TILE BADGES 2026-06-21 01:09 - Remove overlay +5 badges from TADAM tiles` for `Dev 1`.
+- Updated direction: Art/UI will put the coin cue directly into the TADAM icon, so the separate tile overlay badge should be removed.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Remove only the overlay badge implementation. Keep TADAM reward/rules and normal TADAM tile rendering intact.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:09 - Dev 1
+
+Changed:
+- Completed `ACTIVE PHONE ROOM REOPEN 2026-06-21 01:04 - Do not recreate existing room on panel reopen`.
+- Split phone-room creation into explicit recreate vs idempotent ensure behavior.
+- Header phone button now uses the non-recreate path: if a room code already exists, reopening the panel reuses the same room/link and connected-phone state instead of closing and replacing it.
+- Explicit `Пересоздать комнату` still calls the default recreate path and remains the only way to replace an existing room.
+- Added a guard so the header button ignores clicks while a phone room request is already in flight.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- No controller modes, connected-phone protocol, room code/link formatting, `Не отображать кубики`, fullscreen, gameplay rules, cards, dice, or board logic changed.
+- Checks passed: `node --check src/game.js`; `git diff --check`; static/source checks for non-recreate header path and explicit recreate button path.
+- Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:05 - Art/UI
+
+Changed:
+- Equalized the horizontal widths of the phone-room `Ссылка` block and `Скопировать ссылку` button.
+- Kept the room code as a compact highlighted column and made the link/copy columns share the remaining space equally.
+- Bumped the stylesheet cache key to `20260621-0057`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- CSS/layout-only; no phone room behavior, protocol, room recreation logic, controller actions, or active GD reopen task changed.
+- Checks passed: phone details equal columns source check, `git diff --check`.
+- Per user preference, no GD/QA handback was sent for this direct user task.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:04 - GD
+
+Changed:
+- Added `ACTIVE PHONE ROOM REOPEN 2026-06-21 01:04 - Do not recreate existing room on panel reopen` for `Dev 1`.
+- Clarified that reopening/toggling the phone panel must reuse an existing room; only `Пересоздать комнату` may create a replacement room.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a phone-room lifecycle/UI bugfix only. It should not affect controller modes, phone protocol, fullscreen, or gameplay.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:04 - Dev 1
+
+Changed:
+- Completed `ACTIVE TADAM TILE COIN BADGE 2026-06-21 01:00 - Show +5 coin bait on TADAM fields`.
+- Added a permanent compact `+5` coin badge to every board tile whose type is `tadam`.
+- Badge uses the existing coin icon via `coinIcon()` and is inserted during board shell construction, so it is visible before landing.
+- Styled the badge as a small gold reward marker in the lower-left corner, below route/preview outlines and token layer so it should not cover path outlines, monster numbers, or player tokens.
+- Updated TADAM tile tooltip/title to `ТАДАМ! — возьми карту Тадам и получи 5 монет`.
+- Updated current-field effect text to `возьми карту Тадам и получи 5 монет`.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- No TADAM deck/card lifecycle, reward logic, active TADAM panel, card faces, other field types, dice, movement, phones, or balance changed.
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+- Static/source checks passed: badge is only for `tadam`, uses existing coin icon, tooltip/effect text mention 5 coins, and landing still calls existing `drawTadamCard(player)`.
+- Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-21 01:00 - GD
+
+Changed:
+- Added `ACTIVE TADAM TILE COIN BADGE 2026-06-21 01:00 - Show +5 coin bait on TADAM fields` for `Dev 1`.
+- Chose a small permanent `+5` coin badge on TADAM board tiles so players know before landing that the field gives 5 coins.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a board readability/UI task only. It should not change TADAM card lifecycle or the active TADAM panel.
+
+Open questions:
+- None.
+
+## 2026-06-21 00:57 - Art/UI
+
+Changed:
+- Polished the phone-room settings panel after the header-button move.
+- Made the active phone header button less bright with a softer border/glow and muted light phone icon.
+- Removed the visible `Шейк` settings block from the phone-room panel.
+- Made the room code block larger and more visually important.
+- Equalized the vertical size of the code, link, and copy blocks in the phone-room details row.
+- Bumped the stylesheet cache key to `20260621-0056`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI/layout-only; phone room protocol still treats missing `#phoneRoomShake` as shake off through the existing optional lookup.
+- No controller actions, room API, gameplay rules, cards, dice, balance, or Dev 1 phone field preview behavior changed.
+- Checks passed: phone panel polish source check, `node --check src/game.js`, `git diff --check`.
+- Per user preference, no GD/QA handback was sent for this direct user task.
+
+Open questions:
+- None.
+
+## 2026-06-21 00:56 - Dev 1
+
+Changed:
+- Completed `ACTIVE PHONE FIELD PREVIEW 2026-06-21 00:50 - Show Показать поле on phone controller`.
+- Added explicit phone actions `field-preview` / `field-preview-return`.
+- Phone snapshot now shows `Показать поле` to the active owner of a host card/portal choice when the host choice offers field preview.
+- While preview is active, the same owner phone gets `Вернуться к выбору`.
+- Phone action reuses existing host handlers: card-choice preview calls `setChoiceFieldPreviewMode(...)`; portal preview calls `setPortalPreviewMode(...)`.
+- Inactive phones do not receive preview actions because all preview actions are gated by `playerId`.
+- Updated controller rendering so both full controller and big-button layouts can show preview/return actions, including larger/more complex choice sets and auction bid prompts.
+- Bumped host `game.js` and phone `controller.js` cache keys to `20260621-0055`.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `src/controller.js`
+- `index.html`
+- `controller.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- No gameplay rules, card effects, movement, dice math, room creation/copy flow, controller defaults, board placement, or balance changed.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Static/source checks passed: preview actions exist; owner gating uses `pendingCardChoice.playerId` / `pendingChoice.playerId`; host preview handlers are reused; full and big-button controller paths include preview kinds; controller/host cache keys are fresh.
+- Browser smoke was not completed: `127.0.0.1:5173` was unreachable in this pass and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-21 00:51 - Art/UI 2
+
+Changed:
+- Renamed Shop card `reroll-one-move-die` from `Переброс маршрута` to `Ещё раз`.
+- Synced the title in local card config, local CSV mirror, and Google Sheet `Cards Config` / `shop`.
+- Bumped card config import and host script cache keys to `20260621-0048`.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- Google Sheet `Cards Config` / `shop`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Title-only card data change; shortTitle, description, cost, count, effect id, gameplay behavior, UI layout, and assets were not changed.
+- Readback passed: Google Sheet `shop!A15:N15` now has title `Ещё раз`.
+- Checks passed: `node --check src/cards.config.js`; `node --check src/game.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-21 00:50 - GD
+
+Changed:
+- Added `ACTIVE PHONE FIELD PREVIEW 2026-06-21 00:50 - Show Показать поле on phone controller` for `Dev 1`.
+- Required phone controller to expose the same field-preview action as the host choice/prompt overlays when relevant.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a phone-controller UI/protocol task only; it should not change gameplay rules, card effects, dice, movement, or room creation.
+
+Open questions:
+- None.
+
+## 2026-06-21 00:45 - Art/UI
+
+Changed:
+- Cleaned up the phone-room settings block layout after moving it under the header controls.
+- Made the phone-room details area use a tidy full-width grid: code, link, copy button, then full-width hint and controller status rows.
+- Changed the header phone button into a real panel toggle: first click opens/creates/copies, second click hides the settings block without closing the room.
+- Centered the phone icon inside its header button and changed it to a light stroke so it reads on the dark/gold button.
+- Bumped host CSS/JS cache keys to `20260621-0038`.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI/layout/toggle-only; no phone protocol, controller actions, room API, gameplay rules, cards, dice, balance, or active Shop multi-buy task changed.
+- Checks passed: phone room UI/toggle source check, `node --check src/game.js`, `git diff --check`.
+- Per user preference, no GD/QA handback was sent for this direct user task.
+
+Open questions:
+- None.
+
+## 2026-06-21 00:44 - GD
+
+Changed:
+- Added `ACTIVE SHOP MULTI-BUY 2026-06-21 00:44 - Keep one Joe Shop offer during unlimited buys` for `Dev 3`.
+- Clarified that ordinary Joe Shop should draw one offer per visit, not refresh after every purchase.
+- Required repeat purchases from `shop-unlimited-buy` to use the same opened offer until it is empty, declined, or unaffordable.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Current source clue: `resolveShop(player)` draws a fresh offer inside its repeat-buy loop.
+- This should not affect Joe Auction, Black Market, or free Shop rewards.
+
+Open questions:
+- None.
+
+## 2026-06-21 00:37 - Dev 1
+
+Changed:
+- Completed `ACTIVE PHONE ROOM HEADER UI 2026-06-21 00:28 - Move phone room to top header button`.
+- Replaced the single fullscreen slot with two small matching header icon buttons: phone controllers and fullscreen.
+- Moved `.phone-room-panel` out of hidden settings and directly under `.season-controls`, spanning the `game-settings` block width.
+- Phone header button now enables the phone room, opens the panel, creates a room if needed, copies the current link, and shows floating `Комната скопирована` feedback for about 2 seconds.
+- Removed the old settings checkbox entry point `Играть с телефонами`.
+- Changed phone room default mode to `Полный контроллер`.
+- Changed dice checkbox text/semantics to `Не отображать кубики`: unchecked means dice visible, checked means dice hidden.
+- Kept manual create/recreate and manual copy controls working inside the moved panel.
+- Bumped host CSS/JS cache keys to `20260621-0037`.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `server.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- No phone controller action protocol, gameplay rules, cards, board, history save behavior, final battle, reference panel, or unrelated settings were intentionally changed.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check server.js`; `git diff --check`.
+- Static/source checks passed: phone button exists; panel is before `#settingsPanel`; old `#usePhoneControllers` is gone; default mode is `full`; `Не отображать кубики` is present; dice checkbox inversion maps to `diceVisible`; server fallback default is full mode with dice visible.
+- Browser smoke was not completed: in-app browser bridge failed with sandbox metadata error; existing `127.0.0.1:5173` was a stale server without fresh files; starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-21 00:29 - Art/UI
+
+Changed:
+- Added an artifact-style backing plate behind the face icons on artifact Event cards so `Волшебный кошель`, `Меч Героя`, and `Анти-Плохо` read as more important.
+- Marked those three cards in `src/cards.config.js` with `artifact: true`.
+- Updated Event artifact face rendering to use the new `artifact: true` marker, with existing ids kept as fallback for compatibility.
+- Added a project memory rule: persistent artifact cards should be marked with `artifact: true` and artifact-specific UI should use that flag.
+- Bumped host CSS/JS cache keys and the `cards.config.js` import cache key to `20260621-0012`.
+
+Files:
+- `src/cards.config.js`
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/README.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/config marker only; no artifact effects, event rules, balance, ownership behavior, assets, phone controller behavior, or active GD task behavior changed.
+- Checks passed: artifact config/backing source check, `node --check src/game.js`, `node --check src/cards.config.js`, `git diff --check`.
+- Per user preference, no GD/QA handback was sent for this direct user task.
+
+Open questions:
+- None.
+
+## 2026-06-21 00:28 - GD
+
+Changed:
+- Added `ACTIVE PHONE ROOM HEADER UI 2026-06-21 00:28 - Move phone room to top header button` for `Dev 1`.
+- Requested replacing the single fullscreen slot with two small matching icon buttons: phone controllers and fullscreen.
+- Requested moving the phone room panel directly under the top controls, full width of the game-settings block.
+- Requested one-click phone room creation, automatic link copy, and `Комната скопирована` floating feedback.
+- Requested default `Полный контроллер` mode and inverted `Не отображать кубики` checkbox semantics.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a Dev 1 UI+JS implementation task, not just visual polish.
+- Preserve existing phone controller protocol/actions unless the inverted dice option needs snapshot wiring.
+
+Open questions:
+- None.
+
+## 2026-06-21 00:13 - Art/UI
+
+Changed:
+- Increased the Event artifact card-face icon size one more step for `Волшебный кошель`, `Меч Героя`, and `Анти-Плохо`.
+- Added per-artifact classes to the Event card text block so individual artifact visuals can be tuned without changing rules or card data.
+- Scaled the `Волшебный кошель` icon slightly inside its larger slot so it reads closer in visual size to the other artifact icons.
+- Bumped host CSS/JS cache keys to `20260621-0011`.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual sizing only; no event rules, artifact behavior, card data, balance, assets, phone controller behavior, or history/autosave work changed.
+- Checks passed: artifact icon sizing source check, `node --check src/game.js`, `git diff --check`.
+- Per user preference, no GD/QA handback was sent for this direct user task.
+
+Open questions:
+- None.
+
+## 2026-06-21 00:13 - Art/UI 2
+
+Changed:
+- Completed `ACTIVE 2026-06-21 00:05 - Brighter walk-path outline`.
+- Made `.walk-path-outline` noticeably brighter with a stronger warm border, full opacity, and stronger gold glow.
+- Made `.walk-path-outline.is-final` slightly more prominent than intermediate path cells with tighter inset, solid 3px border, and stronger final glow.
+- Left portal, card-choice, and post-roll target outline styles unchanged.
+- Bumped host CSS/JS cache keys to `20260621-0011`.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual CSS/cache-only pass; no movement rules, route calculation, dice logic, cards, board placement, or toggle behavior changed.
+- Checks passed: `git diff --check`; `node --check src/game.js`.
+- Browser visual smoke was not completed because the in-app browser bridge failed with an environment-side sandbox metadata error during setup.
+
+Open questions:
+- None.
+
+## 2026-06-21 00:48 - Dev 3
+
+Changed:
+- Completed `ACTIVE SHOP MULTI-BUY 2026-06-21 00:44 - Keep one Joe Shop offer during unlimited buys`.
+- Reworked ordinary `resolveShop(player)` so one Joe Shop visit draws one offer before the buy loop.
+- `shop-unlimited-buy` repeat buys now reuse the same opened offer, remove bought cards from that offer, and do not draw replacement cards during the visit.
+- Remaining unbought offer cards are discarded only once when the visit ends.
+- Kept Joe Auction, Black Market, free Shop rewards, card data/counts/titles/effects unchanged.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Static/source checks passed: ordinary Shop offer is drawn once before the buy loop, bought cards are spliced out of that same offer, and only remaining unbought cards are returned through `discardCardsToDeck("shop", offer)`.
+- Browser smoke was not completed in this environment because `127.0.0.1:5173` was unreachable and starting `server.js` on `127.0.0.1:5174` failed with `listen EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-21 00:12 - Dev 3
+
+Changed:
+- Completed `ACTIVE HISTORY AUTOSAVE 2026-06-21 00:05 - Auto-save finished games after first winner popup`.
+- Added one-shot finished-game history autosave after the first visible winner popup render.
+- Reused the existing `saveCurrentGameHistory()` snapshot/export path for autosave, with status return values and autosave-specific non-blocking messages.
+- Added per-game autosave guard fields in `state.history`; new games reset them through fresh history initialization.
+- Kept manual `Сохранить` available after autosave.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Static/source checks passed: autosave guard resets on new game, autosave only schedules after `state.finished` plus final summary fields plus visible winner popup render, duplicate renders are guarded by `autoSaveRequestedAt`, and the autosave calls `saveCurrentGameHistory({ autosave: true })`.
+- Browser smoke was not completed in this environment: in-app browser connection failed with sandbox metadata error, direct HTTP check could not reach `127.0.0.1:5173`, and starting `server.js` on `127.0.0.1:5174` failed with `listen EPERM`.
+
+Open questions:
+- None.
+
+## 2026-06-21 00:05 - GD
+
+Changed:
+- Added `ACTIVE HISTORY AUTOSAVE 2026-06-21 00:05 - Auto-save finished games after first winner popup` for `Dev 3`.
+- Requested automatic game save once per finished game after the first winner popup is visible.
+- Required reuse of the existing manual history save/export path and duplicate-save guard.
+- Added `ACTIVE 2026-06-21 00:05 - Brighter walk-path outline` for `Art / UI 2`.
+- Requested brighter visual styling for `Показывать контур хода` route outlines.
+- Kept QA out of both flows per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Autosave should not run before final summary fields exist and should reset on new game.
+- Walk-path styling should target `.walk-path-outline` / `.walk-path-outline.is-final` and avoid changing portal/card/post-roll preview outlines.
+
+Open questions:
+- None.
+
+## 2026-06-20 00:01 - Art/UI
+
+Changed:
+- Made the face icons larger on the Event artifact cards `Волшебный кошель`, `Меч Героя`, and `Анти-Плохо`.
+- Added a dedicated `has-large-artifact-icon` card-face class for those three cards instead of enlarging every Event card icon.
+- Adjusted dense/long Event card icon rows so long descriptions still keep room inside the card.
+- Bumped host CSS/JS cache keys to `20260620-0001`.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual card-face sizing only; no event rules, artifact ownership, card data, balance, phone controller behavior, or assets changed.
+- Checks passed: artifact icon sizing source check, `node --check src/game.js`, `git diff --check`.
+- Per user preference, no GD/QA handback was sent for this direct user task.
+
+Open questions:
+- None.
+
 ## 2026-06-19 02:27 - Art/UI 2
 
 Changed:

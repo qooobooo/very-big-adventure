@@ -1,4 +1,4 @@
-import { cardConfig } from "./cards.config.js?v=20260619-0116";
+import { cardConfig } from "./cards.config.js?v=20260621-0357";
 import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260531-0271";
 
 const boardEl = document.querySelector("#board");
@@ -15,7 +15,9 @@ const savedGamesStorageKey = "very-big-adventure.saved-games";
 const googleSheetsSaveUrl = "https://script.google.com/macros/s/AKfycbxNXmGjR9w3U0vmUd9xS5Rc2KHwR8Q7ViB5Pcl70qIOEhwIJp_M_1faO7RvpDtuPLqkdQ/exec";
 const defaultUiStyle = "classic";
 const uiStyleValues = new Set(["tabletop", "classic"]);
-const defaultPhoneRoomMode = "big-button";
+const defaultFontStyle = "standard";
+const fontStyleValues = new Set(["standard", "adventure"]);
+const defaultPhoneRoomMode = "full";
 const phoneRoomModeValues = new Set(["full", "big-button"]);
 
 const ui = {
@@ -35,6 +37,7 @@ const ui = {
   exactMoveBtn: document.querySelector("#exactMoveBtn"),
   finalBattleHud: document.querySelector("#finalBattleHud"),
   fieldEffect: document.querySelector("#fieldEffect"),
+  fontStyle: document.querySelector("#fontStyle"),
   fullscreenBtn: document.querySelector("#fullscreenBtn"),
   logToggle: document.querySelector("#logToggle"),
   modifierPlayerStatus: document.querySelector("#modifierPlayerStatus"),
@@ -45,12 +48,18 @@ const ui = {
   phoneRoomControllers: document.querySelector("#phoneRoomControllers"),
   phoneRoomDetails: document.querySelector("#phoneRoomDetails"),
   phoneRoomDice: document.querySelector("#phoneRoomDice"),
+  phoneRoomHeaderBtn: document.querySelector("#phoneRoomHeaderBtn"),
+  phoneRoomHeaderFeedback: document.querySelector("#phoneRoomHeaderFeedback"),
   phoneRoomMode: document.querySelector("#phoneRoomMode"),
+  phoneRoomSettingsBody: document.querySelector("#phoneRoomSettingsBody"),
+  phoneRoomSettingsToggle: document.querySelector("#phoneRoomSettingsToggle"),
   phoneRoomShake: document.querySelector("#phoneRoomShake"),
   phoneRoomStatus: document.querySelector("#phoneRoomStatus"),
   phoneRoomUrl: document.querySelector("#phoneRoomUrl"),
   phoneRoomUrlHint: document.querySelector("#phoneRoomUrlHint"),
   playerCount: document.querySelector("#playerCount"),
+  referenceHeaderBtn: document.querySelector("#referenceHeaderBtn"),
+  referenceOutput: document.querySelector("#referenceOutput"),
   referencePanel: document.querySelector("#referencePanel"),
   rollBtn: document.querySelector("#rollBtn"),
   roundTitle: document.querySelector("#roundTitle"),
@@ -61,7 +70,6 @@ const ui = {
   startingCoins: document.querySelector("#startingCoins"),
   turnActions: document.querySelector("#turnActions"),
   uiStyle: document.querySelector("#uiStyle"),
-  usePhoneControllers: document.querySelector("#usePhoneControllers"),
   winnerPopup: document.querySelector("#winnerPopup"),
 };
 
@@ -303,6 +311,7 @@ let routeIndex;
 let routeNext;
 let cellEvents;
 const visibleReferenceSections = new Set();
+let referencePanelOpen = false;
 
 const eventToastVisibleMs = 3000;
 const eventToastFadeMs = 800;
@@ -347,7 +356,7 @@ const eventIcons = {
   "pay-double": '<img class="tile-icon-image tile-icon-pay-double" src="./assets/tiles/pay_double_1024.png?v=20260521-1205" alt="Удвой монеты">',
   "joe-auction": `<img class="tile-icon-image tile-icon-joe-auction" src="${joeAuctionIconSrc}" alt="Аукцион Джо">`,
   shop: '<img class="tile-icon-image tile-icon-shop" src="./assets/icons/joes_shop_512.png" alt="Лавка Джо">',
-  tadam: '<img class="tile-icon-image tile-icon-tadam" src="./assets/icons/tadam_512.png" alt="ТАДАМ!">',
+  tadam: '<img class="tile-icon-image tile-icon-tadam" src="./assets/icons/tadam_512.png?v=20260621-0118" alt="ТАДАМ!">',
   vs: `<img class="tile-icon-image tile-icon-vs" src="${vsIconSrc}" alt="VS">`,
 };
 
@@ -357,6 +366,7 @@ const tileIcons = {
 };
 
 applyUiStyle();
+applyFontStyle();
 applyBoardConfig(ui.boardSelect?.value || "field2");
 
 const shopCards = expandDeck(cardConfig.shop);
@@ -396,6 +406,7 @@ let state;
 const phoneRoom = {
   code: null,
   controllers: [],
+  enabled: false,
   eventSource: null,
   hostId: null,
   inFlight: false,
@@ -403,8 +414,9 @@ const phoneRoom = {
   lanUrls: [],
   localJoinUrl: "",
   lastSnapshotJson: "",
-  diceVisible: false,
+  diceVisible: true,
   mode: defaultPhoneRoomMode,
+  panelOpen: false,
   shakeEnabled: false,
   snapshotTimer: null,
 };
@@ -420,8 +432,11 @@ let eventToastFadeTimer = null;
 let eventToastHideTimer = null;
 let logExpanded = false;
 let movementActionInProgress = false;
+let referenceActionInProgress = false;
 let humanRollCooldownUntil = 0;
 let phoneRoomCopyTimer = null;
+let phoneRoomHeaderFeedbackTimer = null;
+const phoneRoomHeaderFeedbackText = "Комната скопирована";
 let phoneDiceRollClearTimer = null;
 let transientUiResetToken = 0;
 
@@ -449,6 +464,11 @@ function selectedUiStyle() {
   return uiStyleValues.has(value) ? value : defaultUiStyle;
 }
 
+function selectedFontStyle() {
+  const value = ui.fontStyle?.value || document.body?.dataset.fontStyle || defaultFontStyle;
+  return fontStyleValues.has(value) ? value : defaultFontStyle;
+}
+
 function selectedPhoneRoomMode() {
   const value = ui.phoneRoomMode?.value || phoneRoom.mode || defaultPhoneRoomMode;
   return normalizePhoneRoomMode(value);
@@ -463,7 +483,7 @@ function phoneRoomShakeEnabled() {
 }
 
 function phoneRoomDiceVisible() {
-  return Boolean(ui.phoneRoomDice?.checked);
+  return !Boolean(ui.phoneRoomDice?.checked);
 }
 
 function applyUiStyle() {
@@ -472,10 +492,14 @@ function applyUiStyle() {
   syncWideScoreStripPlacement();
 }
 
+function applyFontStyle() {
+  if (document.body) document.body.dataset.fontStyle = selectedFontStyle();
+}
+
 function syncSettingsToggleLabel() {
   if (!ui.settingsToggle) return;
-  ui.settingsToggle.textContent = phoneLayoutQuery.matches ? "Настр." : "Настройки";
   ui.settingsToggle.setAttribute("aria-label", "Настройки");
+  ui.settingsToggle.setAttribute("title", "Настройки");
 }
 
 function fullscreenElement() {
@@ -694,6 +718,9 @@ function clearBoardTransientOverlays() {
 
 function createGameHistory(players) {
   return {
+    autoSaveFailedAt: null,
+    autoSaveRequestedAt: null,
+    autoSavedAt: null,
     finalSummary: null,
     finishedAt: null,
     startedAt: Date.now(),
@@ -711,6 +738,7 @@ function collectGameSettings() {
     botSpeed: ui.botSpeed?.value || "standard",
     diceCount: Number(ui.diceCount?.value) || 1,
     exactMoveAmount: exactMoveControlAmount(),
+    fontStyle: selectedFontStyle(),
     monsterStrengthMode: monsterStrengthMode(),
     playerCount,
     showWalkPath: Boolean(ui.showWalkPath?.checked),
@@ -1176,9 +1204,14 @@ function monsterDefeatCoinReward(door) {
   return [0, 0, 5, 10, 20][monsterDefeatTier(door)] || 0;
 }
 
+function monsterDefeatStrengthReward() {
+  return 1;
+}
+
 function monsterDefeatRewardText(door) {
   const coins = monsterDefeatCoinReward(door);
-  return coins > 0 ? `Лавка Джо + ${coinAmount(coins)}` : "Лавка Джо";
+  const strength = battleForceText(monsterDefeatStrengthReward());
+  return coins > 0 ? `${strength} + ${coinAmount(coins)}` : strength;
 }
 
 function chanceThresholdScore(before, after, scale = 1) {
@@ -2409,7 +2442,7 @@ function renderScores() {
 }
 
 function phoneControllersEnabled() {
-  return Boolean(ui.usePhoneControllers?.checked);
+  return Boolean(phoneRoom.enabled);
 }
 
 function phonePlayerSnapshot(player) {
@@ -2651,6 +2684,9 @@ function phoneActionsForPlayer(player) {
     ];
   }
 
+  const fieldPreviewActions = phoneFieldPreviewActionsForPlayer(player);
+  if (fieldPreviewActions.length) return fieldPreviewActions;
+
   if (state.pendingCardChoice?.playerId === player.id && !state.pendingCardChoice.previewField) {
     if (state.pendingCardChoice.kind === "joe-auction-bid") {
       const limits = auctionBidLimits(player);
@@ -2676,33 +2712,40 @@ function phoneActionsForPlayer(player) {
           min: limits.min,
           note: limits.max >= limits.min ? `${limits.min}-${limits.max} монет` : "нет монет",
         },
+        ...phoneFieldPreviewOpenActionsForPendingCardChoice(state.pendingCardChoice),
       ];
     }
-    return state.pendingCardChoice.choices.map((choice) => ({
-      contextKicker: plainText(state.pendingCardChoice.kicker || ""),
-      contextSummary: plainText(state.pendingCardChoice.summary || ""),
-      contextTitle: plainText(state.pendingCardChoice.title || ""),
-      disabled: Boolean(choice.disabled),
-      displayKind: phoneCardChoiceDisplayKind(state.pendingCardChoice, choice),
-      id: choice.id,
-      kind: "card-choice",
-      label: plainText(choice.label),
-      note: plainText(choice.note || ""),
-      noteClass: choice.noteClass || "",
-      ownerColor: choice.ownerColor || "",
-      ownerName: choice.ownerName || "",
-      ownerToken: choice.ownerToken || "",
-      price: choice.price ?? null,
-    }));
+    return [
+      ...state.pendingCardChoice.choices.map((choice) => ({
+        contextKicker: plainText(state.pendingCardChoice.kicker || ""),
+        contextSummary: plainText(state.pendingCardChoice.summary || ""),
+        contextTitle: plainText(state.pendingCardChoice.title || ""),
+        disabled: Boolean(choice.disabled),
+        displayKind: phoneCardChoiceDisplayKind(state.pendingCardChoice, choice),
+        id: choice.id,
+        kind: "card-choice",
+        label: plainText(choice.label),
+        note: plainText(choice.note || ""),
+        noteClass: choice.noteClass || "",
+        ownerColor: choice.ownerColor || "",
+        ownerName: choice.ownerName || "",
+        ownerToken: choice.ownerToken || "",
+        price: choice.price ?? null,
+      })),
+      ...phoneFieldPreviewOpenActionsForPendingCardChoice(state.pendingCardChoice),
+    ];
   }
 
   if (state.pendingChoice?.playerId === player.id && !state.pendingChoice.previewField) {
-    return state.pendingChoice.choices.map((choice) => ({
-      id: choice.cell,
-      kind: "board-choice",
-      label: plainText(choice.label),
-      note: plainText(choice.note || `клетка ${cellLabel(choice.cell)}`),
-    }));
+    return [
+      ...state.pendingChoice.choices.map((choice) => ({
+        id: choice.cell,
+        kind: "board-choice",
+        label: plainText(choice.label),
+        note: plainText(choice.note || `клетка ${cellLabel(choice.cell)}`),
+      })),
+      ...phoneFieldPreviewOpenActionsForPendingChoice(state.pendingChoice),
+    ];
   }
 
   if (actionPromptChoiceOptions.length > 0 && actionPromptAutoPlayerId === player.id) {
@@ -2739,6 +2782,56 @@ function phoneActionsForPlayer(player) {
   }
 
   return [];
+}
+
+function phoneFieldPreviewActionsForPlayer(player) {
+  if (state.pendingCardChoice?.playerId === player.id && state.pendingCardChoice.previewField) {
+    return [
+      {
+        id: "return-card-choice",
+        kind: "field-preview-return",
+        label: "Вернуться к выбору",
+        note: plainText(state.pendingCardChoice.title || ""),
+      },
+    ];
+  }
+
+  if (state.pendingChoice?.playerId === player.id && state.pendingChoice.previewField) {
+    return [
+      {
+        id: "return-board-choice",
+        kind: "field-preview-return",
+        label: "Вернуться к выбору",
+        note: state.pendingChoice.kind === "portal" ? "выбор портала" : "",
+      },
+    ];
+  }
+
+  return [];
+}
+
+function phoneFieldPreviewOpenActionsForPendingCardChoice(pending) {
+  if (!cardChoiceCanPreviewField(pending)) return [];
+  return [
+    {
+      id: "show-card-choice-field",
+      kind: "field-preview",
+      label: "Показать поле",
+      note: "вернуться к выбору",
+    },
+  ];
+}
+
+function phoneFieldPreviewOpenActionsForPendingChoice(pending) {
+  if (pending?.kind !== "portal") return [];
+  return [
+    {
+      id: "show-portal-field",
+      kind: "field-preview",
+      label: "Показать поле",
+      note: "финиши хода",
+    },
+  ];
 }
 
 function phoneRollContextNote() {
@@ -2779,7 +2872,9 @@ function renderPhoneRoomPanel() {
   if (!panel) return;
 
   const enabled = phoneControllersEnabled();
-  panel.hidden = !enabled;
+  panel.hidden = !phoneRoom.panelOpen;
+  syncPhoneRoomHeaderButton();
+  if (!phoneRoom.panelOpen) return;
   if (!enabled) {
     if (ui.phoneRoomStatus) ui.phoneRoomStatus.textContent = "Телефонный режим выключен";
     return;
@@ -2824,14 +2919,21 @@ function renderPhoneRoomPanel() {
   }
 }
 
-async function createPhoneRoom() {
+async function createPhoneRoom({ recreate = true } = {}) {
+  phoneRoom.panelOpen = true;
   if (!phoneControllersEnabled()) {
-    if (ui.usePhoneControllers) ui.usePhoneControllers.checked = true;
+    phoneRoom.enabled = true;
+  }
+  if (phoneRoom.code && !recreate) {
+    renderPhoneRoomPanel();
+    return true;
   }
   phoneRoom.inFlight = true;
   renderPhoneRoomPanel();
   try {
-    await closeCurrentPhoneRoom({ silent: true });
+    if (recreate) {
+      await closeCurrentPhoneRoom({ silent: true });
+    }
     const response = await fetchJson("/api/rooms", {
       body: JSON.stringify({
         diceVisible: phoneRoomDiceVisible(),
@@ -2846,8 +2948,10 @@ async function createPhoneRoom() {
     connectPhoneHostEvents();
     publishPhoneSnapshot({ force: true });
     log(`Создана комната для телефонов: <strong>${phoneRoom.code}</strong>.`, { toast: true });
+    return true;
   } catch {
     if (ui.phoneRoomStatus) ui.phoneRoomStatus.textContent = "Не удалось создать комнату. Проверь сервер.";
+    return false;
   } finally {
     phoneRoom.inFlight = false;
     renderPhoneRoomPanel();
@@ -2899,10 +3003,24 @@ function applyPhoneRoom(room, hostId = null) {
   phoneRoom.joinUrl = pickBestPhoneJoinUrl(phoneRoom.lanUrls, phoneRoom.localJoinUrl, room.code);
   if ("diceVisible" in room) {
     phoneRoom.diceVisible = room.diceVisible !== false;
-    if (ui.phoneRoomDice) ui.phoneRoomDice.checked = phoneRoom.diceVisible;
+    syncPhoneRoomDiceCheckbox();
   }
   phoneRoom.mode = normalizePhoneRoomMode(room.mode);
+  if (ui.phoneRoomMode) ui.phoneRoomMode.value = phoneRoom.mode;
   phoneRoom.shakeEnabled = Boolean(room.shakeEnabled);
+  if (ui.phoneRoomShake) ui.phoneRoomShake.checked = phoneRoom.shakeEnabled;
+}
+
+function syncPhoneRoomDiceCheckbox() {
+  if (ui.phoneRoomDice) ui.phoneRoomDice.checked = !phoneRoom.diceVisible;
+}
+
+function syncPhoneRoomHeaderButton() {
+  if (!ui.phoneRoomHeaderBtn) return;
+  const active = Boolean(phoneRoom.panelOpen);
+  ui.phoneRoomHeaderBtn.classList.toggle("active", active);
+  ui.phoneRoomHeaderBtn.disabled = phoneRoom.inFlight;
+  ui.phoneRoomHeaderBtn.setAttribute("aria-pressed", String(active));
 }
 
 function pickBestPhoneJoinUrl(lanUrls = [], localJoinUrl = "", code = "") {
@@ -3030,7 +3148,26 @@ function handlePhoneControllerAction(message) {
     resolveChoice(action.id);
   } else if (action.kind === "prompt-choice") {
     actionPromptChoiceResolver?.(action.id);
+  } else if (action.kind === "field-preview") {
+    resolvePhoneFieldPreviewAction(player, action, true);
+  } else if (action.kind === "field-preview-return") {
+    resolvePhoneFieldPreviewAction(player, action, false);
   }
+}
+
+function resolvePhoneFieldPreviewAction(player, action, enabled) {
+  if (state.pendingCardChoice?.playerId === player.id && cardChoiceCanPreviewField(state.pendingCardChoice)) {
+    setChoiceFieldPreviewMode(enabled);
+    return;
+  }
+
+  if (state.pendingChoice?.playerId === player.id && state.pendingChoice.kind === "portal") {
+    setPortalPreviewMode(enabled);
+    return;
+  }
+
+  log(`Телефон ${playerName(player)} отправил недоступный просмотр поля. Он отклонен.`);
+  publishPhoneSnapshot({ force: true });
 }
 
 function resolveAuctionBidPhoneAction(player, action) {
@@ -3062,9 +3199,52 @@ async function copyPhoneRoomUrl() {
     if (!navigator.clipboard?.writeText) throw new Error("clipboard-unavailable");
     await navigator.clipboard.writeText(url);
     setPhoneRoomCopyFeedback("Скопировано");
+    setPhoneRoomHeaderFeedback();
   } catch {
     selectPhoneRoomUrl();
     setPhoneRoomCopyFeedback("Выделено");
+    setPhoneRoomHeaderFeedback();
+  }
+}
+
+async function openPhoneRoomFromHeader() {
+  if (phoneRoom.inFlight) return;
+  if (phoneRoom.panelOpen) {
+    phoneRoom.panelOpen = false;
+    renderPhoneRoomPanel();
+    return;
+  }
+
+  const hadRoomBeforeOpen = Boolean(phoneRoom.code);
+  phoneRoom.panelOpen = true;
+  phoneRoom.enabled = true;
+  renderPhoneRoomPanel();
+
+  if (!phoneRoom.code) {
+    await createPhoneRoom({ recreate: false });
+  }
+
+  if (phoneRoom.code) {
+    if (!hadRoomBeforeOpen) {
+      await copyPhoneRoomUrlFromHeader();
+    }
+    publishPhoneSnapshot({ force: true });
+  }
+}
+
+async function copyPhoneRoomUrlFromHeader() {
+  const url = ui.phoneRoomUrl?.value || phoneRoom.joinUrl || "";
+  if (!url) return;
+
+  try {
+    if (!navigator.clipboard?.writeText) throw new Error("clipboard-unavailable");
+    await navigator.clipboard.writeText(url);
+    setPhoneRoomCopyFeedback("Скопировано");
+    setPhoneRoomHeaderFeedback();
+  } catch {
+    selectPhoneRoomUrl();
+    setPhoneRoomCopyFeedback("Выделено");
+    setPhoneRoomHeaderFeedback();
   }
 }
 
@@ -3082,6 +3262,31 @@ function setPhoneRoomCopyFeedback(label) {
   phoneRoomCopyTimer = window.setTimeout(() => {
     if (ui.copyPhoneRoomUrlBtn) ui.copyPhoneRoomUrlBtn.textContent = "Скопировать ссылку";
   }, 1300);
+}
+
+function setPhoneRoomHeaderFeedback() {
+  const toast = ui.phoneRoomHeaderFeedback;
+  if (!toast) return;
+  window.clearTimeout(phoneRoomHeaderFeedbackTimer);
+  phoneRoomHeaderFeedbackTimer = null;
+  toast.textContent = phoneRoomHeaderFeedbackText;
+  toast.classList.remove("visible");
+  toast.hidden = false;
+  void toast.offsetWidth;
+  toast.classList.add("visible");
+  phoneRoomHeaderFeedbackTimer = window.setTimeout(() => {
+    if (!ui.phoneRoomHeaderFeedback) return;
+    ui.phoneRoomHeaderFeedback.classList.remove("visible");
+    ui.phoneRoomHeaderFeedback.hidden = true;
+    phoneRoomHeaderFeedbackTimer = null;
+  }, 2000);
+}
+
+async function recreatePhoneRoomFromPanel() {
+  const created = await createPhoneRoom();
+  if (created && phoneRoom.code) {
+    await copyPhoneRoomUrlFromHeader();
+  }
 }
 
 function renderHistory() {
@@ -3368,26 +3573,72 @@ function readSavedGames() {
   }
 }
 
-async function saveCurrentGameHistory() {
-  if (!state?.history) return;
+async function saveCurrentGameHistory({ autosave = false } = {}) {
+  if (!state?.history) return { localSaved: false, remoteSaved: false, reason: "no-history" };
   const snapshot = buildGameHistorySnapshot();
   const savedGames = [snapshot, ...readSavedGames()].slice(0, 50);
   try {
     window.localStorage.setItem(savedGamesStorageKey, JSON.stringify(savedGames));
-  } catch {
-    flashSaveHistoryButton("Ошибка");
-    showEventToast("Не удалось сохранить историю в браузере.");
-    return;
+  } catch (error) {
+    if (autosave) {
+      console.warn("History autosave failed: local save unavailable.", error);
+      showEventToast("Автосохранение истории не удалось. Можно сохранить вручную.");
+    } else {
+      flashSaveHistoryButton("Ошибка");
+      showEventToast("Не удалось сохранить историю в браузере.");
+    }
+    return { localSaved: false, remoteSaved: false, snapshot, error };
   }
 
-  flashSaveHistoryButton("Отправка");
+  if (!autosave) flashSaveHistoryButton("Отправка");
   try {
     await sendGameHistoryToGoogleSheets(snapshot);
-    flashSaveHistoryButton("Сохранено");
-    showEventToast("История партии сохранена локально и отправлена в Google Таблицу.");
-  } catch {
-    flashSaveHistoryButton("Локально");
-    showEventToast("История сохранена локально. В Google Таблицу отправить не удалось.");
+    if (autosave) {
+      showEventToast("История партии сохранена автоматически.");
+    } else {
+      flashSaveHistoryButton("Сохранено");
+      showEventToast("История партии сохранена локально и отправлена в Google Таблицу.");
+    }
+    return { localSaved: true, remoteSaved: true, snapshot };
+  } catch (error) {
+    if (autosave) {
+      console.warn("History autosave remote export failed; local save is available.", error);
+      showEventToast("История автоматически сохранена локально. В Google Таблицу отправить не удалось.");
+    } else {
+      flashSaveHistoryButton("Локально");
+      showEventToast("История сохранена локально. В Google Таблицу отправить не удалось.");
+    }
+    return { localSaved: true, remoteSaved: false, snapshot, error };
+  }
+}
+
+function scheduleFinishedGameHistoryAutosave() {
+  const history = state?.history;
+  if (!state?.finished || !history || !history.finalSummary || !history.finishedAt) return;
+  if (history.autoSaveRequestedAt || history.autoSavedAt) return;
+
+  history.autoSaveRequestedAt = Date.now();
+  const runAutosave = () => {
+    window.setTimeout(async () => {
+      if (!state?.finished || state.history !== history || ui.winnerPopup?.hidden) return;
+      try {
+        const result = await saveCurrentGameHistory({ autosave: true });
+        if (result?.localSaved) {
+          history.autoSavedAt = Date.now();
+          return;
+        }
+      } catch (error) {
+        console.warn("History autosave failed unexpectedly.", error);
+        showEventToast("Автосохранение истории не удалось. Можно сохранить вручную.");
+      }
+      history.autoSaveFailedAt = Date.now();
+    }, 0);
+  };
+
+  if (typeof window.requestAnimationFrame === "function") {
+    window.requestAnimationFrame(runAutosave);
+  } else {
+    runAutosave();
   }
 }
 
@@ -3692,6 +3943,11 @@ function renderMonsterRageIndicator() {
 }
 
 function renderReferencePanel() {
+  if (ui.referenceHeaderBtn) {
+    ui.referenceHeaderBtn.classList.toggle("active", referencePanelOpen);
+    ui.referenceHeaderBtn.setAttribute("aria-pressed", String(referencePanelOpen));
+  }
+
   const buttons = document.querySelectorAll("[data-reference-toggle]");
   buttons.forEach((button) => {
     const sectionId = button.dataset.referenceToggle;
@@ -3701,6 +3957,8 @@ function renderReferencePanel() {
   });
 
   if (!ui.referencePanel) return;
+  ui.referencePanel.hidden = !referencePanelOpen;
+
   const sections = [...visibleReferenceSections]
     .map((sectionId) => {
       if (sectionId === "fields") return renderReferenceFields();
@@ -3709,8 +3967,10 @@ function renderReferencePanel() {
     })
     .filter(Boolean);
 
-  ui.referencePanel.hidden = sections.length === 0;
-  ui.referencePanel.innerHTML = sections.length
+  const output = ui.referenceOutput;
+  if (!output) return;
+  output.hidden = sections.length === 0;
+  output.innerHTML = sections.length
     ? `
       <div class="section-title">
         <h2>Карты и поля</h2>
@@ -3736,7 +3996,14 @@ function renderReferenceDeck(deckId, title) {
       const count = Number(card.count) || 0;
       const cardTitle = card.title || title;
       return `
-        <article class="reference-card-item" aria-label="${escapeHtml(`${title}: ${cardTitle}`)}">
+        <article
+          class="reference-card-item"
+          role="button"
+          tabindex="0"
+          aria-label="${escapeHtml(`Применить ${title}: ${cardTitle}`)}"
+          data-reference-card-deck="${escapeHtml(deckId)}"
+          data-reference-card-id="${escapeHtml(card.id || "")}"
+        >
           <span class="reference-card-count">x${count}</span>
           ${referenceCardFaceMarkup(deckId, card, { title: cardTitle })}
         </article>
@@ -3773,7 +4040,13 @@ function renderReferenceFields() {
     .map((type) => {
       const field = referenceFieldInfo(type);
       return `
-        <article class="reference-item reference-field-item">
+        <article
+          class="reference-item reference-field-item"
+          role="button"
+          tabindex="0"
+          aria-label="${escapeHtml(`Применить поле: ${field.title}`)}"
+          data-reference-field-type="${escapeHtml(type)}"
+        >
           ${field.icon ? `<span class="reference-field-icon">${field.icon}</span>` : ""}
           <div class="reference-item-copy">
             <div class="reference-item-title">
@@ -3872,6 +4145,179 @@ function referenceFieldIcon(type) {
     return `<span class="reference-field-tile tile-${type}" aria-hidden="true"></span>`;
   }
   return eventIcons[type] || tileIcons[type] || "";
+}
+
+function referenceCardConfig(deckId, cardId) {
+  return uniqueConfiguredCards(cardConfig[deckId] || []).find((card) => String(card.id || "") === String(cardId || "")) || null;
+}
+
+function referenceRuntimeCard(deckId, card) {
+  return {
+    ...card,
+    _copyId: `reference:${deckId}:${referenceCopyKey(card)}:${Date.now()}:${Math.random().toString(36).slice(2, 7)}`,
+    _deckId: deckId,
+  };
+}
+
+function referenceCopyKey(card) {
+  return encodeURIComponent(String(card?.id || card?.title || "card").toLowerCase()).slice(0, 48);
+}
+
+function isReferenceRuntimeCard(card) {
+  return String(card?._copyId || "").startsWith("reference:");
+}
+
+function referenceActionBlocked() {
+  return Boolean(
+    referenceActionInProgress ||
+      state.finished ||
+      state.isAnimating ||
+      state.pendingCardChoice ||
+      state.pendingChoice ||
+      state.pendingPreRoll ||
+      state.pendingDiceControl ||
+      state.pendingMoveDieReroll ||
+      state.pendingMoveOneFarther ||
+      state.pendingShop ||
+      actionPromptResolver
+  );
+}
+
+async function applyReferenceCard(deckId, cardId) {
+  const player = currentPlayer();
+  const config = referenceCardConfig(deckId, cardId);
+  if (!player || !config) {
+    log("Справочник: не удалось найти карту для применения.", { toast: true });
+    return;
+  }
+
+  const card = referenceRuntimeCard(deckId, config);
+  log(`Справочник: ${playerName(player)} применяет <strong>${deckLabel(deckId)}</strong>: ${card.title}.`, { toast: true });
+
+  if (deckId === "shop") {
+    player.items.push(ownedShopItem(card));
+    recordShopCards(player);
+    render();
+    log(`Справочник: ${playerName(player)} бесплатно получает карту <strong>Лавка Джо</strong>: ${card.title}.`, { toast: true });
+    return;
+  }
+
+  if (deckId === "tadam") {
+    await activateReferenceTadamCard(player, card);
+    return;
+  }
+
+  if (deckId === "good") {
+    await revealGoodCard(player, card);
+    if (await resolveGoodCashout(player, card)) return;
+    log(`${playerName(player)} применяет карту <strong>Хорошо</strong>: ${card.title}`, { toast: true });
+  } else if (deckId === "bad") {
+    await revealBadCard(player, card);
+  } else if (deckId === "event") {
+    await revealEventCard(player, card);
+  } else {
+    log(`Справочник: колода <strong>${deckLabel(deckId)}</strong> пока не поддерживает прямое применение.`, { toast: true });
+    return;
+  }
+
+  await applyCardEffect(player, card.effect, { card, deckId, reference: true, title: card.title });
+  if (deckId === "bad") resolveBadConsolation(player);
+  render();
+}
+
+async function activateReferenceTadamCard(player, card) {
+  await revealTadamCard(player, card);
+  state.tadams.push(card);
+  recordTadamPlayed();
+  resolveTadamIncomeRewards(card);
+  if (state.tadams.length > 3) discardCardToDeck("tadam", state.tadams.shift());
+  log(`Справочник: ${playerName(player)} активирует карту <strong>ТАДАМ!</strong>: ${card.title}.`, { toast: true });
+  render();
+}
+
+async function applyReferenceField(type) {
+  const player = currentPlayer();
+  if (!player) {
+    log("Справочник: нет активного игрока.", { toast: true });
+    return;
+  }
+
+  const field = referenceFieldInfo(type);
+  log(`Справочник: ${playerName(player)} применяет поле <strong>${field.title}</strong>.`, { toast: true });
+  state.eventDepth += 1;
+  try {
+    if (type === "green") {
+      await resolveGreenField(player);
+    } else if (type === "red") {
+      await resolveRedField(player);
+    } else if (type === "good") {
+      await drawAndApplyCard(player, "good", "Хорошо");
+    } else if (type === "bad") {
+      if (!(await resolveAntiBadFieldReplacement(player))) {
+        await drawAndApplyCard(player, "bad", "Плохо");
+      }
+    } else if (type === "very-bad") {
+      for (let index = 0; index < 3; index += 1) {
+        await drawAndApplyCard(player, "bad", "Плохо");
+      }
+    } else if (type === "event") {
+      await drawAndApplyCard(player, "event", "Событие");
+    } else if (type === "big-rest") {
+      await resolveBigRest(player);
+    } else if (type === "black-market") {
+      await resolveBlackMarket(player);
+    } else if (type === "chaos-portal") {
+      await resolveChaosPortal(player);
+    } else if (type === "tadam") {
+      await drawTadamCard(player);
+    } else if (type === "shop") {
+      await resolveShop(player);
+    } else if (type === "joe-auction") {
+      await resolveJoeAuction(player);
+    } else if (type === "joe-game") {
+      await resolveJoeGame(player);
+    } else if (type === "dice-fortune") {
+      await resolveDiceFortuneField(player);
+    } else if (type === "pay-double") {
+      await resolvePayDoubleField(player);
+    } else if (type === "vs") {
+      await resolveVsField(player);
+    } else {
+      log(`Справочник: поле <strong>${field.title}</strong> требует конкретную клетку и не запускается из общего справочника.`, {
+        toast: true,
+      });
+    }
+  } finally {
+    state.eventDepth -= 1;
+    render();
+  }
+}
+
+async function triggerReferenceAction(target) {
+  if (!target || referenceActionBlocked()) return;
+  referenceActionInProgress = true;
+  target.classList.add("is-applying");
+  try {
+    if (target.dataset.referenceCardDeck) {
+      await applyReferenceCard(target.dataset.referenceCardDeck, target.dataset.referenceCardId);
+    } else if (target.dataset.referenceFieldType) {
+      await applyReferenceField(target.dataset.referenceFieldType);
+    }
+  } finally {
+    target.classList.remove("is-applying");
+    referenceActionInProgress = false;
+    render();
+  }
+}
+
+function handleReferencePanelActivation(event) {
+  const target = event.target instanceof Element
+    ? event.target.closest("[data-reference-card-deck], [data-reference-field-type]")
+    : null;
+  if (!target) return;
+  if (event.type === "keydown" && !["Enter", " "].includes(event.key)) return;
+  event.preventDefault();
+  void triggerReferenceAction(target);
 }
 
 function renderChoicePanel() {
@@ -4050,6 +4496,7 @@ function renderWinnerPopup() {
       ${battleSummary}
     </div>
   `;
+  scheduleFinishedGameHistoryAutosave();
 }
 
 function renderFinalBattleHud() {
@@ -4923,7 +5370,10 @@ async function resolveEnemyBattle(player) {
     addCoins(player, defeatCoins);
     render();
   }
-  await drawFreeShopCard(player, "получает карту Лавка Джо за возвращение на старт");
+  const defeatStrength = monsterDefeatStrengthReward();
+  addBattleBonus(player, defeatStrength);
+  render();
+  log(`${playerName(player)} получает <strong>${battleForceText(defeatStrength)}</strong> за поражение монстру.`, { toast: true });
   return { isFinalBoss: Boolean(door.isFinalBoss), resolved: true, winner: "enemy" };
 }
 
@@ -6582,16 +7032,40 @@ function cardFaceTextDensityClass(description, title = "") {
 function cardFaceTextMarkup(card, deckClass, { fallbackTitle = "Карта", icon = "", descriptionLineClass = "" } = {}) {
   const title = cardFaceTitleText(card, fallbackTitle);
   const description = cardBodyText(card);
+  const artifactEffect = cardFaceArtifactEffectText(card);
   const iconMarkup = icon
     ? `<span class="${deckClass}-card-icon card-face-icon" aria-hidden="true">${icon}</span>`
+    : "";
+  const artifactEffectMarkup = artifactEffect
+    ? `<span class="${deckClass}-card-artifact-effect card-face-artifact-effect">${iconizeHtml(artifactEffect)}</span>`
     : "";
   return `
     <strong class="${deckClass}-card-title card-face-title">${cardFaceTitleMarkup(title, fallbackTitle)}</strong>
     ${iconMarkup}
     <span class="${deckClass}-card-description card-face-description">
       ${cardFaceDescriptionMarkup(description, descriptionLineClass)}
+      ${artifactEffectMarkup}
     </span>
   `;
+}
+
+function cardFaceArtifactEffectText(card) {
+  if (!card?.artifact) return "";
+  const explicitHint = card.artifact_desr || card.artifactDesr || card.artifactHint;
+  if (explicitHint) return String(explicitHint);
+  const effect = card.effect || {};
+  if (effect.type === "event-magic-wallet") {
+    return "Артефакт: в начале своего хода получай 5 монет. Если тебя обгоняют, артефакт переходит к обогнавшему.";
+  }
+  if (effect.type === "event-hero-sword") {
+    const bonus = Number.isFinite(Number(effect.bonusPerSix)) ? Number(effect.bonusPerSix) : 3;
+    return `Артефакт: каждая 6 в бою дает +${bonus} к силе.`;
+  }
+  if (effect.type === "event-anti-bad") {
+    const amount = Number.isFinite(Number(effect.amount)) ? Number(effect.amount) : 5;
+    return `Артефакт: обычное Плохо дает ${amount} монет вместо карты.`;
+  }
+  return "";
 }
 
 function cardFaceTitleMarkup(title, fallbackTitle = "Карта") {
@@ -6622,9 +7096,20 @@ function cardFaceDescriptionMarkup(description, lineClass = "") {
 }
 
 function cardFaceDescriptionLines(description) {
-  return (String(description || "").match(/[^.!?]+[.!?]?/g) || [])
+  return mergeLeadingPunctuationLines((String(description || "").match(/[^.!?]+[.!?]?/g) || [])
     .map((line) => line.trim())
-    .filter(Boolean);
+    .filter(Boolean));
+}
+
+function mergeLeadingPunctuationLines(lines) {
+  return lines.reduce((merged, line) => {
+    if (/^[,.;:!?]/.test(line) && merged.length) {
+      merged[merged.length - 1] += line;
+    } else {
+      merged.push(line);
+    }
+    return merged;
+  }, []);
 }
 
 async function revealBadCard(player, card) {
@@ -6692,6 +7177,7 @@ function tadamCardMarkup(card, { revealed }) {
   const description = cardBodyText(card);
   const title = cardFaceTitleText(card, "ТАДАМ");
   const textClass = `tadam-card-text ${cardFaceTextDensityClass(description, title)}`.trim();
+  const customFrontArtStyle = revealed ? cardFaceArtStyle(card.frontArt) : "";
   const cardText = revealed
     ? `
       <span class="${textClass}">
@@ -6701,11 +7187,16 @@ function tadamCardMarkup(card, { revealed }) {
     : "";
   return `
     <article class="tadam-card-reveal ${revealed ? "is-revealed" : "is-hidden"}">
-      <button class="tadam-card-preview" type="button" aria-label="${revealed ? "Применить карту ТАДАМ" : "Открыть карту ТАДАМ"}">
+      <button class="tadam-card-preview" type="button" aria-label="${revealed ? "Применить карту ТАДАМ" : "Открыть карту ТАДАМ"}"${customFrontArtStyle}>
         ${cardText}
       </button>
     </article>
   `;
+}
+
+function cardFaceArtStyle(frontArt) {
+  if (!frontArt) return "";
+  return ` style="--card-art: url('${escapeHtml(frontArt)}')"`;
 }
 
 async function revealEventCard(player, card) {
@@ -6732,9 +7223,12 @@ async function revealEventCard(player, card) {
 function eventCardMarkup(card, { revealed }) {
   const description = cardBodyText(card);
   const title = cardFaceTitleText(card, "Событие");
+  const artifactEffect = cardFaceArtifactEffectText(card);
+  const textForDensity = artifactEffect ? `${description}. ${artifactEffect}` : description;
   const icon = card.icon ? `<img class="event-card-artifact-icon" src="${card.icon}" alt="" aria-hidden="true">` : "";
   const iconClass = icon ? "has-card-face-icon" : "";
-  const textClass = `event-card-text ${eventCardTextDensityClass(description, title)} ${iconClass}`.trim();
+  const iconSizeClass = eventCardLargeArtifactIconClass(card);
+  const textClass = `event-card-text ${eventCardTextDensityClass(textForDensity, title)} ${iconClass} ${iconSizeClass}`.trim();
   const cardText = revealed
     ? `
       <span class="${textClass}">
@@ -6755,6 +7249,12 @@ function eventCardMarkup(card, { revealed }) {
   `;
 }
 
+function eventCardLargeArtifactIconClass(card) {
+  const isArtifact = card?.artifact === true || ["magic-wallet", "hero-sword", "anti-bad"].includes(card?.id);
+  if (!isArtifact) return "";
+  return `has-large-artifact-icon is-artifact-${card.id}`;
+}
+
 function eventCardTextDensityClass(description, title = "") {
   const text = String(description || "");
   const lines = eventCardDescriptionLines(text).length;
@@ -6773,9 +7273,9 @@ function eventCardDescriptionMarkup(description) {
 }
 
 function eventCardDescriptionLines(description) {
-  return (String(description || "").match(/[^.!?]+[.!?]?/g) || [])
+  return mergeLeadingPunctuationLines((String(description || "").match(/[^.!?]+[.!?]?/g) || [])
     .map((line) => line.trim())
-    .filter(Boolean);
+    .filter(Boolean));
 }
 
 async function revealShopCards(cards, player = null) {
@@ -8439,7 +8939,6 @@ async function drawFreeShopCard(player, reason = "бесплатно получ�
   }
   await revealShopCards([card], player);
   player.items.push(ownedShopItem(card));
-  discardCardToDeck("shop", card);
   recordShopCards(player);
   render();
   log(`${playerName(player)} ${reason}: <strong>${card.title}</strong>`, { toast: true });
@@ -9274,15 +9773,15 @@ async function resolveShop(player) {
   await resolveFaceDownShopBuyback(player);
 
   let boughtCount = 0;
+  const offerCount = joeShopOfferCount(player);
+  const offer = drawCardsFromDeck("shop", offerCount, { uniqueIds: true });
+  if (!offer.length) {
+    log("<strong>Лавка Джо</strong>: в колоде нет доступных карт.", { toast: true });
+    return;
+  }
 
-  while (true) {
+  while (offer.length) {
     const cost = joeShopCardCost(player);
-    const offerCount = joeShopOfferCount(player);
-    const offer = drawCardsFromDeck("shop", offerCount, { uniqueIds: true });
-    if (!offer.length) {
-      log("<strong>Лавка Джо</strong>: в колоде нет доступных карт.", { toast: true });
-      return;
-    }
     if (player.coins < cost) {
       log(`Лавка Джо предлагает: ${offer.map((card) => card.title).join(" / ")}. У ${playerName(player)} не хватает монет.`, {
         toast: true,
@@ -9301,18 +9800,31 @@ async function resolveShop(player) {
 
     addCoins(player, -cost);
     player.items.push(ownedShopItem(bought));
-    discardCardsToDeck("shop", offer);
+    const boughtIndex = offer.findIndex((card) => card === bought || (card._copyId && card._copyId === bought._copyId));
+    if (boughtIndex >= 0) offer.splice(boughtIndex, 1);
+    botShopOfferChoices.delete(offer);
     recordShopCards(player);
     boughtCount += 1;
     log(`${playerName(player)} покупает в Лавке Джо за ${coinAmount(cost)}: <strong>${bought.title}</strong>`, { toast: true });
     render();
 
-    if (!hasActiveShopEffect(player, "shop-unlimited-buy") || state.finished) return;
-    if (player.coins < joeShopCardCost(player)) {
-      log(`${playerName(player)} не может купить еще одну карту Лавки Джо: не хватает монет.`, { toast: true });
+    if (!hasActiveShopEffect(player, "shop-unlimited-buy") || state.finished) {
+      discardCardsToDeck("shop", offer);
       return;
     }
-    if (boughtCount > 36) return;
+    if (!offer.length) {
+      log(`${playerName(player)} выкупает все открытые карты Лавки Джо.`, { toast: true });
+      return;
+    }
+    if (player.coins < joeShopCardCost(player)) {
+      log(`${playerName(player)} не может купить еще одну карту Лавки Джо: не хватает монет.`, { toast: true });
+      discardCardsToDeck("shop", offer);
+      return;
+    }
+    if (boughtCount > 36) {
+      discardCardsToDeck("shop", offer);
+      return;
+    }
   }
 }
 
@@ -10289,7 +10801,7 @@ function tileTitle(cell) {
     "pay-double": "Удвой свои монеты",
     red: "Красное поле",
     shop: "Лавка Джо",
-    tadam: "ТАДАМ!",
+    tadam: "ТАДАМ! — возьми карту Тадам и получи 5 монет",
     vs: "VS — все игроки скидывают по 10 монет, затем между ними происходит битва. Игрок с наибольшей силой забирает все скинутые монеты",
   };
   return namesByEvent[cellEvents[cell]] || "Клетка";
@@ -10316,7 +10828,7 @@ function fieldEffectText(cell) {
     "pay-double": ["Удвой свои монеты", "Удвой свои монеты"],
     red: ["Красное поле", redEffectLabel()],
     shop: ["Лавка Джо", `2 карты на выбор за ${joeShopCardCost()} монет`],
-    tadam: ["ТАДАМ!", "новое общее правило"],
+    tadam: ["ТАДАМ!", "возьми карту Тадам и получи 5 монет"],
     vs: ["VS", "Все скидывают по 10 монет и сражаются за банк"],
   };
   const text = texts[cellEvents[cell]] || ["Обычная клетка", "без эффекта"];
@@ -10765,7 +11277,6 @@ function tadamEffectSteps(type) {
 }
 
 function joeShopCardCost(player = null) {
-  if (player && hasActiveShopEffect(player, "shop-choice-3-cost-3")) return 3;
   const baseCost = 5;
   const modifier = tadamEffectAmount("shop-discount") + tadamEffectAmount("shop-surcharge");
   return Math.max(0, baseCost + modifier);
@@ -11390,6 +11901,7 @@ function discardCardsToDeck(deckId, cards) {
 
 function discardCardToDeck(deckId, card) {
   if (!card) return;
+  if (isReferenceRuntimeCard(card)) return;
   const deck = gameDeck(deckId || card._deckId);
   const copyId = card._copyId || `${deckId}:${card.id}`;
   if (deck.discard.some((item) => (item._copyId || item.id) === copyId)) return;
@@ -11578,7 +12090,16 @@ function diceizeHtml(value) {
 }
 
 function iconizeHtml(value) {
-  return keepIconizedPunctuationTogether(diceizeHtml(coinizeHtml(value)));
+  const protectedTitles = [];
+  const html = String(value).replace(
+    /<strong\b(?=[^>]*\bcard-face-title\b)[^>]*>[\s\S]*?<\/strong>/gi,
+    (match) => {
+      const index = protectedTitles.push(match) - 1;
+      return `__CARD_FACE_TITLE_${index}__`;
+    },
+  );
+  const iconized = keepIconizedPunctuationTogether(diceizeHtml(coinizeHtml(html)));
+  return iconized.replace(/__CARD_FACE_TITLE_(\d+)__/g, (_, index) => protectedTitles[Number(index)] || "");
 }
 
 function keepIconizedPunctuationTogether(value) {
@@ -12029,21 +12550,27 @@ ui.monsterStrengthMode?.addEventListener("change", () => {
 ui.uiStyle?.addEventListener("change", () => {
   applyUiStyle();
 });
+ui.fontStyle?.addEventListener("change", () => {
+  applyFontStyle();
+});
 ui.playerCount?.addEventListener("change", syncBotCountOptions);
 ui.settingsPanel?.addEventListener("click", (event) => {
   const button = event.target instanceof Element
-    ? event.target.closest("[data-step-bonus-preset], [data-battle-bonus-preset], [data-reference-toggle]")
+    ? event.target.closest("[data-step-bonus-preset], [data-battle-bonus-preset]")
     : null;
   if (!button) return;
 
-  if (button.dataset.referenceToggle) {
-    toggleReferenceSection(button.dataset.referenceToggle);
-  } else if (button.dataset.stepBonusPreset) {
+  if (button.dataset.stepBonusPreset) {
     addSelectedPlayerStepBonus(Number(button.dataset.stepBonusPreset));
   } else if (button.dataset.battleBonusPreset) {
     addSelectedPlayerBattleBonus(Number(button.dataset.battleBonusPreset));
   }
 });
+
+function toggleReferencePanel() {
+  referencePanelOpen = !referencePanelOpen;
+  renderReferencePanel();
+}
 
 function toggleReferenceSection(sectionId) {
   if (!sectionId) return;
@@ -12062,15 +12589,35 @@ ui.modifierPlayerStatus?.addEventListener("click", (event) => {
   if (!button) return;
   selectModifierPlayer(Number(button.dataset.modifierPlayerId));
 });
+ui.referenceHeaderBtn?.addEventListener("click", () => {
+  toggleReferencePanel();
+});
+ui.referencePanel?.addEventListener("click", (event) => {
+  const button = event.target instanceof Element ? event.target.closest("[data-reference-toggle]") : null;
+  if (!button) return;
+  toggleReferenceSection(button.dataset.referenceToggle);
+});
+ui.referencePanel?.addEventListener("click", handleReferencePanelActivation);
+ui.referencePanel?.addEventListener("keydown", handleReferencePanelActivation);
+ui.phoneRoomSettingsToggle?.addEventListener("click", () => {
+  const expanded = ui.phoneRoomSettingsToggle.getAttribute("aria-expanded") === "true";
+  const nextExpanded = !expanded;
+  ui.phoneRoomSettingsToggle.setAttribute("aria-expanded", String(nextExpanded));
+  if (ui.phoneRoomSettingsBody) ui.phoneRoomSettingsBody.hidden = !nextExpanded;
+});
 ui.settingsToggle?.addEventListener("click", () => {
   if (!ui.settingsPanel) return;
 
   const nextHidden = !ui.settingsPanel.hidden;
   ui.settingsPanel.hidden = nextHidden;
   ui.settingsToggle.setAttribute("aria-expanded", String(!nextHidden));
+  ui.settingsToggle.classList.toggle("active", !nextHidden);
 });
 ui.fullscreenBtn?.addEventListener("click", () => {
   void toggleFullscreen();
+});
+ui.phoneRoomHeaderBtn?.addEventListener("click", () => {
+  void openPhoneRoomFromHeader();
 });
 document.addEventListener("fullscreenchange", syncFullscreenButton);
 document.addEventListener("webkitfullscreenchange", syncFullscreenButton);
@@ -12081,15 +12628,8 @@ ui.logToggle?.addEventListener("click", () => {
 ui.saveHistoryBtn?.addEventListener("click", () => {
   void saveCurrentGameHistory();
 });
-ui.usePhoneControllers?.addEventListener("change", () => {
-  if (!phoneControllersEnabled()) {
-    void closeCurrentPhoneRoom({ silent: true });
-  }
-  renderPhoneRoomPanel();
-  schedulePhoneSnapshot();
-});
 ui.createPhoneRoomBtn?.addEventListener("click", () => {
-  void createPhoneRoom();
+  void recreatePhoneRoomFromPanel();
 });
 ui.phoneRoomDice?.addEventListener("change", () => {
   phoneRoom.diceVisible = phoneRoomDiceVisible();

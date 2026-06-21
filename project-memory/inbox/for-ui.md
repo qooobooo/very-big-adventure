@@ -4,6 +4,87 @@ For UI/UX and art-asset tasks related to "Очень Большая Бродил
 
 ## Open Items
 
+- DONE 2026-06-21 13:16 - Reference cards/fields header icon:
+  - Owner: `Art / UI 2`.
+  - Status:
+    - Sent to `Art / UI 2` at 2026-06-21 13:16.
+    - Completed by `Art / UI 2` at 2026-06-21 13:36.
+    - Handback sent to GD as context only.
+    - QA is not involved.
+  - Context:
+    - User wants `Показать карты и поля` moved out of settings into a separate top-header button, like settings, phones, and fullscreen.
+    - The new button needs a suitable icon.
+    - Dev 1 will integrate the button/UI separately.
+  - Goal:
+    - Create a compact icon for the new `Показать карты и поля` header button.
+  - Expected asset:
+    - `assets/icons/reference_cards.svg`
+  - Result:
+    - Created `assets/icons/reference_cards.svg`.
+    - Format: SVG, 512x512 viewBox.
+    - Status: visual-only; Dev 1 wiring already targets this path.
+  - Visual direction:
+    - Should read as “cards and fields/reference”.
+    - Fit visually with the existing compact header icons: settings, phone, fullscreen.
+    - Recommended motif: small stack of cards plus a tiny board tile/grid mark.
+    - Warm gold/dark tabletop style, readable at header-button size.
+  - Constraints:
+    - SVG only.
+    - Do not change gameplay, layout, JS behavior, card configs, or existing icons.
+    - Avoid editing `index.html`/`styles.css` unless absolutely necessary; Dev 1 will wire the icon.
+  - Verification:
+    - `git diff --check`.
+    - If touching JS unexpectedly, `node --check src/game.js`.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+
+- DONE 2026-06-21 00:05 - Brighter walk-path outline:
+  - Owner: `Art / UI 2`.
+  - Status:
+    - Completed by `Art / UI 2` at 2026-06-21 00:13.
+    - Handback sent to GD as context only.
+    - QA is not involved.
+  - Context:
+    - User says: in `Показывать контур хода` mode, make the move path outline itself brighter.
+    - Current entry points:
+      - `styles.css` `.walk-path-outline`
+      - `styles.css` `.walk-path-outline.is-final`
+    - This is a visual clarity task only.
+  - Goal:
+    - When `Показывать контур хода` is enabled, the route outline must be noticeably easier to see on the board.
+    - The final/landing outline should remain slightly more prominent than intermediate route cells.
+  - Change:
+    - Increase brightness/contrast of `.walk-path-outline` and `.walk-path-outline.is-final`.
+    - Acceptable levers:
+      - stronger border alpha;
+      - slightly thicker border if needed;
+      - brighter glow/box-shadow;
+      - clearer final-cell highlight.
+    - Keep the contour visually tasteful and board-game-like; it should guide the eye without covering tile icons, players, monsters, portals, or field art.
+  - Constraints:
+    - Do not change movement rules, route calculation, dice logic, card effects, board placement, or UI toggles.
+    - Do not affect `.portal-preview-outline`, `.card-choice-preview-outline`, or `.post-roll-target-outline` unless absolutely necessary to avoid visual conflict.
+    - Preserve the existing `Показывать контур хода` setting behavior.
+    - Preserve unrelated local changes and untracked `outputs/`.
+  - Verification:
+    - `git diff --check`.
+    - `node --check src/game.js` only if `src/game.js` is touched.
+    - Browser visual smoke if environment allows:
+      - enable `Показывать контур хода`;
+      - roll/move preview shows brighter route outline;
+      - final destination is distinct from intermediate route cells;
+      - icons/tokens remain readable;
+      - portal/card-choice/post-roll target outlines still look distinct;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Add context handback to `project-memory/inbox/for-gd.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Send GD context handback only; no QA gate.
+
 - DONE 2026-06-19 00:45 - Align settings reference card faces with in-game card layout:
   - Owner: `Art / UI 2`.
   - Status:

@@ -11,8 +11,8 @@ const closedRooms = new Map();
 const roomCodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const maxBodyBytes = 1024 * 1024;
 const roomTtlMs = 1000 * 60 * 60 * 6;
-const defaultRoomMode = "big-button";
-const roomModes = new Set([defaultRoomMode, "full"]);
+const defaultRoomMode = "full";
+const roomModes = new Set(["full", "big-button"]);
 
 const types = {
   ".css": "text/css;charset=utf-8",
@@ -168,7 +168,7 @@ function closeRoom(room, { reason = "room-closed" } = {}) {
   rooms.delete(room.code);
 }
 
-function createRoom(request, { diceVisible = false, mode = defaultRoomMode, shakeEnabled = false } = {}) {
+function createRoom(request, { diceVisible = true, mode = defaultRoomMode, shakeEnabled = false } = {}) {
   const code = createRoomCode();
   const room = {
     clients: new Set(),

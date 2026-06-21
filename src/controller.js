@@ -3,7 +3,17 @@ const roomStorageKey = "very-big-adventure.controller-room";
 const playerStorageKey = "very-big-adventure.controller-player";
 const defaultControllerMode = "full";
 const controllerModes = new Set([defaultControllerMode, "big-button"]);
-const bigChoiceActionKinds = new Set(["board-choice", "card-choice", "move-farther", "move-reroll", "preroll", "prompt-choice", "shop"]);
+const bigChoiceActionKinds = new Set([
+  "board-choice",
+  "card-choice",
+  "field-preview",
+  "field-preview-return",
+  "move-farther",
+  "move-reroll",
+  "preroll",
+  "prompt-choice",
+  "shop",
+]);
 const shakeThreshold = 14;
 const shakeSettleMs = 420;
 
@@ -726,6 +736,7 @@ function renderBigButtonAction(player, activePlayer, actions, shakeAction, diceR
 
 function renderControllerAuctionBid(actions, bidAction) {
   const passAction = actions.find((action) => actionKind(action) === "auction-bid" && String(action.id) === "pass");
+  const previewAction = actions.find(isFieldPreviewAction);
   const wrapper = document.createElement("form");
   wrapper.className = "controller-auction-bid-stage";
 
@@ -766,6 +777,7 @@ function renderControllerAuctionBid(actions, bidAction) {
     sendControllerAction({ ...bidAction, amount }, null);
   });
 
+  if (previewAction) wrapper.append(createBigCancelButton(previewAction, null));
   if (passAction) wrapper.append(createBigCancelButton(passAction, null));
   ui.actions.append(wrapper);
 }
@@ -958,6 +970,9 @@ function bigButtonActionModel(actions) {
     if (meaningfulActions.length === 2 && cancelActions.length >= 1) {
       return { cancel: cancelActions[0], options: meaningfulActions, primary: null, type: "split" };
     }
+    if (meaningfulActions.some(isFieldPreviewAction) && actions.every((action) => isBigChoiceAction(action) || cancelActions.includes(action))) {
+      return { cancel: cancelActions[0] || null, options: meaningfulActions, primary: null, type: "detail-list" };
+    }
   }
 
   const choiceActions = actions.filter(isBigChoiceAction);
@@ -989,11 +1004,17 @@ function bigButtonActionModel(actions) {
 
 function bigPrimaryAction(action) {
   const kind = action.kind || action.type || "";
+  if (kind === "field-preview" || kind === "field-preview-return") return action;
   return kind === "roll" ? action : null;
 }
 
 function isBigChoiceAction(action) {
   return bigChoiceActionKinds.has(actionKind(action));
+}
+
+function isFieldPreviewAction(action) {
+  const kind = actionKind(action);
+  return kind === "field-preview" || kind === "field-preview-return";
 }
 
 function isCancelStyleAction(action) {
@@ -1097,6 +1118,8 @@ function isFullControllerPrimaryAction(action) {
   return (
     isRollLikeAction(action) ||
     kind === "continue" ||
+    kind === "field-preview" ||
+    kind === "field-preview-return" ||
     id === "continue" ||
     id === "next" ||
     label === "далее" ||

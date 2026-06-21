@@ -4,6 +4,1041 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- DONE FULLSCREEN LOWER SPACING 2026-06-21 13:21 - Add roll-strip-sized gap before lower panels in fullscreen:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by Dev 1 at 2026-06-21 13:24; context handback added for GD; QA was not involved.
+  - Context:
+    - User wants fullscreen/large-screen mode to show `Хроника` and everything below with a vertical gap from the board.
+    - Desired gap: approximately the vertical size of the block with the `Бросить` button / board control strip.
+    - This follows the recent fullscreen change that restored `Хроника`, `История`, and lower UI panels.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - In fullscreen mode only, add vertical spacing between the board area and the lower panels starting from `Хроника`.
+    - The gap should visually match the height of the board control strip / roll button block.
+    - Apply the spacing to the lower content as a group, so `Хроника`, `История`, reference panel, and anything below remain aligned with each other.
+    - If the reference panel is open, it should respect the same fullscreen lower spacing and not crowd the board.
+  - Visual requirements:
+    - Normal non-fullscreen layout should remain unchanged.
+    - Fullscreen should still scroll if content exceeds the viewport.
+    - No overlap between the board/control strip and lower panels.
+    - Desktop fullscreen is the priority; mobile/narrow fullscreen should remain readable and not create excessive wasted space.
+  - Do not change:
+    - fullscreen button behavior/API;
+    - visibility of `Хроника`, `История`, or lower panels;
+    - board layout/routes;
+    - gameplay rules;
+    - phone controller;
+    - reference card/field behavior.
+  - Verification:
+    - `node --check src/game.js` if JS touched.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - enter fullscreen;
+      - lower panels start below the board with a gap about one control-strip height;
+      - `Хроника`, `История`, and reference panel remain visible and aligned;
+      - exit fullscreen returns normal spacing;
+      - no desktop/mobile overlap;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Added a fullscreen-only `.lower-grid` margin override: `margin-top: clamp(64px, 7vh, 96px)`.
+    - The spacing applies to the lower content group together, so `Хроника`, `История`, reference panel, and lower panels stay aligned.
+    - Normal non-fullscreen `.lower-grid` spacing remains unchanged.
+    - Did not change fullscreen button/API behavior, lower panel visibility, board/routes, gameplay rules, phone controller, or reference behavior.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: fullscreen-only lower-grid spacing exists and normal lower-grid margin remains `16px`.
+    - Browser smoke was not completed in this environment.
+
+- DONE REFERENCE HEADER PANEL 2026-06-21 13:16 - Move cards/fields reference out of settings:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by Dev 1 at 2026-06-21 13:23; context handback added for GD; QA was not involved.
+  - Dependency:
+    - Art/UI 2 is creating `assets/icons/reference_cards.svg`.
+    - If the asset is not present yet, wire the button to that path and keep behavior functional; do not invent a final icon in code.
+  - Context:
+    - User wants the `Показать карты и поля` controls removed from the settings panel and opened by a separate header button.
+    - Button placement: left of the phone button, alongside settings / reference / phones / fullscreen / new game controls.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - Remove the `Показать карты и поля` selector block from the settings panel.
+    - Add a new compact header icon button for `Показать карты и поля`.
+      - Position it immediately left of the phone button.
+      - Use `assets/icons/reference_cards.svg`.
+      - Add title/aria-label: `Показать карты и поля`.
+      - Button should have active/pressed visual state when the reference panel is open.
+    - The new header button toggles the reference panel open/closed.
+    - The reference panel should contain the category buttons:
+      - `Хорошо`, `Плохо`, `Лавка Джо`, `Тадам!`, `События`, `Поля`.
+    - Preserve current category-toggle behavior:
+      - multiple categories may remain open;
+      - repeated click hides a category;
+      - active category buttons stay highlighted;
+      - existing clickable reference card/field effects continue to work.
+    - Keep the reference output area in the same lower-page position as now: between upper controls/settings area and `Хроника`.
+  - Do not change:
+    - card/field effect behavior from the reference panel;
+    - card configs, counts, text, Google Sheet, CSV;
+    - settings unrelated to the reference panel;
+    - phone room button behavior;
+    - fullscreen behavior;
+    - gameplay rules.
+  - Visual requirements:
+    - Header button size/style matches existing compact icon buttons.
+    - On desktop, order should read: settings, reference, phones, fullscreen, new game.
+    - On mobile/narrow widths, header controls must wrap cleanly with no overlap.
+    - Reference panel should feel like its own block, not a settings subsection.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - settings panel no longer contains `Показать карты и поля`;
+      - header has a new reference icon button left of phone;
+      - clicking it opens/closes the reference panel;
+      - category buttons still work independently;
+      - clicking reference cards/fields still triggers effects;
+      - phone/fullscreen/settings buttons still work;
+      - desktop/mobile layout has no overlap;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Removed the `Показать карты и поля` selector block from `settingsPanel`.
+    - Added `referenceHeaderBtn` as a compact header icon button with `assets/icons/reference_cards.svg`, placed between settings and phone.
+    - Header order is now settings, reference, phones, fullscreen, then `Новая игра`.
+    - The reference header button toggles the lower reference panel and uses active/pressed state while open.
+    - Moved category buttons into the lower reference panel; multiple sections, repeat-click hide, active category highlighting, and reference card/field activation paths remain intact.
+    - Kept the reference output area in the lower-page position before `Хроника`.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: settings no longer contains reference controls; header button exists and is left of phone; category controls live in `referencePanel`; settings no longer delegates reference toggles; reference button state is wired.
+    - Browser smoke was not completed in this environment.
+
+- DONE SHOP CHOICE CARD SPLIT 2026-06-21 03:20 - Split 3-card choice from unlimited buying:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-06-21 03:25; context handback added for GD; QA was not involved.
+  - Context:
+    - User wants to split the current Joe Shop card text/effect `Во время покупок карт Лавка Джо выбирай из 3 карт и плати только 3 монеты`.
+    - Current config has:
+      - `shop-choice-3-cost-3` / `Привилегия Джо`: choose from 3 and fixed cost 3;
+      - `shop-unlimited-buy` / `Безлимит Джо`: already separate unlimited buying card.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - Update `shop-choice-3-cost-3` so it becomes only the 3-card offer ability:
+      - description: `Во время покупок карт Лавка Джо выбирай из 3 карт`;
+      - shortTitle should no longer mention cost 3, use something like `Выбор из 3`;
+      - effect should no longer set/fix Shop price to 3.
+    - Keep `shop-unlimited-buy` as the separate second card:
+      - description stays `Можешь покупать любое количество карт Лавка Джо`;
+      - behavior stays ordinary Shop repeat purchases from the same opened offer.
+    - Rename effect type only if useful, but maintain backwards-safe handling if existing owned cards/saves can still contain `shop-choice-3-cost-3`.
+    - Sync local config, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `shop`.
+  - Gameplay rules:
+    - A player with only the 3-card choice card sees 3 Shop cards during ordinary Joe Shop purchases, but pays the normal current Shop price.
+    - Normal current Shop price still includes TADAM modifiers like discount/surcharge unless another rule overrides it.
+    - A player with only `shop-unlimited-buy` can buy any number from the ordinary Shop offer, but does not automatically get a 3-card offer.
+    - A player with both cards sees 3 cards and may buy multiple from that same opened 3-card offer.
+    - Do not restore or keep the old fixed `3 монеты` price behavior for this card.
+  - Do not change:
+    - Shop deck counts except if the config row itself needs no count change; keep current counts unless required by existing sheet sync.
+    - Other Shop cards.
+    - Joe Auction.
+    - Black Market.
+    - free Shop rewards.
+    - finite Shop deck/discard lifecycle.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - no player-facing Shop card text says `плати только 3 монеты`;
+      - local config/CSV/Google Sheet match;
+      - ordinary Shop offer count can be 3 from the choice card without forcing cost to 3.
+    - Browser smoke if environment allows:
+      - only choice card: 3-card offer, normal price;
+      - only unlimited card: normal offer size, repeat buys from same offer;
+      - both cards: 3-card offer and repeat buys from same offer;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Updated `shop-choice-3-cost-3` / `Привилегия Джо` in local config, CSV, and Google Sheet `Cards Config` / `shop!A10:N10`.
+    - New description: `Во время покупок карт Лавка Джо выбирай из 3 карт`.
+    - New shortTitle: `Выбор из 3`.
+    - Removed fixed `cost: 3` from the local card effect and cleared the Sheet/CSV `cost` cell for this row.
+    - Removed the `joeShopCardCost(player)` special case that forced `3` coins for owners of `shop-choice-3-cost-3`.
+    - Kept `joeShopOfferCount(player)` behavior: owners of `shop-choice-3-cost-3` still see 3 Shop cards.
+    - Kept `shop-unlimited-buy` / `Безлимит Джо` unchanged, including repeat buys from the same opened offer.
+    - Did not change other Shop cards/counts, Joe Auction, Black Market, free Shop rewards, or finite Shop deck lifecycle.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `node --check src/cards.config.js`.
+    - Passed: `node --check src/controller.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: no player-facing local config/CSV text says `плати только 3 монеты`; local config and CSV match; `shop-choice-3-cost-3` controls offer count but no longer forces Shop cost to `3`.
+    - Passed Google Sheet readback: `shop!A10:N10` has shortTitle `Выбор из 3`, empty `cost`, notes `amount offer count only; ordinary Shop price still applies`, count `3`, and description `Во время покупок карт Лавка Джо выбирай из 3 карт`.
+    - Browser smoke was not completed in this environment because the local server is unavailable.
+
+- DONE FULLSCREEN FULL UI 2026-06-21 03:06 - Fullscreen should keep normal UI panels:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by Dev 1 at 2026-06-21 03:08; context handback added for GD; QA was not involved.
+  - Context:
+    - User wants fullscreen mode to look like the normal mode again, including `Хроника`, `История`, and the rest of the lower UI.
+    - Current source clue: `styles.css` has fullscreen-only rules hiding `.log-panel`, `.history-panel`, and `.lower-grid`.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - Restore the normal page/interface composition in fullscreen mode:
+      - keep `Хроника` visible;
+      - keep `История` visible;
+      - keep any other normal lower-grid content visible;
+      - keep settings/reference/history layout consistent with non-fullscreen mode.
+    - Fullscreen should mean “same game UI inside fullscreen”, not “field-only/minimal UI”.
+    - Remove or override fullscreen-only hiding of `.log-panel`, `.history-panel`, and `.lower-grid`.
+  - Visual requirements:
+    - Fullscreen may still use fullscreen background/viewport sizing.
+    - Do not introduce overlap between board, right panels, log/history, and bottom controls.
+    - Page may scroll in fullscreen if content exceeds viewport, matching the existing `app-shell` overflow behavior.
+    - Desktop and mobile fullscreen should preserve readable normal layout.
+  - Do not change:
+    - fullscreen button behavior/API;
+    - game rules;
+    - board layout/routes;
+    - phone controller;
+    - log/history content;
+    - settings behavior;
+    - card/deck behavior.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - enter fullscreen;
+      - `Хроника` is visible;
+      - `История` is visible;
+      - lower-grid/reference/settings content is not hidden just because fullscreen is active;
+      - fullscreen button still exits fullscreen;
+      - no incoherent overlap on desktop/mobile widths;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Removed fullscreen-only hiding of `.log-panel`, `.history-panel`, and `.lower-grid`.
+    - Preserved fullscreen app-shell background/viewport/overflow behavior.
+    - Fullscreen can now keep the normal UI composition and scroll if content exceeds the viewport.
+    - Did not change fullscreen button/API behavior, game rules, board routes/layout, phone controller, log/history content, settings behavior, cards, deck behavior, or dice logic.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: fullscreen no longer hides `log-panel`, `history-panel`, or `lower-grid`; fullscreen `app-shell` overflow remains.
+    - Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+- DONE MONSTER DEFEAT STRENGTH REWARD 2026-06-21 02:25 - Defeat reward is +1 strength instead of Joe Shop:
+  - Owner: `Dev 3`.
+  - Dispatch status: direct user override completed by Dev 3 at 2026-06-21 02:25; context handback added for GD; QA was not involved.
+  - Context:
+    - User clarified the previous task in the opposite direction: `Наоборот, сделай, чтобы вместо лавки джо выдавалась сила +1`.
+    - This supersedes the 2026-06-21 02:15 Dev 3 handback that restored Joe Shop card reward on monster defeat.
+  - Completed:
+    - Monster defeat reward now grants permanent battle force `Сила +1` instead of a Joe Shop card.
+    - Existing defeat coin amounts are unchanged:
+      - monster 1: `Сила +1`;
+      - monster 2: `Сила +1 + 5 монет`;
+      - monster 3: `Сила +1 + 10 монет`;
+      - monster 4: `Сила +1 + 20 монет`.
+    - Removed the monster-defeat call to `drawFreeShopCard(player, "получает карту Лавка Джо за возвращение на старт")`.
+    - Added the strength reward through `addBattleBonus(player, 1)` after final resolved monster defeat.
+    - `resolveStartStrengthReward(player)` / `Домашний старт` remains separate, so if it also applies on return to start it stacks as a separate `+1`.
+    - Did not change monster strengths, win rewards, normal Shop rewards, Shop card definitions/counts, normal Joe Shop purchases, or board movement rules.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `node --check src/controller.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: monster defeat reward text is `Сила +1` plus unchanged coins; monster defeat no longer calls the free Shop-card reward; start-strength remains separate.
+    - Browser smoke was not completed in this environment because the local server is unavailable.
+
+- DONE MONSTER DEFEAT SHOP REWARD 2026-06-21 02:10 - Defeat reward must grant Joe Shop card, not only +1 strength:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-06-21 02:15; context handback added for GD; QA was not involved.
+  - Context:
+    - User reports: after losing to a monster, the reward now appears/gives `+1 к силе` instead of a `Лавка Джо`.
+    - User clarified: coin reward amounts should stay as they are.
+    - Current source clue: `resolveEnemyBattle(...)` computes `monsterDefeatCoinReward(door)` and then calls `drawFreeShopCard(player, "получает карту Лавка Джо за возвращение на старт")`.
+    - Possible causes to inspect:
+      - `drawFreeShopCard(...)` revealing/granting a specific Shop card such as `Тренировочный меч` may be displayed as `+1 к силе` instead of clearly as a Joe Shop card reward;
+      - returning to `startCell` also calls `resolveStartStrengthReward(player)`, which may add a separate `+1 к силе` from `Домашний старт`.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Expected behavior:
+    - On monster defeat, the defeated player returns to start as now.
+    - The coin reward by monster tier remains unchanged:
+      - monster 1: `Лавка Джо`;
+      - monster 2: `Лавка Джо + 5 монет`;
+      - monster 3: `Лавка Джо + 10 монет`;
+      - monster 4: `Лавка Джо + 20 монет`.
+    - The card reward must be one physical `Лавка Джо` card from the finite Shop deck, added to the defeated player's owned Shop cards.
+    - If the drawn Shop card happens to be `+1 к силе`, that is okay as the card effect, but UI/log/result must still clearly show that the defeat reward granted a `Лавка Джо` card, not that the defeat reward itself was replaced by `+1 к силе`.
+    - Any separate `Домашний старт` / start-return +1 strength trigger must be logged/displayed separately and must not suppress the Joe Shop reward.
+  - Do not change:
+    - defeat coin amounts;
+    - monster strengths;
+    - win rewards;
+    - finite Shop deck/discard lifecycle;
+    - Shop card definitions/counts;
+    - normal Joe Shop purchases;
+    - board movement rules except what is necessary to preserve the defeat reward flow.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source check:
+      - monster defeat still calls the Shop-card reward path;
+      - coin reward path is unchanged;
+      - start-strength reward cannot replace/suppress the Shop reward.
+    - Browser smoke if environment allows:
+      - lose to monster 1: player returns to start and receives one visible owned `Лавка Джо`, with no extra coins;
+      - lose to monster 2/3/4: same Shop card reward plus existing coin amount;
+      - if the drawn Shop card is `Тренировочный меч`, UI still communicates it as a `Лавка Джо` card reward;
+      - if player owns `Домашний старт`, any +1 strength is separate from the defeat Shop reward;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Fixed `drawFreeShopCard(player, ...)` so a free Joe Shop reward draws one physical card from the finite Shop deck and keeps it with the player instead of immediately returning that same drawn card to Shop discard.
+    - Monster defeat still uses `monsterDefeatCoinReward(door)` and `monsterDefeatRewardText(door)` unchanged: tier 1 gives `Лавка Джо`, tier 2 gives `Лавка Джо + 5 монет`, tier 3 gives `Лавка Джо + 10 монет`, tier 4 gives `Лавка Джо + 20 монет`.
+    - Defeat flow still calls `drawFreeShopCard(player, "получает карту Лавка Джо за возвращение на старт")`, so the visible/logged reward is explicitly a Joe Shop card even if the drawn card title/effect is `Тренировочный меч` / `+1 к силе`.
+    - `resolveStartStrengthReward(player)` remains a separate return-to-start trigger and does not replace or suppress the Joe Shop reward.
+    - Did not change defeat coin amounts, monster strengths, win rewards, Shop card definitions/counts, normal Joe Shop purchases, or board movement rules.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `node --check src/controller.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: monster defeat still calls the Shop-card reward path; coin reward path is unchanged; start-strength remains separate; free Shop reward no longer discards the drawn physical card immediately after adding it to owned Shop cards.
+    - Browser smoke was not completed in this environment: recent local server attempts are blocked/unavailable (`127.0.0.1:5173` unreachable and fresh `server.js` starts fail with `listen EPERM`).
+
+- DONE PHONE SETTINGS COMPACT BLOCK 2026-06-21 02:04 - Merge phone mode and dice display settings:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by Dev 1 at 2026-06-21 02:07; context handback added for GD; QA was not involved.
+  - Context:
+    - User wants the separate `Режим` and `Не отображать кубики` blocks in the phone-room panel combined into one phone settings block.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - Combine the phone controller mode select and the `Не отображать кубики` checkbox into one visual block inside the phone-room panel.
+    - Suggested title: `Настройки телефонов`.
+    - Keep both controls:
+      - `Режим` select with current options/default;
+      - `Не отображать кубики` checkbox with current default/behavior.
+    - Layout should read as one grouped settings card, not two separate cards.
+    - On desktop, mode and checkbox may sit side-by-side inside the group if there is room.
+    - On mobile/narrow widths, they should stack cleanly with no horizontal scroll.
+  - Do not change:
+    - phone room create/recreate behavior;
+    - room code/link/copy UI;
+    - controller mode values/defaults;
+    - dice display behavior;
+    - phone protocol;
+    - gameplay rules.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - phone-room panel shows one combined settings block;
+      - mode select still changes controller mode;
+      - `Не отображать кубики` still toggles dice display behavior;
+      - layout is clean on desktop and mobile widths;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Wrapped `Режим` and `Не отображать кубики` into one grouped `Настройки телефонов` block inside the phone-room panel.
+    - Preserved `#phoneRoomMode`, `#phoneRoomDice`, current mode options/default, and dice-hide checkbox behavior.
+    - Added desktop two-column layout inside the grouped card.
+    - Added mobile one-column stacking for the grouped controls.
+    - Bumped the stylesheet cache key in `index.html` to `20260621-0204`.
+    - Did not change phone room create/recreate behavior, room code/link/copy UI, controller mode values/defaults, dice display behavior, phone protocol, or gameplay rules.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `node --check src/controller.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: grouped settings block exists; `#phoneRoomMode` and `#phoneRoomDice` ids are preserved; `full` default and `big-button` option are preserved; desktop two-column layout exists; mobile stack override exists.
+    - Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+- DONE REFERENCE APPLY EFFECTS 2026-06-21 01:36 - Click reference cards/fields to trigger effects:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by Dev 1 at 2026-06-21 01:42; context handback added for GD; QA was not involved.
+  - Context:
+    - User wants cards and fields shown in `Показать карты и поля` to be interactive.
+    - Clicking a displayed card should trigger that card's effect.
+    - Clicking a displayed field should trigger that field's effect.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Product behavior:
+    - This is a debug/playtest action from the reference panel.
+    - Target player is the current active player.
+    - If no active game/player exists, clicks should do nothing or show a small non-blocking message.
+    - Clicking from the reference panel should use the real effect handlers/UI flows where possible, including normal target-choice popups, rolls, battles, rewards, movement, and logs.
+  - Card behavior:
+    - Make every visible reference card tile/button clickable.
+    - Apply the selected card config to the current active player without drawing from or removing from the physical deck.
+    - Do not change deck order/count/discard just because a reference card was clicked.
+    - If the card effect normally keeps the physical card as a held status/artifact, create a runtime copy from the reference config and attach it through the existing held-card/status path.
+    - Suggested behavior by deck:
+      - `Хорошо`, `Плохо`, `Событие`: resolve the selected card effect for the active player.
+      - `Тадам!`: play/activate the selected TADAM effect as if that specific TADAM card was drawn, respecting active TADAM lifecycle and max active-card behavior if the existing resolver requires it.
+      - `Лавка Джо`: add the selected Shop card to the active player's owned Shop items, as a free/debug grant; do not touch Shop deck/discard.
+  - Field behavior:
+    - Make every visible field reference item clickable.
+    - Trigger the selected field type for the current active player using the same field resolver as landing on that field, but without moving the player first.
+    - If the field type normally needs a coordinate/door/portal context and cannot safely resolve from a generic reference item, show a short message and do not crash.
+    - Do not change board route/cell placement.
+  - UI requirements:
+    - Reference cards/fields should look clickable: pointer cursor, hover/focus state, accessible button semantics or keyboard activation.
+    - Keep the current full-card visual layout and spacing.
+    - Avoid accidental double-activation while an effect/prompt is already resolving; disable or ignore further reference clicks until the current effect finishes.
+  - Do not change:
+    - card configs/counts/texts;
+    - Google Sheet/CSV;
+    - normal draw, shop purchase, or field landing behavior;
+    - phone controller;
+    - history/autosave.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - click a Good reference card and see its effect apply to active player;
+      - click a Bad reference card and see its effect apply;
+      - click a Shop reference card and active player receives that Shop card without Shop deck draw;
+      - click a TADAM reference card and that TADAM becomes active/resolves through existing lifecycle;
+      - click an Event reference card and see its effect apply;
+      - click simple fields like `Хорошо`, `Плохо`, `Лавка Джо`, `Тадам!`, `Зеленое`, `Красное`;
+      - deck/discard counts are not consumed by reference-card clicks except where existing TADAM lifecycle intentionally discards active TADAMs;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Reference cards and field items are now keyboard/click activatable with `role="button"`, `tabindex="0"`, data hooks, pointer cursor, hover/focus ring, and applying state.
+    - Added a reference action guard so repeat clicks are ignored while another reference effect/prompt, animation, pending choice, shop, or roll/action prompt is active.
+    - Good/Bad/Event reference cards create runtime reference copies, reveal through the existing card UI, and resolve through `applyCardEffect(...)` without drawing/removing physical deck cards.
+    - Shop reference cards grant the selected Shop item to the active player for free/debug without touching Shop deck/discard.
+    - TADAM reference cards reveal and activate through existing active TADAM lifecycle/max-3 behavior.
+    - Reference runtime copies are marked and skipped by `discardCardToDeck(...)`, so they do not pollute physical deck discard piles.
+    - Field reference items trigger supported field effects for the active player without moving first.
+    - Context-only fields such as `Старт`, `Финиш`, and `Враг` show a short log/toast and do not crash.
+    - Did not change card configs/counts/texts, Google Sheet/CSV, normal draw/shop purchase/field landing behavior, phone controller, history/autosave, dice math, routes, or balance.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `node --check src/controller.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: reference data hooks exist; panel click/keyboard listeners are wired; runtime reference copies are marked; discard skips reference copies; Shop grant path exists; TADAM lifecycle path exists; field trigger path includes supported simple fields; clickable CSS exists.
+    - Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+- DONE BOARD CONTROL STRIP BELOW FIELD 2026-06-21 01:32 - Move board header controls under board:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by Dev 1 at 2026-06-21 01:35; context handback added for GD; QA was not involved.
+  - Context:
+    - User wants the entire current block above the field moved below the field.
+    - Target block is the current `.board-header`: dice value, current field/effect, action chips, and `Бросить` button.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - Move the whole `.board-header` from above `.map-wrap` to directly below `.map-wrap` inside the same `.board-panel`.
+    - Keep all current contents and states:
+      - dice value;
+      - current tile/effect card;
+      - turn action chips / pending-action UI;
+      - `Бросить` button;
+      - disabled, rolling, and pending states.
+    - The control strip should visually become the lower board control panel:
+      - same width context as the board panel;
+      - small spacing from the map;
+      - on desktop, `Бросить` remains on the right;
+      - on mobile, it wraps/adapts without horizontal scroll.
+  - Do not change:
+    - gameplay rules;
+    - text/content of the controls;
+    - dice logic;
+    - phone controller behavior;
+    - active-player animation;
+    - cards/decks;
+    - board layout/routes;
+    - history/log.
+  - Implementation notes:
+    - Prefer changing DOM order in `index.html`: `.map-wrap` first, `.board-header` after it within `.board-panel`.
+    - Update `.board-panel` / `.board-header` CSS so borders, spacing, and rounded corners still look intentional after the strip is below the map.
+    - Check states where the header contains dynamic UI: normal turn, pending pre-roll action, post-roll action, Joe Shop before-turn choice, battle modes.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - new game shows control strip below the field;
+      - `Бросить` works;
+      - pre-roll/pending action blocks render below the field;
+      - dice animation and battle HUD are not broken or covered;
+      - desktop and mobile layouts have no incoherent overlap or horizontal scroll;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Moved the existing `.board-header` block below `.map-wrap` inside `.board-panel`.
+    - Kept dice value, current field/effect card, turn action chips/pending action UI, and `Бросить` button markup/ids intact.
+    - Changed the base `.board-header` divider from `border-bottom` to `border-top` so it reads as a lower control strip.
+    - Updated coarse mobile grid areas so the map renders first, then dice/current field/actions, then the roll button.
+    - Bumped the stylesheet cache key in `index.html` to `20260621-0132`.
+    - Did not change gameplay rules, control text/content, dice logic, phone controller behavior, active-player animation, cards/decks, board routes/layout, history, or log behavior.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `node --check src/controller.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: `.map-wrap` comes before `.board-header` inside `.board-panel`; stylesheet cache is bumped; base `.board-header` uses top border and no base bottom border; coarse mobile grid order is map -> controls -> roll.
+    - Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+- DONE PHONE ROOM REOPEN TOAST 2026-06-21 01:21 - Do not show copy toast on simple panel reopen:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by Dev 1 at 2026-06-21 01:24; context handback added for GD; QA was not involved.
+  - Context:
+    - Clarification from user: the issue is not only duplicate toasts.
+    - If the phone room already exists, simply reopening/showing the phone panel must not display `Комната скопирована`.
+    - `Комната скопирована` should appear only after an actual copy/create-copy action, not after ordinary reuse of an existing room.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - In the header phone button flow:
+      - first open with no room may create/copy and show `Комната скопирована`;
+      - reopen/toggle when `phoneRoom.code` already exists should show the panel and reuse existing room without showing the copy toast;
+      - explicit copy button should still show `Комната скопирована`;
+      - explicit `Пересоздать комнату` may show `Комната скопирована` if it creates/copies the new room link.
+    - Keep the single-instance toast behavior from `DONE PHONE ROOM COPY TOAST 2026-06-21 01:13`.
+  - Do not change:
+    - phone room reuse/recreate contract;
+    - controller modes;
+    - clipboard/link formatting;
+    - gameplay rules.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - first open with no room creates/copies and may show toast;
+      - close/reopen existing room panel: no `Комната скопирована` toast;
+      - explicit copy button shows one toast;
+      - explicit recreate creates a new room and may show one toast;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Header phone button records whether `phoneRoom.code` existed before opening the panel.
+    - If a room already existed, simple reopen now reuses the room and publishes the phone snapshot without copying the link or showing `Комната скопирована`.
+    - First header open with no room still creates/copies and can show the single-instance toast.
+    - Explicit `Скопировать ссылку` now shows the same single-instance header toast.
+    - Explicit `Пересоздать комнату` now recreates, copies the new link, and can show the same single-instance toast.
+    - Kept the single-instance toast behavior from the previous task.
+    - Did not change room reuse/recreate contract, controller modes, clipboard/link formatting, or gameplay rules.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: header copies only when there was no room before opening; existing-room reopen still publishes snapshot; explicit copy button shows header toast; recreate button uses a recreate-copy helper; single-instance toast timer path remains intact.
+    - Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+- DONE PHONE ROOM COPY TOAST 2026-06-21 01:13 - Show one `Комната скопирована` toast at a time:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by Dev 1 at 2026-06-21 01:16; context handback added for GD; QA was not involved.
+  - Context:
+    - User reports that `Комната скопирована` can appear multiple times/stack visually.
+    - Expected: only one visible copy toast at a time.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - Make the phone-room copy confirmation toast single-instance.
+    - If the toast is already visible and the room link is copied again, refresh/restart that same toast instead of creating another DOM element.
+    - Clear/reset any previous hide timer before starting a new 2-second visibility timer.
+    - Keep the text `Комната скопирована`.
+  - Do not change:
+    - phone-room create/recreate behavior;
+    - clipboard/link logic except toast timing;
+    - controller modes;
+    - room code/link formatting;
+    - gameplay rules.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - click/open/copy repeatedly;
+      - only one `Комната скопирована` toast is visible;
+      - repeated copy keeps it visible for roughly 2 seconds from the latest action;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Kept the existing single `#phoneRoomHeaderFeedback` DOM element as the only header copy toast.
+    - Added one fixed source for the toast text: `Комната скопирована`.
+    - `setPhoneRoomHeaderFeedback()` now clears any previous hide timer before showing the toast again.
+    - Repeated copy/open actions reset the same element's visible state and start a fresh 2-second hide timer from the latest action.
+    - Clipboard/link selection behavior remains unchanged except for showing the same fixed header toast text.
+    - Did not change room create/recreate behavior, controller modes, room code/link formatting, or gameplay.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: fixed toast text exists once in `src/game.js`; `setPhoneRoomHeaderFeedback()` takes no label and reuses `ui.phoneRoomHeaderFeedback`; old timer is cleared before a new 2-second timer starts.
+    - Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+- DONE REMOVE TADAM TILE BADGES 2026-06-21 01:09 - Remove overlay `+5` badges from TADAM tiles:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by Dev 1 at 2026-06-21 01:12; context handback added for GD; QA was not involved.
+  - Context:
+    - User changed direction: Art/UI will draw the `+5` coin cue directly into the TADAM tile icon.
+    - Therefore the temporary/overlay `+5` badges added by `DONE TADAM TILE COIN BADGE 2026-06-21 01:00` should be removed.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - Remove the separate overlay `+5` coin badge from TADAM board tiles.
+    - Remove any CSS/classes/DOM helpers that exist only for that overlay badge.
+    - Keep TADAM tiles rendering normally with their base icon.
+  - Keep:
+    - TADAM landing reward and gameplay unchanged.
+    - TADAM tooltip/current-field text may still mention `получи 5 монет`, unless the code relies on badge-only wording.
+    - TADAM deck/card lifecycle unchanged.
+    - Active TADAM panel/card faces unchanged.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - TADAM tiles no longer show separate overlay `+5` badges;
+      - TADAM tiles still show the normal TADAM icon;
+      - landing on TADAM still gives the same reward/effect;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Removed the `tileRewardBadgeMarkup(type)` insertion from board shell tile rendering.
+    - Removed the now-unused `tileRewardBadgeMarkup(...)` helper.
+    - Removed `.tile-reward-badge` CSS, including the field2 sizing override and nested coin-icon rule.
+    - Kept TADAM tiles rendering normally with their base icon.
+    - Kept TADAM tooltip/current-field text that mentions the 5-coin reward.
+    - Did not change TADAM reward/rules, deck/card lifecycle, active TADAM panel, card faces, movement, dice, phones, or balance.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source check: `rg` found no remaining `tileRewardBadge`, `tile-reward-badge`, or `reward-badge` references in `src/game.js` / `styles.css`.
+    - Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+- DONE PHONE ROOM REOPEN 2026-06-21 01:04 - Do not recreate existing room on panel reopen:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by Dev 1 at 2026-06-21 01:09; context handback added for GD; QA was not involved.
+  - Context:
+    - User reports: if a phone room already exists, reopening the phone panel currently recreates the room.
+    - Expected: reopening/toggling the phone panel should keep the existing room. A new room should be created only by the explicit `Пересоздать комнату` button.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - Make the top phone button/panel reopen flow idempotent:
+      - if no room exists, first open may create a room and copy/show the link as currently intended;
+      - if a room already exists, opening the panel must reuse the existing room code/link and connected-phone state;
+      - do not call the room recreation path on ordinary reopen/toggle.
+    - Keep the explicit `Пересоздать комнату` button as the only way to replace an existing room.
+    - If ordinary reopen currently copies the room link, it may copy the existing link, but must not create a new room.
+  - Do not change:
+    - controller modes;
+    - connected phone protocol;
+    - room code/link formatting;
+    - `Не отображать кубики`;
+    - fullscreen button;
+    - gameplay rules.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - open phone panel with no room: room is created;
+      - close/reopen phone panel: same room code remains;
+      - connected phone count/status remains associated with the same room;
+      - click `Пересоздать комнату`: new room code is created;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Added a `recreate` option to `createPhoneRoom(...)`.
+    - Header phone button now calls `createPhoneRoom({ recreate: false })`, so opening the panel creates a room only when no room exists.
+    - If an existing `phoneRoom.code` is present, the non-recreate path returns without calling `closeCurrentPhoneRoom(...)` or POSTing a new room.
+    - The explicit `Пересоздать комнату` button still calls `createPhoneRoom()` with default recreate behavior, so it remains the replacement path.
+    - Added an in-flight guard for the header button to avoid duplicate room requests while creation/recreation is pending.
+    - Did not change controller modes, connected-phone protocol, room code/link formatting, `Не отображать кубики`, fullscreen, or gameplay rules.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: `createPhoneRoom` has a recreate option; existing room returns on non-recreate path; `closeCurrentPhoneRoom(...)` is only called in the recreate path; header uses non-recreate; explicit button uses default recreate.
+    - Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+- DONE TADAM TILE COIN BADGE 2026-06-21 01:00 - Show `+5` coin bait on TADAM fields:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by Dev 1 at 2026-06-21 01:04; context handback added for GD; QA was not involved.
+  - Context:
+    - User wants players to understand before stepping on a `ТАДАМ!` field that landing there gives 5 coins.
+    - Chosen GD direction: add a small permanent badge on TADAM board tiles, not a new popup.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - Add a small `+5` coin badge to every `ТАДАМ!` tile on the board.
+    - Badge should be visible before the player lands on the tile.
+    - Badge text/icon target: `+5🪙` or equivalent using the existing coin icon if that fits the local style better.
+    - Update TADAM field title/tooltip/effect text if needed so it reads like:
+      - `ТАДАМ!`
+      - `возьми карту Тадам и получи 5 монет`
+  - Visual requirements:
+    - Badge must be compact and readable on small board tiles.
+    - Badge must not cover player tokens, monster numbers, route/turn outline, or the main TADAM icon.
+    - It should feel like a reward marker, preferably gold/coin-colored, and match existing board UI.
+    - Keep it stable across desktop and mobile scaling.
+  - Do not change:
+    - TADAM deck/card lifecycle.
+    - Actual TADAM reward amount or logic unless current implementation text is stale.
+    - Other field types.
+    - Card faces or active TADAM panel.
+  - Verification:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - all TADAM tiles show the `+5` coin badge before landing;
+      - badge does not overlap tokens or route outline in common board zoom/layout;
+      - tooltip/field preview mentions 5 coins;
+      - landing on TADAM still works normally;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Added a compact permanent `+5` coin badge to every `tadam` board tile.
+    - Badge uses the existing coin icon and is inserted during board shell construction, so it is visible before landing.
+    - Styled the badge as a small gold reward marker in the lower-left corner.
+    - Badge z-index is below route/preview outlines and token layer, so it should not cover path outlines, player tokens, monster numbers, or the main TADAM icon.
+    - Updated TADAM tile tooltip/title to `ТАДАМ! — возьми карту Тадам и получи 5 монет`.
+    - Updated current-field effect text to `возьми карту Тадам и получи 5 монет`.
+    - Did not change TADAM deck/card lifecycle, reward logic, active TADAM panel, card faces, or other fields.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: badge only appears for `tadam`, uses existing coin icon, tooltip/effect text mention 5 coins, and landing still calls existing `drawTadamCard(player)` path.
+    - Browser smoke was not completed: `127.0.0.1:5173` returned no page and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+- DONE PHONE FIELD PREVIEW 2026-06-21 00:50 - Show `Показать поле` on phone controller:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by Dev 1 at 2026-06-21 00:56; context handback added for GD; QA was not involved.
+  - Context:
+    - User wants the phone controller to display `Показать поле`.
+    - Host already has field-preview affordances in choice/prompt overlays; phone should expose the same action when it is relevant.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - Add a phone-controller action/button `Показать поле` whenever the current active player's host-side prompt/choice offers field preview.
+    - Pressing the phone action should trigger the same host-side preview mode as clicking `Показать поле` on the host.
+    - While field preview is active, phone UI should offer the matching return/continue action used by the host flow, for example `Вернуться к выбору`, if that state exists.
+    - The action must appear only for the player who currently owns the pending choice/prompt/action, not for inactive players.
+    - Support both phone controller layouts/modes that render actions.
+  - Implementation notes:
+    - Prefer reusing/refactoring the existing host preview handlers instead of duplicating preview logic.
+    - Expected likely touchpoints: `phoneActionsForPlayer(...)`, `handlePhoneControllerAction(...)`, and `src/controller.js` action rendering.
+    - If adding a new phone action kind, keep it explicit, e.g. `field-preview` / `field-preview-return`.
+  - Do not change:
+    - gameplay rules;
+    - card effects;
+    - movement/dice math;
+    - phone room creation/copy flow;
+    - controller mode defaults;
+    - host-only preview behavior except where needed to share the handler.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - reach a host popup that shows `Показать поле`;
+      - connected active phone shows `Показать поле`;
+      - pressing it from phone opens the same field preview on host;
+      - phone can return to the choice and complete it;
+      - inactive phones do not get the action;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Added explicit phone actions `field-preview` and `field-preview-return`.
+    - Active owner of a card-choice host prompt with field preview now gets `Показать поле` on phone.
+    - Active owner of an open-portal host choice with field preview now gets `Показать поле` on phone.
+    - While preview is active, the same phone gets `Вернуться к выбору`.
+    - Phone actions reuse existing host preview state functions: `setChoiceFieldPreviewMode(...)` and `setPortalPreviewMode(...)`.
+    - Inactive/non-owner phones do not receive preview actions.
+    - Full controller renders preview actions in the normal action list.
+    - Big-button mode now whitelists preview actions, treats return as primary, and shows complex preview-capable choice sets as a detail list.
+    - Auction bid phone renderer appends a preview button when such an action is present.
+    - Bumped host `game.js` and phone `controller.js` cache keys to `20260621-0055`.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `node --check src/controller.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks for preview action kinds, active-owner gating, host handler reuse, full/big controller rendering, auction renderer support, and fresh cache keys.
+    - Browser smoke was not completed: `127.0.0.1:5173` was unreachable and starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+- DONE SHOP MULTI-BUY 2026-06-21 00:44 - Keep one Joe Shop offer during unlimited buys:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-06-21 00:48; context handback added for GD; QA was not involved.
+  - Context:
+    - User reports: with two Joe Shop cards that allow buying Shop cards, the shop refreshes after each purchase, but it should not.
+    - Current source clue: `resolveShop(player)` draws a fresh `offer = drawCardsFromDeck("shop", offerCount, { uniqueIds: true })` inside a `while (true)` loop, so every `shop-unlimited-buy` repeat opens a new offer.
+    - Expected behavior: one ordinary Joe Shop visit has one opened offer. Multiple buys happen from that same offer.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - Rework ordinary `resolveShop(player)` multi-buy flow so the offer is drawn once per Joe Shop visit, not once per purchase.
+    - If player has `shop-unlimited-buy`, they may buy multiple cards from the current opened offer only.
+    - After a card is bought:
+      - remove that card from the current offer;
+      - keep the remaining offer cards visible/available for the next buy choice;
+      - do not draw replacement cards from the Shop deck during that visit.
+    - When the player declines, cannot afford another card, runs out of offer cards, or the visit ends:
+      - return only the remaining unbought offer cards to Shop discard/stock using the current deck lifecycle;
+      - the bought cards stay in player inventory and must not be returned to the deck.
+    - If the player also has `shop-choice-3-cost-3`, the one opened offer should be 3 cards and cost 3, then all repeat buys still use that same 3-card offer until empty/declined.
+    - If the player has multiple `shop-unlimited-buy` copies, behavior is still “buy any number from the same offer”, not “refresh offer per copy”.
+  - Do not change:
+    - Joe Auction;
+    - Black Market;
+    - free Shop rewards;
+    - finite Shop deck/discard lifecycle outside ordinary Joe Shop visits;
+    - Shop card data/counts/titles/effects.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source check:
+      - ordinary `resolveShop` draws Shop offer once per visit;
+      - repeat buys remove bought cards from the same offer;
+      - unbought offer cards are discarded/returned once at the end.
+    - Browser smoke if environment allows:
+      - player with `shop-unlimited-buy` and enough coins sees one offer;
+      - after buying one card, next choice shows remaining cards from the same offer, not a refreshed offer;
+      - with `shop-choice-3-cost-3`, first offer has 3 cards and repeat buys stay within those 3;
+      - declining returns remaining offer cards;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Reworked ordinary `resolveShop(player)` so a Joe Shop visit draws one offer before the buy loop.
+    - Repeat buys from `shop-unlimited-buy` now reuse the same opened offer.
+    - Bought cards are removed from the current offer and kept in player inventory.
+    - Remaining unbought offer cards stay visible/available for the next buy choice and are discarded only once when the visit ends.
+    - No replacement Shop cards are drawn during the same visit.
+    - `shop-choice-3-cost-3` still controls the initial offer size/cost when active before the visit; multiple `shop-unlimited-buy` copies do not refresh the offer.
+    - Joe Auction, Black Market, free Shop rewards, card data/counts/titles/effects were not changed.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `node --check src/controller.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: ordinary `resolveShop` has one Shop offer draw before the buy loop; repeat buys splice bought cards out of that same offer; remaining offer cards are returned through `discardCardsToDeck("shop", offer)` at visit end.
+    - Browser smoke was not completed in this environment: existing `127.0.0.1:5173` was unreachable and starting `server.js` on `127.0.0.1:5174` failed with `listen EPERM`.
+
+- DONE PHONE ROOM HEADER UI 2026-06-21 00:28 - Move phone room to top header button:
+  - Owner: `Dev 1`.
+  - Dispatch status: completed by Dev 1 at 2026-06-21 00:37; context handback added for GD; QA was not involved.
+  - Context:
+    - User wants the existing phone room block opened from the top controls instead of being buried in settings.
+    - User screenshots:
+      - Current phone block reference: `/var/folders/yp/35z7sz997knfqcpjlg4nvv400000gn/T/codex-clipboard-165109e1-ec74-4943-810f-596aa498cc6f.png`.
+      - Current top controls button area: `/var/folders/yp/35z7sz997knfqcpjlg4nvv400000gn/T/codex-clipboard-61c4b0e3-0178-4284-8caa-0433ec4e3363.png`.
+      - Desired placement: directly under the top header/controls block, before the settings panel content: `/var/folders/yp/35z7sz997knfqcpjlg4nvv400000gn/T/codex-clipboard-d7a5517a-3e9e-4dcb-b4f6-cb9a327449c2.png`.
+    - Current relevant ids/classes:
+      - top controls: `.season-controls`;
+      - fullscreen button: `#fullscreenBtn`;
+      - old phone toggle: `#usePhoneControllers`;
+      - phone panel: `.phone-room-panel`;
+      - create room button: `#createPhoneRoomBtn`;
+      - mode select: `#phoneRoomMode`;
+      - dice checkbox: `#phoneRoomDice`;
+      - copy button: `#copyPhoneRoomUrlBtn`;
+      - existing room functions in `src/game.js`: `createPhoneRoom()`, `copyPhoneRoomUrl()`, `renderPhoneRoomPanel()`, `phoneControllersEnabled()`, `phoneRoomDiceVisible()`, `selectedPhoneRoomMode()`.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Header buttons:
+    - Replace the single wide fullscreen button slot with two small matching icon buttons:
+      - `Играть с телефонами`;
+      - `На полный экран`.
+    - Keep the existing fullscreen behavior on the fullscreen button.
+    - Add a phone button next to it that visually matches the fullscreen button:
+      - same button size family, border, background, hover/active states;
+      - phone/controller icon should feel like the fullscreen icon, not a text-only control;
+      - use an inline/CSS/icon approach if possible, no new art asset required unless Dev chooses one.
+    - The phone button is the entry point for opening the phone block.
+  - Phone block placement/layout:
+    - Move/render `.phone-room-panel` directly below the top `.season-controls` header, not inside the hidden settings panel.
+    - The panel should appear immediately under the header controls when opened.
+    - The panel should be full width of the shared `game-settings` block.
+    - It must not be constrained to the old narrow settings column.
+    - Keep the settings panel below it.
+  - Phone button behavior:
+    - On phone button click:
+      - enable phone controllers if not already enabled;
+      - show/open the phone room block immediately;
+      - create the room immediately, without requiring a separate `Создать комнату` click;
+      - after the room URL is available, copy the link to clipboard automatically.
+    - Show lightweight floating feedback above the phone button for about 2 seconds:
+      - text: `Комната скопирована`;
+      - should be subtle and non-blocking.
+    - If clipboard write fails, keep the existing fallback behavior available: select/show the URL and show an appropriate feedback text.
+    - If a room already exists, clicking the phone button should open/show the existing block and copy the current room link; do not silently recreate unless current code/user flow already explicitly chooses recreate.
+  - Phone block controls/content:
+    - Keep the phone room content/functionality, but adapt it to the new full-width top placement.
+    - Default `#phoneRoomMode` should be `Полный контроллер`, not `Большая кнопка`.
+      - Set default value to full mode in HTML/JS initialization and room creation.
+    - Change checkbox text:
+      - from `Отображать кубики`
+      - to `Не отображать кубики`.
+    - New dice checkbox default is unchecked.
+    - Semantics must invert cleanly:
+      - unchecked = dice are visible on phone;
+      - checked = dice are hidden on phone.
+    - Ensure room creation sends the correct `diceVisible` value after the inversion.
+    - Keep `Шейк`, mode select, room code/link, connected controllers list, and copy/manual controls working.
+    - The old `Играть с телефонами` checkbox inside settings should be removed or hidden so there is only one obvious phone entry point.
+  - Visual requirements:
+    - The phone panel should look like part of the top game settings block, not a detached narrow card.
+    - In desktop layout, it spans the full width under the top controls.
+    - On mobile/narrow layouts, header buttons and panel should wrap cleanly with no overlap.
+    - Floating `Комната скопирована` must not cover critical controls for longer than 2 seconds.
+  - Do not change:
+    - phone controller protocol/server endpoints unless required by the inverted dice option;
+    - controller page gameplay actions;
+    - game rules, cards, board, history save, final battle, reference panel, or unrelated settings.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - top header shows two small matching icon buttons: phone and fullscreen;
+      - fullscreen still toggles fullscreen;
+      - phone button opens the full-width phone block directly under the header;
+      - phone button creates a room and copies link automatically;
+      - `Комната скопирована` appears above the phone button for about 2 seconds;
+      - default mode is `Полный контроллер`;
+      - `Не отображать кубики` starts unchecked and means dice are visible;
+      - checking `Не отображать кубики` hides dice on phone snapshot/controller;
+      - old settings checkbox entry point is gone/hidden;
+      - manual copy still works;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Added top header phone icon button beside fullscreen and kept fullscreen behavior on `#fullscreenBtn`.
+    - Moved `.phone-room-panel` directly under `.season-controls`, full width inside `.game-settings`, above `#settingsPanel`.
+    - Phone header button opens/enables the panel, creates a room if needed, copies the link, and shows floating `Комната скопирована` feedback for about 2 seconds.
+    - Existing rooms are copied/opened without silent recreation.
+    - Removed the old settings checkbox `#usePhoneControllers`.
+    - Default mode is now `Полный контроллер` in HTML, host JS, and server fallback.
+    - Replaced `Отображать кубики` with `Не отображать кубики`; unchecked means dice visible and checked means dice hidden.
+    - Kept manual create/recreate/copy controls and existing phone snapshot/action semantics.
+    - Added responsive header button and full-width phone panel styling.
+    - Bumped host CSS/JS cache keys to `20260621-0037`.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `node --check src/controller.js`.
+    - Passed: `node --check server.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks for header buttons, panel placement, old checkbox removal, full-controller default, inverted dice semantics, and server fallback defaults.
+    - Browser smoke was not completed: in-app browser bridge failed with sandbox metadata error; existing `127.0.0.1:5173` served stale HTML; starting a fresh `server.js` on `5174` failed with `listen EPERM`.
+
+- DONE HISTORY AUTOSAVE 2026-06-21 00:05 - Auto-save finished games after first winner popup:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-06-21 00:12; context handback added for GD; QA was not involved.
+  - Context:
+    - User wants the game saved automatically after every finished game.
+    - Current UI already has manual `Сохранить` in History and `saveCurrentGameHistory()`.
+    - Current final flow sets `state.finished = true`, fills `state.history.finalSummary` / `finishedAt`, renders `winnerPopup`, and manual save can export the full final history.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - After the first victory/winner popup is shown for a finished game, automatically run the same save flow as the manual `Сохранить` button.
+    - Save exactly once per finished game:
+      - no duplicate localStorage entries or Sheet submissions on repeated `render()` / popup rerenders;
+      - starting a new game resets the autosave guard.
+    - Reuse the current snapshot/export path from `saveCurrentGameHistory()` so local saved games and remote `Games Log` receive the same fields as manual saves.
+    - Keep the manual `Сохранить` button available after autosave; if autosave already succeeded, pressing it may either resave intentionally or show a clear already-saved state, but it must not be broken.
+    - If autosave fails, log/show a non-blocking warning and leave manual save usable.
+  - Timing:
+    - Trigger only after the first winner popup/final victory window is actually rendered/visible.
+    - Do not save before final summary fields exist.
+    - Do not autosave mid-final-battle, on ordinary monster wins, on VS wins, or on event/team battle result popups.
+  - Suggested implementation notes:
+    - Add a per-game flag such as `state.historyAutoSaved` or `state.history.autoSavedAt`.
+    - Set/reset the flag in new-game initialization.
+    - Call an autosave helper from the winner popup render path after `ui.winnerPopup.hidden = false`, using a microtask/timeout if needed so the popup paints first.
+    - Avoid recursive render/save loops.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source check:
+      - autosave guard resets on new game;
+      - autosave can only run after `state.finished` and winner popup render;
+      - autosave calls existing history snapshot/export logic.
+    - Browser smoke if environment allows:
+      - finish one game and confirm one automatic save happens after the winner popup appears;
+      - repeated render/opening winner popup does not create duplicate saves;
+      - manual `Сохранить` still works or gives clear state after autosave;
+      - new game can autosave again after its own finish;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - Added history autosave guard fields to new game history: `autoSaveRequestedAt`, `autoSavedAt`, and `autoSaveFailedAt`.
+    - Updated `saveCurrentGameHistory()` to return save status and support autosave messaging while keeping the manual `Сохранить` button path intact.
+    - Added `scheduleFinishedGameHistoryAutosave()` and call it from `renderWinnerPopup()` after the winner popup markup is rendered and visible.
+    - Autosave waits for a paint frame plus timeout, requires `state.finished`, `history.finalSummary`, and `history.finishedAt`, and uses the existing snapshot/export path.
+    - Repeated renders do not schedule duplicate autosaves because `autoSaveRequestedAt` is set before the async save starts.
+    - New games reset the guard through fresh `createGameHistory(...)`.
+    - Autosave failures log/show a non-blocking warning and leave manual save available.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `node --check src/controller.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks for guard reset, winner-popup-only trigger, existing save path reuse, and duplicate-render guard.
+    - Browser smoke was not completed in this environment: in-app browser connection failed with sandbox metadata error; direct HTTP check found no reachable existing `5173`; starting `server.js` on `127.0.0.1:5174` failed with `listen EPERM`.
+
 - DONE SHOP COUNTS 2026-06-19 01:39 - Update Joe Shop card copy counts:
   - Owner: `Dev 3`.
   - Dispatch status: completed by Dev 3 at 2026-06-19 01:43; context handback added for GD; QA was not involved.

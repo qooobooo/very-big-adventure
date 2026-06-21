@@ -4,15 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Очень Большая Бродилка — веб-прототип</title>
-    <link rel="stylesheet" href="./styles.css?v=20260619-0227" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260621-0342" />
   </head>
-  <body data-ui-style="classic">
+  <body data-ui-style="classic" data-font-style="standard">
     <main class="app-shell">
       <section class="score-strip" id="scoreStrip" aria-label="Игроки"></section>
       <div id="monsterRageIndicator" class="monster-rage-indicator" aria-live="polite" hidden></div>
 
       <section class="play-area">
         <article class="board-panel" aria-label="Игровое поле">
+          <div class="map-wrap">
+            <div id="eventToast" class="event-toast" role="button" tabindex="0" aria-live="polite" hidden></div>
+            <div id="finalBattleHud" class="final-battle-hud" aria-live="polite" hidden></div>
+            <div id="winnerPopup" class="winner-popup" aria-live="polite" hidden></div>
+            <div id="choicePanel" class="choice-panel" role="dialog" aria-live="polite" hidden></div>
+            <div id="board" class="board"></div>
+          </div>
           <div class="board-header">
             <div class="dice-panel">
               <span id="diceValue">-</span>
@@ -20,13 +30,6 @@
               <div id="turnActions" class="turn-actions" aria-label="Доступные действия"></div>
               <button id="rollBtn">Бросить <img class="dice-icon" src="./assets/icons/dice.png?v=20260524-0305" alt="" aria-hidden="true"></button>
             </div>
-          </div>
-          <div class="map-wrap">
-            <div id="eventToast" class="event-toast" role="button" tabindex="0" aria-live="polite" hidden></div>
-            <div id="finalBattleHud" class="final-battle-hud" aria-live="polite" hidden></div>
-            <div id="winnerPopup" class="winner-popup" aria-live="polite" hidden></div>
-            <div id="choicePanel" class="choice-panel" role="dialog" aria-live="polite" hidden></div>
-            <div id="board" class="board"></div>
           </div>
         </article>
 
@@ -51,21 +54,66 @@
                   <option value="4">4</option>
                 </select>
               </label>
-              <label aria-label="Кубиков">
-                <img class="dice-icon setup-dice-icon" src="./assets/icons/dice.png?v=20260524-0305" alt="" aria-hidden="true">
-                <select id="diceCount">
-                  <option value="1" selected>1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                </select>
-              </label>
-              <button id="settingsToggle" class="secondary settings-toggle" type="button" aria-expanded="false">Настройки</button>
-              <button id="fullscreenBtn" class="secondary fullscreen-toggle" type="button" title="Открыть игру на весь экран" aria-label="На весь экран">
-                <img class="fullscreen-icon" src="./assets/icons/fullscreen_button.svg?v=20260605-0358" alt="" aria-hidden="true">
-              </button>
+              <div class="header-icon-actions" aria-label="Быстрые действия">
+                <button id="referenceHeaderBtn" class="secondary header-icon-button reference-header-toggle" type="button" title="Показать карты и поля" aria-label="Показать карты и поля" aria-pressed="false">
+                  <img class="reference-header-icon" src="./assets/icons/reference_cards.svg" alt="" aria-hidden="true">
+                </button>
+                <button id="phoneRoomHeaderBtn" class="secondary header-icon-button phone-room-toggle" type="button" title="Играть с телефонами" aria-label="Играть с телефонами" aria-pressed="false">
+                  <svg class="phone-header-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8 3.8h8c1 0 1.8.8 1.8 1.8v12.8c0 1-.8 1.8-1.8 1.8H8c-1 0-1.8-.8-1.8-1.8V5.6c0-1 .8-1.8 1.8-1.8Z" />
+                    <path d="M10 6h4M11 17.4h2" />
+                  </svg>
+                </button>
+                <button id="settingsToggle" class="secondary settings-toggle header-icon-button" type="button" title="Настройки" aria-label="Настройки" aria-expanded="false">
+                  <img class="settings-icon" src="./assets/icons/settings_gear.svg?v=20260621-0205" alt="" aria-hidden="true">
+                </button>
+                <button id="fullscreenBtn" class="secondary fullscreen-toggle header-icon-button" type="button" title="Открыть игру на весь экран" aria-label="На весь экран">
+                  <img class="fullscreen-icon" src="./assets/icons/fullscreen_button.svg?v=20260605-0358" alt="" aria-hidden="true">
+                </button>
+                <span id="phoneRoomHeaderFeedback" class="phone-room-header-feedback" role="status" aria-live="polite" hidden>Комната скопирована</span>
+              </div>
               <button id="newGameBtn" class="secondary">Новая игра</button>
             </div>
+            <section class="phone-room-panel" aria-label="Мобильные контроллеры" hidden>
+              <div class="phone-room-header">
+                <strong>Телефоны</strong>
+                <button id="createPhoneRoomBtn" class="secondary" type="button">Создать комнату</button>
+              </div>
+              <div id="phoneRoomStatus" class="phone-room-status">Комната не создана</div>
+              <div id="phoneRoomDetails" class="phone-room-details" hidden>
+                <div class="phone-room-code-card">
+                  <span>Код</span>
+                  <b id="phoneRoomCode">-</b>
+                </div>
+                <label class="phone-room-link-card">
+                  <span>Ссылка</span>
+                  <input id="phoneRoomUrl" type="text" readonly value="" />
+                </label>
+                <button id="copyPhoneRoomUrlBtn" class="secondary phone-room-copy" type="button">Скопировать ссылку</button>
+                <div id="phoneRoomUrlHint" class="phone-room-url-hint"></div>
+                <div id="phoneRoomControllers" class="phone-room-controllers"></div>
+              </div>
+              <section class="phone-room-settings" aria-label="Настройки телефонов">
+                <button id="phoneRoomSettingsToggle" class="secondary phone-room-settings-toggle" type="button" aria-expanded="false" aria-controls="phoneRoomSettingsBody">
+                  Настройки телефонов
+                </button>
+                <div id="phoneRoomSettingsBody" class="phone-room-settings-body" hidden>
+                  <div class="phone-room-settings-grid">
+                    <label class="phone-room-mode">
+                      <span>Режим</span>
+                      <select id="phoneRoomMode">
+                        <option value="full" selected>Полный контроллер</option>
+                        <option value="big-button">Большая кнопка</option>
+                      </select>
+                    </label>
+                    <label class="cheat-toggle phone-dice-toggle">
+                      <input id="phoneRoomDice" type="checkbox" />
+                      <span>Не отображать кубики</span>
+                    </label>
+                  </div>
+                </div>
+              </section>
+            </section>
             <div id="settingsPanel" class="settings-panel" hidden>
               <div class="exact-move-row" aria-label="Чит точного движения активного игрока">
                 <label class="settings-select exact-move-setting">
@@ -90,6 +138,15 @@
                 <button class="secondary" type="button" data-battle-bonus-preset="50">+50</button>
               </div>
               <label class="settings-select">
+                <span>Кубиков</span>
+                <select id="diceCount">
+                  <option value="1" selected>1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                </select>
+              </label>
+              <label class="settings-select">
                 <span>Поле</span>
                 <select id="boardSelect">
                   <option value="field1">Поле 1</option>
@@ -101,6 +158,13 @@
                 <select id="uiStyle">
                   <option value="tabletop">Настольный</option>
                   <option value="classic" selected>Классический</option>
+                </select>
+              </label>
+              <label class="settings-select">
+                <span>Шрифт</span>
+                <select id="fontStyle">
+                  <option value="standard" selected>Стандартный</option>
+                  <option value="adventure">Приключение</option>
                 </select>
               </label>
               <label class="settings-select">
@@ -132,56 +196,6 @@
                 <input id="showWalkPath" type="checkbox" />
                 <span>Показывать контур хода</span>
               </label>
-              <label class="cheat-toggle phone-mode-toggle">
-                <input id="usePhoneControllers" type="checkbox" />
-                <span>Играть с телефонами</span>
-              </label>
-              <section class="reference-toggle-panel" aria-label="Показать карты и поля">
-                <strong>Показать карты и поля</strong>
-                <div class="reference-toggle-list">
-                  <button class="secondary reference-toggle" type="button" data-reference-toggle="good" aria-pressed="false">Хорошо</button>
-                  <button class="secondary reference-toggle" type="button" data-reference-toggle="bad" aria-pressed="false">Плохо</button>
-                  <button class="secondary reference-toggle" type="button" data-reference-toggle="shop" aria-pressed="false">Лавка Джо</button>
-                  <button class="secondary reference-toggle" type="button" data-reference-toggle="tadam" aria-pressed="false">Тадам!</button>
-                  <button class="secondary reference-toggle" type="button" data-reference-toggle="event" aria-pressed="false">События</button>
-                  <button class="secondary reference-toggle" type="button" data-reference-toggle="fields" aria-pressed="false">Поля</button>
-                </div>
-              </section>
-              <section class="phone-room-panel" aria-label="Мобильные контроллеры" hidden>
-                <div class="phone-room-header">
-                  <strong>Телефоны</strong>
-                  <button id="createPhoneRoomBtn" class="secondary" type="button">Создать комнату</button>
-                </div>
-                <div id="phoneRoomStatus" class="phone-room-status">Комната не создана</div>
-                <label class="phone-room-mode">
-                  <span>Режим</span>
-                  <select id="phoneRoomMode">
-                    <option value="big-button" selected>Большая кнопка</option>
-                    <option value="full">Полный контроллер</option>
-                  </select>
-                </label>
-                <label class="cheat-toggle phone-shake-toggle">
-                  <input id="phoneRoomShake" type="checkbox" />
-                  <span>Шейк</span>
-                </label>
-                <label class="cheat-toggle phone-dice-toggle">
-                  <input id="phoneRoomDice" type="checkbox" />
-                  <span>Отображать кубики</span>
-                </label>
-                <div id="phoneRoomDetails" class="phone-room-details" hidden>
-                  <div>
-                    <span>Код</span>
-                    <b id="phoneRoomCode">-</b>
-                  </div>
-                  <label>
-                    <span>Ссылка</span>
-                    <input id="phoneRoomUrl" type="text" readonly value="" />
-                  </label>
-                  <button id="copyPhoneRoomUrlBtn" class="secondary phone-room-copy" type="button">Скопировать ссылку</button>
-                  <div id="phoneRoomUrlHint" class="phone-room-url-hint"></div>
-                  <div id="phoneRoomControllers" class="phone-room-controllers"></div>
-                </div>
-              </section>
             </div>
           </section>
           <section class="tadam-card">
@@ -195,7 +209,20 @@
       </section>
 
       <section class="lower-grid">
-        <article id="referencePanel" class="reference-panel" aria-label="Справочник карт и полей" hidden></article>
+        <article id="referencePanel" class="reference-panel" aria-label="Справочник карт и полей" hidden>
+          <section class="reference-toggle-panel" aria-label="Показать карты и поля">
+            <strong>Показать карты и поля</strong>
+            <div class="reference-toggle-list">
+              <button class="secondary reference-toggle" type="button" data-reference-toggle="good" aria-pressed="false">Хорошо</button>
+              <button class="secondary reference-toggle" type="button" data-reference-toggle="bad" aria-pressed="false">Плохо</button>
+              <button class="secondary reference-toggle" type="button" data-reference-toggle="shop" aria-pressed="false">Лавка Джо</button>
+              <button class="secondary reference-toggle" type="button" data-reference-toggle="tadam" aria-pressed="false">Тадам!</button>
+              <button class="secondary reference-toggle" type="button" data-reference-toggle="event" aria-pressed="false">События</button>
+              <button class="secondary reference-toggle" type="button" data-reference-toggle="fields" aria-pressed="false">Поля</button>
+            </div>
+          </section>
+          <div id="referenceOutput" class="reference-output" hidden></div>
+        </article>
         <article class="log-panel">
           <div class="section-title">
             <h2>Хроника</h2>
@@ -214,6 +241,6 @@
 
     </main>
 
-    <script type="module" src="./src/game.js?v=20260619-0227"></script>
+    <script type="module" src="./src/game.js?v=20260621-0357"></script>
   </body>
 </html>

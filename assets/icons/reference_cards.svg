@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Показать карты и поля">
+  <defs>
+    <linearGradient id="referenceGold" x1="112" x2="398" y1="82" y2="430" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff2bb"/>
+      <stop offset="0.48" stop-color="#e7b84d"/>
+      <stop offset="1" stop-color="#9c6225"/>
+    </linearGradient>
+    <linearGradient id="referenceCardFace" x1="150" x2="350" y1="112" y2="384" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffe7a4"/>
+      <stop offset="0.54" stop-color="#e7b24c"/>
+      <stop offset="1" stop-color="#8e531f"/>
+    </linearGradient>
+    <linearGradient id="referenceDark" x1="124" x2="388" y1="104" y2="418" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2c3934"/>
+      <stop offset="1" stop-color="#101817"/>
+    </linearGradient>
+    <radialGradient id="referenceGlow" cx="48%" cy="38%" r="62%">
+      <stop offset="0" stop-color="#fff1bc" stop-opacity="0.34"/>
+      <stop offset="0.62" stop-color="#d6a548" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#050807" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="referenceShadow" x="-22%" y="-22%" width="144%" height="144%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#030505" flood-opacity="0.48"/>
+    </filter>
+  </defs>
+  <circle cx="256" cy="256" r="216" fill="#111a18"/>
+  <circle cx="256" cy="256" r="196" fill="url(#referenceGlow)"/>
+  <g filter="url(#referenceShadow)">
+    <path d="M136 154c-4-22 10-42 32-46l166-30c22-4 43 11 47 33l42 232c4 22-11 43-33 47l-166 30c-22 4-42-11-46-33z" fill="#5c3718" opacity="0.7"/>
+    <path d="M122 180c-7-21 5-44 26-51l159-52c21-7 44 5 51 26l72 218c7 21-5 44-26 51l-159 52c-21 7-44-5-51-26z" fill="#7a471c" stroke="#ffe9a8" stroke-width="10" opacity="0.82"/>
+    <rect x="116" y="116" width="254" height="322" rx="34" transform="rotate(-7 243 277)" fill="url(#referenceCardFace)" stroke="#fff0b3" stroke-width="12"/>
+    <rect x="151" y="149" width="184" height="254" rx="24" transform="rotate(-7 243 276)" fill="none" stroke="#6f3c16" stroke-width="10" opacity="0.64"/>
+    <path d="M180 224l112-14" fill="none" stroke="#fff0b3" stroke-linecap="round" stroke-width="18" opacity="0.72"/>
+    <path d="M176 270l132-16" fill="none" stroke="#6d3a15" stroke-linecap="round" stroke-width="18" opacity="0.62"/>
+    <path d="M170 318l92-11" fill="none" stroke="#6d3a15" stroke-linecap="round" stroke-width="18" opacity="0.62"/>
+    <g transform="translate(284 292)">
+      <rect x="0" y="0" width="140" height="140" rx="22" fill="url(#referenceDark)" stroke="url(#referenceGold)" stroke-width="12"/>
+      <path d="M70 8v124M8 70h124" fill="none" stroke="#f5c65b" stroke-linecap="round" stroke-width="10" opacity="0.82"/>
+      <rect x="18" y="18" width="44" height="44" rx="8" fill="#8aa531" stroke="#2b351b" stroke-width="6"/>
+      <rect x="78" y="18" width="44" height="44" rx="8" fill="#bd5a2c" stroke="#3a1d12" stroke-width="6"/>
+      <rect x="18" y="78" width="44" height="44" rx="8" fill="#c9a66c" stroke="#4a3219" stroke-width="6"/>
+      <rect x="78" y="78" width="44" height="44" rx="8" fill="#8aa531" stroke="#2b351b" stroke-width="6"/>
+      <circle cx="100" cy="100" r="13" fill="#fff0b3" opacity="0.84"/>
+    </g>
+  </g>
+</svg>

@@ -1,96 +1,96 @@
-deck,id,title,shortTitle,effect_type,amount,steps,cost,dice,mode,target_deck,notes,count,description
-good,coins10,Звонкая находка,,coins,10,,,,,,amount меняет сколько монет получает игрок,2,Получи 10 монет
-good,forward10,Попутный ветер,,move,,10,,,,,steps больше 0 вперед меньше 0 назад,2,Продвинься на 10 шагов вперед
-good,steal5,Ловкая кража,,steal-chosen-player,5,,,,,,amount меняет сколько монет забирается у выбранного игрока,2,"Выбери игрока, забери у него 5 монет"
-good,extra-turn,Второе дыхание,,extra-turn,,,,,,,бесплатный дополнительный ход,2,Сделай еще один ход
-good,free-shop-card,Купон Джо,,draw-free-shop,,,,,,,тянет случайную карту Лавка Джо,2,Тяни карту Лавка Джо бесплатно
-good,buy-shop-card,Торговый перехват,,buy-shop-card-from-player,,,5,,,,cost меняет цену покупки карты у другого игрока,2,"Можешь заплатить 5 монет любому игроку и забрать у него любую карту Лавка Джо. Если у тебя не хватает монет или у противников нет Лавок Джо, получи 5 монет"
-good,choose-player-back-roll,Обратный ход,,choose-player-back-roll,,,,,,,цель бросает все свои обычные кубики и применяет бонусы движения затем идет назад,2,"Выбери игрока, он делает ход назад используя все свои кубики и бонусы передвижения"
-good,next-battle-minus3,Сглаз,,give-next-battle-penalty,-3,,,,,,amount задает штраф к следующему бою выбранного игрока,2,"Отдай эту карту любому игроку. В следующем бою он получает -3 к силе, затем сбрасывает эту карту"
-good,next-bad-extra-draw,Двойное Плохо,,give-next-bad-extra-draw,,,,,,,ожидающий эффект; следующая карта Плохо цели тянет еще одну карту Плохо,2,"Отдай эту карту любому игроку. В следующий раз, когда он берет карту Плохо, он берет ещё одну"
-good,fountain-coin,Монетка из фонтана,,coins-if-poorest,8,,,,,,amount обычная награда; poorestAmount=15 если у игрока строго меньше всех монет,2,"Получи 8 монет. Если у тебя меньше всех монет, получи 15"
-good,path-sign,Путевой знак,,choose-forward-or-back,,5,,,,,steps задает выбор вперед или назад; backward landing resolves,2,Выбери: идти вперед на 5 или назад на 5. После перемещения назад сработает поле
-good,field-shield,Защитный знак,,field-shield,,,,,,,held Good; may skip stopped-cell effect then discard,2,"Оставь эту карту себе. Когда остановился на клетке, можешь не применять её эффект, а сбросить эту карту"
-good,bad-gift,Плохой подарок,,bad-gift,,,,,bad,,target draws/resolves one Bad through central deck path,2,"Выбери игрока, он берет карту Плохо"
-good,green-path,Зеленая тропа,,green-path,,,,,green,,move forward to nearest green and resolve landing,2,Передвинься вперед до ближайшего зеленого поля
-good,second-chance,Второй шанс,,second-chance,,,,,,,held Good; retry individual monster/final monster loss,2,Оставь эту карту себе. При проигрыше в битве с монстром можешь сбросить эту карту и проатаковать ещё раз
-good,strength-potion,Зелье силы,,strength-potion,3,,,,,,held Good; +3 in monster/final monster/unity only,2,Оставь эту карту себе. В битве с монстром можешь сбросить эту карту и получить +3 к силе
-good,speed-potion,Зелье скорости,,speed-potion,,5,,,,,held Good; +5 steps for current own turn,2,Оставь эту карту себе. Можешь сбросить в начале хода и получить +5 к шагам на этот ход
-good,dice-control,Контроль кубика,,dice-control,,,,,,,held Good; change one own die to 1-6 after roll,2,Оставь эту карту себе. После броска кубиков можешь поменять значение на одном кубике на любое другое и сбросить эту карту
-good,backward-reversal,Разворот,,backward-reversal,,,,,,,held Good; convert numeric backward movement to same-length forward movement,2,"Оставь эту карту себе. Когда двигаешься назад, можешь сбросить эту карту и вместо этого передвинуться на столько же шагов вперед"
-good,coin-tribute,Сбор монет,,coin-tribute,3,,,,,,amount 3 from each other player; twoPlayerAmount=5; direct transfer no recipient coin bonus,2,Все игроки отдают тебе по 3 монеты (5 при игре вдвоем)
-bad,lose10,Дырявый кошель,,coins,-10,,,,,,отрицательный amount отнимает монеты,2,Потеряй 10 монет
-bad,back10,Откат назад,,move,,-10,,,,,steps меньше 0 двигает назад,2,Отойди на 10 шагов назад
-bad,give5,Вынужденная щедрость,,give-chosen-player,5,,,,,,amount меняет сколько монет отдается,2,Выбери игрока и отдай ему 5 монет
-bad,joe-debt,Долги Джо,,shop-debt,2,,,,,,amount за каждую owned карту Лавка Джо,2,Потеряй 2 монеты за каждую свою Лавку Джо
-bad,back-to-red,Красная дорожка,,back-to-nearest-red,,,,,,,движение строго назад до ближайшего red затем resolve landing,2,"Отодвинься назад, до ближайшего красного поля. Эффект поля срабатывает"
-bad,small-scare,Легкий испуг,,nothing,,,,,,,без эффекта кроме лога,2,Легкий испуг - ничего не происходит
-bad,discard-shop,Потерянная покупка,,discard-owned-shop,,,,,,,owned Shop карта удаляется из inventory и не возвращается в shop deck,2,Сбрось одну карту Лавка Джо
-bad,back-to-player,Назад к сопернику,,back-to-nearest-player,-5,,,,,,amount fallback loss если позади нет игроков,2,"Отойди назад до ближайшего игрока. Если ты последний, потеряй 5 монет"
-bad,others-gain5,Щедрость не туда,,others-coins,5,,,,,,amount получает каждый другой игрок,2,"Все игроки, кроме тебя, получают 5 монет"
-bad,others-shop-offer,Чужая распродажа,,others-shop-offer,,,5,,,,cost цена покупки одной карты Лавка Джо для каждого другого игрока,2,"Все игроки, кроме тебя, тащат карту Лавка Джо и могут купить её за 5 монет"
-bad,leaders-back5,Откат лидеров,,leaders-back,,-5,,,,,steps отрицательное движение назад; tied last exempt,2,"Все игроки, кроме последнего, делают 5 шагов назад"
-bad,poorest-steals-shop,Бедняцкий налет,,poorest-steals-shop,,,,,,,по table order от активного среди tied poorest; переносит owned item без shop deck,2,Игрок с наименьшим количеством монет забирает у тебя карту Лавка Джо по своему выбору
-bad,bad-die-choice,Кубик неприятностей,,bad-die-choice,-8,-8,,,,,amount штраф монет steps штраф назад; 5-6 chosen player chooses penalty,2,"Брось кубик. 1-2: отойди на 8 шагов назад. 3-4: потеряй 8 монет. 5-6: выбери игрока, он решает, какой из этих двух штрафов ты получишь"
-bad,self-monster-minus3,Дрожь перед монстром,,self-monster-minus3,-3,,,,,,deferred wave 2 pending Bad status,2,Оставь эту карту себе. В следующей битве с монстром получи -3 к силе и сбрось эту карту
-bad,skip-next-good,Сломанная удача,,skip-next-good,,,,,,,deferred wave 2 pending Bad status,2,"Оставь эту карту себе. Вместо того чтобы в следующий раз тащить карту Хорошо, сбрось эту карту"
-bad,next-turn-pay-or-skip,Тяжелый выбор,,next-turn-pay-or-skip,,,15,,,,deferred wave 2 pending Bad status; cost 15,2,Оставь эту карту себе. В начале следующего хода выбери: заплатить 15 монет или пропустить ход. Затем сбрось эту карту
-bad,monster-sixes-to-ones,Проклятые шестерки,,monster-sixes-to-ones,,,,,,,deferred wave 2 pending Bad status,2,Оставь эту карту себе. В следующей битве с монстром все выброшенные 6 превращаются в 1. После боя сбрось эту карту
-bad,flip-shop-down,Закрытая лавка,,flip-shop-down,,,5,,2,,deferred wave 3 face-down Shop; dice column stores flip count 2 cost 5,2,Переверни 2 свои карты Лавка Джо лицом вниз. При посещении клетки Лавка Джо можешь выкупать перевернутые карты по 5 монет за каждую
-bad,block-next-coins,Пустые карманы,,block-next-coins,,,,,,,deferred wave 2 pending Bad status,2,"Оставь эту карту себе. В следующий раз, когда ты должен получить монеты, вместо этого сбрось эту карту"
-bad,monster-rematch,Реванш монстра,,monster-rematch,,,,,,,deferred wave 2 pending Bad status,2,"Оставь эту карту себе. В битве с монстром, если ты победил, сбрось эту карту и сразись ещё раз. Получи награду только за вторую победу"
-tadam,green-forward,Зеленый попутчик,,green-field,,5,,,move,,mode=move steps задает движение,2,Зеленые поля двигают на 5 клеток вперед
-tadam,red-back,Красный откат,,red-field,,-5,,,move,,mode=move отрицательные steps назад,2,Красные поля двигают на 5 клеток назад
-tadam,green-good,Зеленая удача,,green-field,,,,,draw,good,mode=draw target_deck выбирает колоду,2,Зеленые поля дают карту Хорошо
-tadam,red-bad,Красная беда,,red-field,,,,,draw,bad,mode=draw target_deck выбирает колоду,2,Красные поля дают карту Плохо
-tadam,jump-steal,Плата за обгон,,jump-steal,3,,,,,,amount меняет сколько монет забирается у каждого перепрыгнутого игрока,2,"Перепрыгивая игроков, забери у каждого по 3 монеты"
-tadam,land-steal,Тесная клетка,,land-steal,10,,,,,,amount меняет сколько монет забирается,2,"Если остановился на клетке с другим игроком, забери у него 10 монет"
-tadam,monster-hunt,Охота на монстра,,monster-win-coins,10,,,,,,amount меняет награду за победу над монстром,2,За победу над монстром игрок получает 10 монет
-tadam,same-cell-duel,Дуэль на клетке,,same-cell-duel,10,,,,,,amount 10 reward transfer/take shop; Wave 1 battle hook,2,Если остановился на одной клетке с игроком начинается битва. Эффект клетки срабатывает после битвы. Победитель забирает у проигравшего 10 монет или Лавку Джо на выбор
-tadam,last-good-start,Поддержка отстающего,,last-good-start,,,,,,good,start-turn Good draw; Wave 2,2,Последний игрок тащит карту Хорошо в начале своего хода
-tadam,poorest-start-coins,Монеты бедняку,,poorest-start-coins,3,,,,,,amount start-turn coin reward; Wave 2,2,Игрок с наименьшим количеством монет в начале хода получает 3 монеты
-tadam,last-step-plus,Фора последнему,,last-step-plus,,5,,,,,steps start-turn/movement modifier; Wave 2,2,Последний игрок получает +5 к шагам
-tadam,shop-discount,Скидки у Джо,,shop-discount,-2,,,,,,amount modifies Joe Shop card price; Wave 2,2,Карты Лавки Джо стоят на 2 монеты дешевле
-tadam,shop-surcharge,Жадность Джо,,shop-surcharge,2,,,,,,amount modifies Joe Shop card price; Wave 2,2,Карты Лавки Джо стоят на 2 монеты дороже
-tadam,portal-bad,Опасный портал,,portal-bad,,,,,,bad,portal movement Bad draw; Wave 2,2,После перемещения через портал игрок берет карту Плохо
-tadam,green-extra-coins,Зеленая прибавка,,green-extra-coins,3,,,,,,amount extra green-field coins; Wave 2,2,Зеленые поля дают дополнительно 3 монеты
-tadam,red-extra-loss,Красный штраф,,red-extra-loss,3,,,,,,amount extra red-field loss; Wave 2,2,Красные поля отнимают дополнительно 3 монеты
-tadam,good-cashout,Обмен удачи,,good-cashout,8,,,,,good,amount cashout reward; Wave 2,2,"Когда игрок тянет карту Хорошо, он может применить её как обычно или сбросить и получить 8 монет"
-tadam,bad-consolation,Утешение после беды,,bad-consolation,5,,,,,bad,amount consolation reward; Wave 2,2,После разыгрывания карты Плохо игрок получает 5 монет
-tadam,monster-bribe,Подкуп монстра,,monster-bribe,1,,3,,,,amount strength per payment; cost bribe cost; Wave 1 battle hook,2,Перед битвой с монстром другие игроки могут заплатить 3 монеты: монстр +1 к силе
-tadam,rich-weakness,Бремя богатства,,rich-weakness,-2,,,,,,threshold 20 coins; Wave 1 shared combat hook,2,"Если у игрока 20 монет и больше, он получает -2 к силе"
-event,race,Гонка,,event-race,,,,,,,бросок 1d6 + бонус шагов: 8+ дает 20 монет 5-7 дает 10 монет 4- дает 5 монет,2,Брось 1 кубик и прибавь бонус шагов. 8 и больше: получи 20 монет. 5-7: получи 10 монет. 4 и меньше: получи 5 монет
-event,free-step,Вольный шаг,,event-free-step,,,,,,,бросок 1d6 + бонус шагов затем выбор движения от 0 до результата,2,Брось 1 кубик и прибавь бонус шагов. Можешь пройти от 0 до результата клеток вперед
-event,unity,Сплочение,,event-unity,,,,,,,Сила монстра для MVP: 6 x число игроков. Победа: всем +10. Проигрыш: всем -5,2,"Общий бой с монстром. При победе все игроки получают 10 монет, при проигрыше все теряют 5 монет"
-event,justice,Справедливость,,event-justice,,,,,,,первый по маршруту назад последний вперед остальные монеты,2,Первый игрок по маршруту идет на 10 клеток назад последний игрок идет на 10 клеток вперед остальные получают 5 монет
-event,balance,Равновесие,,event-balance,10,,,,,,amount меняет сколько монет передается от богатого бедному,2,Самый богатый игрок отдает 10 монет самому бедному игроку
-event,generous-rain,Щедрый дождь,,event-generous-rain,20,,,,,,amount меняет выплату игрокам с 0 монет; если таких нет все получают 5 монет,2,"Все игроки без монет получают 20 монет. Если монеты есть у всех, все получают 5 монет"
-event,portal-swap,Портальный обмен,,event-portal-swap,,,,,,,активный игрок выбирает другого игрока и меняется местами,2,Поменяйся местами с любым игроком. Эффекты полей не применяются
-event,magic-wallet,Волшебный кошель,,event-magic-wallet,,,,,,,артефакт для последнего игрока по маршруту; icon assets/icons/artifact_magic_wallet_512.png,1,Последний игрок по маршруту получает артефакт. В начале своего хода владелец получает 5 монет. Если другой игрок обгоняет владельца артефакт переходит к нему
-event,monster-rage,Ярость монстров,,event-monster-rage,1,,,,,,amount меняет прибавку силы ко всем монстрам,2,Все монстры получают +1 к силе. Эффект складывается с другими копиями
-event,unity-start,Бой за старт,,event-unity-start,,,,,,,team monster battle; win all +10 lose all to start no landing effect,2,Общий бой с монстром. При победе все игроки получают 10 монет. При проигрыше все игроки отправляются на старт
-event,shop-redistribution,Перетасовка Лавки,,event-shop-redistribution,,,,,,,free Shop for no-shop players; shuffle one owned Shop from each player and redeal,2,Все игроки без карт Лавка Джо берут по 1 карте Лавка Джо. Затем все игроки сбрасывают по 1 карте Лавка Джо. Замешай сброшенные карты и раздай по одной каждому игроку
-event,fate-draw,Кубик судьбы,,event-fate-draw,,,,,,,1-2 Bad; 3-4 Good; 5-6 free Shop via finite deck,2,"Брось кубик: 1-2 - тащи карту Плохо, 3-4 - тащи карту Хорошо, 5-6 - тащи карту Лавка Джо"
-event,triple-tadam,Три ТАДАМ,,event-triple-tadam,,,,,draw,tadam,draw three TADAM sequentially,2,Тащи 3 карты Тадам
-event,mass-good-bad,Общий жребий,,event-mass-good-bad,,,,,,,1-3 all Bad; 4-6 all Good in active-player order,2,"Брось кубик: 1-3 - все игроки берут по карте Плохо, 4-6 - все игроки берут по карте Хорошо"
-event,golden-markers,Золотые метки,,event-golden-markers,10,,,,,,markerCount 5; visible route coin markers; amount reward when collected,2,"Возьми 5 отдельных монет и положи их на любые клетки поля. Игрок, который заканчивает ход на такой клетке, сбрасывает монету с поля и берет 10 монет"
-event,rich-tax,Налог на богатых,,event-rich-tax,5,,,,,,threshold 20; rich players draw Bad; others gain amount,2,"Все игроки, у которых 20 монет и больше, получают карту Плохо. Остальные игроки получают 5 монет"
-event,monster-banner,Знамя монстров,,event-monster-banner,2,,,,,,persistent Event status; stacks monster strength; owner victory draws Good then discards,2,"Оставь эту карту себе. Пока эта карта в игре, все монстры получают +2 к силе. При победе над монстром возьми карту Хорошо и сбрось эту карту"
-event,winner-takes-all,Большой приз,,event-winner-takes-all,,,,1,,,all roll 1d6 + step bonuses; winner gets Good Shop TADAM,2,"Все игроки бросают 1 кубик и прибавляют бонусы шагов. Победитель тащит карты: Хорошо, Лавка Джо и Тадам!"
-event,hero-sword,Меч Героя,,event-hero-sword,6,,,1,battle-artifact,,icon ./assets/icons/artifact_hero_sword_512.png; bonusPerSix 3; win keeps Event card out of discard,1,Битва с монстром с силой 6. Брось 1 кубик и прибавь бонусы силы. При победе получи артефакт Меч Героя. При проигрыше ничего не происходит
-event,anti-bad,Анти-Плохо,,event-anti-bad,5,,2,,artifact,,icon ./assets/icons/artifact_anti_bad_512.png; cost 2 face-up Shop cards; ordinary Bad field becomes +5 coins,1,Игрок с наименьшим количеством монет может отдать 2 Лавки Джо и получить артефакт Анти-Плохо
-shop,battle-plus,Тренировочный меч,+1 к силе,passive-battle-bonus,1,,,,,,amount adds battle strength,8,+1 к силе
-shop,step-plus,Быстрые сапоги,+2 к шагам,passive-step-bonus,,2,,,,,steps adds movement steps,8,+2 к шагам
-shop,green-fields-plus5,Зеленый бонус,Зеленое +5,green-fields-plus5,5,,,,,,amount extra coins from green fields,6,Зеленые поля дают ещё +5 монет
-shop,monster-strength-plus3,Боевой эликсир,+3 к монстру,monster-strength-plus3,3,,5,,,,cost pay before own monster roll; amount strength for this battle,4,Во время боя с монстром можешь заплатить 5 монет и получить +3 силы на этот бой
-shop,pre-roll-step-plus5,Дорожный рывок,+5 шагов за 5,pre-roll-step-plus5,,5,5,,,,cost pay before movement roll; steps turn-only,4,Перед броском кубиков можешь заплатить 5 монет и получить +5 шагов на этот ход
-shop,monster-bribe-plus1,Темная взятка,Подкуп +1,monster-bribe-plus1,1,,3,,,,cost repeatable before another player monster roll; anti-self rule,3,"Когда кто-то бьется с монстром, до его бросков кубиков, можешь заплатить 3 монеты и увеличить силу монстра на 1 на этот бой. Можно делать неограниченное количество раз за бой"
-shop,duplicate-dice-reward,Дубль на удачу,Дубль: 5,duplicate-dice-reward,5,5,,,,,amount coins or steps reward after duplicate movement dice,3,"Если во время хода хотя бы на двух кубиках выпало одно число, выбери: получить 5 монет или сделать 5 шагов вперед"
-shop,tadam-income,Эхо ТАДАМ!,Тадам +3,tadam-income,3,,,,,,amount income per TADAM played,3,"Каждый раз, когда кто-то разыгрывает карту Тадам!, получи 3 монеты"
-shop,shop-choice-3-cost-3,Привилегия Джо,3 карты за 3,shop-choice-3-cost-3,3,,3,,,,amount offer count; cost fixed ordinary Shop price,3,Во время покупок карт Лавка Джо выбирай из 3 карт и плати только 3 монеты
-shop,shop-unlimited-buy,Безлимит Джо,Покупай сколько хочешь,shop-unlimited-buy,,,,,,,ordinary Shop repeat purchases until decline/no coins/no offers,3,Можешь покупать любое количество карт Лавка Джо
-shop,turn-strength-buy,Платная тренировка,10 монет: +1 сила,turn-strength-buy,1,,10,,,,once per owner turn pre-roll permanent strength,3,Раз в ход можешь заплатить 10 монет и получить +1 к силе
-shop,turn-steps-buy,Платный марш,10 монет: +2 шага,turn-steps-buy,,2,10,,,,once per owner turn pre-roll permanent steps,3,Раз в ход можешь заплатить 10 монет и получить +2 к шагам
-shop,start-strength,Домашний старт,Старт: +1 сила,start-strength,1,,,,,,amount permanent battle strength on return or landing Start,3,Каждый раз возвращаясь на поле Старт получи +1 к силе
-shop,reroll-one-move-die,Переброс маршрута,Переброс за 3,reroll-one-move-die,,,3,,,,post-roll own movement only; cost reroll one die once per copy per turn,3,"Раз в ход после броска кубиков можешь заплатить 3 монеты и перебросить один кубик. Если ты бросаешь кубики не в свой ход, ты не можешь использовать эту карту"
-shop,move-one-farther,Еще шажок,+1 шаг за 3,move-one-farther,,1,3,,,,post-roll own movement only; highlights normal and +1 target,3,"После броска кубиков для движения, можешь заплатить 3 монеты и пройти на 1 шаг дальше"
+deck,id,title,shortTitle,effect_type,amount,steps,cost,dice,mode,target_deck,notes,count,description,artifact_desr
+good,coins10,Звонкая находка,,coins,10,,,,,,amount меняет сколько монет получает игрок,2,Получи 10 монет,
+good,forward10,Попутный ветер,,move,,10,,,,,steps больше 0 вперед меньше 0 назад,2,Продвинься на 10 шагов вперед,
+good,steal5,Ловкая кража,,steal-chosen-player,5,,,,,,amount меняет сколько монет забирается у выбранного игрока,2,"Выбери игрока, забери у него 5 монет",
+good,extra-turn,Второе дыхание,,extra-turn,,,,,,,бесплатный дополнительный ход,2,Сделай еще один ход,
+good,free-shop-card,Купон Джо,,draw-free-shop,,,,,,,тянет случайную карту Лавка Джо,2,Тяни карту Лавка Джо бесплатно,
+good,buy-shop-card,Торговый перехват,,buy-shop-card-from-player,,,5,,,,cost меняет цену покупки карты у другого игрока,2,"Можешь заплатить 5 монет любому игроку и забрать у него любую карту Лавка Джо. Если у тебя не хватает монет или у противников нет Лавок Джо, получи 5 монет",
+good,choose-player-back-roll,Обратный ход,,choose-player-back-roll,,,,,,,цель бросает все свои обычные кубики и применяет бонусы движения затем идет назад,2,"Выбери игрока, он делает ход назад используя все свои кубики и бонусы передвижения",
+good,next-battle-minus3,Сглаз,,give-next-battle-penalty,-3,,,,,,amount задает штраф к следующему бою выбранного игрока,2,"Отдай эту карту любому игроку. В следующем бою он получает -3 к силе, затем сбрасывает эту карту",
+good,next-bad-extra-draw,Двойное Плохо,,give-next-bad-extra-draw,,,,,,,ожидающий эффект; следующая карта Плохо цели тянет еще одну карту Плохо,2,"Отдай эту карту любому игроку. В следующий раз, когда он берет карту Плохо, он берет ещё одну",
+good,fountain-coin,Монетка из фонтана,,coins-if-poorest,8,,,,,,amount обычная награда; poorestAmount=15 если у игрока строго меньше всех монет,2,"Получи 8 монет. Если у тебя меньше всех монет, получи 15",
+good,path-sign,Путевой знак,,choose-forward-or-back,,5,,,,,steps задает выбор вперед или назад; backward landing resolves,2,Выбери: идти вперед на 5 или назад на 5. После перемещения назад сработает поле,
+good,field-shield,Защитный знак,,field-shield,,,,,,,held Good; may skip stopped-cell effect then discard,2,"Оставь эту карту себе. Когда остановился на клетке, можешь не применять её эффект, а сбросить эту карту",
+good,bad-gift,Плохой подарок,,bad-gift,,,,,bad,,target draws/resolves one Bad through central deck path,2,"Выбери игрока, он берет карту Плохо",
+good,green-path,Зеленая тропа,,green-path,,,,,green,,move forward to nearest green and resolve landing,2,Передвинься вперед до ближайшего зеленого поля,
+good,second-chance,Второй шанс,,second-chance,,,,,,,held Good; retry individual monster/final monster loss,2,Оставь эту карту себе. При проигрыше в битве с монстром можешь сбросить эту карту и проатаковать ещё раз,
+good,strength-potion,Зелье силы,,strength-potion,3,,,,,,held Good; +3 in monster/final monster/unity only,2,Оставь эту карту себе. В битве с монстром можешь сбросить эту карту и получить +3 к силе,
+good,speed-potion,Зелье скорости,,speed-potion,,5,,,,,held Good; +5 steps for current own turn,2,Оставь эту карту себе. Можешь сбросить в начале хода и получить +5 к шагам на этот ход,
+good,dice-control,Контроль кубика,,dice-control,,,,,,,held Good; change one own die to 1-6 after roll,2,Оставь эту карту себе. После броска кубиков можешь поменять значение на одном кубике на любое другое и сбросить эту карту,
+good,backward-reversal,Разворот,,backward-reversal,,,,,,,held Good; convert numeric backward movement to same-length forward movement,2,"Оставь эту карту себе. Когда двигаешься назад, можешь сбросить эту карту и вместо этого передвинуться на столько же шагов вперед",
+good,coin-tribute,Сбор монет,,coin-tribute,3,,,,,,amount 3 from each other player; twoPlayerAmount=5; direct transfer no recipient coin bonus,2,Все игроки отдают тебе по 3 монеты (5 при игре вдвоем),
+bad,lose10,Дырявый кошель,,coins,-10,,,,,,отрицательный amount отнимает монеты,2,Потеряй 10 монет,
+bad,back10,Откат назад,,move,,-10,,,,,steps меньше 0 двигает назад,2,Отойди на 10 шагов назад,
+bad,give5,Вынужденная щедрость,,give-chosen-player,5,,,,,,amount меняет сколько монет отдается,2,Выбери игрока и отдай ему 5 монет,
+bad,joe-debt,Долги Джо,,shop-debt,2,,,,,,amount за каждую owned карту Лавка Джо,2,Потеряй 2 монеты за каждую свою Лавку Джо,
+bad,back-to-red,Красная дорожка,,back-to-nearest-red,,,,,,,движение строго назад до ближайшего red затем resolve landing,2,"Отодвинься назад, до ближайшего красного поля. Эффект поля срабатывает",
+bad,small-scare,Легкий испуг,,nothing,,,,,,,без эффекта кроме лога,2,Легкий испуг - ничего не происходит,
+bad,discard-shop,Потерянная покупка,,discard-owned-shop,,,,,,,owned Shop карта удаляется из inventory и не возвращается в shop deck,2,Сбрось одну карту Лавка Джо,
+bad,back-to-player,Назад к сопернику,,back-to-nearest-player,-5,,,,,,amount fallback loss если позади нет игроков,2,"Отойди назад до ближайшего игрока. Если ты последний, потеряй 5 монет",
+bad,others-gain5,Щедрость не туда,,others-coins,5,,,,,,amount получает каждый другой игрок,2,"Все игроки, кроме тебя, получают 5 монет",
+bad,others-shop-offer,Чужая распродажа,,others-shop-offer,,,5,,,,cost цена покупки одной карты Лавка Джо для каждого другого игрока,2,"Все игроки, кроме тебя, тащат карту Лавка Джо и могут купить её за 5 монет",
+bad,leaders-back5,Откат лидеров,,leaders-back,,-5,,,,,steps отрицательное движение назад; tied last exempt,2,"Все игроки, кроме последнего, делают 5 шагов назад",
+bad,poorest-steals-shop,Бедняцкий налет,,poorest-steals-shop,,,,,,,по table order от активного среди tied poorest; переносит owned item без shop deck,2,Игрок с наименьшим количеством монет забирает у тебя карту Лавка Джо по своему выбору,
+bad,bad-die-choice,Кубик неприятностей,,bad-die-choice,-8,-8,,,,,amount штраф монет steps штраф назад; 5-6 chosen player chooses penalty,2,"Брось кубик. 1-2: отойди на 8 шагов назад. 3-4: потеряй 8 монет. 5-6: выбери игрока, он решает, какой из этих двух штрафов ты получишь",
+bad,self-monster-minus3,Дрожь перед монстром,,self-monster-minus3,-3,,,,,,deferred wave 2 pending Bad status,2,Оставь эту карту себе. В следующей битве с монстром получи -3 к силе и сбрось эту карту,
+bad,skip-next-good,Сломанная удача,,skip-next-good,,,,,,,deferred wave 2 pending Bad status,2,"Оставь эту карту себе. Вместо того чтобы в следующий раз тащить карту Хорошо, сбрось эту карту",
+bad,next-turn-pay-or-skip,Тяжелый выбор,,next-turn-pay-or-skip,,,15,,,,deferred wave 2 pending Bad status; cost 15,2,Оставь эту карту себе. В начале следующего хода выбери: заплатить 15 монет или пропустить ход. Затем сбрось эту карту,
+bad,monster-sixes-to-ones,Проклятые шестерки,,monster-sixes-to-ones,,,,,,,deferred wave 2 pending Bad status,2,Оставь эту карту себе. В следующей битве с монстром все выброшенные 6 превращаются в 1. После боя сбрось эту карту,
+bad,flip-shop-down,Закрытая лавка,,flip-shop-down,,,5,,2,,deferred wave 3 face-down Shop; dice column stores flip count 2 cost 5,2,Переверни 2 свои карты Лавка Джо лицом вниз. При посещении клетки Лавка Джо можешь выкупать перевернутые карты по 5 монет за каждую,
+bad,block-next-coins,Пустые карманы,,block-next-coins,,,,,,,deferred wave 2 pending Bad status,2,"Оставь эту карту себе. В следующий раз, когда ты должен получить монеты, вместо этого сбрось эту карту",
+bad,monster-rematch,Реванш монстра,,monster-rematch,,,,,,,deferred wave 2 pending Bad status,2,"Оставь эту карту себе. В битве с монстром, если ты победил, сбрось эту карту и сразись ещё раз. Получи награду только за вторую победу",
+tadam,green-forward,Зеленый попутчик,,green-field,,5,,,move,,mode=move steps задает движение,2,Зеленые поля двигают на 5 клеток вперед,
+tadam,red-back,Красный откат,,red-field,,-5,,,move,,mode=move отрицательные steps назад,2,Красные поля двигают на 5 клеток назад,
+tadam,green-good,Зеленая удача,,green-field,,,,,draw,good,mode=draw target_deck выбирает колоду,2,Зеленые поля дают карту Хорошо,
+tadam,red-bad,Красная беда,,red-field,,,,,draw,bad,mode=draw target_deck выбирает колоду,2,Красные поля дают карту Плохо,
+tadam,jump-steal,Плата за обгон,,jump-steal,3,,,,,,amount меняет сколько монет забирается у каждого перепрыгнутого игрока,2,"Перепрыгивая игроков, забери у каждого по 3 монеты",
+tadam,land-steal,Тесная клетка,,land-steal,10,,,,,,amount меняет сколько монет забирается,2,"Если остановился на клетке с другим игроком, забери у него 10 монет",
+tadam,monster-hunt,Охота на монстра,,monster-win-coins,10,,,,,,amount меняет награду за победу над монстром,2,За победу над монстром игрок получает 10 монет,
+tadam,same-cell-duel,Дуэль на клетке,,same-cell-duel,10,,,,,,amount 10 reward transfer/take shop; Wave 1 battle hook,2,Если остановился на одной клетке с игроком начинается битва. Эффект клетки срабатывает после битвы. Победитель забирает у проигравшего 10 монет или Лавку Джо на выбор,
+tadam,last-good-start,Поддержка отстающего,,last-good-start,,,,,,good,start-turn Good draw; Wave 2,2,Последний игрок тащит карту Хорошо в начале своего хода,
+tadam,poorest-start-coins,Монеты бедняку,,poorest-start-coins,3,,,,,,amount start-turn coin reward; Wave 2,2,Игрок с наименьшим количеством монет в начале хода получает 3 монеты,
+tadam,last-step-plus,Фора последнему,,last-step-plus,,5,,,,,steps start-turn/movement modifier; Wave 2,2,Последний игрок получает +5 к шагам,
+tadam,shop-discount,Скидки у Джо,,shop-discount,-2,,,,,,amount modifies Joe Shop card price; Wave 2,2,Карты Лавки Джо стоят на 2 монеты дешевле,
+tadam,shop-surcharge,Жадность Джо,,shop-surcharge,2,,,,,,amount modifies Joe Shop card price; Wave 2,2,Карты Лавки Джо стоят на 2 монеты дороже,
+tadam,portal-bad,Опасный портал,,portal-bad,,,,,,bad,portal movement Bad draw; Wave 2,2,После перемещения через портал игрок берет карту Плохо,
+tadam,green-extra-coins,Зеленая прибавка,,green-extra-coins,3,,,,,,amount extra green-field coins; Wave 2,2,Зеленые поля дают дополнительно 3 монеты,
+tadam,red-extra-loss,Красный штраф,,red-extra-loss,3,,,,,,amount extra red-field loss; Wave 2,2,Красные поля отнимают дополнительно 3 монеты,
+tadam,good-cashout,Обмен удачи,,good-cashout,8,,,,,good,amount cashout reward; Wave 2,2,"Когда игрок тянет карту Хорошо, он может применить её как обычно или сбросить и получить 8 монет",
+tadam,bad-consolation,Утешение после беды,,bad-consolation,5,,,,,bad,amount consolation reward; Wave 2,2,После разыгрывания карты Плохо игрок получает 5 монет,
+tadam,monster-bribe,Подкуп монстра,,monster-bribe,1,,3,,,,amount strength per payment; cost bribe cost; Wave 1 battle hook,2,Перед битвой с монстром другие игроки могут заплатить 3 монеты: монстр +1 к силе,
+tadam,rich-weakness,Бремя богатства,,rich-weakness,-2,,,,,,threshold 20 coins; Wave 1 shared combat hook,2,"Если у игрока 20 монет и больше, он получает -2 к силе",
+event,race,Гонка,,event-race,,,,,,,бросок 1d6 + бонус шагов: 8+ дает 20 монет 5-7 дает 10 монет 4- дает 5 монет,2,Брось 1 кубик и прибавь бонус шагов. 8 и больше: получи 20 монет. 5-7: получи 10 монет. 4 и меньше: получи 5 монет,
+event,free-step,Вольный шаг,,event-free-step,,,,,,,бросок 1d6 + бонус шагов затем выбор движения от 0 до результата,2,Брось 1 кубик и прибавь бонус шагов. Можешь пройти от 0 до результата клеток вперед,
+event,unity,Сплочение,,event-unity,,,,,,,Сила монстра для MVP: 6 x число игроков. Победа: всем +10. Проигрыш: всем -5,2,"Общий бой с монстром. При победе все игроки получают 10 монет, при проигрыше все теряют 5 монет",
+event,justice,Справедливость,,event-justice,,,,,,,первый по маршруту назад последний вперед остальные монеты,2,Первый игрок по маршруту идет на 10 клеток назад последний игрок идет на 10 клеток вперед остальные получают 5 монет,
+event,balance,Равновесие,,event-balance,10,,,,,,amount меняет сколько монет передается от богатого бедному,2,Самый богатый игрок отдает 10 монет самому бедному игроку,
+event,generous-rain,Щедрый дождь,,event-generous-rain,20,,,,,,amount меняет выплату игрокам с 0 монет; если таких нет все получают 5 монет,2,"Все игроки без монет получают 20 монет. Если монеты есть у всех, все получают 5 монет",
+event,portal-swap,Портальный обмен,,event-portal-swap,,,,,,,активный игрок выбирает другого игрока и меняется местами,2,Поменяйся местами с любым игроком. Эффекты полей не применяются,
+event,magic-wallet,Волшебный кошель,,event-magic-wallet,,,,,,,артефакт для последнего игрока по маршруту; icon assets/icons/artifact_magic_wallet_512.png,1,Последний игрок получает артефакт,"Получи 5 монет в начале хода. Если тебя обгоняет игрок, передай артефакт ему"
+event,monster-rage,Ярость монстров,,event-monster-rage,1,,,,,,amount меняет прибавку силы ко всем монстрам,2,Все монстры получают +1 к силе. Эффект складывается с другими копиями,
+event,unity-start,Бой за старт,,event-unity-start,,,,,,,team monster battle; win all +10 lose all to start no landing effect,2,Общий бой с монстром. При победе все игроки получают 10 монет. При проигрыше все игроки отправляются на старт,
+event,shop-redistribution,Перетасовка Лавки,,event-shop-redistribution,,,,,,,free Shop for no-shop players; shuffle one owned Shop from each player and redeal,2,Все игроки без карт Лавка Джо берут по 1 карте Лавка Джо. Затем все игроки сбрасывают по 1 карте Лавка Джо. Замешай сброшенные карты и раздай по одной каждому игроку,
+event,fate-draw,Кубик судьбы,,event-fate-draw,,,,,,,1-2 Bad; 3-4 Good; 5-6 free Shop via finite deck,2,"Брось кубик: 1-2 - тащи карту Плохо, 3-4 - тащи карту Хорошо, 5-6 - тащи карту Лавка Джо",
+event,triple-tadam,Три ТАДАМ,,event-triple-tadam,,,,,draw,tadam,draw three TADAM sequentially,2,Тащи 3 карты Тадам,
+event,mass-good-bad,Общий жребий,,event-mass-good-bad,,,,,,,1-3 all Bad; 4-6 all Good in active-player order,2,"Брось кубик: 1-3 - все игроки берут по карте Плохо, 4-6 - все игроки берут по карте Хорошо",
+event,golden-markers,Золотые метки,,event-golden-markers,10,,,,,,markerCount 5; visible route coin markers; amount reward when collected,2,"Возьми 5 отдельных монет и положи их на любые клетки поля. Игрок, который заканчивает ход на такой клетке, сбрасывает монету с поля и берет 10 монет",
+event,rich-tax,Налог на богатых,,event-rich-tax,5,,,,,,threshold 20; rich players draw Bad; others gain amount,2,"Все игроки, у которых 20 монет и больше, получают карту Плохо. Остальные игроки получают 5 монет",
+event,monster-banner,Знамя монстров,,event-monster-banner,2,,,,,,persistent Event status; stacks monster strength; owner victory draws Good then discards,2,"Оставь эту карту себе. Пока эта карта в игре, все монстры получают +2 к силе. При победе над монстром возьми карту Хорошо и сбрось эту карту",
+event,winner-takes-all,Большой приз,,event-winner-takes-all,,,,1,,,all roll 1d6 + step bonuses; winner gets Good Shop TADAM,2,"Все игроки бросают 1 кубик и прибавляют бонусы шагов. Победитель тащит карты: Хорошо, Лавка Джо и Тадам!",
+event,hero-sword,Меч Героя,,event-hero-sword,6,,,1,battle-artifact,,icon ./assets/icons/artifact_hero_sword_512.png; bonusPerSix 3; win keeps Event card out of discard,1,Битва с монстром с силой 6. Брось 1 кубик и прибавь бонусы силы. При победе получи артефакт Меч Героя. При проигрыше ничего не происходит,Каждая 6 в бою дает +3 к силе
+event,anti-bad,Анти-Плохо,,event-anti-bad,5,,2,,artifact,,icon ./assets/icons/artifact_anti_bad_512.png; cost 2 face-up Shop cards; ordinary Bad field becomes +5 coins,1,Игрок с наименьшим количеством монет может отдать 2 Лавки Джо и получить артефакт Анти-Плохо,Обычное Плохо дает 5 монет вместо карты
+shop,battle-plus,Тренировочный меч,+1 к силе,passive-battle-bonus,1,,,,,,amount adds battle strength,8,+1 к силе,
+shop,step-plus,Быстрые сапоги,+2 к шагам,passive-step-bonus,,2,,,,,steps adds movement steps,8,+2 к шагам,
+shop,green-fields-plus5,Зеленый бонус,Зеленое +5,green-fields-plus5,5,,,,,,amount extra coins from green fields,6,Зеленые поля дают ещё +5 монет,
+shop,monster-strength-plus3,Боевой эликсир,+3 к монстру,monster-strength-plus3,3,,5,,,,cost pay before own monster roll; amount strength for this battle,4,Во время боя с монстром можешь заплатить 5 монет и получить +3 силы на этот бой,
+shop,pre-roll-step-plus5,Дорожный рывок,+5 шагов за 5,pre-roll-step-plus5,,5,5,,,,cost pay before movement roll; steps turn-only,4,Перед броском кубиков можешь заплатить 5 монет и получить +5 шагов на этот ход,
+shop,monster-bribe-plus1,Темная взятка,Подкуп +1,monster-bribe-plus1,1,,3,,,,cost repeatable before another player monster roll; anti-self rule,3,"Когда кто-то бьется с монстром, до его бросков кубиков, можешь заплатить 3 монеты и увеличить силу монстра на 1 на этот бой. Можно делать неограниченное количество раз за бой",
+shop,duplicate-dice-reward,Дубль на удачу,Дубль: 5,duplicate-dice-reward,5,5,,,,,amount coins or steps reward after duplicate movement dice,3,"Если во время хода хотя бы на двух кубиках выпало одно число, выбери: получить 5 монет или сделать 5 шагов вперед",
+shop,tadam-income,Эхо ТАДАМ!,Тадам +3,tadam-income,3,,,,,,amount income per TADAM played,3,"Каждый раз, когда кто-то разыгрывает карту Тадам!, получи 3 монеты",
+shop,shop-choice-3-cost-3,Привилегия Джо,Выбор из 3,shop-choice-3-cost-3,3,,,,,,amount offer count only; ordinary Shop price still applies,3,Во время покупок карт Лавка Джо выбирай из 3 карт,
+shop,shop-unlimited-buy,Безлимит Джо,Покупай сколько хочешь,shop-unlimited-buy,,,,,,,ordinary Shop repeat purchases until decline/no coins/no offers,3,Можешь покупать любое количество карт Лавка Джо,
+shop,turn-strength-buy,Платная тренировка,10 монет: +1 сила,turn-strength-buy,1,,10,,,,once per owner turn pre-roll permanent strength,3,Раз в ход можешь заплатить 10 монет и получить +1 к силе,
+shop,turn-steps-buy,Платный марш,10 монет: +2 шага,turn-steps-buy,,2,10,,,,once per owner turn pre-roll permanent steps,3,Раз в ход можешь заплатить 10 монет и получить +2 к шагам,
+shop,start-strength,Домашний старт,Старт: +1 сила,start-strength,1,,,,,,amount permanent battle strength on return or landing Start,3,Каждый раз возвращаясь на поле Старт получи +1 к силе,
+shop,reroll-one-move-die,Ещё раз,Переброс за 3,reroll-one-move-die,,,3,,,,post-roll own movement only; cost reroll one die once per copy per turn,3,"Раз в ход после броска кубиков можешь заплатить 3 монеты и перебросить один кубик. Если ты бросаешь кубики не в свой ход, ты не можешь использовать эту карту",
+shop,move-one-farther,Еще шажок,+1 шаг за 3,move-one-farther,,1,3,,,,post-roll own movement only; highlights normal and +1 target,3,"После броска кубиков для движения, можешь заплатить 3 монеты и пройти на 1 шаг дальше",
