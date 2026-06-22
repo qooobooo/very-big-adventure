@@ -1,4 +1,4 @@
-import { cardConfig } from "./cards.config.js?v=20260622-0231";
+import { cardConfig } from "./cards.config.js?v=20260622-1749";
 import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260531-0271";
 
 const boardEl = document.querySelector("#board");

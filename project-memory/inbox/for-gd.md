@@ -4,6 +4,391 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-06-22 17:49 - Art/UI 1 context note: TADAM infographic redraw `Монеты бедняку`
+  - Pipeline status:
+    - Context note for a user-requested redraw of an accepted reference card.
+    - QA was not involved.
+  - Completed:
+    - Replaced only `assets/cards/tadam_poorest_start_coins_front.png` for `poorest-start-coins` / `Монеты бедняку`.
+    - Final infographic uses the newest TADAM format: active red-cape knight without shield as the poorest player, purple mage and green hunter as other same-scale pawns, neutral/equal-size route tiles, neutral bank/source, and green `+3` plus coin icon.
+    - The effect reads as a bank/game reward to the poorest player, not a coin transfer from other players.
+    - Preserved normal DOM-rendered title and description below the art.
+    - Bumped the card `frontArt` cache key, the `cards.config.js` import cache key, and the host `game.js` cache key.
+    - Did not change gameplay rules, card text, counts, CSV, Google Sheet, deck lifecycle, global `assets/cards/tadam_front.png`, or unrelated cards.
+  - Files changed by Art/UI 1:
+    - `assets/cards/tadam_poorest_start_coins_front.png`
+    - `src/cards.config.js`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/updates.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+    - PNG static check: changed asset is `744x1039 RGBA`
+  - Notes:
+    - Visual check passed: art stays inside the accepted top slot, title/description remain readable, the effect reads as +3 coins for the poorest player, and no shield is visible.
+
+- 2026-06-22 17:36 - Art/UI 1 context handback: TADAM infographic `Бремя богатства`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - Direct handback also sent to the active GD thread.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE 2026-06-22 17:22 - TADAM infographic step 17: Бремя богатства`.
+  - Completed:
+    - Replaced only `assets/cards/tadam_rich-weakness_front.png` for `rich-weakness` / `Бремя богатства`.
+    - Final infographic shows the active red-cape knight burdened by a heavy coin bag marked `20+`, with a separate red `-2` plus strength icon.
+    - The effect reads as a threshold penalty for rich players, not a coin loss or transfer.
+    - Uses neutral/equal-size route tiles, no green/red fields, no loose/flying coin trails, and no shield.
+    - Preserved normal DOM-rendered title and description below the art.
+    - Bumped the card `frontArt` cache key, the `cards.config.js` import cache key, and the host `game.js` cache key.
+    - Did not change gameplay rules, card text, counts, CSV, Google Sheet, deck lifecycle, global `assets/cards/tadam_front.png`, or unrelated cards.
+  - Files changed by Art/UI 1:
+    - `assets/cards/tadam_rich-weakness_front.png`
+    - `src/cards.config.js`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/updates.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+    - PNG static check: changed asset is `744x1039 RGBA`
+  - Notes:
+    - Visual check passed: art stays inside the accepted top slot, title/description remain readable, the effect reads as 20+ coins causing -2 strength, and no shield is visible.
+
+- 2026-06-22 17:17 - Art/UI 1 context handback: TADAM infographic `Подкуп монстра`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - Direct handback also sent to the active GD thread.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE 2026-06-22 17:04 - TADAM infographic step 16: Подкуп монстра`.
+  - Completed:
+    - Replaced only `assets/cards/tadam_monster-bribe_front.png` for `monster-bribe` / `Подкуп монстра`.
+    - Final infographic shows a purple mage as the paying other player with red `-3` plus coin icon, a small monster token getting red `+1` plus strength icon, and the active red-cape knight preparing for battle.
+    - The effect reads as other players paying to strengthen the monster, not coins being awarded to the active player.
+    - Uses neutral/equal-size route tiles, no green/red fields, no loose/flying coin trails, and no shield.
+    - Preserved normal DOM-rendered title and description below the art.
+    - Bumped the card `frontArt` cache key, the `cards.config.js` import cache key, and the host `game.js` cache key.
+    - Did not change gameplay rules, card text, counts, CSV, Google Sheet, deck lifecycle, global `assets/cards/tadam_front.png`, or unrelated cards.
+  - Files changed by Art/UI 1:
+    - `assets/cards/tadam_monster-bribe_front.png`
+    - `src/cards.config.js`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/updates.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+    - PNG static check: changed asset is `744x1039 RGBA`
+  - Notes:
+    - Visual check passed: art stays inside the accepted top slot, title/description remain readable, the effect reads as monster bribe for +1 strength at cost 3 coins from another player, and no shield is visible.
+
+- 2026-06-22 16:58 - Art/UI 1 context handback: TADAM infographic `Утешение после беды`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - Direct handback also sent to the active GD thread.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE 2026-06-22 16:45 - TADAM infographic step 15: Утешение после беды`.
+  - Completed:
+    - Replaced only `assets/cards/tadam_bad-consolation_front.png` for `bad-consolation` / `Утешение после беды`.
+    - Final infographic shows the active red-cape knight on neutral route tiles after a dark `Плохо` card has resolved, with green `+5` plus coin icon as compensation.
+    - The reward reads as a game/bank consolation after Bad card resolution, not stealing coins from another player.
+    - Uses neutral/equal-size route tiles, no green/red fields, no loose/flying coin trails, and no shield.
+    - Preserved normal DOM-rendered title and description below the art.
+    - Bumped the card `frontArt` cache key, the `cards.config.js` import cache key, and the host `game.js` cache key.
+    - Did not change gameplay rules, card text, counts, CSV, Google Sheet, deck lifecycle, global `assets/cards/tadam_front.png`, or unrelated cards.
+  - Files changed by Art/UI 1:
+    - `assets/cards/tadam_bad-consolation_front.png`
+    - `src/cards.config.js`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/updates.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+    - PNG static check: changed asset is `744x1039 RGBA`
+  - Notes:
+    - Visual check passed: art stays inside the accepted top slot, title/description remain readable, the effect reads as Bad-card consolation for 5 coins, and no shield is visible.
+
+- 2026-06-22 16:40 - Art/UI 1 context handback: TADAM infographic `Обмен удачи`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - Direct handback also sent to the active GD thread.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE 2026-06-22 16:27 - TADAM infographic step 14: Обмен удачи`.
+  - Completed:
+    - Replaced only `assets/cards/tadam_good-cashout_front.png` for `good-cashout` / `Обмен удачи`.
+    - Final infographic shows the active red-cape knight holding one golden `Хорошо` card, with a forked choice arrow to a normal magic-use sparkle or green `+8` plus coin icon.
+    - The reward reads as cashing out the Good card, not stealing coins from another player.
+    - Uses neutral/equal-size route tiles, no green/red fields, no loose/flying coin trails, and no shield.
+    - Preserved normal DOM-rendered title and description below the art.
+    - Bumped the card `frontArt` cache key, the `cards.config.js` import cache key, and the host `game.js` cache key.
+    - Did not change gameplay rules, card text, counts, CSV, Google Sheet, deck lifecycle, global `assets/cards/tadam_front.png`, or unrelated cards.
+  - Files changed by Art/UI 1:
+    - `assets/cards/tadam_good-cashout_front.png`
+    - `src/cards.config.js`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/updates.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+    - PNG static check: changed asset is `744x1039 RGBA`
+  - Notes:
+    - Visual check passed: art stays inside the accepted top slot, title/description remain readable, the effect reads as Good-card use or cash-out for 8 coins, and no shield is visible.
+
+- 2026-06-22 16:22 - Art/UI 1 context handback: TADAM infographics `Опасный портал` + `Зеленая прибавка` + `Красный штраф`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - Direct handback also sent to the active GD thread.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE 2026-06-22 16:08 - TADAM infographic steps 11-13: Опасный портал + Зеленая прибавка + Красный штраф`.
+  - Completed:
+    - Replaced only `assets/cards/tadam_portal-bad_front.png` for `portal-bad` / `Опасный портал`.
+    - Replaced only `assets/cards/tadam_green-extra-coins_front.png` for `green-extra-coins` / `Зеленая прибавка`.
+    - Replaced only `assets/cards/tadam_red-extra-loss_front.png` for `red-extra-loss` / `Красный штраф`.
+    - `Опасный портал` shows the active red-cape knight exiting a portal on neutral route tiles and drawing a dark cursed `Плохо` card.
+    - `Зеленая прибавка` shows the active red-cape knight on green route tiles with green `+3` plus coin icon.
+    - `Красный штраф` shows the active red-cape knight on red route tiles with red `-3` plus coin icon.
+    - Green/red route tiles appear only on the two cards that are explicitly about green/red fields; portal tiles remain neutral.
+    - All three cards use the accepted top-art slot and warm backing, no loose/flying coin trails, and no shield.
+    - Preserved normal DOM-rendered title and description below the art.
+    - Bumped all three card `frontArt` cache keys, the `cards.config.js` import cache key, and the host `game.js` cache key.
+    - Did not change gameplay rules, card text, counts, CSV, Google Sheet, deck lifecycle, global `assets/cards/tadam_front.png`, or unrelated cards.
+  - Files changed by Art/UI 1:
+    - `assets/cards/tadam_portal-bad_front.png`
+    - `assets/cards/tadam_green-extra-coins_front.png`
+    - `assets/cards/tadam_red-extra-loss_front.png`
+    - `src/cards.config.js`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/updates.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+    - PNG static check: all three changed assets are `744x1039 RGBA`
+  - Notes:
+    - Visual check passed: all three arts stay inside the accepted top slot, title/description remain readable, `Опасный портал` reads as portal movement causing a Bad card, `Зеленая прибавка` reads as green fields giving +3 coins, `Красный штраф` reads as red fields taking -3 coins, and no shield is visible.
+
+- 2026-06-22 15:57 - Art/UI 1 context handback: TADAM infographics `Фора последнему` + `Скидки у Джо` + `Жадность Джо`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - Direct handback also sent to the active GD thread.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE 2026-06-22 15:40 - TADAM infographic steps 8-10: Фора последнему + Скидки у Джо + Жадность Джо`.
+  - Completed:
+    - Replaced only `assets/cards/tadam_last-step-plus_front.png` for `last-step-plus` / `Фора последнему`.
+    - Replaced only `assets/cards/tadam_shop-discount_front.png` for `shop-discount` / `Скидки у Джо`.
+    - Replaced only `assets/cards/tadam_shop-surcharge_front.png` for `shop-surcharge` / `Жадность Джо`.
+    - `Фора последнему` shows the last-place red-cape knight behind two other same-scale pawns, with green `+5` and a white/gold forward arrow over neutral equal-size route tiles.
+    - `Скидки у Джо` shows a Joe Shop card/counter motif with green `-2` plus coin icon and a downward price arrow.
+    - `Жадность Джо` shows a Joe Shop card/counter motif with red `+2` plus coin icon and an upward price arrow.
+    - All three cards use the accepted top-art slot and warm backing, with neutral/equal-size route tiles where visible, no green/red fields, no loose/flying coin trails, and no shield.
+    - Preserved normal DOM-rendered title and description below the art.
+    - Bumped all three card `frontArt` cache keys, the `cards.config.js` import cache key, and the host `game.js` cache key.
+    - Did not change gameplay rules, card text, counts, CSV, Google Sheet, deck lifecycle, global `assets/cards/tadam_front.png`, or unrelated cards.
+  - Files changed by Art/UI 1:
+    - `assets/cards/tadam_last-step-plus_front.png`
+    - `assets/cards/tadam_shop-discount_front.png`
+    - `assets/cards/tadam_shop-surcharge_front.png`
+    - `src/cards.config.js`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/updates.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+    - PNG static check: all three changed assets are `744x1039 RGBA`
+  - Notes:
+    - Visual check passed: all three arts stay inside the accepted top slot, title/description remain readable, `Фора последнему` reads as +5 movement for the last player, `Скидки у Джо` reads as shop price -2 coins, `Жадность Джо` reads as shop price +2 coins, and no shield is visible.
+
+- 2026-06-22 15:14 - Art/UI 1 context handback: TADAM infographics `Дуэль на клетке` + `Поддержка отстающего`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - Direct handback also sent to the active GD thread.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE 2026-06-22 15:02 - TADAM infographic steps 6-7: Дуэль на клетке + Поддержка отстающего`.
+  - Completed:
+    - Replaced only `assets/cards/tadam_same-cell-duel_front.png` for `same-cell-duel` / `Дуэль на клетке`.
+    - Replaced only `assets/cards/tadam_last-good-start_front.png` for `last-good-start` / `Поддержка отстающего`.
+    - `Дуэль на клетке` shows the active red-cape knight and a purple mage crowded on one neutral tan/gold route tile with a duel sparkle, plus a reward choice between green `+10` plus coin icon and a small Joe Shop card icon.
+    - `Поддержка отстающего` shows the last-place red-cape knight behind two other same-scale player pawns, drawing a glowing golden `Хорошо` card with a chest-like motif.
+    - Both cards use neutral/equal-size route tiles, no green/red fields, no loose/flying coin trails, and no shield.
+    - Preserved normal DOM-rendered title and description below the art.
+    - Bumped both card `frontArt` cache keys, the `cards.config.js` import cache key, and the host `game.js` cache key.
+    - Did not change gameplay rules, card text, counts, CSV, Google Sheet, deck lifecycle, global `assets/cards/tadam_front.png`, or unrelated cards.
+  - Files changed by Art/UI 1:
+    - `assets/cards/tadam_same-cell-duel_front.png`
+    - `assets/cards/tadam_last-good-start_front.png`
+    - `src/cards.config.js`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/updates.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+    - PNG static check: both changed assets are `744x1039 RGBA`
+  - Notes:
+    - Visual check passed: both arts stay inside the accepted top slot, title/description remain readable, the duel reads as same-cell battle with reward choice, the support card reads as last player drawing a Good card, and no active pawn has a shield.
+
+- 2026-06-22 15:00 - Art/UI 1 context handback: TADAM infographic `Охота на монстра`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - Direct handback also sent to the active GD thread.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE 2026-06-22 14:52 - TADAM infographic step 5: Охота на монстра`.
+  - Completed:
+    - Replaced only `assets/cards/tadam_monster-hunt_front.png` for `monster-hunt` / `Охота на монстра`.
+    - Final infographic shows the active red-cape knight on neutral tan/gold route tiles, a defeated small monster token, and green `+10` plus coin icon near the knight.
+    - The reward reads as coins received for beating the monster, not stolen from another player.
+    - Uses equal-size neutral route tiles, no green/red fields, no other player characters, no coin stealing, no loose/flying coin trails, and no shield.
+    - Preserved normal DOM-rendered title and description below the art.
+    - Bumped the card `frontArt` cache key, `cards.config.js` import cache key, and host `game.js` cache key.
+    - Did not change gameplay rules, card text, counts, CSV, Google Sheet, deck lifecycle, global `assets/cards/tadam_front.png`, or unrelated cards.
+  - Files changed by Art/UI 1:
+    - `assets/cards/tadam_monster-hunt_front.png`
+    - `src/cards.config.js`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/updates.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+    - PNG static check: `744x1039 RGBA`
+  - Notes:
+    - Visual check passed: art stays inside the accepted top slot, title/description remain readable, value/effect reads as monster victory gives 10 coins, route tiles are neutral/equal-size, and the active pawn has no shield.
+
+- 2026-06-22 14:46 - Art/UI 1 context handback: TADAM infographic redraw `Тесная клетка`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - Direct handback also sent to the active GD thread.
+    - QA was not involved.
+  - Context:
+    - User requested replacing the previous `land-steal` art with the provided preferred variant.
+  - Completed:
+    - Replaced only `assets/cards/tadam_land-steal_front.png` for `land-steal` / `Тесная клетка`.
+    - Final infographic now matches the user-provided variant: purple mage and active red-cape knight share one neutral route cell, with red `-10` plus coin icon by the mage and green `+10` plus coin icon by the knight.
+    - Route tiles remain neutral and equal-size; no green/red fields, no loose/flying coin trails, and no shield.
+    - Preserved normal DOM-rendered title and description below the art.
+    - Bumped the card `frontArt` cache key, `cards.config.js` import cache key, and host `game.js` cache key again for the redraw.
+    - Did not change gameplay rules, card text, counts, CSV, Google Sheet, deck lifecycle, global `assets/cards/tadam_front.png`, or unrelated cards.
+  - Files changed by Art/UI 1:
+    - `assets/cards/tadam_land-steal_front.png`
+    - `src/cards.config.js`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/updates.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+    - PNG static check: `744x1039 RGBA`
+  - Notes:
+    - Visual check passed: art stays inside the accepted top slot, title/description remain readable, value/effect reads as landing on another player and stealing 10 coins, and the preferred composition is preserved.
+
+- 2026-06-22 14:10 - Art/UI 1 context handback: TADAM infographic `Тесная клетка`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - Direct handback also sent to the active GD thread.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE 2026-06-22 13:55 - TADAM infographic step 4: Тесная клетка`.
+  - Completed:
+    - Replaced only `assets/cards/tadam_land-steal_front.png` for `land-steal` / `Тесная клетка`.
+    - Final infographic shows the active red-cape knight and purple mage sharing one neutral tan/gold route cell to communicate stopping on an occupied cell.
+    - Shows green `+10` plus coin icon near the active knight and red `-10` plus coin icon near the mage.
+    - Uses equal-size neutral route tiles, no green/red fields, no loose/flying coin trails, and no shield.
+    - Preserved normal DOM-rendered title and description below the art.
+    - Updated `project-memory/tadam-infographic-rules.md` with the equal-size visible route tile constraint.
+    - Bumped the card `frontArt` cache key, `cards.config.js` import cache key, and host `game.js` cache key.
+    - Did not change gameplay rules, card text, counts, CSV, Google Sheet, deck lifecycle, global `assets/cards/tadam_front.png`, or unrelated cards.
+  - Files changed by Art/UI 1:
+    - `assets/cards/tadam_land-steal_front.png`
+    - `src/cards.config.js`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/tadam-infographic-rules.md`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/updates.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+    - PNG static check: `744x1039 RGBA`
+  - Notes:
+    - Visual check passed: art stays inside the accepted top slot, title/description remain readable, all pawns have the same visual scale, the effect reads as landing on another player and stealing 10 coins from that player, and the backing stays close to the accepted warm TADAM color.
+
+- 2026-06-22 12:04 - Art/UI 1 context handback: TADAM infographic `Плата за обгон`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - Direct handback also sent to the active GD thread.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE 2026-06-22 11:48 - TADAM infographic step 3: Плата за обгон`.
+  - Completed:
+    - Replaced only `assets/cards/tadam_jump-steal_front.png` for `jump-steal` / `Плата за обгон`.
+    - After user feedback, redrew the infographic to better match the accepted pawn/background patterns.
+    - After the next user feedback, redrew the infographic again.
+    - After the latest user feedback, redrew the infographic again to remove loose/flying coins and make the neutral route tiles equal-size.
+    - Final infographic uses the same small pawn scale for all figures, shows the active pawn already on the final neutral tile, keeps a translucent silhouette on the starting neutral tile, shows one purple mage pawn as the jumped player, shows red `-3` plus coin icon to the right of the mage, and shows `+3` plus coin icon near the active pawn.
+    - Preserved normal DOM-rendered title and description below the art.
+    - Updated `project-memory/tadam-infographic-rules.md` with the new general style constraints for distinct non-active player classes, neutral tiles, coin reward/loss notation, and avoiding unnecessary loose/flying coin trails.
+    - Bumped the card `frontArt` cache key, `cards.config.js` import cache key, and host `game.js` cache key again for the final redraw.
+    - Did not change gameplay rules, card text, counts, CSV, Google Sheet, deck lifecycle, global `assets/cards/tadam_front.png`, or unrelated cards.
+  - Files changed by Art/UI 1:
+    - `assets/cards/tadam_jump-steal_front.png`
+    - `src/cards.config.js`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/tadam-infographic-rules.md`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/updates.md`
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+    - PNG static check: `744x1039 RGBA`
+  - Notes:
+    - Visual check passed after final redraw: art stays inside the accepted top slot, title/description remain readable, all pawns have the same visual scale, the effect reads as jumping one player and taking 3 coins from that player, no loose/flying coins remain, neutral route tiles are equal-size, and no shield is visible.
+
 - 2026-06-22 11:28 - Dev 3 context handback: `Кубик неприятностей` backward target preview
   - Pipeline status:
     - Context note only under the current pipeline rule.

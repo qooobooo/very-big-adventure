@@ -74,6 +74,7 @@ Style direction:
 - Current accepted direction for the knight-like pawn: no shield unless the specific effect requires one.
 - Do not put a shield on the belly, chest, clothing emblem, or as a floating accessory.
 - If a class prop is needed, make it clearly held or worn in a sensible way.
+- If an infographic needs several players, keep the active pawn in the established red-cape knight style and make other players visually distinct while staying in the same pawn/figurine language, for example a purple mage, green hunter, or orange barbarian.
 - Benefiting pawns may smile or glow.
 - Other players should usually look neutral unless the effect explicitly harms them.
 
@@ -89,6 +90,11 @@ Style direction:
   - `Лавка Джо`: shop/Joe card motif.
 - Do not show coin transfer unless the card actually steals/transfers coins.
 - If coins are awarded by the game/bank, show a neutral source, not another player.
+- If a player receives coins, show the numeric amount with a coin icon, for example `+3` plus a small gold coin icon, not just a bare `+3`.
+- If a player loses coins, show the loss as a red numeric amount with a coin icon near that losing player, for example red `-3` plus a small gold coin icon.
+- Avoid loose/flying coin trails unless they are specifically needed for clarity. Prefer clear `+N` / `-N` markers with coin icons over extra coins moving through the scene.
+- Do not use green or red board tiles unless the card text/effect is specifically about green or red fields. For other movement/position examples, use neutral tan/gold route tiles.
+- If route tiles/cells are shown, keep visible cells equal-size and in the same perspective; do not enlarge an occupied cell unless the card is explicitly about a special field.
 - Show the essence of the effect, not every rule detail.
 
 ## Prompt Template

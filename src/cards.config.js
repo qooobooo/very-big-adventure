@@ -314,7 +314,7 @@ export const cardConfig = {
       count: 2,
       title: "Плата за обгон",
       description: "Перепрыгивая игроков, забери у каждого по 3 монеты",
-      frontArt: "./assets/cards/tadam_jump-steal_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_jump-steal_front.png?v=20260622-1340",
       effect: { type: "jump-steal", amount: 3 },
     },
     {
@@ -322,7 +322,7 @@ export const cardConfig = {
       count: 2,
       title: "Тесная клетка",
       description: "Если остановился на клетке с другим игроком, забери у него 10 монет",
-      frontArt: "./assets/cards/tadam_land-steal_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_land-steal_front.png?v=20260622-1446",
       effect: { type: "land-steal", amount: 10 },
     },
     {
@@ -330,7 +330,7 @@ export const cardConfig = {
       count: 2,
       title: "Охота на монстра",
       description: "За победу над монстром игрок получает 10 монет",
-      frontArt: "./assets/cards/tadam_monster-hunt_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_monster-hunt_front.png?v=20260622-1500",
       effect: { type: "monster-win-coins", amount: 10 },
     },
     {
@@ -338,7 +338,7 @@ export const cardConfig = {
       count: 2,
       title: "Дуэль на клетке",
       description: "Если остановился на одной клетке с игроком начинается битва. Эффект клетки срабатывает после битвы. Победитель забирает у проигравшего 10 монет или Лавку Джо на выбор",
-      frontArt: "./assets/cards/tadam_same-cell-duel_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_same-cell-duel_front.png?v=20260622-1514",
       effect: { type: "same-cell-duel", amount: 10 },
     },
     {
@@ -346,7 +346,7 @@ export const cardConfig = {
       count: 2,
       title: "Поддержка отстающего",
       description: "Последний игрок тащит карту Хорошо в начале своего хода",
-      frontArt: "./assets/cards/tadam_last-good-start_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_last-good-start_front.png?v=20260622-1514",
       effect: { type: "last-good-start", deck: "good" },
     },
     {
@@ -354,7 +354,7 @@ export const cardConfig = {
       count: 2,
       title: "Монеты бедняку",
       description: "Игрок с наименьшим количеством монет в начале хода получает 3 монеты",
-      frontArt: "./assets/cards/tadam_poorest_start_coins_front.png?v=20260622-0038",
+      frontArt: "./assets/cards/tadam_poorest_start_coins_front.png?v=20260622-1749",
       effect: { type: "poorest-start-coins", amount: 3 },
     },
     {
@@ -362,7 +362,7 @@ export const cardConfig = {
       count: 2,
       title: "Фора последнему",
       description: "Последний игрок получает +5 к шагам",
-      frontArt: "./assets/cards/tadam_last-step-plus_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_last-step-plus_front.png?v=20260622-1557",
       effect: { type: "last-step-plus", steps: 5 },
     },
     {
@@ -370,7 +370,7 @@ export const cardConfig = {
       count: 2,
       title: "Скидки у Джо",
       description: "Карты Лавки Джо стоят на 2 монеты дешевле",
-      frontArt: "./assets/cards/tadam_shop-discount_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_shop-discount_front.png?v=20260622-1557",
       effect: { type: "shop-discount", amount: -2 },
     },
     {
@@ -378,7 +378,7 @@ export const cardConfig = {
       count: 2,
       title: "Жадность Джо",
       description: "Карты Лавки Джо стоят на 2 монеты дороже",
-      frontArt: "./assets/cards/tadam_shop-surcharge_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_shop-surcharge_front.png?v=20260622-1557",
       effect: { type: "shop-surcharge", amount: 2 },
     },
     {
@@ -386,7 +386,7 @@ export const cardConfig = {
       count: 2,
       title: "Опасный портал",
       description: "После перемещения через портал игрок берет карту Плохо",
-      frontArt: "./assets/cards/tadam_portal-bad_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_portal-bad_front.png?v=20260622-1622",
       effect: { type: "portal-bad", deck: "bad" },
     },
     {
@@ -394,7 +394,7 @@ export const cardConfig = {
       count: 2,
       title: "Зеленая прибавка",
       description: "Зеленые поля дают дополнительно 3 монеты",
-      frontArt: "./assets/cards/tadam_green-extra-coins_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_green-extra-coins_front.png?v=20260622-1622",
       effect: { type: "green-extra-coins", amount: 3 },
     },
     {
@@ -402,7 +402,7 @@ export const cardConfig = {
       count: 2,
       title: "Красный штраф",
       description: "Красные поля отнимают дополнительно 3 монеты",
-      frontArt: "./assets/cards/tadam_red-extra-loss_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_red-extra-loss_front.png?v=20260622-1622",
       effect: { type: "red-extra-loss", amount: 3 },
     },
     {
@@ -410,7 +410,7 @@ export const cardConfig = {
       count: 2,
       title: "Обмен удачи",
       description: "Когда игрок тянет карту Хорошо, он может применить её как обычно или сбросить и получить 8 монет",
-      frontArt: "./assets/cards/tadam_good-cashout_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_good-cashout_front.png?v=20260622-1640",
       effect: { type: "good-cashout", amount: 8, deck: "good" },
     },
     {
@@ -418,7 +418,7 @@ export const cardConfig = {
       count: 2,
       title: "Утешение после беды",
       description: "После разыгрывания карты Плохо игрок получает 5 монет",
-      frontArt: "./assets/cards/tadam_bad-consolation_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_bad-consolation_front.png?v=20260622-1658",
       effect: { type: "bad-consolation", amount: 5, deck: "bad" },
     },
     {
@@ -426,7 +426,7 @@ export const cardConfig = {
       count: 2,
       title: "Подкуп монстра",
       description: "Перед битвой с монстром другие игроки могут заплатить 3 монеты: монстр +1 к силе",
-      frontArt: "./assets/cards/tadam_monster-bribe_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_monster-bribe_front.png?v=20260622-1717",
       effect: { type: "monster-bribe", amount: 1, cost: 3 },
     },
     {
@@ -434,7 +434,7 @@ export const cardConfig = {
       count: 2,
       title: "Бремя богатства",
       description: "Если у игрока 20 монет и больше, он получает -2 к силе",
-      frontArt: "./assets/cards/tadam_rich-weakness_front.png?v=20260621-2350",
+      frontArt: "./assets/cards/tadam_rich-weakness_front.png?v=20260622-1736",
       effect: { type: "rich-weakness", amount: -2 },
     },
   ],
