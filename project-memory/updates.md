@@ -20,6 +20,60 @@ Open questions:
 - ...
 ```
 
+## 2026-06-22 18:53 - Art/UI 1
+
+Changed:
+- Lightened all current card-specific TADAM infographic backings so the top-art background is only slightly darker than the card face parchment.
+- Used the user screenshot and the lower card face parchment as the color reference; target top backing is approximately `RGB(248, 200, 72)`.
+- Applied a local pixel-level background mask in the accepted top-art slot only; no image generation was used.
+- Preserved characters, icons, numbers, route tiles, card frames, lower parchment/text area, gameplay rules, card text, counts, CSV, Google Sheet, deck lifecycle, and unrelated UI.
+- Bumped all current TADAM `frontArt` cache keys plus the `cards.config.js` / `game.js` cache chain.
+
+Files:
+- `assets/cards/tadam_*_front.png` current card-specific TADAM frontArt assets
+- `src/cards.config.js`
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/cards.config.js`; `node --check src/game.js`; `git diff --check`.
+- PNG static check passed for all current card-specific TADAM frontArt assets: `744x1039 RGBA`.
+- Visual contact sheet checked; effect colors remain localized and the backing is much closer to the light card face.
+
+Open questions:
+- None.
+
+## 2026-06-22 18:30 - Art/UI 1
+
+Changed:
+- Normalized the warm backing color across current card-specific TADAM infographics to match `Зеленый попутчик` / `green-forward`.
+- Used local pixel-level background masking in the accepted top-art slot only; no image generation was used.
+- Preserved the card frame, lower parchment/text area, characters, icons, numbers, route tiles, and gameplay/card text.
+- Left `green-forward` as the reference asset and left already-matching `red-back` unchanged.
+- Updated cache keys for the changed TADAM `frontArt` assets plus the `cards.config.js` / `game.js` cache chain.
+
+Files:
+- `assets/cards/tadam_*_front.png` card-specific TADAM assets except `tadam_green-forward_front.png` and `tadam_red-back_front.png`
+- `src/cards.config.js`
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/cards.config.js`; `node --check src/game.js`; `git diff --check`.
+- PNG static check passed for all current card-specific TADAM frontArt assets: `744x1039 RGBA`.
+- Final edge/background median matches the `green-forward` reference across normalized cards; visual contact sheet checked.
+
+Open questions:
+- None.
+
 ## 2026-06-22 17:49 - Art/UI 1
 
 Changed:

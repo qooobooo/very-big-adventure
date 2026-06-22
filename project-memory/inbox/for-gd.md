@@ -4,6 +4,42 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-06-22 18:53 - Art/UI 1 context note: TADAM backing lightening pass
+  - Pipeline status:
+    - Context note for a user-requested visual consistency pass.
+    - QA was not involved.
+  - Completed:
+    - Lightened all current card-specific TADAM infographic backings so the top-art background is only slightly darker than the card face parchment.
+    - Used the user screenshot and lower card face parchment as reference; target top backing is approximately `RGB(248, 200, 72)`.
+    - Changed only top-slot background pixels via local masking; no image generation was used.
+    - Preserved characters, icons, numbers, route tiles, card frames, lower parchment/text area, gameplay rules, card text, counts, CSV, Google Sheet, deck lifecycle, global `assets/cards/tadam_front.png`, and unrelated UI.
+    - Bumped all current TADAM `frontArt` cache keys, the `cards.config.js` import cache key, and the host `game.js` cache key.
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+    - PNG static check: all current card-specific TADAM frontArt assets are `744x1039 RGBA`
+  - Notes:
+    - Visual contact sheet checked; effect colors remain localized and the backing now sits much closer to the light face parchment.
+
+- 2026-06-22 18:30 - Art/UI 1 context note: TADAM backing color normalization
+  - Pipeline status:
+    - Context note for a user-requested visual consistency pass.
+    - QA was not involved.
+  - Completed:
+    - Normalized the warm backing color across current card-specific TADAM infographics to match `Зеленый попутчик` / `green-forward`.
+    - Changed only top-slot background pixels via local masking; no image generation was used.
+    - Preserved characters, icons, numbers, route tiles, card frames, lower parchment/text area, gameplay rules, text, counts, CSV, Google Sheet, deck lifecycle, global `assets/cards/tadam_front.png`, and unrelated UI.
+    - Left `green-forward` as the reference asset and `red-back` unchanged because it was already within tolerance.
+    - Bumped changed TADAM `frontArt` cache keys, the `cards.config.js` import cache key, and the host `game.js` cache key.
+  - Checks passed:
+    - `node --check src/cards.config.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+    - PNG static check: all current card-specific TADAM frontArt assets are `744x1039 RGBA`
+  - Notes:
+    - Final edge/background medians match the `green-forward` reference across normalized cards; visual contact sheet checked.
+
 - 2026-06-22 17:49 - Art/UI 1 context note: TADAM infographic redraw `Монеты бедняку`
   - Pipeline status:
     - Context note for a user-requested redraw of an accepted reference card.
