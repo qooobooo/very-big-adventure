@@ -6219,6 +6219,62 @@ body.is-game-fullscreen .app-shell > * {
   width: 100%;
 }
 
+.tadam-slot.has-card-face .tadam-card-preview {
+  border-radius: 9px;
+  box-shadow:
+    0 8px 14px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(0, 0, 0, 0.38);
+}
+
+.tadam-slot.has-card-face .tadam-card-text {
+  --card-face-title-row: 12px;
+  --card-face-title-size: 0.42rem;
+  --card-face-description-size: 0.305rem;
+  --card-face-description-gap: 1px;
+  --card-face-description-line-height: 0.98;
+  grid-template-rows: max-content minmax(0, 1fr);
+  left: 7%;
+  right: 7%;
+  top: 39.5%;
+  bottom: 3.8%;
+  gap: 2px;
+}
+
+.tadam-slot.has-card-face .tadam-card-text.is-dense {
+  --card-face-title-row: 12px;
+  --card-face-title-size: 0.4rem;
+  --card-face-description-size: 0.29rem;
+  --card-face-description-line-height: 0.96;
+  top: 39%;
+  bottom: 3.5%;
+}
+
+.tadam-slot.has-card-face .tadam-card-text.is-long {
+  --card-face-title-row: 11px;
+  --card-face-title-size: 0.38rem;
+  --card-face-description-size: 0.27rem;
+  --card-face-description-line-height: 0.94;
+  left: 6.2%;
+  right: 6.2%;
+  top: 38%;
+  bottom: 3.2%;
+  gap: 1px;
+}
+
+.tadam-slot.has-card-face .tadam-card-text > .card-face-title {
+  max-height: none;
+  overflow: visible;
+  line-height: 0.98;
+}
+
+.tadam-slot.has-card-face .tadam-card-text > .card-face-description {
+  justify-content: start;
+}
+
+.tadam-slot.has-card-face .tadam-card-text > .card-face-description > span {
+  text-wrap: pretty;
+}
+
 .tadam-slot.is-activating {
   z-index: 2;
 }
@@ -6377,6 +6433,55 @@ body.is-game-fullscreen .app-shell > * {
 
 .event-toast.quick-fading {
   --event-toast-duration: 140ms;
+}
+
+.monster-defeat-banner {
+  position: absolute;
+  top: clamp(150px, 29%, 320px);
+  left: 50%;
+  z-index: 25;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: min(560px, calc(100% - 32px));
+  padding: 10px 16px 11px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff7df;
+  background: rgba(28, 24, 17, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 12px 28px rgba(0, 0, 0, 0.34);
+  font-size: clamp(1rem, 1.75vw, 1.45rem);
+  font-weight: 900;
+  line-height: 1.16;
+  text-align: center;
+  text-wrap: balance;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -8px) scale(0.98);
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+}
+
+.monster-defeat-banner[hidden] {
+  display: none;
+}
+
+.monster-defeat-banner.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.monster-defeat-banner.is-hiding {
+  opacity: 0;
+  transform: translate(-50%, -6px) scale(0.98);
+}
+
+.monster-defeat-banner strong {
+  color: #ffd777;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.24);
+  white-space: nowrap;
 }
 
 .event-toast:hover,

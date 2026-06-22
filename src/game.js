@@ -1,5 +1,5 @@
-import { cardConfig } from "./cards.config.js?v=20260622-1853";
-import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260531-0271";
+import { cardConfig } from "./cards.config.js?v=20260623-0014";
+import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260622-2347";
 
 const boardEl = document.querySelector("#board");
 const scoreStripEl = document.querySelector("#scoreStrip");
@@ -42,6 +42,7 @@ const ui = {
   logToggle: document.querySelector("#logToggle"),
   modifierPlayerStatus: document.querySelector("#modifierPlayerStatus"),
   monsterStrengthMode: document.querySelector("#monsterStrengthMode"),
+  monsterDefeatBanner: document.querySelector("#monsterDefeatBanner"),
   monsterRageIndicator: document.querySelector("#monsterRageIndicator"),
   newGameBtn: document.querySelector("#newGameBtn"),
   phoneRoomCode: document.querySelector("#phoneRoomCode"),
@@ -315,6 +316,7 @@ let referencePanelOpen = false;
 const eventToastVisibleMs = 3000;
 const eventToastFadeMs = 800;
 const eventToastQuickFadeMs = 140;
+const monsterDefeatBannerFadeMs = 220;
 const tadamActivationFlashMs = 2800;
 const humanRollCooldownMs = 650;
 const blackMarketStrengthCards = 1;
@@ -430,6 +432,7 @@ let botActionTimer = null;
 const botShopOfferChoices = new WeakMap();
 let eventToastFadeTimer = null;
 let eventToastHideTimer = null;
+let monsterDefeatBannerHideTimer = null;
 let logExpanded = false;
 let movementActionInProgress = false;
 let referenceActionInProgress = false;
@@ -652,6 +655,7 @@ function resetTransientUi() {
   resetTransientResolversAndTimers();
   hardHideEventToast();
   hideChoicePanel();
+  hardHideMonsterDefeatBanner();
   hardHideBattleHud();
   clearDiceThrowLayers();
   clearBoardTransientOverlays();
@@ -694,10 +698,12 @@ function resetTransientResolversAndTimers() {
   window.clearTimeout(botActionTimer);
   window.clearTimeout(eventToastFadeTimer);
   window.clearTimeout(eventToastHideTimer);
+  window.clearTimeout(monsterDefeatBannerHideTimer);
   window.clearTimeout(phoneDiceRollClearTimer);
   botActionTimer = null;
   eventToastFadeTimer = null;
   eventToastHideTimer = null;
+  monsterDefeatBannerHideTimer = null;
   phoneDiceRollClearTimer = null;
 }
 
@@ -714,6 +720,13 @@ function hardHideBattleHud() {
   ui.finalBattleHud.hidden = true;
   ui.finalBattleHud.className = "final-battle-hud";
   ui.finalBattleHud.innerHTML = "";
+}
+
+function hardHideMonsterDefeatBanner() {
+  if (!ui.monsterDefeatBanner) return;
+  ui.monsterDefeatBanner.hidden = true;
+  ui.monsterDefeatBanner.className = "monster-defeat-banner";
+  ui.monsterDefeatBanner.innerHTML = "";
 }
 
 function clearDiceThrowLayers() {
@@ -895,10 +908,15 @@ async function rollAndMove({ animate = true } = {}) {
     renderTileStates();
     if (animate && state.walkPath.length > 0) await sleep(160);
 
+    let shouldResolveLanding = totalSteps > 0;
+    let landingContext = { movement: "forward" };
     for (let step = 0; step < totalSteps && player.position !== finishCell; step += 1) {
       const currentPosition = player.position;
       const nextPosition = await chooseNextPosition(player, currentPosition, totalSteps - step, animate);
-      if (!nextPosition) break;
+      if (!nextPosition) {
+        shouldResolveLanding = false;
+        break;
+      }
 
       const blockingDoor = lockedDoorForTransition(player, currentPosition, nextPosition);
       if (blockingDoor) {
@@ -908,11 +926,13 @@ async function rollAndMove({ animate = true } = {}) {
             { autoFor: player },
           );
         }
+        shouldResolveLanding = false;
         break;
       }
 
       const beforeMoveCell = player.position;
       player.position = nextPosition;
+      landingContext = { movement: "forward" };
       recordPlayerMoved(player, nextPosition);
       resolveMagicWalletOvertake(player, beforeMoveCell, nextPosition);
       consumeWalkPathCell(nextPosition);
@@ -922,9 +942,13 @@ async function rollAndMove({ animate = true } = {}) {
         await sleep(180);
       }
       const enemyBattle = await resolvePassThroughEnemy(player);
-      if (state.finished || player.position !== nextPosition) break;
+      if (state.finished || player.position !== nextPosition) {
+        shouldResolveLanding = false;
+        break;
+      }
       if (enemyBattle?.winner === "player" && !enemyBattle.isFinalBoss && !passThroughAllEnabled()) break;
-      await resolvePortalAtCurrentCell(player, { animate, remaining: totalSteps - step - 1 });
+      const movedByPortal = await resolvePortalAtCurrentCell(player, { animate, remaining: totalSteps - step - 1 });
+      if (movedByPortal) landingContext = { forwardTriggers: false, movement: "teleport" };
       if (step < totalSteps - 1) {
         await resolvePassThroughShop(player);
       }
@@ -938,7 +962,7 @@ async function rollAndMove({ animate = true } = {}) {
     pulseTile(player.position);
     log(`${playerName(player)} бросает <strong>${formatRoll(rolls)}</strong>${totalSteps !== rolled ? ` и идет на ${totalSteps}` : ""}.`);
     player.turnStepBonus = 0;
-    await resolveLanding(player);
+    if (shouldResolveLanding) await resolveLanding(player, landingContext);
 
     completeMovementTurn(player);
   } finally {
@@ -1160,7 +1184,7 @@ function monsterStrengthMode() {
 }
 
 function ordinaryMonsterStrengthBonus(door) {
-  return door && !isFirstOrdinaryMonsterDoor(door) && monsterStrengthMode() === "strong" ? 2 : 0;
+  return 0;
 }
 
 function isFirstOrdinaryMonsterDoor(door) {
@@ -4372,7 +4396,7 @@ function referenceFieldInfo(type) {
     "black-market": "меняй Лавки Джо на силу, монеты или рывок к монстру",
     "chaos-portal": "брось кубик и переместись к ближайшему событию по результату",
     "dice-fortune": `6 бросков: 6 = +${diceFortuneCoinReward} монет, 1 = -${diceFortuneBackwardStepPenalty} шагов`,
-    enemy: "сразись с врагом и открывай путь к порталу",
+    enemy: "Победи, чтобы пройти дальше. При поражении получи +1/+2/+3/+5 силы и отправляйся на старт",
     event: "тяни карту Событие",
     finish: "финальная битва",
     good: "тяни карту Хорошо",
@@ -5456,14 +5480,18 @@ function resolveCardChoice(choiceId) {
   render();
 }
 
-async function resolveLanding(player) {
+async function resolveLanding(player, { fieldEffects = true, forwardTriggers = null, movement = "direct" } = {}) {
   if (state.eventDepth > 5) return;
 
+  const allowForwardTriggers = forwardTriggers ?? movement === "forward";
   recordPlayerStopped(player);
-  await resolveSameCellDuels(player);
-  if (state.finished) return;
-  await collectGoldenMarker(player);
-  if (state.finished) return;
+  if (allowForwardTriggers) {
+    await resolveSameCellDuels(player);
+    if (state.finished) return;
+    await collectGoldenMarker(player);
+    if (state.finished) return;
+  }
+  if (!fieldEffects) return;
 
   const event = cellEvents[player.position];
   if (!event) return;
@@ -5516,7 +5544,7 @@ async function resolveLanding(player) {
       await resolveVsField(player);
     }
 
-    if (player.position === landedPosition) {
+    if (allowForwardTriggers && player.position === landedPosition) {
       await resolveLandSteal(player);
     }
   } finally {
@@ -5906,6 +5934,7 @@ async function resolveEnemyBattle(player) {
     return resolveEnemyBattle(player);
   }
 
+  const defeatStrength = monsterDefeatStrengthReward(door);
   const defeatReward = monsterDefeatRewardText(door);
   state.enemyBattleProgress = {
     bonus,
@@ -5918,9 +5947,10 @@ async function resolveEnemyBattle(player) {
     rolls,
     winner: "enemy",
   };
+  render();
+  showMonsterDefeatBanner(defeatStrength);
   player.position = startCell;
   resolveStartStrengthReward(player);
-  const defeatStrength = monsterDefeatStrengthReward(door);
   addBattleBonus(player, defeatStrength);
   render();
   pulseTile(player.position);
@@ -5931,6 +5961,7 @@ async function resolveEnemyBattle(player) {
     `${playerName(player)} не побеждает врага: ${formatRoll(rolls)}${bonusText}. Возврат на <strong>старт</strong>. Награда за поражение: <strong>${defeatReward}</strong>.`,
     { autoFor: player },
   );
+  hideMonsterDefeatBanner();
   clearEnemyBattleHud();
   log(`${playerName(player)} получает <strong>${battleForceText(defeatStrength)}</strong> за поражение монстру.`, { toast: true });
   return { isFinalBoss: Boolean(door.isFinalBoss), resolved: true, winner: "enemy" };
@@ -6328,7 +6359,7 @@ async function teleportFromChaosPortal(player, destination) {
     return;
   }
 
-  await resolveLanding(player);
+  await resolveLanding(player, { movement: "teleport", forwardTriggers: false });
 }
 
 function chaosPortalRollLabel(roll) {
@@ -8345,25 +8376,33 @@ async function resolveBackToNearestPlayer(player, fallbackLoss = 5) {
   const nearestProgress = routeProgress(behind[0]);
   const nearestPlayers = behind.filter((target) => routeProgress(target) === nearestProgress);
   const steps = nearestProgress - current;
-  setNearestPlayerTargetPreview(route[nearestProgress], nearestPlayers);
   log(
     `${playerName(player)} отходит назад до ближайшего игрока: <strong>${nearestPlayers.map(playerName).join(", ")}</strong>.`,
     { toast: true },
   );
-  await sleep(360);
-  clearNearestPlayerTargetPreview();
-  await movePlayerSteps(player, steps);
+  try {
+    setNearestPlayerTargetPreview(route[nearestProgress], nearestPlayers);
+    if (state.nearestPlayerTargetPreview) await sleep(360);
+    await movePlayerSteps(player, steps);
+  } finally {
+    clearNearestPlayerTargetPreview();
+  }
 }
 
 function setNearestPlayerTargetPreview(cell, nearestPlayers = []) {
-  if (!cell || !routeIndex.has(cell)) return;
-  const names = nearestPlayers.map(playerName).join(", ");
-  state.nearestPlayerTargetPreview = {
-    cell,
-    label: "Игрок",
-    title: names ? `Назад к сопернику: ${names} (${cellTitleWithLabel(cell)})` : `Назад к сопернику: ${cellTitleWithLabel(cell)}`,
-  };
-  renderTileStates();
+  try {
+    if (!cell || !routeIndex.has(cell)) return;
+    const names = nearestPlayers.map(playerName).join(", ");
+    state.nearestPlayerTargetPreview = {
+      cell,
+      label: "Игрок",
+      title: names ? `Назад к сопернику: ${names} (${cellTitleWithLabel(cell)})` : `Назад к сопернику: ${cellTitleWithLabel(cell)}`,
+    };
+    renderTileStates();
+  } catch (error) {
+    state.nearestPlayerTargetPreview = null;
+    console.warn("Не удалось показать подсветку цели для карты Назад к сопернику", error);
+  }
 }
 
 function clearNearestPlayerTargetPreview() {
@@ -10004,7 +10043,7 @@ async function resolveGreenPath(player) {
   clearGreenPathTargetPreview();
   await movePlayerAlongRouteDirectly(player, currentIndex, target.index);
   pulseTile(player.position);
-  await resolveLanding(player);
+  await resolveLanding(player, { movement: "forward" });
 }
 
 function setGreenPathTargetPreview(target) {
@@ -10503,6 +10542,7 @@ async function resolveShop(player) {
   let immediateStepBonus = 0;
   const offerCount = joeShopOfferCount(player);
   const offer = drawCardsFromDeck("shop", offerCount, { uniqueIds: true });
+  let offerRevealed = false;
   if (!offer.length) {
     log("<strong>Лавка Джо</strong>: в колоде нет доступных карт.", { toast: true });
     return 0;
@@ -10518,8 +10558,14 @@ async function resolveShop(player) {
       return immediateStepBonus;
     }
 
-    const directChoice = await revealSelectableShopCards(offer, player, { cost });
-    const bought = directChoice || (await chooseRevealedShopCard(offer, player, { cost }));
+    let bought = null;
+    if (offerRevealed) {
+      bought = await chooseRevealedShopCard(offer, player, { cost });
+    } else {
+      const directChoice = await revealSelectableShopCards(offer, player, { cost });
+      offerRevealed = true;
+      bought = directChoice || (await chooseRevealedShopCard(offer, player, { cost }));
+    }
     if (!bought) {
       discardCardsToDeck("shop", offer);
       log(`${playerName(player)} отказывается от карт Лавки Джо.`, { toast: true });
@@ -11055,31 +11101,41 @@ async function movePlayerSteps(player, steps, { resolveBackwardLanding = false }
   if (steps < 0 && await resolveBackwardReversal(player, steps)) return;
 
   let shouldResolveLanding = steps > 0 || (steps < 0 && resolveBackwardLanding);
+  let landingContext = steps > 0 ? { movement: "forward" } : { forwardTriggers: false, movement: "backward" };
 
   if (steps > 0) {
     for (let step = 0; step < steps && player.position !== finishCell; step += 1) {
       const currentPosition = player.position;
       const nextPosition = getNextOptions(player.position)[0]?.cell;
-      if (!nextPosition) break;
+      if (!nextPosition) {
+        shouldResolveLanding = false;
+        break;
+      }
       const blockingDoor = lockedDoorForTransition(player, currentPosition, nextPosition);
       if (blockingDoor) {
         await showActionPrompt(
           `${playerName(player)} не может пройти ${blockingDoor.label}: победи врага с силой <strong>${monsterStrengthText(blockingDoor)}</strong>`,
           { autoFor: player },
         );
+        shouldResolveLanding = false;
         break;
       }
       const beforeMoveCell = player.position;
       player.position = nextPosition;
+      landingContext = { movement: "forward" };
       recordPlayerMoved(player, nextPosition);
       resolveMagicWalletOvertake(player, beforeMoveCell, nextPosition);
       if (step < steps - 1) await resolveJumpSteal(player);
       render();
       await sleep(120);
       const enemyBattle = await resolvePassThroughEnemy(player);
-      if (state.finished || player.position !== nextPosition) break;
+      if (state.finished || player.position !== nextPosition) {
+        shouldResolveLanding = false;
+        break;
+      }
       if (enemyBattle?.winner === "player" && !enemyBattle.isFinalBoss && !passThroughAllEnabled()) break;
-      await resolvePortalAtCurrentCell(player, { remaining: steps - step - 1 });
+      const movedByPortal = await resolvePortalAtCurrentCell(player, { remaining: steps - step - 1 });
+      if (movedByPortal) landingContext = { forwardTriggers: false, movement: "teleport" };
       if (step < steps - 1) {
         await resolvePassThroughShop(player);
       }
@@ -11099,7 +11155,7 @@ async function movePlayerSteps(player, steps, { resolveBackwardLanding = false }
 
   pulseTile(player.position);
   if (shouldResolveLanding) {
-    await resolveLanding(player);
+    await resolveLanding(player, landingContext);
   }
 }
 
@@ -12503,7 +12559,7 @@ async function movePlayerExactSteps(player, steps) {
   }
 
   pulseTile(player.position);
-  await resolveLanding(player);
+  await resolveLanding(player, { movement: "forward" });
   return true;
 }
 
@@ -12958,6 +13014,7 @@ function trimToastTrailingDot(message) {
 
 function showEventToast(message) {
   if (!ui.eventToast) return;
+  if (actionPromptToastActive()) return;
 
   window.clearTimeout(eventToastFadeTimer);
   window.clearTimeout(eventToastHideTimer);
@@ -12972,6 +13029,29 @@ function showEventToast(message) {
   eventToastFadeTimer = window.setTimeout(() => {
     hideEventToast();
   }, eventToastVisibleMs);
+}
+
+function showMonsterDefeatBanner(defeatStrength) {
+  if (!ui.monsterDefeatBanner) return;
+
+  window.clearTimeout(monsterDefeatBannerHideTimer);
+  const amount = Math.max(0, Number(defeatStrength) || 0);
+  ui.monsterDefeatBanner.hidden = false;
+  ui.monsterDefeatBanner.innerHTML = `<span>Получи <strong>+${amount} силы</strong> и возвращайся на старт</span>`;
+  ui.monsterDefeatBanner.classList.remove("is-hiding", "is-visible");
+  void ui.monsterDefeatBanner.offsetWidth;
+  ui.monsterDefeatBanner.classList.add("is-visible");
+}
+
+function hideMonsterDefeatBanner() {
+  if (!ui.monsterDefeatBanner || ui.monsterDefeatBanner.hidden) return;
+
+  window.clearTimeout(monsterDefeatBannerHideTimer);
+  ui.monsterDefeatBanner.classList.remove("is-visible");
+  ui.monsterDefeatBanner.classList.add("is-hiding");
+  monsterDefeatBannerHideTimer = window.setTimeout(() => {
+    hardHideMonsterDefeatBanner();
+  }, monsterDefeatBannerFadeMs);
 }
 
 function showRollContextStatus(contextInput) {
@@ -13020,7 +13100,7 @@ function showActionPrompt(message, { buttonLabel = "Далее", autoFor = null,
       actionPromptChoiceOptions = [];
       actionPromptChoiceResolver = null;
       actionPromptRollContext = null;
-      hideEventToast({ quick: true });
+      hideEventToast({ quick: true, force: true });
       render();
       resolve();
     };
@@ -13036,8 +13116,13 @@ function showActionPrompt(message, { buttonLabel = "Далее", autoFor = null,
   });
 }
 
-function hideEventToast({ quick = false } = {}) {
+function actionPromptToastActive() {
+  return Boolean(actionPromptResolver && ui.eventToast?.classList.contains("action-prompt"));
+}
+
+function hideEventToast({ quick = false, force = false } = {}) {
   if (!ui.eventToast || ui.eventToast.hidden) return;
+  if (!force && actionPromptToastActive()) return;
 
   window.clearTimeout(eventToastFadeTimer);
   window.clearTimeout(eventToastHideTimer);

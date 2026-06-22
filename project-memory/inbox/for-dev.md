@@ -4,6 +4,475 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- DONE MOVEMENT TRIGGER BUG 2026-06-23 00:24 - Forward-only triggers and `Дуэль на клетке`:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-06-23 00:24; QA is not involved unless the user explicitly asks.
+  - Requested by: user via `GD`.
+  - Summary:
+    - Fix `same-cell-duel` / `Дуэль на клетке` so it does not trigger on backward movement, return-to-start movement, teleport/swap/direct placement, or any non-forward movement.
+    - Audit similar field/card/TADAM movement triggers for the same direction bug.
+  - User report:
+    - Player moved backward/returned to `Старт`.
+    - Another player was already on `Старт`.
+    - `Дуэль на клетке` triggered, but it should not.
+  - Rule contract:
+    - Field effects and card/TADAM triggers that happen on stopping, landing, passing, jumping, or sharing a cell are forward-only by default.
+    - Backward movement, return-to-start movement, teleport/swap/direct placement do not trigger them unless the card/field text explicitly says otherwise.
+    - If an effect explicitly says a backward destination field triggers, only that destination field effect should trigger; unrelated forward-only triggers such as same-cell duel/land steal/jump steal should not piggyback unless explicitly stated.
+  - Initial GD code read:
+    - `resolveLanding(player)` currently calls `resolveSameCellDuels(player)` before the normal field event, without movement direction context.
+    - `movePlayerSteps(player, steps, { resolveBackwardLanding })` can call `resolveLanding(player)` for backward moves when `resolveBackwardLanding: true`.
+    - Some explicit cards do request backward landing, e.g. `Красная дорожка` and `Путевой знак`, but that should not automatically enable unrelated forward-only TADAM triggers.
+  - Required changes:
+    - Add movement/landing context so landing/pass-through resolvers can distinguish at least forward vs backward vs return-to-start/direct/teleport.
+    - Gate `resolveSameCellDuels(...)` to forward movement only.
+    - Audit and, if needed, gate similar triggers:
+      - `land-steal` / `Тесная клетка`;
+      - `jump-steal` / `Плата за обгон`;
+      - pass-through shop/enemy/portal triggers;
+      - golden markers;
+      - green/red field TADAM modifiers;
+      - any direct `resolveLanding(...)` calls after non-forward movement.
+    - Preserve explicit exceptions:
+      - If a card text says the field effect triggers after moving backward, the destination field effect still works.
+      - Do not broaden that exception to same-cell duel or other forward-only TADAM effects unless the text says so.
+  - Guardrails:
+    - Do not change card text, counts, TADAM deck lifecycle, route order, board placement, battle math, monster rewards, or unrelated UI.
+    - Do not remove `resolveBackwardLanding` behavior for cards that explicitly need destination field effects.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Source/browser smoke:
+      - active `same-cell-duel`, move forward onto another player's cell -> duel triggers;
+      - active `same-cell-duel`, move backward onto another player's cell -> duel does not trigger;
+      - active `same-cell-duel`, return to start onto occupied start after monster defeat -> duel does not trigger;
+      - `Путевой знак` backward still triggers the destination field effect promised by its text, but not same-cell duel unless moving forward;
+      - `Красная дорожка` still triggers the red field effect promised by its text, but not same-cell duel;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the result.
+  - Completed by Dev 3 at 2026-06-23 00:32:
+    - Added landing context for ordinary forward, backward, and teleport/direct landings.
+    - `resolveLanding(...)` now only runs forward-only stop/share-cell triggers when landing context is forward.
+    - Gated `same-cell-duel`, golden marker collection, and `land-steal` behind forward landing context.
+    - Preserved explicit backward destination field effects through `resolveBackwardLanding`, while keeping same-cell/marker/land-steal triggers disabled for those backward landings.
+    - Normal roll movement and `movePlayerSteps(...)` now skip final landing resolution if a pass-through monster battle moved the player away from the route step, including return-to-start after defeat.
+    - Pass-through shop/enemy and `jump-steal` were audited; they remain scoped to forward movement loops.
+    - Open-portal/chaos-portal direct landings now pass non-forward context to avoid forward-only landing triggers while preserving their existing destination field resolution.
+    - Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+    - Browser smoke was not run because the local server cannot listen in this sandbox (`listen EPERM 0.0.0.0:5173`).
+
+- DONE DECK COUNTS 2026-06-23 00:14 - `ТАДАМ!` and `Событие` one copy each, `Ярость монстров` four:
+  - Owner: `Dev 2`.
+  - Dispatch status: sent directly to Dev 2 thread at 2026-06-23 00:14; completed by Dev 2 at 2026-06-23 00:23; QA was not involved.
+  - Requested by: user via `GD`.
+  - Summary:
+    - Change physical card counts for decks `tadam` and `event`.
+  - Required counts:
+    - Every card in deck `tadam`: `count: 1`.
+    - Every card in deck `event`: `count: 1`.
+    - Exception: Event card `monster-rage` / `Ярость монстров`: `count: 4`.
+  - Required sync:
+    - Update `src/cards.config.js`.
+    - Update `cards-google-sheet.csv`.
+    - Update Google Sheet `Cards Config` tabs `tadam` and `event`.
+    - Ensure finite deck creation uses these new physical counts.
+  - Guardrails:
+    - Do not change titles, descriptions, effects, artifact flags/icons, frontArt paths, deck lifecycle, discard reshuffle, field placements, TADAM active-card limit, or runtime rules.
+    - Event artifacts that already have `count: 1` should remain `1`.
+    - Do not re-add recently removed Event cards `race`, `free-step`, `fate-draw`.
+  - Test plan:
+    - `node --check src/cards.config.js`.
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - all local `cardConfig.tadam[*].count === 1`;
+      - all local `cardConfig.event[*].count === 1` except `monster-rage === 4`;
+      - CSV mirrors the same counts;
+      - Google Sheet `Cards Config` readback mirrors the same counts;
+      - removed Event ids `race`, `free-step`, `fate-draw` are still absent.
+    - Browser/source smoke:
+      - finite deck physical counts match expected totals;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the result.
+  - Completed by Dev 2:
+    - Set every local `tadam` card physical `count` to `1`.
+    - Set every local `event` card physical `count` to `1`, except `monster-rage` / `Ярость монстров` to `4`.
+    - Synced the same counts in `cards-google-sheet.csv`.
+    - Synced Google Sheet `Cards Config` tabs `tadam` and `event`.
+    - Bumped `cards.config.js` import cache key in `src/game.js` and host `game.js` cache key in `index.html`.
+    - Preserved card titles, descriptions, effects, artifact flags/icons, frontArt paths, deck lifecycle, field placements, and active-card limits.
+  - Checks:
+    - Passed `node --check src/cards.config.js`.
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Static check: all local `tadam` counts are `1`; all local `event` counts are `1` except `monster-rage` is `4`; `golden-markers` effect `count: 5` remains unchanged.
+    - CSV mirrors the same counts.
+    - Google Sheet readback mirrors the same counts.
+    - Removed Event ids `race`, `free-step`, and `fate-draw` remain absent.
+    - Physical totals are `tadam = 20` and `event = 20`.
+    - Browser smoke on `localhost:5173` loaded the host with new cache key and no serious console/page errors.
+
+- DONE TADAM COMPACT CARD UI 2026-06-23 00:06 - Long description must fit:
+  - Owner: `Dev 1`.
+  - Dispatch status: sent directly to Dev 1 thread at 2026-06-23 00:06; completed by Dev 1 at 2026-06-23 00:14; context handback added for GD; QA was not involved.
+  - Requested by: user via `GD`.
+  - Summary:
+    - Fix the compact/small active TADAM card layout so long descriptions fit inside the card.
+  - Current bug:
+    - In the right-side `ТАДАМ!` active-card block, `same-cell-duel` / `Дуэль на клетке` has a long description.
+    - The text is clipped at the bottom in the small card format.
+  - Required behavior:
+    - The full title and description must fit inside each compact active TADAM card.
+    - Do not shorten card rules/text.
+    - Keep the TADAM infographic art visible and attractive.
+    - Use responsive/density styling for long TADAM cards: smaller font, tighter line-height, adjusted vertical spacing, or equivalent.
+    - The three-card active TADAM row must remain clean: cards must not overlap each other or overflow the TADAM panel.
+    - Existing normal/full card reveal/reference card layout should not regress.
+  - Primary test card:
+    - `same-cell-duel` / `Дуэль на клетке`.
+    - Text starts with: `Если остановился на одной клетке с игроком начинается битва...`
+  - Guardrails:
+    - Do not change card data, text, counts, TADAM deck lifecycle, TADAM rules/effects, infographic PNGs, or unrelated cards.
+    - Do not hide the description entirely.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - render `same-cell-duel` in the compact active TADAM slot and verify no clipping;
+      - render three active TADAM cards together and verify no overlap/overflow;
+      - sample short/medium TADAM cards to verify they still look polished;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the result.
+  - Completed:
+    - Added compact-slot-only CSS for active TADAM card faces in `.tadam-slot.has-card-face`.
+    - Long active cards now use smaller compact typography, tighter line-height, expanded text area, `max-content` title row, and visible title overflow.
+    - Scoped the change to the right-side active TADAM panel so full reveal/reference card faces keep their existing global layout.
+    - Did not change card data, text, counts, TADAM deck lifecycle, rules/effects, infographic PNGs, or unrelated cards/UI.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `node --check src/cards.config.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source smoke: `same-cell-duel` text remains unchanged and qualifies for long density; compact TADAM slot rules are scoped; full reveal/reference rules remain globally intact.
+    - Browser smoke was not run in this environment.
+
+- DONE MONSTER DEFEAT UI 2026-06-23 00:02 - Centered defeat reward text:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-06-23 00:02; QA is not involved unless the user explicitly asks.
+  - Requested by: user via `GD`.
+  - Summary:
+    - When a player loses to a monster, show a clear, attractive centered message over the board/map:
+      - `Получи +N силы и возвращайся на старт`
+  - Required behavior:
+    - `N` must be the actual monster defeat reward for that monster:
+      - monster 1 -> `+1`
+      - monster 2 -> `+2`
+      - monster 3 -> `+3`
+      - monster 4 / final monster gate -> `+5`
+    - Message should appear after the loss result is known and before/during the return-to-start movement.
+    - The message should be centered over the field/board, visually polished, and readable without covering important choice buttons.
+    - It should feel like a short result banner, not a blocking modal requiring extra input.
+    - Existing logs/history can remain, but this board-centered feedback is the primary visible cue.
+  - Scope:
+    - Apply to ordinary monster-gate losses and final monster-gate losses if they use the same defeat-return-to-start flow.
+    - If Event/team battles use different loss rules, do not add this message there unless they also trigger the same monster-defeat reward and return-to-start contract.
+  - Guardrails:
+    - Do not change monster strength values, defeat rewards, return-to-start rules, battle math, boss/final PvP rules, cards, TADAM effects, decks, routes, or Art/UI assets.
+    - Do not add an extra click/confirmation that slows the flow.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - lose to monster 1/2/3/4 and verify banner says `+1`, `+2`, `+3`, `+5` respectively;
+      - verify player still receives the correct strength reward and returns to start;
+      - verify win flow does not show the defeat banner;
+      - verify message does not overlap battle result buttons or persist into next turn;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the result.
+  - Completed by Dev 3 at 2026-06-23 00:09:
+    - Added a centered `#monsterDefeatBanner` overlay inside `.map-wrap` for ordinary/final monster-gate defeat feedback.
+    - Defeat flow now computes `monsterDefeatStrengthReward(door)` before returning to start and shows `Получи +N силы и возвращайся на старт`.
+    - The banner auto-hides after a short non-click delay and uses `pointer-events: none`, so it is not a blocking modal and does not intercept board/UI clicks.
+    - Added transient UI cleanup so the banner cannot persist into a new game/next reset.
+    - Bumped host `styles.css` and `game.js` cache keys.
+    - Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+    - Browser smoke was not run because the local server cannot listen in this sandbox (`listen EPERM 0.0.0.0:5173`).
+
+- DONE EVENT DECK CLEANUP 2026-06-22 23:52 - Remove red-marked Event cards:
+  - Owner: `Dev 2`.
+  - Dispatch status: sent directly to Dev 2 thread at 2026-06-22 23:52; completed by Dev 2 at 2026-06-23 00:00; QA was not involved.
+  - Requested by: user via `GD`.
+  - Summary:
+    - Remove the three Event cards marked red in the user's sheet screenshot from the playable `event` deck.
+  - Cards to remove:
+    - `race` / `Гонка`:
+      - current text starts with `Брось 1 кубик и прибавь бонус шагов...`
+    - `free-step` / `Вольный шаг`:
+      - current text starts with `Брось 1 кубик и прибавь бонус шагов. Можешь пройти...`
+    - `fate-draw` / `Кубик судьбы`:
+      - current text starts with `Брось кубик: 1-2 - тащи карту Плохо...`
+  - Required changes:
+    - Remove these three cards from `src/cards.config.js` `event` config.
+    - Remove/sync these rows in `cards-google-sheet.csv`.
+    - Remove/sync these rows in Google Sheet `Cards Config` / `event` tab.
+    - Ensure the finite Event deck no longer creates physical copies of these cards.
+  - Guardrails:
+    - Do not remove unrelated Event cards.
+    - Do not change Event field placement, Event back/front assets, artifact handling, deck lifecycle, discard reshuffle, or unrelated card text/counts.
+    - If runtime handlers for these removed effect types remain in `src/game.js`, they may stay as harmless legacy compatibility unless removing them is trivial and safe.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - `race`, `free-step`, and `fate-draw` are absent from local Event card config and CSV;
+      - Google Sheet `Cards Config` / `event` no longer contains these three rows;
+      - no other Event card rows were accidentally removed.
+    - Browser/source smoke:
+      - Event deck initializes without these cards;
+      - drawing Event cards does not reveal these three cards;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the result.
+  - Completed by Dev 2:
+    - Removed `race` / `Гонка`, `free-step` / `Вольный шаг`, and `fate-draw` / `Кубик судьбы` from local `src/cards.config.js` Event config.
+    - Removed the same three rows from `cards-google-sheet.csv`.
+    - Removed the same three rows from Google Sheet `Cards Config` / `event`.
+    - Left legacy runtime handlers in `src/game.js` untouched as harmless compatibility; no gameplay/field/deck lifecycle logic was changed.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/cards.config.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Static local check confirmed `race`, `free-step`, and `fate-draw` are absent from local Event config and CSV, with 17 remaining Event rows in both.
+    - Google Sheet readback confirmed `Cards Config` / `event` no longer contains those three rows and still contains the expected remaining Event rows.
+    - Browser smoke on `localhost:5173` passed: host loaded, Event reference list opened without the removed titles, expected Event titles remained visible, and there were no serious console/page errors.
+
+- DONE BALANCE 2026-06-22 23:45 - Monster strengths `6 / 12 / 18 / 26`:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-06-22 23:45; completed by Dev 3 at 2026-06-22 23:47; context handback added for GD; QA was not involved.
+  - Requested by: user via `GD`.
+  - Summary:
+    - Change the four monster strengths to exactly:
+      - monster 1: `6`
+      - monster 2: `12`
+      - monster 3: `18`
+      - monster 4 / final monster gate: `26`
+  - Required behavior:
+    - These values must be used by actual monster battle math.
+    - These values must be shown consistently on board monster badges, battle HUD, logs/history where monster target strength is displayed, and field/reference UI if it reads monster strength directly.
+    - Preserve existing defeat reward rules: monster losses grant strength bonuses according to the current `+1 / +2 / +3 / +5` contract and no coins.
+  - Guardrails:
+    - Do not change route, doors/portal open rules, monster defeat rewards, boss/final PvP rules, TADAM/card effects, bot strategy beyond any direct strength-value reads, or Art/UI assets.
+    - If there is still a `Сила монстров` setting, verify whether these numbers are the final displayed gameplay strengths. Do not accidentally make the displayed values `8 / 14 / 20 / 28` unless the current settings contract explicitly requires an additive strong-mode variant.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/browser smoke:
+      - monster badges and battle HUD show `6`, `12`, `18`, `26`;
+      - fighting each monster uses the same target strength shown in UI;
+      - final monster gate uses `26`;
+      - no stale `24` remains for the final monster strength unless it is unrelated historical text;
+      - no console errors.
+  - Completed by Dev 3:
+    - Updated `src/game.config.js` base door strengths to `6 / 12 / 18 / 26`.
+    - Applied the same ordered strength set to both current board configs.
+    - Disabled the old additive `Сила монстров = Сильные` `+2` modifier so these values remain the displayed/gameplay monster strengths instead of becoming `6 / 14 / 20 / 28`.
+    - Existing display/math paths still read through `effectiveMonsterStrength(...)`, so board badges, battle HUD target text, logs/history target strings, and direct bot strength reads use the new config values.
+    - Preserved defeat rewards: `+1 / +2 / +3 / +5` strength, no coins.
+    - Route, door/portal open rules, boss/final PvP rules, TADAM/card effects, unrelated bot strategy, and Art/UI assets were not changed.
+    - Bumped `game.config.js` import cache key and host `game.js` cache key.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `node --check src/game.config.js`.
+    - Passed `git diff --check`.
+    - Static check: no `damage: 10`, `damage: 16`, or `damage: 24` remains in `src/game.config.js`.
+    - Browser smoke was not run because the local server cannot listen in this sandbox (`listen EPERM 0.0.0.0:5173`).
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the result.
+
+- DONE BAD CARD BUG 2026-06-22 23:40 - `Назад к сопернику` skipped movement/fallback:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-06-22 23:40; completed by Dev 3 at 2026-06-22 23:42; context handback added for GD; QA was not involved.
+  - Requested by: user via `GD`.
+  - Context:
+    - User screenshot shows chronology:
+      - `Пес бросает 1 + 5 + 6 = 12 и идет на 16`.
+      - `Пес применяет карту Плохо: Назад к сопернику`.
+      - `Пес тянет карту Плохо: Назад к сопернику`.
+      - then `Пес бросает 2 + 6 + 3 = 11 и идет на 15`.
+    - User expected to move backward to the opponent behind, but the card apparently resolved without movement and the game allowed another normal roll.
+  - Initial GD code read:
+    - Card data: `bad/back-to-player` uses effect `{ type: "back-to-nearest-player", amount: -5 }`.
+    - Resolver `resolveBackToNearestPlayer(...)` currently:
+      - finds players with `routeProgress(target) < current`;
+      - moves to the nearest one behind and logs `отходит назад до ближайшего игрока`;
+      - if no one is behind, applies `-5` coins and logs `последний по маршруту`.
+    - The screenshot has neither movement log nor fallback log, so the bug is likely a silent interruption/early return/race in the Bad-card resolve flow, not just the normal “no player behind” branch.
+  - Required behavior:
+    - When `Назад к сопернику` is applied, it must always finish with exactly one visible outcome:
+      - if there is an opponent behind by route order, move the active player backward to the nearest such opponent and log it;
+      - if there is no opponent behind, lose 5 coins and log the fallback;
+      - it must not silently finish and allow a normal movement roll before one of those outcomes happens.
+    - Keep the recent board target preview behavior, but it must not block or replace the actual movement/fallback.
+  - Investigation targets:
+    - Check `drawAndApplyCard(...)` / `applyCardEffect(...)` awaiting for Bad cards.
+    - Check if reveal UI, `resolvePortalBadDraw(...)`, `portal-bad` TADAM chain, or board-preview state can let the turn continue before `resolveBackToNearestPlayer(...)` finishes.
+    - Check whether `routeProgress(player)` or target route indices can become invalid after portal/movement and cause a silent no-op.
+  - Guardrails:
+    - Do not change card title/text/count, Bad deck lifecycle, route order, unrelated Bad cards, portals, TADAM rules, or bot movement logic except as required to fix this bug.
+    - Do not change Art/UI assets.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Source/browser smoke:
+      - force/draw `Назад к сопернику` with at least one opponent behind; verify movement to nearest behind player and log;
+      - force/draw it while active player is last; verify exactly `-5` coins and fallback log;
+      - reproduce or simulate the screenshot chain after movement/Bad draw/portal-bad if possible; verify no extra normal roll starts before the card outcome;
+      - no console errors.
+  - Completed by Dev 3:
+    - Hardened `resolveBackToNearestPlayer(...)` so the outcome log is emitted before board-preview setup.
+    - Made `setNearestPlayerTargetPreview(...)` best-effort: preview/render errors are caught, stale preview state is cleared, and a non-blocking console warning is emitted.
+    - Wrapped preview delay and movement in `try/finally` so preview cleanup always runs.
+    - Movement/fallback behavior remains unchanged:
+      - opponent behind -> movement log and backward movement to nearest behind player;
+      - no opponent behind -> existing `-5` coins fallback and fallback log.
+    - Recent board-preview behavior is preserved but can no longer block/replace the actual movement/fallback.
+    - Card title/text/count, Bad deck lifecycle, route order, portals/TADAM rules, unrelated Bad cards, bots, and Art/UI assets were not changed.
+    - Bumped host `game.js` cache key.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Browser smoke was not run because the local server cannot listen in this sandbox (`listen EPERM 0.0.0.0:5173`).
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the result.
+
+- DONE SHOP BUG 2026-06-22 23:27 - `Безлимит Джо` should keep remaining offers face-up:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-06-22 23:27; completed by Dev 3 at 2026-06-22 23:30; context handback added for GD; QA was not involved.
+  - Requested by: user via `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Summary:
+    - Fix Joe Shop behavior while using the `Безлимит Джо` / unlimited-buy Shop card: after buying one visible offer, the remaining offers must stay in their current face-up state instead of turning back face-down.
+  - Current bug:
+    - During `Безлимит Джо`, after buying a Joe Shop card, the remaining Shop cards flip back to card backs.
+    - Player has to reveal/flip them again to continue buying.
+  - Required behavior:
+    - In an ordinary Joe Shop visit with `Безлимит Джо` active, after purchasing one offer:
+      - purchased card is removed/added to player as before;
+      - remaining unpurchased offer cards stay face-up/revealed exactly as they were;
+      - player can continue buying from the same revealed set without re-flipping them;
+      - no extra hidden/reveal step is required.
+  - Guardrails:
+    - Do not change `Безлимит Джо` ownership, card counts, Shop deck/discard lifecycle, offer replacement rules outside this bug, prices, `Скидки у Джо` / `Жадность Джо` interactions, Joe Auction, Black Market, or free Shop rewards.
+    - Do not change Art/UI assets.
+    - Preserve previous fix: with unlimited buys, buying one card should not refresh the whole shop offer set after every purchase.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - player owns `Безлимит Джо`;
+      - ordinary Joe Shop opens multiple offers face-up;
+      - after first purchase, remaining offers stay face-up and buyable;
+      - subsequent purchases work without forcing another reveal;
+      - normal non-unlimited Shop behavior still works;
+      - no console errors.
+  - Completed by Dev 3:
+    - Added an `offerRevealed` guard inside `resolveShop(...)` for the current ordinary Shop visit.
+    - First view of a Shop offer still uses the existing hidden-to-revealed flow.
+    - After a purchase with active `shop-unlimited-buy`, remaining cards in the same offer are shown directly via the revealed choice UI instead of going back through card backs.
+    - The bought card is still removed from the offer and added to the player inventory as before.
+    - The existing previous fix remains preserved: unlimited buys reuse the same opened offer set and do not draw replacement cards during the same visit.
+    - Non-unlimited Shop visits still end after one purchase and keep their existing reveal behavior.
+    - Prices, TADAM price modifiers, Shop deck/discard lifecycle, Joe Auction, Black Market, free Shop rewards, card data/counts, and Art/UI assets were not changed.
+    - Bumped host `game.js` and `styles.css` cache keys.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Browser smoke was not run because the local server cannot listen in this sandbox (`listen EPERM 0.0.0.0:5173`).
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the handback.
+
+- DONE FIELD REFERENCE TEXT 2026-06-22 23:19 - Monster field info copy:
+  - Owner: `Dev 1`.
+  - Dispatch status: sent directly to Dev 1 thread at 2026-06-22 23:19; completed by Dev 1 at 2026-06-22 23:21; context handback added for GD; QA was not involved.
+  - Requested by: user via `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Summary:
+    - In the field reference / `Поля` info UI, change the monster/enemy field description text.
+  - Required text:
+    - Field title stays: `Враг`.
+    - Field description/effect text must become exactly:
+      - `Победи, чтобы пройти дальше. При поражении получи +1/+2/+3/+5 силы и отправляйся на старт`
+  - Scope:
+    - Update the player-facing field reference text only.
+    - If the same stale text is reused in tooltip/reference helpers, update the shared source so the reference panel shows the new copy.
+  - Guardrails:
+    - Do not change monster rules, defeat rewards, battle math, board placement, icons, cards, decks, route, or unrelated UI.
+    - Do not change Google Sheet / card config unless this text is actually sourced there, which is unlikely.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - open `Показать карты и поля` -> `Поля`;
+      - `Враг` shows the requested text;
+      - no stale `сразись с врагом и открывай путь к порталу` remains in player-facing field reference;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the handback.
+  - Completed:
+    - Updated `referenceFieldInfo()` for field type `enemy`.
+    - Title remains `Враг`.
+    - Description/effect is now exactly `Победи, чтобы пройти дальше. При поражении получи +1/+2/+3/+5 силы и отправляйся на старт`.
+    - Did not change monster rules, defeat rewards, battle math, board placement, icons, cards, decks, route, phone controller, or unrelated UI.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: new reference text is present; stale `сразись с врагом и открывай путь к порталу` copy is not present in the field reference source; tile title copy remains unchanged.
+
 - DONE BOARD PREVIEW UX 2026-06-22 11:27 - `Кубик неприятностей` backward target preview:
   - Owner: `Dev 3`.
   - Dispatch status: sent directly to Dev 3 thread at 2026-06-22 11:27; completed by Dev 3 at 2026-06-22 11:28; context handback added for GD; QA was not involved.

@@ -48,6 +48,13 @@ This folder is the shared mailbox for Codex chats working on "Очень Бол�
 - Use a small non-blocking HUD, hidden panel, side/phone actions, or safe auto-confirm where appropriate. Existing buttons may remain as fallback only if they do not block board clicks.
 - Highlight only valid target cells, make selected/current targets readable, and ensure unrelated cells do not accidentally resolve the choice.
 
+## Movement Trigger Rules
+
+- By default, field effects and card/TADAM triggers that say they happen on stopping, landing, passing, jumping, or sharing a cell work only during forward movement.
+- Backward movement, return-to-start movement, and direct teleports/swaps do not trigger those effects unless the card/field text explicitly says otherwise.
+- If an effect explicitly says the destination field triggers after backward movement, only that destination field effect should trigger; unrelated forward-only TADAM/card triggers such as same-cell battle or jump/pass effects should still stay gated unless explicitly named.
+- When adding movement code, pass enough movement context to landing/pass-through resolvers so they can distinguish forward, backward, return-to-start, teleport, swap, and forced movement.
+
 ## Chat Roles
 
 - `Important`: project memory, summaries, status, and coordination.
