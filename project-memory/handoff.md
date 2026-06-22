@@ -39,6 +39,7 @@ Current important state:
   4. If a task is split into waves, every wave must have an assigned owner before it is sent to development.
   5. GD creates an implementation-ready task for the executor.
   6. Default pipeline: the executor completes it, writes a handback, updates `updates.md`, and sends it to GD as a context note only.
+     - If GD or another active role needs to react soon, the executor also sends a direct message to that active Codex thread; the inbox note alone is not enough for expected handbacks.
   7. GD does not verify or approve handbacks by default; GD only keeps them in mind.
   8. GD approval/checking/rework happens only when the user explicitly asks for review/approval/checking.
   9. QA is skipped by default and is involved only when the user explicitly asks, for example says `привлеки QA`.

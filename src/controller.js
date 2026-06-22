@@ -8,8 +8,6 @@ const bigChoiceActionKinds = new Set([
   "card-choice",
   "field-preview",
   "field-preview-return",
-  "move-farther",
-  "move-reroll",
   "preroll",
   "prompt-choice",
   "shop",

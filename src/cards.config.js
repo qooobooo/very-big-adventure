@@ -81,7 +81,7 @@ export const cardConfig = {
       id: "field-shield",
       count: 2,
       title: "Защитный знак",
-      description: "Оставь эту карту себе. Когда остановился на клетке, можешь не применять её эффект, а сбросить эту карту",
+      description: "Оставь эту карту себе. Когда остановился на клетке Плохо или Красное поле, можешь сбросить эту карту и отменить действие поля",
       effect: { type: "field-shield" },
     },
     {
@@ -118,13 +118,6 @@ export const cardConfig = {
       title: "Зелье скорости",
       description: "Оставь эту карту себе. Можешь сбросить в начале хода и получить +5 к шагам на этот ход",
       effect: { type: "speed-potion", steps: 5 },
-    },
-    {
-      id: "dice-control",
-      count: 2,
-      title: "Контроль кубика",
-      description: "Оставь эту карту себе. После броска кубиков можешь поменять значение на одном кубике на любое другое и сбросить эту карту",
-      effect: { type: "dice-control" },
     },
     {
       id: "backward-reversal",
@@ -289,6 +282,7 @@ export const cardConfig = {
       count: 2,
       title: "Зеленый попутчик",
       description: "Зеленые поля двигают на 5 клеток вперед",
+      frontArt: "./assets/cards/tadam_green-forward_front.png?v=20260622-0115",
       effect: { type: "green-field", mode: "move", steps: 5 },
     },
     {
@@ -296,6 +290,7 @@ export const cardConfig = {
       count: 2,
       title: "Красный откат",
       description: "Красные поля двигают на 5 клеток назад",
+      frontArt: "./assets/cards/tadam_red-back_front.png?v=20260622-0115",
       effect: { type: "red-field", mode: "move", steps: -5 },
     },
     {
@@ -303,6 +298,7 @@ export const cardConfig = {
       count: 2,
       title: "Зеленая удача",
       description: "Зеленые поля дают карту Хорошо",
+      frontArt: "./assets/cards/tadam_green-good_front.png?v=20260622-0115",
       effect: { type: "green-field", mode: "draw", deck: "good" },
     },
     {
@@ -310,6 +306,7 @@ export const cardConfig = {
       count: 2,
       title: "Красная беда",
       description: "Красные поля дают карту Плохо",
+      frontArt: "./assets/cards/tadam_red-bad_front.png?v=20260622-0231",
       effect: { type: "red-field", mode: "draw", deck: "bad" },
     },
     {
@@ -317,6 +314,7 @@ export const cardConfig = {
       count: 2,
       title: "Плата за обгон",
       description: "Перепрыгивая игроков, забери у каждого по 3 монеты",
+      frontArt: "./assets/cards/tadam_jump-steal_front.png?v=20260621-2350",
       effect: { type: "jump-steal", amount: 3 },
     },
     {
@@ -324,6 +322,7 @@ export const cardConfig = {
       count: 2,
       title: "Тесная клетка",
       description: "Если остановился на клетке с другим игроком, забери у него 10 монет",
+      frontArt: "./assets/cards/tadam_land-steal_front.png?v=20260621-2350",
       effect: { type: "land-steal", amount: 10 },
     },
     {
@@ -331,6 +330,7 @@ export const cardConfig = {
       count: 2,
       title: "Охота на монстра",
       description: "За победу над монстром игрок получает 10 монет",
+      frontArt: "./assets/cards/tadam_monster-hunt_front.png?v=20260621-2350",
       effect: { type: "monster-win-coins", amount: 10 },
     },
     {
@@ -338,6 +338,7 @@ export const cardConfig = {
       count: 2,
       title: "Дуэль на клетке",
       description: "Если остановился на одной клетке с игроком начинается битва. Эффект клетки срабатывает после битвы. Победитель забирает у проигравшего 10 монет или Лавку Джо на выбор",
+      frontArt: "./assets/cards/tadam_same-cell-duel_front.png?v=20260621-2350",
       effect: { type: "same-cell-duel", amount: 10 },
     },
     {
@@ -345,6 +346,7 @@ export const cardConfig = {
       count: 2,
       title: "Поддержка отстающего",
       description: "Последний игрок тащит карту Хорошо в начале своего хода",
+      frontArt: "./assets/cards/tadam_last-good-start_front.png?v=20260621-2350",
       effect: { type: "last-good-start", deck: "good" },
     },
     {
@@ -352,7 +354,7 @@ export const cardConfig = {
       count: 2,
       title: "Монеты бедняку",
       description: "Игрок с наименьшим количеством монет в начале хода получает 3 монеты",
-      frontArt: "./assets/cards/tadam_poorest_start_coins_front.png?v=20260621-0343",
+      frontArt: "./assets/cards/tadam_poorest_start_coins_front.png?v=20260622-0038",
       effect: { type: "poorest-start-coins", amount: 3 },
     },
     {
@@ -360,6 +362,7 @@ export const cardConfig = {
       count: 2,
       title: "Фора последнему",
       description: "Последний игрок получает +5 к шагам",
+      frontArt: "./assets/cards/tadam_last-step-plus_front.png?v=20260621-2350",
       effect: { type: "last-step-plus", steps: 5 },
     },
     {
@@ -367,6 +370,7 @@ export const cardConfig = {
       count: 2,
       title: "Скидки у Джо",
       description: "Карты Лавки Джо стоят на 2 монеты дешевле",
+      frontArt: "./assets/cards/tadam_shop-discount_front.png?v=20260621-2350",
       effect: { type: "shop-discount", amount: -2 },
     },
     {
@@ -374,6 +378,7 @@ export const cardConfig = {
       count: 2,
       title: "Жадность Джо",
       description: "Карты Лавки Джо стоят на 2 монеты дороже",
+      frontArt: "./assets/cards/tadam_shop-surcharge_front.png?v=20260621-2350",
       effect: { type: "shop-surcharge", amount: 2 },
     },
     {
@@ -381,6 +386,7 @@ export const cardConfig = {
       count: 2,
       title: "Опасный портал",
       description: "После перемещения через портал игрок берет карту Плохо",
+      frontArt: "./assets/cards/tadam_portal-bad_front.png?v=20260621-2350",
       effect: { type: "portal-bad", deck: "bad" },
     },
     {
@@ -388,6 +394,7 @@ export const cardConfig = {
       count: 2,
       title: "Зеленая прибавка",
       description: "Зеленые поля дают дополнительно 3 монеты",
+      frontArt: "./assets/cards/tadam_green-extra-coins_front.png?v=20260621-2350",
       effect: { type: "green-extra-coins", amount: 3 },
     },
     {
@@ -395,6 +402,7 @@ export const cardConfig = {
       count: 2,
       title: "Красный штраф",
       description: "Красные поля отнимают дополнительно 3 монеты",
+      frontArt: "./assets/cards/tadam_red-extra-loss_front.png?v=20260621-2350",
       effect: { type: "red-extra-loss", amount: 3 },
     },
     {
@@ -402,6 +410,7 @@ export const cardConfig = {
       count: 2,
       title: "Обмен удачи",
       description: "Когда игрок тянет карту Хорошо, он может применить её как обычно или сбросить и получить 8 монет",
+      frontArt: "./assets/cards/tadam_good-cashout_front.png?v=20260621-2350",
       effect: { type: "good-cashout", amount: 8, deck: "good" },
     },
     {
@@ -409,6 +418,7 @@ export const cardConfig = {
       count: 2,
       title: "Утешение после беды",
       description: "После разыгрывания карты Плохо игрок получает 5 монет",
+      frontArt: "./assets/cards/tadam_bad-consolation_front.png?v=20260621-2350",
       effect: { type: "bad-consolation", amount: 5, deck: "bad" },
     },
     {
@@ -416,6 +426,7 @@ export const cardConfig = {
       count: 2,
       title: "Подкуп монстра",
       description: "Перед битвой с монстром другие игроки могут заплатить 3 монеты: монстр +1 к силе",
+      frontArt: "./assets/cards/tadam_monster-bribe_front.png?v=20260621-2350",
       effect: { type: "monster-bribe", amount: 1, cost: 3 },
     },
     {
@@ -423,6 +434,7 @@ export const cardConfig = {
       count: 2,
       title: "Бремя богатства",
       description: "Если у игрока 20 монет и больше, он получает -2 к силе",
+      frontArt: "./assets/cards/tadam_rich-weakness_front.png?v=20260621-2350",
       effect: { type: "rich-weakness", amount: -2 },
     },
   ],
@@ -611,12 +623,12 @@ export const cardConfig = {
       effect: { type: "monster-strength-plus3", amount: 3, cost: 5 },
     },
     {
-      id: "pre-roll-step-plus5",
-      count: 4,
-      title: "Дорожный рывок",
-      shortTitle: "+5 шагов за 5",
-      description: "Перед броском кубиков можешь заплатить 5 монет и получить +5 шагов на этот ход",
-      effect: { type: "pre-roll-step-plus5", steps: 5, cost: 5 },
+      id: "shop-fixed-cost-3",
+      count: 3,
+      title: "Тариф Джо",
+      shortTitle: "Цена 3",
+      description: "Во время покупок карт Лавка Джо плати только 3 монеты",
+      effect: { type: "shop-fixed-cost-3", cost: 3 },
     },
     {
       id: "monster-bribe-plus1",
@@ -681,22 +693,6 @@ export const cardConfig = {
       shortTitle: "Старт: +1 сила",
       description: "Каждый раз возвращаясь на поле Старт получи +1 к силе",
       effect: { type: "start-strength", amount: 1 },
-    },
-    {
-      id: "reroll-one-move-die",
-      count: 3,
-      title: "Ещё раз",
-      shortTitle: "Переброс за 3",
-      description: "Раз в ход после броска кубиков можешь заплатить 3 монеты и перебросить один кубик. Если ты бросаешь кубики не в свой ход, ты не можешь использовать эту карту",
-      effect: { type: "reroll-one-move-die", cost: 3 },
-    },
-    {
-      id: "move-one-farther",
-      count: 3,
-      title: "Еще шажок",
-      shortTitle: "+1 шаг за 3",
-      description: "После броска кубиков для движения, можешь заплатить 3 монеты и пройти на 1 шаг дальше",
-      effect: { type: "move-one-farther", steps: 1, cost: 3 },
     },
   ],
 };

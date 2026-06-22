@@ -20,6 +20,1602 @@ Open questions:
 - ...
 ```
 
+## 2026-06-22 11:28 - Dev 3
+
+Changed:
+- Completed `ACTIVE BOARD PREVIEW UX 2026-06-22 11:27 - Кубик неприятностей backward target preview`.
+- `Кубик неприятностей` now highlights the target cell only when the resolved penalty is backward movement.
+- Added compact non-clickable board label `-8` for the destination.
+- Roll `1-2` shows the preview after the roll result resolves into backward movement.
+- Roll `5-6` shows the preview only if the chosen player selects the backward movement penalty.
+- Coin-loss branches do not add any board target preview.
+- The preview is brief/non-blocking and clears before movement starts.
+- Did not add confirmation and did not change card rules, die branches, target-player choice, penalty choice, movement amount, coin loss amount, landing resolution, Bad deck lifecycle, route order, bots, phone/controller behavior, or unrelated previews.
+- Bumped host `game.js` and `styles.css` cache keys.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+
+Open questions:
+- None.
+
+## 2026-06-22 11:27 - GD
+
+Changed:
+- Accepted Dev 3 direct handback for `Назад к сопернику` target preview as context in the board-preview UX cycle.
+- Assigned the next board-preview task to `Dev 3`: `Кубик неприятностей` backward target preview.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA is not involved.
+- `Art / UI 1` remains on hold; no next TADAM card is dispatched.
+
+Open questions:
+- None.
+
+## 2026-06-22 11:21 - Dev 3
+
+Changed:
+- Completed `ACTIVE BOARD PREVIEW UX 2026-06-22 11:19 - Назад к сопернику target preview`.
+- `Назад к сопернику` now highlights the destination cell with the nearest player behind before automatic movement.
+- Added compact non-clickable board label `Игрок` for the target cell.
+- If several players are tied on that nearest cell, the board still shows one target highlight while the existing result text names the tied players.
+- If the active player is last and the card only applies the fallback coin loss, no target preview is shown.
+- The preview is brief/non-blocking and clears before movement starts.
+- Did not add confirmation and did not change card rules, nearest-player search, fallback coin loss, movement, landing resolution, Bad deck lifecycle, route order, bots, phone/controller behavior, or unrelated previews.
+- Bumped host `game.js` and `styles.css` cache keys.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+
+Open questions:
+- None.
+
+## 2026-06-22 11:19 - GD
+
+Changed:
+- Accepted Dev 3 direct handback for `Красная дорожка` target preview as context in the board-preview UX cycle.
+- Assigned the next board-preview task to `Dev 3`: `Назад к сопернику` target preview.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA is not involved.
+- `Art / UI 1` remains on hold; no next TADAM card is dispatched.
+
+Open questions:
+- None.
+
+## 2026-06-22 11:13 - Dev 3
+
+Changed:
+- Completed `ACTIVE BOARD PREVIEW UX 2026-06-22 11:11 - Красная дорожка target preview`.
+- `Красная дорожка` now highlights the valid backward red destination cell before automatic movement.
+- Added compact non-clickable board label `Красное` for the target cell.
+- If there is no valid red field behind the player, the existing no-movement/log flow remains unchanged and no target preview is shown.
+- The preview is brief/non-blocking and clears before movement starts.
+- Did not add confirmation and did not change card rules, backward target search, movement, red-field resolution, Bad deck lifecycle, route order, bots, phone/controller behavior, or unrelated previews.
+- Bumped host `game.js` and `styles.css` cache keys.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+
+Open questions:
+- None.
+
+## 2026-06-22 11:11 - GD
+
+Changed:
+- Accepted Dev 3 direct handback for `Зеленая тропа` target preview as context in the board-preview UX cycle.
+- Assigned the next board-preview task to `Dev 3`: `Красная дорожка` target preview.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA is not involved.
+- `Art / UI 1` remains on hold; no next TADAM card is dispatched.
+
+Open questions:
+- None.
+
+## 2026-06-22 03:20 - Dev 3
+
+Changed:
+- Completed `ACTIVE BOARD PREVIEW UX 2026-06-22 03:18 - Зеленая тропа target preview`.
+- `Зеленая тропа` now highlights the valid forward green destination cell before automatic movement.
+- Added compact non-clickable board label `Зеленое` for the target cell.
+- If there is no valid green field ahead, the existing no-movement/log flow remains unchanged and no target preview is shown.
+- The preview is brief/non-blocking and clears before movement starts.
+- Did not add confirmation and did not change card rules, target search direction, movement, green-field resolution, Good deck lifecycle, route order, bots, phone/controller behavior, or unrelated previews.
+- Bumped host `game.js` and `styles.css` cache keys.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+
+Open questions:
+- None.
+
+## 2026-06-22 03:18 - GD
+
+Changed:
+- Accepted Dev 3 direct handback for `Кубик удачи` backward target preview as context in the board-preview UX cycle.
+- Assigned the next board-preview task to `Dev 3`: `Зеленая тропа` target preview.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA is not involved.
+- `Art / UI 1` remains on hold; no next TADAM card is dispatched.
+
+Open questions:
+- None.
+
+## 2026-06-22 03:16 - Dev 3
+
+Changed:
+- Completed `ACTIVE BOARD PREVIEW UX 2026-06-22 03:12 - Кубик удачи backward target preview`.
+- After all 6 `Кубик удачи` rolls are resolved, if at least one `1` creates backward movement, the destination cell is highlighted before movement.
+- The preview label uses the actual total penalty, e.g. `-10`, `-20`, etc.
+- If no `1`s are rolled, no board target preview is added.
+- The preview remains visible through the existing result/action step and is cleared just before the automatic backward movement.
+- Did not add a new confirmation and did not change rewards, penalties, dice count, random, movement, landing resolution, route order, cards, or unrelated previews.
+- Bumped host `game.js` and `styles.css` cache keys.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+
+Open questions:
+- None.
+
+## 2026-06-22 03:12 - GD
+
+Changed:
+- Accepted Dev 3 direct handback for `Портал хаоса` target preview as context in the board-preview UX cycle.
+- Assigned the next board-preview task to `Dev 3`: `Кубик удачи` backward target preview.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA is not involved.
+- `Art / UI 1` remains on hold; no next TADAM card is dispatched.
+
+Open questions:
+- None.
+
+## 2026-06-22 03:08 - Art/UI 1
+
+Changed:
+- Added a standalone TADAM infographic continuation guide so any chat can pick up future card-specific infographic work.
+- Linked the new guide from `project-memory/README.md`.
+- Captured the accepted workflow, one-card-at-a-time rule, asset paths, cache bumps, shared top-art slot, backing color target, no-shield pawn direction, prompt template, verification, and direct handback rule.
+
+Files:
+- `project-memory/tadam-infographic-rules.md`
+- `project-memory/README.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Documentation-only change; gameplay, card configs, assets, CSV, Google Sheet, and UI code were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-22 03:10 - Dev 3
+
+Changed:
+- Completed `ACTIVE BOARD PREVIEW UX 2026-06-22 03:02 - Портал хаоса target preview`.
+- After the Chaos Portal die result is known and the destination cell is calculated, that target cell is highlighted on the board before movement.
+- Added compact non-clickable labels for the result: `назад`, `Лавка`, `Хорошо`, or `вперед` / `Портал`.
+- The preview remains visible through the existing result/action step and is cleared just before teleport movement.
+- Did not add a new confirmation or change automatic movement.
+- Rules, nearest-target logic, movement, landing resolution, routes, card effects, and other board-click previews were not changed.
+- Bumped host `game.js` and `styles.css` cache keys.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+
+Open questions:
+- None.
+
+## 2026-06-22 03:08 - GD
+
+Changed:
+- Sent the active `Портал хаоса` target preview task directly to `Dev 3` thread.
+- Clarified that docs-only queue entries are not enough for active work: direct dispatch and direct handback are required for cyclic tasks.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Art / UI 1` remains on hold; no next TADAM card is dispatched.
+- QA is not involved.
+
+Open questions:
+- None.
+
+## 2026-06-22 03:02 - GD
+
+Changed:
+- Accepted direct handbacks from `Dev 3` for `Черный рынок` 30-step rush target preview and from `Art / UI 1` for TADAM infographic `Красная беда`.
+- Assigned next cyclic board-preview task to `Dev 3`: `Портал хаоса` target preview.
+- Drafted next single-card TADAM infographic item `Плата за обгон`, then put it on hold because the user asked not to send Art/UI the next card yet.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA is not involved.
+- These are cyclic one-task-at-a-time queues: each executor must ping GD directly after completion before GD sends the next item.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:59 - Dev 3
+
+Changed:
+- Completed `ACTIVE BOARD PREVIEW UX 2026-06-22 02:54 - Черный рынок 30-step rush target preview`.
+- When a human player has enough face-up Joe Shop cards for the 3-card Black Market rush exchange, the `+30` destination cell is highlighted on the board before confirmation.
+- Clicking the highlighted `+30` cell resolves the same `rush` option as the existing button and then enters the existing Shop-card exchange/payment selection flow.
+- The existing Black Market choice buttons remain available as fallback in a compact non-blocking preview panel.
+- If the 3-card rush option is unavailable, no clickable rush target is created.
+- Existing exchange rules, card removal semantics, next-monster `+10`, 30-step movement, landing resolution, bot choices, route, Shop lifecycle, field text, CSV, and Google Sheet were not changed.
+- Added a shared compact `.choice-panel-board-preview` style for board-click choices that need visible fallback buttons without blocking the field.
+- Bumped host `game.js` and `styles.css` cache keys.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:54 - GD
+
+Changed:
+- Accepted Dev 3 direct handback for `Разворот` as context in the board-click UX cycle.
+- Assigned the next board-preview UX queue task to `Dev 3`: `Черный рынок` 30-step rush target preview.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- The 30-step target preview must follow the no-blocking board-click rule.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:53 - Dev 3
+
+Changed:
+- Completed `ACTIVE BOARD CLICK UX 2026-06-22 02:50 - Разворот board target preview`.
+- `Разворот` now starts with board preview enabled for human players when backward movement can be reversed.
+- Normal backward and reversed forward target cells are highlighted directly on the board with compact `-N` / `+N` labels.
+- Clicking the backward target resolves the same as declining `Разворот`; clicking the forward target resolves the same as using/discarding `Разворот`.
+- If both options collapse onto the same cell, the board click prefers the non-consuming `keep` option to avoid accidentally discarding the held card.
+- Generalized phone/controller preview actions for clickable board-choice cards, covering `Путевой знак` and `Разворот`.
+- Bumped host `game.js` cache key again so the no-blocking `Путевой знак` / `Разворот` code is not hidden by stale browser cache.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+- Direct user report noted that `Путевой знак` still showed a blocking window in-browser; the cache key was bumped after the no-blocking fix.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:50 - GD
+
+Changed:
+- Added a `Board-Click UX` rule to `project-memory/README.md`: board selection must not be blocked by a large modal/dialog over the field.
+- Accepted Dev 3 direct rework handback for `Золотые метки` / `Путевой знак` no-blocking-preview fix as context.
+- Assigned the next board-click UX queue task to `Dev 3`: `Разворот` board target preview.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Similar board-click effects should use non-blocking HUD/panels or safe auto-confirm instead of covering the board.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:48 - Dev 3
+
+Changed:
+- Fixed the blocking board-click window for `Золотые метки`.
+- While `Золотые метки` is in board-selection preview, the large choice dialog is now hidden so the board remains clickable.
+- Selecting the 5th marker cell now auto-confirms and places the markers; no blocking confirm window is needed.
+- Applied the same no-blocking-preview rule to `Путевой знак`: its large choice dialog is hidden while board targets are active, so highlighted cells are actually clickable.
+- Bumped host `game.js` cache key.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Direct user bugfix after the board-click UX queue.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Similar board-click previews should not keep a large modal over the board unless that modal is non-blocking.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:46 - Dev 3
+
+Changed:
+- Completed `ACTIVE BOARD CLICK UX 2026-06-22 02:42 - Путевой знак board target selection`.
+- `Путевой знак` now starts with board preview enabled for human players.
+- Forward/backward target cells are highlighted directly on the board with compact `+5` / `-5` labels.
+- Clicking a highlighted target resolves the same choice as the existing forward/backward buttons.
+- The existing choice buttons remain visible as fallback while the board targets are clickable.
+- Phone/controller actions still expose the forward/backward choices while the board preview is open.
+- Bot choice behavior, card data, CSV, Google Sheet, Good deck lifecycle, movement distance, and backward landing-field resolution were not changed.
+- Bumped host `game.js` and `styles.css` cache keys.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:31 - Art/UI 1
+
+Changed:
+- Completed `ACTIVE 2026-06-22 01:49 - TADAM infographic step 2: Красная беда`.
+- Replaced the `Красная беда` / `red-bad` TADAM infographic in the accepted rich fantasy board-game style.
+- The new `red-bad` art shows a red field activating a miniature `Плохо` card with a cursed chest, without baked title/rules text.
+- Normalized the top-art backing color so the edge/background areas match the accepted TADAM cards (`red-bad` edge average is about `#DA920F`, target standard is `#D8910F`).
+- Added the accepted TADAM art slot and backing color standard to `project-memory/README.md`.
+- Bumped the `red-bad` `frontArt` cache key plus the `cards.config.js` / `game.js` cache chain.
+
+Files:
+- `assets/cards/tadam_red-bad_front.png`
+- `src/cards.config.js`
+- `src/game.js`
+- `index.html`
+- `project-memory/README.md`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Direct Art/UI task from GD; QA was not involved.
+- Rules, text, counts, CSV, Google Sheet, deck lifecycle, and unrelated UI were not changed.
+- Checks passed: `assets/cards/tadam_red-bad_front.png` is `744x1039 RGBA`; `node --check src/cards.config.js`; `node --check src/game.js`; `git diff --check -- assets/cards/tadam_red-bad_front.png src/cards.config.js src/game.js index.html project-memory/README.md project-memory/handoff.md project-memory/prompts/next-chat.md`.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:45 - Dev 2
+
+Changed:
+- Tuned the TADAM activation highlight after user feedback: smoother visible ramp-in, brighter peak, and 2800ms fade.
+- Preserved the one-pulse behavior and the negative-delay re-render guard from the previous fix.
+- Bumped the host `styles.css` cache key.
+
+Files:
+- `styles.css`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+- Browser smoke on `localhost:5173` passed: opacity ramped `0.18 -> 0.999`, then continued down after simulated re-render `0.32 -> 0.25 -> 0.046`, with no second pulse.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:42 - GD
+
+Changed:
+- Added a Task Lifecycle rule for cyclic / one-item-at-a-time task queues.
+- Clarified that GD owns the queue, sends exactly the next task, the executor completes one task, updates docs, and must ping GD directly with the handback.
+- Clarified that docs/inbox-only handback is not enough for cyclic work; GD sends the next task only after the direct handback.
+- Assigned the next board-click UX queue task to `Dev 3`: `Путевой знак` board target selection.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This applies to TADAM infographic one-card flow, board-click UX queue, and similar repeated task cycles.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:41 - Dev 2
+
+Changed:
+- Fixed the TADAM activation highlight restarting on re-render by storing each flashed card's start time.
+- Re-rendered TADAM slots now receive a negative animation delay, so the visible highlight continues fading instead of starting a second pulse.
+- Made the single pulse brighter at the start and extended the fade to 2400ms.
+- Bumped host `styles.css` and `game.js` cache keys.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+- Browser smoke on `localhost:5173` passed: after simulated TADAM-slot re-render during the animation, measured opacity continued down (`1 -> 0.32 -> 0.21 -> 0.067`) instead of returning to a second bright pulse.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:40 - Dev 3
+
+Changed:
+- Completed `ACTIVE BOARD CLICK UX 2026-06-22 02:34 - Золотые метки board-cell selection`.
+- Human `Золотые метки` resolution now opens board-selection mode instead of asking for one cell five times.
+- Valid route cells are highlighted on the board; clicking a valid cell selects it, clicking a selected cell removes it.
+- Selection progress is shown as `Выбрано X/5`; confirm stays disabled until exactly 5 different cells are selected.
+- Confirm places the selected markers through the existing `goldenMarkers` state/lifecycle.
+- Bot marker placement, marker collection for 10 coins, new-game cleanup, card data, CSV, and Google Sheet were not changed.
+- Bumped host `game.js` and `styles.css` cache keys.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run; static/source checks covered the board-click flow.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:34 - GD
+
+Changed:
+- Assigned the first board-click UX queue task to `Dev 3`: `Золотые метки` board-cell selection.
+- Specified direct board selection for 5 marker cells: click to select, click again to unselect, confirm only at exactly 5 selected cells.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This continues the one-task-at-a-time UX improvement queue proposed by Dev 3.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:30 - Dev 2
+
+Changed:
+- Simplified the TADAM activation animation to one external pulse only.
+- Removed the card-scale animation and extended the fade to 2200ms so the highlight disappears more slowly without extra visual beats.
+- Bumped host `styles.css` and `game.js` cache keys.
+
+Files:
+- `styles.css`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`, static single-keyframe/cache-key check.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:28 - Dev 2
+
+Changed:
+- Tuned the TADAM activation highlight into a single softer pulse with a slower fade.
+- Matched the TADAM flash timeout to the 1650ms CSS animation so the fade is not cut off early.
+- Bumped the host `game.js` cache key; `styles.css` was already bumped for this animation tune.
+
+Files:
+- `styles.css`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`, static duration/cache-key check.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:26 - Dev 3
+
+Changed:
+- Added board-click selection during `Вольный шаг` field preview.
+- `event-free-step` choices now carry their destination cell using the same movement target helper as post-roll movement.
+- While `Вольный шаг` is in `Просмотр поля`, highlighted destination cells become clickable/focusable and selecting a cell resolves the matching step choice.
+- Added compact step-number labels inside clickable preview outlines.
+- Kept this board-click behavior scoped to `event-free-step`, so other card-choice previews are unchanged.
+- Bumped host `game.js` and `styles.css` cache keys.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Direct user follow-up; QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was attempted but `127.0.0.1:5173` was unavailable.
+
+Open questions:
+- Suggested follow-up candidates for similar board-click selection: `Золотые метки`, `Путевой знак`, `Разворот`, `Черный рынок` rush option, and roll/random movement result previews such as `Портал хаоса` / `Кубик удачи`.
+
+## 2026-06-22 02:18 - Dev 1
+
+Changed:
+- Removed Good card `dice-control` / `Контроль кубика` with text `Оставь эту карту себе. После броска кубиков можешь поменять значение на одном кубике на любое другое и сбросить эту карту`.
+- Deleted the card from local `src/cards.config.js`.
+- Deleted the corresponding row from `cards-google-sheet.csv`.
+- Deleted the corresponding row from Google Sheet `Cards Config` / tab `good`.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- Google Sheet `Cards Config` / `good`
+- `project-memory/updates.md`
+
+Notes for others:
+- Runtime dice-control helper code remains in `src/game.js` for now, but the card is no longer present in the Good deck data sources.
+- Checks passed: `node --check src/cards.config.js`; `node --check src/game.js`; `git diff --check`; local data scan; Google Sheet readback confirmed no `good/dice-control` row.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:11 - Dev 2
+
+Changed:
+- Added a short visual activation flash for visible TADAM cards when their active effects trigger.
+- Green/red field TADAM effects now pulse the matching card in the TADAM block before applying draw/move/coin effects.
+- Added the same flash helper to several other active TADAM triggers, including Good cashout, Bad consolation, start-turn effects, monster-hunt reward, same-cell duel, jump steal, and land steal.
+- Bumped host `styles.css` / `game.js` cache keys.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- The animation is CSS-only on `.tadam-slot.is-activating`, with a reduced-motion fallback.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`; static source/CSS scan; browser host smoke at `localhost:5173`.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:08 - Dev 3
+
+Changed:
+- Updated monster tile corner numbers per direct user request.
+- `monster-power` and `monster-defeat-reward` now render as plain corner text without chip border/background.
+- Kept top-right monster strength and bottom-left defeat reward positions.
+- Bumped host `styles.css` cache key.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Direct UI follow-up to monster defeat reward display; QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-22 02:05 - Dev 3
+
+Changed:
+- Added a monster-cell UI badge for the defeat strength reward requested by the user.
+- Enemy tiles now render a bottom-left `.monster-defeat-reward` badge showing `+1`, `+2`, `+3`, or `+5` from `monsterDefeatStrengthReward(door)`.
+- The badge is removed when a non-final monster tile becomes an opened portal.
+- The badge title/aria-label says `Награда за поражение: Сила +N`.
+- Added compact styling for the main board and `field2`, and bumped host `styles.css` / `game.js` cache keys.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Direct user follow-up to the monster defeat reward task; QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was attempted but the local static server could not bind a port in this sandbox (`PermissionError: Operation not permitted`).
+
+Open questions:
+- None.
+
+## 2026-06-22 01:55 - Dev 3
+
+Changed:
+- Completed `ACTIVE MONSTER DEFEAT REWARD 2026-06-22 01:52 - Strength-only defeat rewards by monster tier`.
+- Changed monster defeat reward helper to tiered permanent strength only: tier 1 `Сила +1`, tier 2 `Сила +2`, tier 3 `Сила +3`, tier 4/final monster door `Сила +5`.
+- Removed `monsterDefeatCoinReward(...)` from live reward logic and removed defeat coin payout from `resolveEnemyBattle(...)`.
+- Kept monster defeat return-to-Start behavior and existing separate `start-strength` Shop-card trigger.
+- Defeat branch no longer draws/grants a free `Лавка Джо`.
+- Defeat HUD/result/log/toast now uses strength-only wording via `monsterDefeatRewardText(door)`.
+- Applied the permanent defeat strength through `addBattleBonus(...)` before result render/prompt so player status updates immediately.
+
+Files:
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved per current pipeline.
+- No card data, monster strength, win rewards, door opening rules, final boss PvP, Event monster battles, Shop deck/discard lifecycle, CSV, or Google Sheet rows were changed.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Static/source checks passed: no `monsterDefeatCoinReward` / `defeatCoins` live code; defeat branch no longer calls free Shop reward; defeat result text no longer mentions defeat coins or `Лавка Джо`.
+- Browser smoke was not run in this pass.
+
+Open questions:
+- None.
+
+## 2026-06-22 01:52 - GD
+
+Changed:
+- Created Dev 3 task `ACTIVE MONSTER DEFEAT REWARD 2026-06-22 01:52 - Strength-only defeat rewards by monster tier`.
+- New monster defeat rewards: tier 1 `Сила +1`, tier 2 `Сила +2`, tier 3 `Сила +3`, tier 4/final door `Сила +5`.
+- Explicitly removed defeat coin rewards and free `Лавка Джо` from the new contract.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Owner is `Dev 3`.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-22 01:49 - GD
+
+Changed:
+- Sent next one-card TADAM infographic task to `Art / UI 1`: `Красная беда` / `red-bad`.
+- Kept the one-card-at-a-time workflow: Art/UI 1 should finish this card and hand back before GD dispatches another.
+
+Files:
+- `project-memory/inbox/for-ui.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Existing `assets/cards/tadam_red-bad_front.png` from the old mass pass should be treated as replaceable draft art, not accepted final art.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-22 01:45 - Dev 3
+
+Changed:
+- Completed `ACTIVE SHOP TIMING 2026-06-22 01:41 - Purchased Joe Shop cards apply immediately`.
+- Ordinary Joe Shop purchases still add the bought card to owned Shop cards immediately and render before the visit continues, so passive strength/step status updates right away.
+- `resolveShop(player)` now tracks only `step-plus` / `passive-step-bonus` cards bought during that specific Shop visit.
+- After an ordinary Shop landing closes, newly bought `Быстрые сапоги` grant immediate extra forward movement equal to the newly gained step amount.
+- Multiple newly bought step cards stack into one grouped extra movement after the visit; pre-owned step cards are not counted again.
+- Immediate extra movement uses the existing `movePlayerSteps(...)` path, so the new destination resolves normal landing effects and Shop-field chains still use the existing `eventDepth` guard.
+- Free/debug/reference Shop rewards and pass-through Shop purchases update owned-card UI/status immediately but do not add extra current movement under this task.
+
+Files:
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved per current pipeline.
+- No card data, counts, prices, deck/discard lifecycle, CSV, or Google Sheet rows were changed for this task.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check src/cards.config.js`; `git diff --check`.
+- Browser smoke was not run in this pass.
+
+Open questions:
+- None.
+
+## 2026-06-22 01:41 - GD
+
+Changed:
+- Created Dev 3 task `ACTIVE SHOP TIMING 2026-06-22 01:41 - Purchased Joe Shop cards apply immediately`.
+- Specified that newly bought Joe Shop cards become active immediately after purchase.
+- Added special movement contract for newly bought `+2 к шагам`: after the Shop visit, the player moves the newly gained step amount during the same turn.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Owner is `Dev 3`, continuing recent Shop behavior work.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-22 01:35 - Dev 3
+
+Changed:
+- Completed `ACTIVE GOOD CARD 2026-06-22 01:31 - Limit Защитный знак to Bad and Red fields`.
+- Updated `field-shield` / `Защитный знак` description to `Оставь эту карту себе. Когда остановился на клетке Плохо или Красное поле, можешь сбросить эту карту и отменить действие поля`.
+- Synced the new description in `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `good`.
+- Added an explicit shield eligibility gate so `Защитный знак` prompts/uses only on ordinary `Плохо` and `Красное поле`.
+- Ordinary `Плохо` shield use now returns before the Bad draw path; red-field shield use returns before `resolveRedField(...)`, skipping base red and stacked red-field TADAM effects for that stop.
+- Removed prior effective coverage for `Очень Плохо`, Events, monsters, VS, Shop, TADAM, portals, start/finish, and other fields.
+- Bumped `cards.config.js` import and host `game.js` cache keys.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `index.html`
+- Google Sheet `Cards Config` / `good`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved per current pipeline.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; `git diff --check`.
+- Static readback passed: local config, CSV, and Google Sheet all show the new exact description with `count: 2`.
+- Browser smoke was not run in this pass.
+
+Open questions:
+- None.
+
+## 2026-06-22 01:31 - GD
+
+Changed:
+- Created Dev 3 task `ACTIVE GOOD CARD 2026-06-22 01:31 - Limit Защитный знак to Bad and Red fields`.
+- New `Защитный знак` description: `Оставь эту карту себе. Когда остановился на клетке Плохо или Красное поле, можешь сбросить эту карту и отменить действие поля`.
+- Specified that the held shield should only trigger on ordinary `Плохо` and `Красное поле`, not on every field.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Owner is `Dev 3`.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-22 01:28 - Dev 3
+
+Changed:
+- Completed `ACTIVE SHOP DECK 2026-06-22 01:21 - Add fixed 3-coin Joe tariff and remove 3 Shop cards`.
+- Added new Shop card `shop-fixed-cost-3` / `Тариф Джо`, `shortTitle: Цена 3`, `count: 3`, description `Во время покупок карт Лавка Джо плати только 3 монеты`.
+- Removed `pre-roll-step-plus5`, `reroll-one-move-die`, and `move-one-farther` from playable Shop data in local config, CSV, and Google Sheet.
+- Ordinary Joe Shop purchases now cost exactly `3` coins for owners of `Тариф Джо`, overriding TADAM Shop discount/surcharge modifiers for that ordinary purchase path.
+- Kept `Привилегия Джо` as 3-card offer size only and `Безлимит Джо` as repeat-buy from the same opened offer; with `Тариф Джо`, those purchases cost `3` each.
+- Removed active roll-flow calls, action chip, and bot valuation hooks for the deleted pre-roll/post-roll Shop cards.
+- Bumped `cards.config.js` import and host `game.js` cache keys.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `src/controller.js`
+- `index.html`
+- Google Sheet `Cards Config` / `shop`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved per current pipeline.
+- Defensive legacy helper functions for old saved states remain in code, but new games and playable Shop offers cannot create the removed cards and the movement flow no longer calls their prompts.
+- Static readback shows 13 Shop rows / 53 physical Shop copies after removing counts `4 + 3 + 3` and adding `3`.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run in this pass.
+
+Open questions:
+- None.
+
+## 2026-06-22 01:26 - Art/UI 1
+
+Changed:
+- Completed `ACTIVE 2026-06-22 00:51 - TADAM infographic step 1: Зеленая удача`.
+- Replaced the `Зеленая удача` / `green-good` TADAM infographic in the accepted rich fantasy board-game style.
+- The new `green-good` art shows a green field activating a miniature `Хорошо` card with a chest, without baked title/rules text.
+- Followed the user's additional correction and removed shields completely from the pawn art on `Зеленый попутчик`, `Красный откат`, and `Зеленая удача`.
+- Kept the shared upper-art backing size consistent with the accepted `Зеленый попутчик` slot.
+- Bumped `green-forward`, `red-back`, and `green-good` `frontArt` cache keys plus the `cards.config.js` / `game.js` cache chain.
+
+Files:
+- `assets/cards/tadam_green-forward_front.png`
+- `assets/cards/tadam_red-back_front.png`
+- `assets/cards/tadam_green-good_front.png`
+- `src/cards.config.js`
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Direct Art/UI task from GD plus user correction; QA was not involved.
+- Rules, text, counts, CSV, Google Sheet, deck lifecycle, and unrelated UI were not changed.
+- Checks passed: changed TADAM assets are `744x1039 RGBA`; `node --check src/cards.config.js`; `node --check src/game.js`; `git diff --check -- assets/cards/tadam_green-forward_front.png assets/cards/tadam_red-back_front.png assets/cards/tadam_green-good_front.png src/cards.config.js src/game.js index.html`.
+
+Open questions:
+- None.
+
+## 2026-06-22 01:21 - GD
+
+Changed:
+- Created Dev 3 task `ACTIVE SHOP DECK 2026-06-22 01:21 - Add fixed 3-coin Joe tariff and remove 3 Shop cards`.
+- New `Лавка Джо` card to add: `Тариф Джо` / `shop-fixed-cost-3`, count `3`, description `Во время покупок карт Лавка Джо плати только 3 монеты`.
+- Cards to remove from playable Shop deck: `Дорожный рывок`, `Ещё раз`, `Еще шажок`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Owner is `Dev 3`, because this follows recent Shop deck/card behavior work.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-06-22 01:06 - Dev 3
+
+Changed:
+- Reworked `Ещё шажок` boosted target cost display to use floating coin-marker UI instead of a static chip.
+- Added persistent `.post-roll-target-cost-float.coin-float.is-negative` on the boosted target with `-${coinAmount(pending.cost)}`.
+- Disabled the coin-float animation for this preview and set `opacity: 1`, so it stays visible until the pending choice resolves.
+- Kept normal target textless and clickable.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- No card config, cost, steps, movement math, or resolver behavior changed.
+
+Open questions:
+- None.
+
+## 2026-06-22 01:01 - Dev 3
+
+Changed:
+- Updated `Ещё шажок` target UI copy per user request.
+- Boosted board target now displays `-3 монеты` instead of `С картой +1`.
+- Normal board target keeps its outline/click behavior but no longer renders a `Без карты` text badge.
+- Action panel legend now shows the boosted coin cost instead of `С картой`.
+- Skip action text changed from `Без карты` to `Не платить` in host and phone/controller labels.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Static source check passed: no `С картой` / `Без карты` strings remain in `src/game.js`.
+
+Open questions:
+- None.
+
+## 2026-06-22 00:56 - Dev 3
+
+Changed:
+- Hotfixed `Ещё шажок` board click after user clarified that press animation happened but the action still did not apply.
+- Fixed the resolver blocker: target cell ids are strings such as `10-14`, but the board handler was converting `dataset.moveFartherCell` through `Number(...)`, producing `NaN`.
+- `resolveMoveOneFartherBoardCell(...)` now compares string cell ids directly.
+- Kept the coordinate fallback for clicks that arrive from token/overlay layers.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not completed because local `127.0.0.1:5173` is unavailable in this environment.
+
+Open questions:
+- None.
+
+## 2026-06-22 00:51 - GD
+
+Changed:
+- Switched TADAM infographic work to a one-card-at-a-time Art/UI 1 workflow.
+- Created `ACTIVE 2026-06-22 00:51 - TADAM infographic step 1: Зеленая удача` for `Art / UI 1`.
+- Queued `Красная беда` as the next GD-dispatched card, but did not send it yet.
+
+Files:
+- `project-memory/inbox/for-ui.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Treat the earlier broad full-deck TADAM infographic pass as draft/superseded for future corrections.
+- Art/UI 1 should finish and hand back exactly one TADAM card before GD sends the next.
+- Already accepted style references: `Зеленый попутчик`, `Красный откат`, `Монеты бедняку`.
+
+Open questions:
+- None.
+
+## 2026-06-22 00:51 - Dev 3
+
+Changed:
+- Reworked `Ещё шажок` board-click target after user reported that clicking the highlighted field did nothing.
+- Expanded click handling from the outline span to the highlighted tile itself.
+- Target tiles now receive `data-move-farther-target`, `data-move-farther-cell`, button semantics, title/aria-label, focusability, and pointer cursor while `state.pendingMoveOneFarther` is active.
+- Board click/keyboard handling still resolves through `resolveMoveOneFartherChoice(...)`; boosted tile resolves `pay`, normal tile resolves `skip`, combined same-cell tile resolves `skip`.
+- Tile-level interactive state is cleaned up on each tile-state render.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not completed because local `127.0.0.1:5173` is unavailable in this environment.
+
+Open questions:
+- None.
+
+## 2026-06-22 00:38 - Art/UI 1
+
+Changed:
+- Unified the upper TADAM art backing size for `Монеты бедняку` / `poorest-start-coins` to match the larger `Зеленый попутчик` slot.
+- Added a new rich fantasy board-game style infographic for `Красный откат` / `red-back`.
+- The `Красный откат` art shows red fields, a backward path, and a clear `-5` movement cue.
+- Kept existing card-frame format and DOM-rendered titles/descriptions; no rules, text, counts, or balance changed.
+- Bumped `poorest-start-coins` and `red-back` `frontArt` cache keys plus the `cards.config.js` / `game.js` cache chain.
+
+Files:
+- `assets/cards/tadam_poorest_start_coins_front.png`
+- `assets/cards/tadam_red-back_front.png`
+- `src/cards.config.js`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Direct user visual task; no GD/QA handback requested.
+- Used built-in image generation for the new `Красный откат` top illustration, then composited it into the existing 744x1039 card-face format.
+- Checks passed: changed TADAM assets are `744x1039 RGBA`; `node --check src/cards.config.js`; `node --check src/game.js`; `git diff --check -- assets/cards/tadam_poorest_start_coins_front.png assets/cards/tadam_red-back_front.png src/cards.config.js src/game.js index.html`.
+
+Open questions:
+- None.
+
+## 2026-06-22 00:37 - Dev 3
+
+Changed:
+- Completed `ACTIVE MOVE ONE FARTHER BOARD CLICK 2026-06-22 00:33 - Click highlighted field to choose Ещё шажок`.
+- Made `Ещё шажок` post-roll target outlines clickable/focusable while `state.pendingMoveOneFarther` is active.
+- Boosted target click resolves as `pay`; normal target click resolves as `skip`.
+- Combined same-cell target click defaults to `skip`, so no coins are spent when destination would not change.
+- Kept existing buttons and phone/controller actions on the same `resolveMoveOneFartherChoice(...)` path.
+- Added pointer/hover/focus styling only for clickable post-roll target outlines.
+- Added GD context handback only; QA was not involved.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Static/source checks passed: board click handler only targets `[data-move-farther-target]`; stale/no pending state does nothing; combined target uses `skip`; button/phone resolver path remains.
+- Browser smoke was not completed because local `127.0.0.1:5173` is unavailable in this environment.
+
+Open questions:
+- None.
+
+## 2026-06-22 00:33 - GD
+
+Changed:
+- Added `ACTIVE MOVE ONE FARTHER BOARD CLICK 2026-06-22 00:33 - Click highlighted field to choose Ещё шажок` for `Dev 3`.
+- Specified that clicking the boosted target should choose `pay`, clicking the normal target should choose `skip`, and combined same-target clicks should not charge coins.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Current code already has `state.pendingMoveOneFarther`, `renderPostRollTargetOutlines()`, and `resolveMoveOneFartherChoice(...)`; this task adds board-click affordance without changing card balance.
+
+Open questions:
+- None.
+
+## 2026-06-22 00:26 - Art/UI 1
+
+Changed:
+- Replaced the `Зеленый попутчик` / `green-forward` TADAM infographic with a new rich fantasy board-game style art pass matching the newer `Монеты бедняку` direction.
+- The new art shows a pawn on green fields, a forward path, and a clear `+5` movement cue.
+- Kept the existing card-frame format and DOM-rendered title/description; no rules, text, counts, or balance changed.
+- Bumped the `green-forward` `frontArt` cache key and the `cards.config.js` import cache key in `src/game.js`; kept the current host `game.js` cache key from the latest local UI update.
+
+Files:
+- `assets/cards/tadam_green-forward_front.png`
+- `src/cards.config.js`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Direct user visual task; no GD/QA handback requested.
+- Used built-in image generation for the new top illustration, then composited it into the existing 744x1039 card-face format.
+- Checks passed: asset is `744x1039 RGBA`; `node --check src/cards.config.js`; `node --check src/game.js`; `git diff --check -- assets/cards/tadam_green-forward_front.png src/cards.config.js src/game.js index.html`.
+
+Open questions:
+- None.
+
+## 2026-06-22 00:24 - Art/UI 2
+
+Changed:
+- Updated the player score cards to show the current total dice count instead of the dice bonus delta.
+- The score stat now shows `1` by default instead of `+0`, and follows the shared dice-count setting/bonuses.
+- Bumped the `src/game.js` cache key in `index.html`.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI display-only change for the shared score card renderer; applies to both `Классический` and `Настольный`.
+- Gameplay dice calculation, movement rules, card configs, and settings behavior were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-22 00:15 - Art/UI 2
+
+Changed:
+- Updated `Настольный` UI to use the same icons as `Классический`.
+- Removed tabletop-only header/reference/action SVG usage from `index.html` and `styles.css`.
+- Removed the unused `assets/ui/tabletop/*.svg` custom icon set from the workspace.
+- Kept the lightweight tabletop color/material styling from the previous pass.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI/visual-only change; gameplay, card configs, board placement, card renderer, and `src/game.js` behavior were not changed.
+- `Настольный` now reuses the existing standard header icons, reference card-back icons, and start-field icon.
+
+Open questions:
+- None.
+
+## 2026-06-22 00:15 - Art/UI 1
+
+Changed:
+- Replaced the `Монеты бедняку` / `poorest-start-coins` TADAM infographic with the user-provided richer coin-transfer art.
+- Kept the existing card-frame format and DOM-rendered title/description; no rules, text, counts, or balance changed.
+- Bumped the `poorest-start-coins` `frontArt` cache key and the `cards.config.js` / `game.js` cache chain.
+
+Files:
+- `assets/cards/tadam_poorest_start_coins_front.png`
+- `src/cards.config.js`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Direct user visual task; no GD/QA handback requested.
+- Checks passed: asset is `744x1039 RGBA`; `node --check src/cards.config.js`; `node --check src/game.js`; `git diff --check -- assets/cards/tadam_poorest_start_coins_front.png src/cards.config.js src/game.js index.html`.
+
+Open questions:
+- None.
+
+## 2026-06-22 00:05 - Art/UI 2
+
+Changed:
+- Reworked the final `Настольный` UI attempt into one lightweight tabletop theme block instead of layered experimental overrides.
+- Removed the old competing tabletop CSS stack that styled board tiles and piled up radial/repeating gradients, heavy shadows, and icon filters.
+- Kept tabletop styling scoped to UI shells, controls, settings/reference/log/history/phone surfaces, score cards, and dialogs; card faces and board tile visuals are no longer targeted by tabletop overrides.
+- Simplified tabletop icon usage in `index.html`: header/reference/action affordances only, with noisy settings-label icons removed.
+- Rebuilt all `assets/ui/tabletop/*.svg` as cleaner 64x64 SVGs without SVG filters or drop shadows.
+- Bumped the `styles.css` and tabletop SVG cache keys in `index.html` / CSS URLs.
+
+Files:
+- `styles.css`
+- `index.html`
+- `assets/ui/tabletop/*.svg`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is the requested last careful attempt for `Настольный`; gameplay, card configs, card text, board placement, renderer logic, and `src/game.js` behavior were not changed.
+- Checks passed: SVG XML parse for all `assets/ui/tabletop/*.svg`; no SVG filters/drop-shadows in the tabletop icon set; tabletop CSS block scan found no `backdrop-filter`, `blur()`, `drop-shadow`, `repeating-linear-gradient`, `.tile-*`, or card-face selectors; CSS brace balance; `node --check src/game.js`; `git diff --check -- styles.css index.html assets/ui/tabletop project-memory/updates.md`.
+- Browser visual/performance smoke could not run because the environment blocks local port binding (`listen EPERM` on `127.0.0.1:5173`).
+- If the user still sees unacceptable performance/visual quality locally, the next recommended step is to temporarily remove/hide `Настольный` from the UI selector and keep `Классический`.
+
+Open questions:
+- None.
+
+## 2026-06-21 23:56 - Art/UI 2
+
+Changed:
+- Deepened the `Настольный` UI pass into a fantasy cartoon GUI layer: darker tavern/tabletop background, stronger carved wood surfaces, inset control areas, cream/gold typography, chunkier beveled buttons, active/hover/focus/disabled states, wooden score cards, and protected revealed-card overlays.
+- Added a new original tabletop SVG icon set and wired it only into tabletop UI/header/settings/reference surfaces; `Классический` keeps the existing icons via hidden tabletop-only markup/CSS.
+- Added tabletop-only icons for setup labels, reference toggles, phone/settings actions, log/history buttons, exact move, and top header actions.
+- Kept card-face coin/dice icons and gameplay renderers unchanged so card text/layout is not affected.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `assets/ui/tabletop/reference.svg` — 64x64 SVG, visual-only, wired for tabletop header/reference.
+- `assets/ui/tabletop/phone.svg` — 64x64 SVG, visual-only, wired for tabletop header/phone UI.
+- `assets/ui/tabletop/settings.svg` — 64x64 SVG, visual-only, wired for tabletop header/settings UI.
+- `assets/ui/tabletop/fullscreen.svg` — 64x64 SVG, visual-only, wired for tabletop header.
+- `assets/ui/tabletop/coin.svg` — 64x64 SVG, visual-only, wired for tabletop setup labels.
+- `assets/ui/tabletop/dice.svg` — 64x64 SVG, visual-only, wired for tabletop setup labels.
+- `assets/ui/tabletop/new_game.svg` — 64x64 SVG, visual-only, wired for tabletop new game button.
+- `assets/ui/tabletop/copy.svg` — 64x64 SVG, visual-only, wired for tabletop phone copy button.
+- `assets/ui/tabletop/save.svg` — 64x64 SVG, visual-only, wired for tabletop history save button.
+- `assets/ui/tabletop/log.svg` — 64x64 SVG, visual-only, wired for tabletop log/font UI.
+- `assets/ui/tabletop/players.svg` — 64x64 SVG, visual-only, wired for tabletop setup labels.
+- `assets/ui/tabletop/bots.svg` — 64x64 SVG, visual-only, wired for tabletop setup labels.
+- `assets/ui/tabletop/steps.svg` — 64x64 SVG, visual-only, wired for tabletop move/steps UI.
+- `assets/ui/tabletop/strength.svg` — 64x64 SVG, visual-only, wired for tabletop strength UI.
+- `assets/ui/tabletop/field.svg` — 64x64 SVG, visual-only, wired for tabletop field/reference UI.
+- `assets/ui/tabletop/cards.svg` — 64x64 SVG, visual-only, wired for tabletop card/reference UI.
+- `assets/ui/tabletop/history.svg` — 64x64 SVG, visual-only, available for tabletop history UI.
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is UI/visual work only; gameplay, card configs, board placement, card art, field icons, card renderer, rules, and balance were not changed.
+- New tabletop SVGs are original analogues in the reference direction, not copied from the reference image.
+- Checks passed: SVG XML parse for all `assets/ui/tabletop/*.svg`; `node --check src/game.js`; CSS brace balance; `git diff --check -- styles.css index.html src/game.js project-memory/updates.md assets/ui/tabletop`.
+- Browser visual smoke could not run because the environment blocks local port binding (`listen EPERM` on `127.0.0.1:5173`).
+
+Open questions:
+- None.
+
+## 2026-06-21 23:50 - Art/UI
+
+Changed:
+- Rebuilt all 20 TADAM card-specific front infographics as clean parchment-native diagrams.
+- Removed hard rectangular backing blocks and old TADAM-logo remnants from the custom TADAM face assets.
+- Replaced invented card symbols with project-card miniatures for Good/Bad/Joe Shop references; `Плохо` now uses the actual Bad card visual instead of the purple skull card.
+- Bumped TADAM `frontArt` cache keys and the `cards.config.js` / `game.js` cache chain.
+
+Files:
+- `assets/cards/tadam_*_front.png`
+- `src/cards.config.js`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Direct user task; no GD/QA handback requested.
+- Gameplay/card text/effects/counts were not changed.
+- Preview contact sheet: `outputs/tadam_infographics_contact_sheet.png`.
+
+Open questions:
+- None.
+
+## 2026-06-21 23:21 - Art/UI 2
+
+Changed:
+- Reworked the `Настольный` UI mode into a warm wooden cartoon board-game style.
+- Added a final tabletop design-system override: wood/cream/gold variables, carved panels, chunky beveled buttons, dark inset controls, golden primary roll button, wooden score cards, reference/settings/phone/log/history surfaces, empty TADAM slots, and dialog/toast surfaces.
+- Kept `Классический` scoped out by using only `body[data-ui-style="tabletop"]` selectors.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- CSS-only UI pass; gameplay, layout structure, card configs, board placement, rules, card renderer, and visual assets were not changed.
+- The override intentionally avoids broad card-face button styling so revealed card faces keep their own layout and artwork.
+- Checks passed: `git diff --check -- styles.css index.html project-memory/updates.md`.
+- Browser smoke was not completed because the environment blocks local port binding (`listen EPERM` on `127.0.0.1:5173`).
+
+Open questions:
+- None.
+
+## 2026-06-21 23:07 - Art/UI 2
+
+Changed:
+- Added small card-back icons before each card section label in the `Показать карты и поля` toggle panel.
+- Added the `Старт` field icon before the `Поля` label.
+- Adjusted reference toggle button layout so icons and text sit centered with stable spacing.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI-only markup/style update; reference behavior, cards, fields, gameplay, and configs were not changed.
+- Checks passed: `git diff --check -- index.html styles.css project-memory/updates.md`.
+
+Open questions:
+- None.
+
+## 2026-06-21 23:05 - Art/UI 2
+
+Changed:
+- Redrew `assets/icons/fullscreen_button.svg` as four thin golden corner marks without the heavy inner frame or arrow diagonals.
+- Bumped the fullscreen icon cache key in `index.html`.
+
+Files:
+- `assets/icons/fullscreen_button.svg`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only SVG update; fullscreen behavior and layout were not changed.
+- Checks passed: SVG XML parse; `git diff --check -- assets/icons/fullscreen_button.svg index.html project-memory/updates.md`.
+
+Open questions:
+- None.
+
+## 2026-06-21 22:57 - Art/UI 2
+
+Changed:
+- Redrew the header phone icon as a thinner, cleaner line-art silhouette.
+- Redrew `assets/icons/settings_gear.svg` as a lighter, more even line-art gear to match the other compact header icons.
+- Changed the phone room copy feedback timing to show for 2 seconds, then fade out smoothly for 1 second before hiding.
+- Bumped `styles.css`, `src/game.js`, and settings icon cache keys in `index.html`.
+
+Files:
+- `assets/icons/settings_gear.svg`
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI-only visual/timing update; phone room copy behavior, room creation, gameplay, and configs were not changed.
+- Checks passed: SVG XML parse; `node --check src/game.js`; `git diff --check -- assets/icons/settings_gear.svg index.html src/game.js styles.css project-memory/updates.md`.
+
+Open questions:
+- None.
+
+## 2026-06-21 22:51 - Art/UI 2
+
+Changed:
+- Repositioned the phone room copy feedback so `Комната скопирована` appears centered above the phone header button.
+- Removed the visible border from the feedback label and kept only a small soft backing with a float-up animation.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI-only styling change; phone room behavior, copying logic, and gameplay were not changed.
+- Checks passed: `git diff --check -- styles.css index.html project-memory/updates.md`.
+
+Open questions:
+- None.
+
+## 2026-06-21 17:06 - Art/UI
+
+Changed:
+- Redrew the full TADAM `frontArt` infographic set in a single warmer fantasy board-game style, using the successful `Монеты бедняку` direction as the reference.
+- Replaced the previous tiny diagram/TADAM-burst-style visuals with larger top-card scenes: board pawns, tiles, cards, shop, portal, monster, coins, arrows, and readable effect values.
+- Rebuilt all 20 TADAM face assets as `744x1039` RGBA PNGs.
+- Updated all TADAM `frontArt` cache keys to `20260621-1626`.
+- Bumped `cards.config.js` import and host `game.js` cache keys to `20260621-1626`.
+- Saved review/source previews in `outputs/tadam_redrawn_frontart_contact_v8.png` and `outputs/tadam_infographic_sheet_redrawn_20260621.png`.
+
+Files:
+- `assets/cards/tadam_bad-consolation_front.png`
+- `assets/cards/tadam_good-cashout_front.png`
+- `assets/cards/tadam_green-extra-coins_front.png`
+- `assets/cards/tadam_green-forward_front.png`
+- `assets/cards/tadam_green-good_front.png`
+- `assets/cards/tadam_jump-steal_front.png`
+- `assets/cards/tadam_land-steal_front.png`
+- `assets/cards/tadam_last-good-start_front.png`
+- `assets/cards/tadam_last-step-plus_front.png`
+- `assets/cards/tadam_monster-bribe_front.png`
+- `assets/cards/tadam_monster-hunt_front.png`
+- `assets/cards/tadam_poorest_start_coins_front.png`
+- `assets/cards/tadam_portal-bad_front.png`
+- `assets/cards/tadam_red-back_front.png`
+- `assets/cards/tadam_red-bad_front.png`
+- `assets/cards/tadam_red-extra-loss_front.png`
+- `assets/cards/tadam_rich-weakness_front.png`
+- `assets/cards/tadam_same-cell-duel_front.png`
+- `assets/cards/tadam_shop-discount_front.png`
+- `assets/cards/tadam_shop-surcharge_front.png`
+- `src/cards.config.js`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only task: no TADAM rules, descriptions, counts, deck lifecycle, card effects, board logic, phone controller, or balance changed.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; all 20 TADAM `frontArt` PNGs are `744x1039` RGBA; `git diff --check`.
+- Per user preference, no GD/QA handback was sent.
+
+Open questions:
+- None.
+
+## 2026-06-21 17:02 - Art/UI 2
+
+Changed:
+- Centered the gear artwork inside `assets/icons/settings_gear.svg` by shifting the SVG gear group upward.
+
+Files:
+- `assets/icons/settings_gear.svg`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only SVG alignment tweak; no layout, JS behavior, or gameplay changed.
+- Bumped the settings icon asset cache key in `index.html`.
+- Checks passed: SVG XML parse; `git diff --check -- assets/icons/settings_gear.svg index.html project-memory/updates.md`.
+
+Open questions:
+- None.
+
+## 2026-06-21 14:27 - Art/UI 2
+
+Changed:
+- Redrew `assets/icons/reference_cards.svg` as a minimal two-card silhouette icon.
+- Removed the previous board/grid badge, suit symbols, and card ranks per user correction.
+
+Files:
+- `assets/icons/reference_cards.svg`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only SVG asset update; no gameplay, layout, JS behavior, card config, or cache keys changed.
+- Checks passed: SVG XML parse; `git diff --check -- assets/icons/reference_cards.svg`.
+
+Open questions:
+- None.
+
+## 2026-06-21 14:19 - Art/UI 2
+
+Changed:
+- Completed `ACTIVE 2026-06-21 13:46 - Full TADAM infographic pass`.
+- Created card-specific TADAM front-art PNG infographics for all 19 remaining TADAM cards.
+- Kept the existing `poorest-start-coins` / `Монеты бедняку` baseline asset unchanged.
+- Added `frontArt` fields to the matching TADAM card configs only.
+- Bumped the `cards.config.js` import cache key in `src/game.js` and host `game.js` cache key in `index.html`.
+- Marked the UI task DONE and added GD context handback; QA was not involved.
+
+Files:
+- `assets/cards/tadam_green-forward_front.png`
+- `assets/cards/tadam_red-back_front.png`
+- `assets/cards/tadam_green-good_front.png`
+- `assets/cards/tadam_red-bad_front.png`
+- `assets/cards/tadam_jump-steal_front.png`
+- `assets/cards/tadam_land-steal_front.png`
+- `assets/cards/tadam_monster-hunt_front.png`
+- `assets/cards/tadam_same-cell-duel_front.png`
+- `assets/cards/tadam_last-good-start_front.png`
+- `assets/cards/tadam_last-step-plus_front.png`
+- `assets/cards/tadam_shop-discount_front.png`
+- `assets/cards/tadam_shop-surcharge_front.png`
+- `assets/cards/tadam_portal-bad_front.png`
+- `assets/cards/tadam_green-extra-coins_front.png`
+- `assets/cards/tadam_red-extra-loss_front.png`
+- `assets/cards/tadam_good-cashout_front.png`
+- `assets/cards/tadam_bad-consolation_front.png`
+- `assets/cards/tadam_monster-bribe_front.png`
+- `assets/cards/tadam_rich-weakness_front.png`
+- `src/cards.config.js`
+- `src/game.js`
+- `index.html`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- PNG dimension/mode check passed: all 20 TADAM `frontArt` assets exist as `744x1039` RGBA.
+- Static source check passed: all 20 TADAM cards have `frontArt`; global `assets/cards/tadam_front.png` was not replaced.
+- Checks passed: `node --check src/cards.config.js`; `node --check src/game.js`; `git diff --check`.
+- No TADAM rules, balance, counts, descriptions, deck lifecycle, Google Sheet/CSV, or global TADAM face asset changed.
+- Browser smoke was not completed because this environment blocks local port binding.
+
+Open questions:
+- None.
+
+## 2026-06-21 13:46 - GD
+
+Changed:
+- Added `ACTIVE 2026-06-21 13:46 - Full TADAM infographic pass` for `Art / UI 2`.
+- Defined an autonomous full-deck TADAM infographic pass using `Монеты бедняку` as the baseline.
+- Listed all remaining TADAM cards to convert with card-specific `frontArt` assets.
+- Kept QA out of the flow per current pipeline.
+
+Files:
+- `project-memory/inbox/for-ui.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- The task should follow `project-memory/README.md` / `TADAM Card Infographics`.
+- Do not change TADAM rules, counts, descriptions, deck lifecycle, Google Sheet/CSV, or global `tadam_front.png`.
+
+Open questions:
+- None.
+
+## 2026-06-21 13:43 - Art/UI
+
+Changed:
+- Added permanent TADAM infographic creation rules to `project-memory/README.md`.
+- Documented the per-card `frontArt` approach, so new TADAM infographics replace the generic logo only on specific cards and do not affect the rest of the deck.
+- Captured visual rules: compact upper-card infographic, visible gap before title, no hard rectangular backing, exact effect values, neutral-source coin flow, class-style player pawns, and no baked title/full rules text inside the image.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Documentation-only update; no gameplay, card config, assets, layout CSS, or cache keys changed.
+- Per user preference, no GD/QA handback was sent.
+
+Open questions:
+- None.
+
+## 2026-06-21 14:04 - Art/UI 2
+
+Changed:
+- Updated the active `ТАДАМ!` panel slots to render filled cards through the shared revealed TADAM card face (`tadamCardMarkup`) instead of the older compact slot text.
+- Reused the inert card-face wrapper helper so active TADAM panel cards keep the same title, custom front art, icon rendering, and text placement as gameplay revealed cards.
+- Removed the filled-slot extra background/border when a real card face is rendered inside it.
+- Bumped `styles.css` and `src/game.js` cache keys.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `git diff --check`.
+- Browser smoke was not completed because this environment blocks local port binding.
+
+Open questions:
+- None.
+
 ## 2026-06-21 13:36 - Art/UI 2
 
 Changed:

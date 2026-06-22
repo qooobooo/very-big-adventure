@@ -4,6 +4,230 @@ For UI/UX and art-asset tasks related to "Очень Большая Бродил
 
 ## Open Items
 
+- ON HOLD 2026-06-22 03:02 - TADAM infographic step 3: `Плата за обгон`:
+  - Owner: `Art / UI 1`.
+  - Status:
+    - Drafted by `GD` at 2026-06-22 03:02.
+    - Not dispatched: user asked not to send Art/UI the next card yet.
+    - Do not start until GD explicitly reactivates and dispatches this item.
+    - QA is not involved.
+  - Workflow:
+    - Do exactly one TADAM infographic card in this task.
+    - Do not start other TADAM cards from the old broad full-deck pass.
+    - After finishing, immediately report back to GD; GD will then send the next single card.
+    - Art/UI may ask GD clarifying questions before drawing if needed.
+  - Accepted style references:
+    - `green-forward` / `Зеленый попутчик`.
+    - `red-back` / `Красный откат`.
+    - `green-good` / `Зеленая удача`.
+    - `red-bad` / `Красная беда`.
+    - `poorest-start-coins` / `Монеты бедняку`.
+  - Current card:
+    - id: `jump-steal`.
+    - title: `Плата за обгон`.
+    - description: `Перепрыгивая игроков, забери у каждого по 3 монеты`.
+    - effect: when a player jumps over other players, take 3 coins from each jumped player.
+    - asset path: `assets/cards/tadam_jump-steal_front.png`.
+  - Direction:
+    - Replace/improve only this card-specific infographic so it matches the accepted TADAM infographic style.
+    - Art/UI chooses what exactly to depict; GD is intentionally not prescribing the composition.
+    - Preserve normal DOM-rendered title and description below the art.
+    - If `tadam_jump-steal_front.png` already exists from the older mass pass, treat it as replaceable draft art, not as accepted final art.
+  - Must follow:
+    - `project-memory/README.md` / `TADAM Card Infographics`.
+    - Do not replace `assets/cards/tadam_front.png` globally.
+    - Do not change gameplay rules, text, counts, CSV, Google Sheet, deck lifecycle, or unrelated cards.
+    - Keep the card-specific `frontArt` on `jump-steal` and bump cache keys after changing art.
+  - Verification:
+    - `node --check src/cards.config.js`.
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Visual check: card title/description remain readable; art does not touch title, description, or frame; value/effect is not misleading.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Send GD a direct handback as soon as this one card is complete.
+
+- DONE 2026-06-22 02:31 - TADAM infographic step 2: `Красная беда`:
+  - Owner: `Art / UI 1`.
+  - Status:
+    - Sent to `Art / UI 1` at 2026-06-22 01:49.
+    - Completed by `Art / UI 1` at 2026-06-22 02:31.
+    - Handback sent to GD as context note and direct Codex-thread ping.
+    - QA is not involved.
+  - Workflow:
+    - Do exactly one TADAM infographic card in this task.
+    - Do not start other TADAM cards from the old broad full-deck pass.
+    - After finishing, immediately report back to GD; GD will then send the next single card.
+    - Art/UI may ask GD clarifying questions before drawing if needed.
+  - Accepted style references:
+    - `green-forward` / `Зеленый попутчик`.
+    - `red-back` / `Красный откат`.
+    - `green-good` / `Зеленая удача`.
+    - `poorest-start-coins` / `Монеты бедняку`.
+  - Current card:
+    - id: `red-bad`.
+    - title: `Красная беда`.
+    - description: `Красные поля дают карту Плохо`.
+    - effect: red fields give a `Плохо` card.
+    - asset path: `assets/cards/tadam_red-bad_front.png`.
+  - Direction:
+    - Replace/improve only this card-specific infographic so it matches the accepted TADAM infographic style.
+    - Art/UI chooses what exactly to depict; GD is intentionally not prescribing the composition.
+    - Preserve normal DOM-rendered title and description below the art.
+    - If `tadam_red-bad_front.png` already exists from the older mass pass, treat it as replaceable draft art, not as accepted final art.
+  - Must follow:
+    - `project-memory/README.md` / `TADAM Card Infographics`.
+    - Do not replace `assets/cards/tadam_front.png` globally.
+    - Do not change gameplay rules, text, counts, CSV, Google Sheet, deck lifecycle, or unrelated cards.
+    - Keep the card-specific `frontArt` on `red-bad` and bump cache keys after changing art.
+  - Verification:
+    - `node --check src/cards.config.js`.
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Visual check: card title/description remain readable; art does not touch title, description, or frame; value/effect is not misleading.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Send GD a handback as soon as this one card is complete.
+
+- DONE 2026-06-22 01:26 - TADAM infographic step 1: `Зеленая удача`:
+  - Owner: `Art / UI 1`.
+  - Status:
+    - Sent to `Art / UI 1` at 2026-06-22 00:51.
+    - Completed by `Art / UI 1` at 2026-06-22 01:26.
+    - Handback sent to GD as context only.
+    - QA is not involved.
+  - New workflow:
+    - Do exactly one TADAM infographic card in this task.
+    - Do not start other TADAM cards from the old broad full-deck pass.
+    - After finishing, immediately report back to GD; GD will then send the next single card.
+    - Art/UI may ask GD clarifying questions before drawing if needed.
+  - Already accepted style references:
+    - `green-forward` / `Зеленый попутчик`.
+    - `red-back` / `Красный откат`.
+    - `poorest-start-coins` / `Монеты бедняку`.
+  - Current card:
+    - id: `green-good`.
+    - title: `Зеленая удача`.
+    - description: `Зеленые поля дают карту Хорошо`.
+    - effect: green fields give a `Хорошо` card.
+    - asset path: `assets/cards/tadam_green-good_front.png`.
+  - Direction:
+    - Replace/improve only this card-specific infographic so it matches the accepted TADAM infographic style.
+    - Art/UI chooses what exactly to depict; GD is intentionally not prescribing the composition.
+    - Preserve normal DOM-rendered title and description below the art.
+    - If an older generated `tadam_green-good_front.png` already exists, treat it as replaceable draft art.
+  - Must follow:
+    - `project-memory/README.md` / `TADAM Card Infographics`.
+    - Do not replace `assets/cards/tadam_front.png` globally.
+    - Do not change gameplay rules, text, counts, CSV, Google Sheet, deck lifecycle, or unrelated cards.
+    - Keep the card-specific `frontArt` on `green-good` and bump cache keys after changing art.
+  - Verification:
+    - `node --check src/cards.config.js`.
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Visual check: card title/description remain readable; art does not touch title, description, or frame; value/effect is not misleading.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Send GD a handback as soon as this one card is complete.
+  - Next card queued by GD, not yet sent:
+    - `red-bad` / `Красная беда`.
+
+- DONE 2026-06-21 13:46 - Full TADAM infographic pass:
+  - Owner: `Art / UI 2`.
+  - Status:
+    - Sent to `Art / UI 2` at 2026-06-21 13:46.
+    - Completed by `Art / UI 2` at 2026-06-21 14:19.
+    - Handback sent to GD as context only.
+    - QA is not involved.
+  - Context:
+    - User is leaving and will not correct the work live.
+    - Goal is to draw card-specific infographics for all `ТАДАМ!` cards, one by one, following `project-memory/README.md` / `TADAM Card Infographics`.
+    - One card is already done and should be treated as the style baseline:
+      - `poorest-start-coins` / `Монеты бедняку`
+      - `assets/cards/tadam_poorest_start_coins_front.png`
+      - connected via `frontArt` in `src/cards.config.js`
+    - This can take as much time as needed; prioritize complete, consistent, readable work over speed.
+  - Goal:
+    - Add card-specific infographics to every remaining TADAM card.
+    - Preserve normal DOM-rendered title and description below each infographic.
+    - Do not wait for user corrections between cards.
+  - Cards to convert, in current deck order:
+    - `green-forward` / `Зеленый попутчик` — green fields move +5 forward.
+    - `red-back` / `Красный откат` — red fields move -5 back.
+    - `green-good` / `Зеленая удача` — green fields give Good card.
+    - `red-bad` / `Красная беда` — red fields give Bad card.
+    - `jump-steal` / `Плата за обгон` — jumping players steals 3 coins from each.
+    - `land-steal` / `Тесная клетка` — landing on another player steals 10 coins.
+    - `monster-hunt` / `Охота на монстра` — monster victory gives 10 coins.
+    - `same-cell-duel` / `Дуэль на клетке` — same-cell battle, winner chooses 10 coins or Joe Shop card.
+    - `last-good-start` / `Поддержка отстающего` — last player draws Good at start of turn.
+    - `last-step-plus` / `Фора последнему` — last player gets +5 steps.
+    - `shop-discount` / `Скидки у Джо` — Joe Shop cards cost 2 less.
+    - `shop-surcharge` / `Жадность Джо` — Joe Shop cards cost 2 more.
+    - `portal-bad` / `Опасный портал` — after portal movement, player draws Bad.
+    - `green-extra-coins` / `Зеленая прибавка` — green fields give +3 extra coins.
+    - `red-extra-loss` / `Красный штраф` — red fields take 3 extra coins.
+    - `good-cashout` / `Обмен удачи` — Good draw can be cashed out for 8 coins.
+    - `bad-consolation` / `Утешение после беды` — after Bad card resolves, player gets 5 coins.
+    - `monster-bribe` / `Подкуп монстра` — other players may pay 3 coins to make monster +1 strength.
+    - `rich-weakness` / `Бремя богатства` — players with 20+ coins get -2 strength.
+  - Already converted, do not redo unless needed for final consistency:
+    - `poorest-start-coins` / `Монеты бедняку`.
+  - Result:
+    - Created and connected card-specific PNG front art for all 19 remaining listed TADAM cards.
+    - Kept existing `poorest-start-coins` baseline asset unchanged.
+    - Added `frontArt` only to the matching TADAM card configs.
+    - Status: visual-only / wired through `frontArt`.
+  - Asset and config rules:
+    - For each converted card, create `assets/cards/tadam_<card-id>_front.png`.
+    - Add `frontArt: "./assets/cards/tadam_<card-id>_front.png?v=<cache-key>"` to that exact card in `src/cards.config.js`.
+    - Bump the relevant asset cache key, the `cards.config.js` import cache key in `src/game.js`, and the host `game.js` cache key in `index.html`.
+    - Keep cards without finished `frontArt` on the standard TADAM face until their specific art is ready.
+  - Visual rules:
+    - Follow `project-memory/README.md` / `TADAM Card Infographics` exactly.
+    - Infographic lives in the upper part of the card and replaces the generic TADAM logo/art area.
+    - Leave a visible breathing gap before the title.
+    - Do not bake the card title or full rules text into the image.
+    - Match current effect values exactly: `+3`, `+5`, `-2`, `10`, `8`, etc.
+    - Use board-game pawn/class figures, not animal characters.
+    - Use neutral source for bank/game coin rewards; show theft/transfer only when the card really steals/transfers.
+    - Avoid hard rectangular backplates; blend generated art into parchment/card texture with soft edges.
+    - Keep safe padding from border and text.
+  - Constraints:
+    - Do not change rules, balance, counts, card descriptions, deck lifecycle, or Google Sheet/CSV unless the user separately asks.
+    - Do not replace `assets/cards/tadam_front.png` globally.
+    - Do not edit unrelated cards or UI.
+    - Do not include temporary `outputs/` previews in commits/handback unless explicitly requested.
+  - Suggested work rhythm:
+    - Work in small visual batches if helpful, but keep a running checklist in this task.
+    - After each batch, run syntax/checks and visually inspect representative cards.
+    - Continue until all listed cards have `frontArt`.
+    - If one card is unusually hard, still continue with the rest and note the blocker clearly in handback.
+  - Verification:
+    - `node --check src/cards.config.js`.
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Static:
+      - every listed TADAM card except already-converted `poorest-start-coins` has a card-specific PNG and `frontArt`;
+      - no TADAM rules/counts/descriptions changed;
+      - no global TADAM face replacement.
+    - Visual:
+      - revealed gameplay TADAM cards and settings/reference TADAM cards show matching custom infographics;
+      - title and description remain readable;
+      - no art overlaps the title row, description, or card frame;
+      - values in art match config.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+
 - DONE 2026-06-21 13:16 - Reference cards/fields header icon:
   - Owner: `Art / UI 2`.
   - Status:

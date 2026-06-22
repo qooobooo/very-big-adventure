@@ -4,6 +4,966 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- DONE BOARD PREVIEW UX 2026-06-22 11:27 - `Кубик неприятностей` backward target preview:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-06-22 11:27; completed by Dev 3 at 2026-06-22 11:28; context handback added for GD; QA was not involved.
+  - Requested by: `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Cyclic queue rule:
+    - Do exactly this one board-preview task.
+    - After finishing, update docs and ping GD directly with a short handback.
+    - GD will assign the next board-click/preview task only after that direct handback.
+  - Summary:
+    - Improve Bad card `bad-die-choice` / `Кубик неприятностей` so the `назад на 8` penalty highlights its destination cell before automatic movement resolves.
+  - Current card contract:
+    - id: `bad-die-choice`.
+    - title: `Кубик неприятностей`.
+    - description: `Брось кубик. 1-2: отойди на 8 шагов назад. 3-4: потеряй 8 монет. 5-6: выбери игрока, он решает, какой из этих двух штрафов ты получишь`.
+    - Effect:
+      - roll `1-2`: active player moves 8 steps backward;
+      - roll `3-4`: active player loses 8 coins;
+      - roll `5-6`: active player chooses another player, and that player chooses either backward movement or coin loss.
+  - UX behavior:
+    - When the resolved penalty is backward movement, highlight the destination cell before movement.
+    - Use a compact non-clickable label such as `-8`.
+    - If roll result is `1-2`, show the preview after the roll result is known.
+    - If roll result is `5-6`, show the preview only if/when the chosen player selects the backward movement penalty.
+    - If the resolved penalty is coin loss, do not add a board target highlight.
+    - Do not add a new confirmation step if the current flow moves automatically; preview can be brief/non-blocking or stay visible through the existing action/result step.
+  - Guardrails:
+    - Do not change `Кубик неприятностей` rules, die branches, target-player choice, penalty choice, movement amount, coin loss amount, landing resolution, Bad deck lifecycle, route order, bots, phone/controller behavior, or unrelated board previews.
+    - Do not make unrelated cells clickable.
+    - Follow the `Board-Click UX` rule: no large blocking modal over the board while the highlighted target is meant to be inspected.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - direct `1-2` branch highlights the correct `-8` destination;
+      - `3-4` coin-loss branch shows no destination highlight;
+      - `5-6` branch shows target highlight only when backward penalty is chosen;
+      - movement and landing still resolve as before;
+      - no console errors.
+  - Completed by Dev 3:
+    - Added a dedicated `badDieTargetPreview` state path.
+    - Backward penalties highlight the projected destination before automatic movement with compact label `-8`.
+    - Roll `1-2` shows the preview after the roll result resolves into backward movement.
+    - Roll `5-6` shows the preview only if the selected penalty is backward movement.
+    - Coin-loss branches show no destination highlight.
+    - The target preview is non-clickable and clears before movement starts.
+    - Card rules, die branches, target-player choice, penalty choice, movement amount, coin loss amount, landing resolution, Bad deck lifecycle, route order, bots, phone/controller behavior, and unrelated previews were not changed.
+    - Bumped host `game.js` and `styles.css` cache keys.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the handback.
+
+- DONE BOARD PREVIEW UX 2026-06-22 11:19 - `Назад к сопернику` target preview:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-06-22 11:19; completed by Dev 3 at 2026-06-22 11:21; context handback added for GD; QA was not involved.
+  - Requested by: `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Cyclic queue rule:
+    - Do exactly this one board-preview task.
+    - After finishing, update docs and ping GD directly with a short handback.
+    - GD will assign the next board-click/preview task only after that direct handback.
+  - Summary:
+    - Improve Bad card `back-to-player` / `Назад к сопернику` so the destination cell with the nearest player behind is highlighted before automatic movement resolves.
+  - Current card contract:
+    - id: `back-to-player`.
+    - title: `Назад к сопернику`.
+    - description: `Отойди назад до ближайшего игрока. Если ты последний, потеряй 5 монет`.
+    - Effect: move backward to the nearest player behind; if there is no player behind because the active player is last, lose 5 coins instead.
+  - UX behavior:
+    - When a human player reveals/resolves `Назад к сопернику` and a valid nearest player behind exists, highlight that destination cell on the board before movement.
+    - Use a compact non-clickable label such as `Игрок` or the nearest player short name if existing preview helpers support it cleanly.
+    - If several players are tied on the same nearest destination, one highlighted destination cell is enough; result text can keep naming all tied players.
+    - Keep existing card/result text visible so the player understands why this cell is highlighted.
+    - Do not add a new confirmation step if the current flow moves automatically; preview can be brief/non-blocking or stay visible through the existing action/result step.
+    - If the active player is last and the card only causes coin loss, do not add a board target highlight.
+  - Guardrails:
+    - Do not change `Назад к сопернику` rules, nearest-player search, coin-loss fallback, movement, landing resolution, Bad deck lifecycle, route order, bots, phone/controller behavior, or unrelated board previews.
+    - Do not make unrelated cells clickable.
+    - Follow the `Board-Click UX` rule: no large blocking modal over the board while the highlighted target is meant to be inspected.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - valid nearest player behind highlights the correct destination;
+      - tied players on the same destination still produce one clear highlight and current text remains understandable;
+      - last-player fallback loses 5 coins and shows no destination highlight;
+      - movement and landing still resolve as before;
+      - no console errors.
+  - Completed by Dev 3:
+    - Added a dedicated `nearestPlayerTargetPreview` state path.
+    - Valid nearest-player-behind destinations are highlighted before automatic movement with compact label `Игрок`.
+    - Tied players on the same nearest destination still produce one clear highlighted cell; existing result text keeps naming all tied players.
+    - The target preview is non-clickable and clears before movement starts.
+    - No target highlight is shown for the last-player fallback coin loss.
+    - Card rules, nearest-player search, fallback coin loss, movement, landing resolution, Bad deck lifecycle, route order, bots, phone/controller behavior, and unrelated previews were not changed.
+    - Bumped host `game.js` and `styles.css` cache keys.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the handback.
+
+- DONE BOARD PREVIEW UX 2026-06-22 11:11 - `Красная дорожка` target preview:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-06-22 11:11; completed by Dev 3 at 2026-06-22 11:13; context handback added for GD; QA was not involved.
+  - Requested by: `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Cyclic queue rule:
+    - Do exactly this one board-preview task.
+    - After finishing, update docs and ping GD directly with a short handback.
+    - GD will assign the next board-click/preview task only after that direct handback.
+  - Summary:
+    - Improve Bad card `back-to-red` / `Красная дорожка` so its destination red field is highlighted on the board before automatic backward movement resolves.
+  - Current card contract:
+    - id: `back-to-red`.
+    - title: `Красная дорожка`.
+    - description: `Отодвинься назад, до ближайшего красного поля. Эффект поля срабатывает`.
+    - Effect: move backward to the nearest red field, then resolve that red field normally.
+  - UX behavior:
+    - When a human player reveals/resolves `Красная дорожка` and a backward red target exists, highlight that destination cell on the board before movement.
+    - Use a compact non-clickable label such as `Красное` or `цель`.
+    - Keep existing card/result text visible so the player understands why this cell is highlighted.
+    - Do not add a new confirmation step if the current flow moves automatically; preview can be brief/non-blocking or stay visible through the existing action/result step.
+    - If no red field exists backward, keep current no-movement/log behavior and do not add a target highlight.
+  - Guardrails:
+    - Do not change `Красная дорожка` rules, backward target search, movement, red-field resolution, Bad deck lifecycle, route order, bots, phone/controller behavior, or unrelated board previews.
+    - Do not make unrelated cells clickable.
+    - Follow the `Board-Click UX` rule: no large blocking modal over the board while the highlighted target is meant to be inspected.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - `Красная дорожка` with a valid backward red target highlights the correct destination;
+      - movement and red landing effect still resolve as before;
+      - no-backward-red case remains graceful;
+      - no console errors.
+  - Completed by Dev 3:
+    - Added a dedicated `redPathTargetPreview` state path.
+    - Valid backward red destinations are highlighted before automatic movement with compact label `Красное`.
+    - The target preview is non-clickable and clears before movement starts.
+    - No target highlight is shown when no backward red field exists.
+    - Card rules, backward target search, movement, red landing resolution, Bad deck lifecycle, route order, bots, phone/controller behavior, and unrelated previews were not changed.
+    - Bumped host `game.js` and `styles.css` cache keys.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the handback.
+
+- DONE BOARD PREVIEW UX 2026-06-22 03:18 - `Зеленая тропа` target preview:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-06-22 03:18; completed by Dev 3 at 2026-06-22 03:20; context handback added for GD; QA was not involved.
+  - Requested by: `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Cyclic queue rule:
+    - Do exactly this one board-preview task.
+    - After finishing, update docs and ping GD directly with a short handback.
+    - GD will assign the next board-click/preview task only after that direct handback.
+  - Summary:
+    - Improve Good card `green-path` / `Зеленая тропа` so its destination green field is highlighted on the board before the automatic movement resolves.
+  - Current card contract:
+    - id: `green-path`.
+    - title: `Зеленая тропа`.
+    - description: `Передвинься вперед до ближайшего зеленого поля`.
+    - Effect: move strictly forward to the nearest green field, then resolve that green field normally.
+  - UX behavior:
+    - When a human player plays/reveals `Зеленая тропа` and a forward green target exists, highlight that destination cell on the board before movement.
+    - Use a compact label such as `Зеленое` or `цель`.
+    - Keep existing card/result text visible so the player understands why this cell is highlighted.
+    - Do not add a new confirmation step if the current flow moves automatically; preview can be brief/non-blocking or stay visible through the existing action/result step.
+    - If no green field exists forward, keep current no-movement/log behavior and do not add a target highlight.
+  - Guardrails:
+    - Do not change `Зеленая тропа` rules, target search direction, movement, green-field resolution, Good deck lifecycle, route order, bots, phone/controller behavior, or unrelated board previews.
+    - Do not make unrelated cells clickable.
+    - Follow the `Board-Click UX` rule: no large blocking modal over the board while the highlighted target is meant to be inspected.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - `Зеленая тропа` with a valid forward green target highlights the correct destination;
+      - movement and green landing effect still resolve as before;
+      - no-forward-green case remains graceful;
+      - no console errors.
+  - Completed by Dev 3:
+    - Added a dedicated `greenPathTargetPreview` state path.
+    - Valid forward green destinations are highlighted before automatic movement with compact label `Зеленое`.
+    - The target preview is non-clickable and clears before movement starts.
+    - No target highlight is shown when no forward green field exists.
+    - Card rules, search direction, movement, green landing resolution, Good deck lifecycle, route order, bots, phone/controller behavior, and unrelated previews were not changed.
+    - Bumped host `game.js` and `styles.css` cache keys.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the handback.
+
+- DONE BOARD PREVIEW UX 2026-06-22 03:12 - `Кубик удачи` backward target preview:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-06-22 03:12; completed by Dev 3 at 2026-06-22 03:16; context handback added for GD; QA was not involved.
+  - Requested by: `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Cyclic queue rule:
+    - Do exactly this one board-preview task.
+    - After finishing, update docs and ping GD directly with a short handback.
+    - GD will assign the next board-click/preview task only after that direct handback.
+  - Summary:
+    - Improve `Кубик удачи` so, when the final result includes backward movement, the destination cell is highlighted on the board before the player moves.
+  - Current field contract:
+    - `Кубик удачи` rolls 6 dice.
+    - Each `6` gives coins.
+    - Each `1` makes the player move backward by the configured penalty.
+  - UX behavior:
+    - After all dice are rolled, calculate the total backward movement from rolled `1`s.
+    - If total backward movement is greater than `0`, highlight the destination cell on the board before the movement resolves.
+    - Use a compact label such as `-10`, `-20`, etc. based on the actual total backward movement.
+    - Keep the existing roll-context/result text visible so the player sees both coins gained and backward penalty.
+    - Do not add a new confirmation step if the current flow moves automatically; preview can be brief/non-blocking or stay visible through the existing action/result step.
+    - If no backward movement happens, do not add a board target highlight.
+  - Guardrails:
+    - Do not change `Кубик удачи` rules, reward amounts, dice count, random generation, backward movement amount, landing resolution, route order, card effects, or unrelated board previews.
+    - Do not make unrelated cells clickable.
+    - Follow the `Board-Click UX` rule: no large blocking modal over the board while the highlighted target is meant to be inspected.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - result with no `1`s shows no movement target;
+      - result with one or more `1`s highlights the correct backward destination;
+      - movement and landing still resolve as before;
+      - result text still shows coin rewards and penalties clearly;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the handback.
+  - Completed:
+    - After all 6 `Кубик удачи` rolls are resolved, if at least one `1` creates backward movement, the destination cell is highlighted before movement.
+    - The preview label uses the actual total penalty, e.g. `-10`, `-20`, etc.
+    - If no `1`s are rolled, no board target preview is added.
+    - The preview remains visible through the existing result/action step and is cleared just before the automatic backward movement.
+    - No new confirmation was added.
+    - Rewards, penalties, dice count, random, movement, landing resolution, route order, cards, and unrelated previews were not changed.
+    - Bumped host `game.js` and `styles.css` cache keys.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+
+- DONE BOARD PREVIEW UX 2026-06-22 03:02 - `Портал хаоса` target preview:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-06-22 03:08; completed by Dev 3 at 2026-06-22 03:10; context handback added for GD; QA was not involved.
+  - Requested by: `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Cyclic queue rule:
+    - Do exactly this one board-preview task.
+    - After finishing, update docs and ping GD directly with a short handback.
+    - GD will assign the next board-click/preview task only after that direct handback.
+  - Summary:
+    - Improve `Портал хаоса` so the random result clearly previews the destination cell on the board before/while the player is moved.
+  - Current field contract:
+    - `Портал хаоса` rolls 1d6:
+      - `1-2`: backward to nearest monster/portal.
+      - `3-4`: to nearest `Лавка Джо`.
+      - `5`: to nearest `Хорошо`.
+      - `6`: forward to nearest monster/portal.
+  - UX behavior:
+    - After the portal die result is known and the destination cell is calculated, highlight the destination cell on the board with a compact label, for example `Портал`, `Лавка`, `Хорошо`, or `назад`.
+    - Keep the existing roll-context information visible so the player understands why this destination was chosen.
+    - Do not require a new confirmation if current flow moves automatically; the preview can be brief and non-blocking.
+    - If an existing continue/action step is already present, the highlighted target should remain visible until that step resolves.
+    - Follow the `Board-Click UX` rule: do not put a large blocking modal over the board while the highlighted target is meant to be inspected.
+  - Guardrails:
+    - Do not change `Портал хаоса` rules, nearest-target logic, movement distance, landing resolution, route order, card effects, or unrelated board-click previews.
+    - Do not make unrelated cells clickable.
+    - Keep phone/controller behavior working; if the phone cannot show the board highlight, keep clear result text there.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - force/check result branches `1-2`, `3-4`, `5`, `6`;
+      - target cell is highlighted after roll result;
+      - no blocking modal hides the target;
+      - movement and landing still resolve as before;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the handback.
+  - Completed:
+    - After the Chaos Portal die result is known and the destination cell is calculated, the destination is highlighted on the board before movement.
+    - Added compact non-clickable labels for the result: `назад`, `Лавка`, `Хорошо`, or `вперед` / `Портал`.
+    - The preview remains visible through the existing result/action step and is cleared just before teleport movement.
+    - No new confirmation was added; automatic movement stays automatic.
+    - Rules, nearest-target logic, movement, landing resolution, routes, card effects, and other board-click previews were not changed.
+    - Bumped host `game.js` and `styles.css` cache keys.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+
+- DONE BOARD PREVIEW UX 2026-06-22 02:54 - `Черный рынок` 30-step rush target preview:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-06-22 02:59; context handback added for GD; QA was not involved.
+  - Requested by: `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Status:
+    - Sent to `Dev 3` at 2026-06-22 02:54.
+    - Completed by `Dev 3` at 2026-06-22 02:59.
+  - Summary:
+    - Improve `Черный рынок` so the 3-card exchange option previews its 30-step destination on the board before the player confirms the exchange.
+  - Current field contract:
+    - `Черный рынок` offers exchanges for face-up `Лавка Джо` cards.
+    - 3 face-up Shop cards: set/refresh `+10 к силе` in the next monster battle and move 30 steps forward with normal landing resolution.
+  - UX behavior:
+    - While the human player is choosing a `Черный рынок` option, calculate the target cell for the 30-step rush option from the player's current position.
+    - If the 3-card option is available, highlight that destination cell on the board before the player confirms the exchange.
+    - Clicking the highlighted destination cell should resolve the same as choosing the existing 3-card market option.
+    - The existing market option button should remain as fallback.
+    - If the 3-card option is disabled/unavailable, do not make the destination cell clickable; a non-clickable preview is optional only if it does not confuse the disabled state.
+    - Follow the `Board-Click UX` rule: if board click is expected, do not leave a large blocking modal over the field. Use a non-blocking panel/HUD or existing preview pattern.
+  - Labeling:
+    - Highlight label should communicate the destination clearly, e.g. `+30`.
+    - If the target is clamped at finish or route end, show the actual target honestly.
+  - Resolution:
+    - Clicking the target must not skip any existing required payment/card-selection flow.
+    - If the current 3-card option asks the player which 3 face-up Shop cards to exchange, clicking the target should enter that same card-selection/payment flow.
+    - After exchange, preserve current behavior: remove chosen Shop cards from inventory only, set/refresh next-monster bonus to `+10`, move 30 forward, resolve landing normally.
+  - Guardrails:
+    - Do not change Black Market rules, exchange costs, rewards, card removal semantics, bot choices, board route, Shop deck lifecycle, or unrelated board-click effects.
+    - Do not change `Черный рынок` text unless a tiny label is required for the preview.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - human with 3 face-up Shop cards lands on `Черный рынок`;
+      - 30-step target is highlighted before confirmation;
+      - clicking target starts/resolves the same 3-card exchange path as the button;
+      - after exchange, player gets next-monster `+10`, moves 30, and landing resolves;
+      - human with fewer than 3 face-up Shop cards cannot click a rush target to bypass disabled state;
+      - no blocking modal prevents target click;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the handback, because this is part of a cyclic one-task-at-a-time queue.
+  - Completed:
+    - Human Black Market choice now calculates the 30-step rush target cell when the 3-card option is available.
+    - The available `rush` choice carries `cell` and compact board label `+30`.
+    - The highlighted `+30` target is clickable and resolves the same `rush` option as the existing button.
+    - Clicking the target still enters the existing required `exchangeBlackMarketShopCards(...)` / `chooseBlackMarketShopCards(...)` payment selection flow; it does not skip card selection.
+    - The existing Black Market option buttons remain available in a compact non-blocking preview panel.
+    - If the 3-card rush option is disabled/unavailable, no clickable rush target cell is created.
+    - Existing exchange rules, card removal semantics, next-monster `+10`, 30-step movement, landing resolution, bot choices, route, Shop lifecycle, field text, CSV, and Google Sheet were not changed.
+    - Added shared `.choice-panel-board-preview` styling for board-click choices that need visible fallback buttons without blocking the field.
+    - Bumped host `game.js` and `styles.css` cache keys.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+
+- DONE BOARD CLICK UX 2026-06-22 02:50 - `Разворот` board target preview:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-06-22 02:53; context handback added for GD; QA was not involved.
+  - Requested by: `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Status:
+    - Sent to `Dev 3` at 2026-06-22 02:50.
+    - Completed by `Dev 3` at 2026-06-22 02:53.
+  - Summary:
+    - Improve Good held card `backward-reversal` / `Разворот` so human players can choose between the normal backward target and the reversed forward target by clicking highlighted cells on the board.
+  - Current card contract:
+    - id: `backward-reversal`.
+    - title: `Разворот`.
+    - description: `Оставь эту карту себе. Когда двигаешься назад, можешь сбросить эту карту и вместо этого передвинуться на столько же шагов вперед`.
+  - UX behavior:
+    - When a human player is about to move backward and `Разворот` can trigger, show both possible target cells on the board:
+      - normal backward destination if the player does not use the card;
+      - reversed forward destination if the player discards `Разворот`.
+    - Player can click either highlighted target cell to choose that option.
+    - Existing choice buttons/popup may remain as fallback, but must not block board clicks.
+    - Do not show a large blocking modal over the board while target cells are expected to be clickable.
+    - Highlight labels should use the actual movement amount, e.g. `-5` and `+5`, or equivalent clear current UI language.
+    - If movement is clamped at start/finish or both targets collapse to the same cell, show an honest state without duplicate broken targets.
+  - Resolution:
+    - Clicking the normal backward target resolves exactly like choosing not to use `Разворот`.
+    - Clicking the reversed forward target resolves exactly like choosing to use/discard `Разворот`.
+    - Preserve current movement and landing-effect behavior for both paths.
+    - Bot choice behavior can stay unchanged.
+  - Visual requirements:
+    - Highlights must be readable without hiding player tokens or tile icons.
+    - Board should remain clickable only for the pending `Разворот` targets; unrelated cells should not resolve the choice.
+    - Reuse existing board-click/pending-selection patterns from `Вольный шаг`, `Ещё шажок`, `Золотые метки`, and `Путевой знак` where practical.
+  - Guardrails:
+    - Do not change card text, count, Google Sheet/CSV, Good deck lifecycle, movement distance, bot scoring, or unrelated board-click effects.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - create a backward movement situation with held `Разворот`;
+      - normal backward target is visible and clickable;
+      - reversed forward target is visible and clickable;
+      - clicking backward target declines the card and resolves backward movement;
+      - clicking forward target consumes `Разворот` and resolves forward movement;
+      - no blocking modal prevents board clicks;
+      - clicking unrelated board cells does nothing;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the handback, because this is part of a cyclic one-task-at-a-time queue.
+  - Completed:
+    - `Разворот` choices now carry their normal backward and reversed forward target cells.
+    - Human `Разворот` starts with board preview enabled.
+    - Target cells are highlighted directly on the board with compact `-N` / `+N` labels.
+    - Clicking the backward target resolves the same as declining `Разворот`.
+    - Clicking the forward target resolves the same as using/discarding `Разворот`.
+    - If both options collapse onto the same cell, board click prefers the non-consuming `keep` option to avoid accidental discard.
+    - Phone/controller preview actions were generalized for clickable card-choice board previews, covering `Путевой знак` and `Разворот`.
+    - Existing movement and landing-effect behavior, bot choice behavior, card text/count/data, CSV, Google Sheet, Good deck lifecycle, and movement distance were not changed.
+    - Bumped host `game.js` cache key again so the no-blocking preview code is not hidden by stale browser cache.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+
+- DONE BOARD CLICK UX 2026-06-22 02:42 - `Путевой знак` board target selection:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-06-22 02:46; context handback added for GD; QA was not involved.
+  - Requested by: `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Status:
+    - Sent to `Dev 3` at 2026-06-22 02:42.
+    - Completed by `Dev 3` at 2026-06-22 02:46.
+  - Summary:
+    - Improve Good card `path-sign` / `Путевой знак` so human players can choose the forward/backward target by clicking the highlighted target cell on the board.
+  - Current card contract:
+    - id: `path-sign`.
+    - title: `Путевой знак`.
+    - description: `Выбери: идти вперед на 5 или назад на 5. После перемещения назад сработает поле`.
+    - effect: `{ type: "choose-forward-or-back", steps: 5 }`.
+  - UX behavior:
+    - When a human resolves `Путевой знак`, show both possible target cells on the board:
+      - forward 5 route cells;
+      - backward 5 route cells.
+    - Player can click either highlighted target cell to choose that option.
+    - The existing choice buttons/popup may remain as fallback, but board click should be a first-class way to select.
+    - Highlight labels should make direction clear, e.g. `+5` and `-5`, or equivalent current UI language.
+    - If forward/backward target is clamped at start/finish or otherwise same/current cell, still show honest available options without duplicate broken targets.
+  - Resolution:
+    - Clicking the forward target resolves exactly like choosing the existing forward option.
+    - Clicking the backward target resolves exactly like choosing the existing backward option.
+    - Preserve current rule: after backward movement, the destination field effect resolves.
+    - Preserve current forward behavior exactly as implemented.
+    - Bot choice behavior can stay unchanged.
+  - Visual requirements:
+    - Highlights must be readable without hiding player tokens or tile icons.
+    - Board should remain clickable only for the pending `Путевой знак` targets; unrelated cells should not resolve the choice.
+    - Reuse existing board-click/pending-selection patterns from `Вольный шаг`, `Ещё шажок`, and `Золотые метки` where practical.
+  - Guardrails:
+    - Do not change card text, count, Google Sheet/CSV, Good deck lifecycle, movement distance, bot scoring, or unrelated board-click effects.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - reveal/play `Путевой знак`;
+      - forward target is visible and clickable;
+      - backward target is visible and clickable;
+      - clicking forward resolves the forward option;
+      - clicking backward resolves the backward option and then the landing field effect;
+      - clicking unrelated board cells does nothing;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the handback, because this is part of a cyclic one-task-at-a-time queue.
+  - Completed:
+    - `Путевой знак` choices now carry their forward/backward target cells.
+    - Human `Путевой знак` starts with board preview enabled.
+    - Forward/backward target cells are highlighted directly on the board with compact `+5` / `-5` labels.
+    - Clicking a highlighted target resolves the same option as the existing forward/backward button.
+    - Existing choice buttons remain visible as fallback while board targets are clickable.
+    - Phone/controller actions still expose forward/backward choices while preview is open.
+    - Backward choice still calls the existing movement path with landing field resolution.
+    - Bot choice behavior, card text/count/data, CSV, Google Sheet, Good deck lifecycle, and movement distance were not changed.
+    - Bumped host `game.js` and `styles.css` cache keys.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Browser smoke was not run because `127.0.0.1:5173` was unavailable.
+
+- DONE BOARD CLICK UX 2026-06-22 02:34 - `Золотые метки` board-cell selection:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-06-22 02:40; context handback added for GD; QA was not involved.
+  - Requested by: `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Status:
+    - Sent to `Dev 3` at 2026-06-22 02:34.
+    - Completed by `Dev 3` at 2026-06-22 02:40.
+  - Summary:
+    - Improve Event card `golden-markers` / `Золотые метки` so human players place the 5 coin markers by clicking cells directly on the board.
+  - Current card contract:
+    - `Золотые метки`: `Возьми 5 отдельных монет и положи их на любые клетки поля. Игрок, который заканчивает ход на такой клетке, сбрасывает монету с поля и берет 10 монет`.
+  - UX behavior:
+    - When a human resolves `Золотые метки`, enter board-selection mode.
+    - Show the board and highlight valid route cells that can receive a marker.
+    - Player can click a valid route cell to select it.
+    - Clicking an already selected marker cell removes that selection.
+    - Exactly 5 different route cells are required.
+    - Show current progress clearly, e.g. `Выбрано 3/5`.
+    - The confirm/apply action is disabled until exactly 5 cells are selected.
+    - Include a `Просмотр поля` / board-view affordance if the existing modal/action pattern needs it.
+  - Marker placement rules:
+    - Only one marker per cell.
+    - Do not allow selection outside the current board route.
+    - Prefer allowing special/event cells too unless the current card implementation already restricts to route cells only; preserve existing rules if stricter.
+    - Existing bot behavior can stay automatic.
+  - Resolution:
+    - On confirm, place the 5 markers using the existing `golden-markers` state/lifecycle.
+    - Do not change collection rule: a player ending a turn on a marker cell removes that marker and gains 10 coins.
+    - Markers still clear on new game as now.
+  - Visual requirements:
+    - Selected marker cells should be obvious and readable on top of existing tile art.
+    - Valid hover/focus/click affordance should not obscure player tokens, route outline, or existing tile icons.
+    - Keyboard fallback is nice if cheap, but not required if current board-click UX patterns do not support it.
+  - Guardrails:
+    - Do not change card text, count, Google Sheet/CSV, Event deck lifecycle, marker reward amount, bot choice logic, or unrelated board-click effects.
+    - Reuse the same board-click/pending-selection patterns added for `Вольный шаг` / `Ещё шажок` where practical.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - reveal/play `Золотые метки`;
+      - click 5 distinct route cells and confirm;
+      - click a selected cell again to unselect it;
+      - confirm is disabled before 5 selections;
+      - markers appear on selected cells;
+      - ending a turn on a marker grants 10 coins and removes that marker;
+      - new game clears markers;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Send GD a context handback when complete.
+  - Completed:
+    - Human `Золотые метки` now opens board-selection mode and highlights valid route cells.
+    - Clicking a valid route cell selects it; clicking the selected cell again removes it.
+    - The selection panel shows progress as `Выбрано X/5`.
+    - Confirm/apply stays disabled until exactly 5 different cells are selected.
+    - On confirm, the selected cells are written into the existing `goldenMarkers` state/lifecycle.
+    - Existing bot marker placement remains automatic.
+    - Existing marker collection still removes the marker and awards 10 coins.
+    - Card text/count/data, CSV, Google Sheet, Event deck lifecycle, reward amount, and new-game marker cleanup were not changed.
+    - Bumped host `game.js` and `styles.css` cache keys.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+
+- DONE MONSTER DEFEAT REWARD 2026-06-22 01:52 - Strength-only defeat rewards by monster tier:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-06-22 01:55; context handback added for GD; QA was not involved.
+  - Requested by: `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Status:
+    - Sent to `Dev 3` at 2026-06-22 01:52.
+    - Completed by `Dev 3` at 2026-06-22 01:55.
+  - Summary:
+    - Change ordinary monster defeat rewards from the current mixed strength/coin reward to strength-only rewards.
+  - New reward table:
+    - defeat to monster tier 1: `+1 к силе`.
+    - defeat to monster tier 2: `+2 к силе`.
+    - defeat to monster tier 3: `+3 к силе`.
+    - defeat to monster tier 4 / final monster door tier: `+5 к силе`.
+  - Required behavior:
+    - On ordinary board monster defeat, player still returns to Start as now.
+    - Award permanent battle strength through the same path used for permanent `+1 к силе` rewards/status.
+    - Remove all coin rewards from monster defeat.
+    - Do not grant a free `Лавка Джо` card on monster defeat.
+    - Update all battle HUD/result/log/toast text so the defeat reward is only the tiered strength reward, e.g. `Награда за поражение: Сила +3`.
+    - Existing `start-strength` Shop-card behavior remains separate: if returning to Start triggers that card by the existing route/landing logic, do not remove it unless the current code already intentionally skips Start effects on monster defeat.
+  - Source clues:
+    - `monsterDefeatTier(door)`.
+    - `monsterDefeatCoinReward(door)`.
+    - `monsterDefeatStrengthReward()`.
+    - `monsterDefeatRewardText(door)`.
+    - `resolveEnemyBattle(...)` defeat branch around the `Награда за поражение` text.
+  - Remove/replace:
+    - `monsterDefeatCoinReward(...)` should no longer feed live reward logic/text; delete it or make it unused if cleaner.
+    - `monsterDefeatStrengthReward(...)` should become tier-aware, e.g. `monsterDefeatStrengthReward(door)`.
+    - Remove stale player-facing text such as `Лавка Джо + 5 монет`, `+ 10 монет`, `+ 20 монет`, or defeat coin rewards.
+  - Guardrails:
+    - Do not change monster win rewards, monster strength, dice math, door opening rules, final boss PvP, Event monster battles, or `Меч Героя` artifact fight unless they share the same ordinary defeat helper and must be adjusted for text consistency.
+    - Do not change Shop deck/discard lifecycle.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source checks:
+      - defeat reward table is 1/2/3/5 strength by tier;
+      - monster defeat branch no longer adds defeat coins;
+      - monster defeat branch no longer draws free Shop cards;
+      - defeat result/log text does not mention defeat coins or `Лавка Джо`.
+    - Browser/source smoke if practical:
+      - lose to tier 1 monster: return to Start, get permanent `Сила +1`, no coins/card;
+      - lose to tier 2: `Сила +2`;
+      - lose to tier 3: `Сила +3`;
+      - lose to tier 4/final monster door: `Сила +5`;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Send GD a context handback when complete.
+  - Completed:
+    - Removed `monsterDefeatCoinReward(...)` from live reward logic.
+    - Made `monsterDefeatStrengthReward(door)` tier-aware: tier 1 `Сила +1`, tier 2 `Сила +2`, tier 3 `Сила +3`, tier 4/final monster door `Сила +5`.
+    - `monsterDefeatRewardText(door)` now returns only the tiered strength text.
+    - Defeat branch no longer adds coins and does not draw or grant a free `Лавка Джо`.
+    - Defeat branch still sends the player to Start and keeps existing `start-strength` Shop-card behavior separate.
+    - Permanent strength reward is applied through `addBattleBonus(...)` before the result render/prompt, so status reflects the reward immediately.
+    - Battle HUD/result/log/toast text now uses strength-only reward wording.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Static/source checks passed: no `monsterDefeatCoinReward` / `defeatCoins` in live code; defeat branch no longer calls free Shop reward; defeat result text no longer mentions defeat coins or `Лавка Джо`.
+
+- DONE SHOP TIMING 2026-06-22 01:41 - Purchased Joe Shop cards apply immediately:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-06-22 01:45; context handback added for GD; QA was not involved.
+  - Requested by: `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Status:
+    - Sent to `Dev 3` at 2026-06-22 01:41.
+    - Completed by `Dev 3` at 2026-06-22 01:45.
+  - User rule:
+    - Купленные `Лавки Джо` можно использовать сразу после покупки.
+    - Example: if a player buys `+2 к шагам`, the player immediately gains `+2 к шагам` and moves 2 more steps during the same turn.
+  - Scope:
+    - Ordinary `Лавка Джо` field purchases.
+    - Recheck free Shop rewards only to ensure the owned-card bonus UI updates immediately, but do not add extra movement from non-purchase rewards unless the card is obtained during an active movement stop where local flow naturally supports it.
+  - Required behavior:
+    - Newly bought Shop cards become active immediately after purchase, before the current Shop visit finishes.
+    - Passive strength cards (`battle-plus` / `passive-battle-bonus`) update player strength/status immediately.
+    - Passive step cards (`step-plus` / `passive-step-bonus`) update step/status immediately.
+    - If a player buys one or more `step-plus` cards during a movement stop, after the Shop flow closes they should continue moving forward by the newly gained step bonus amount for this movement:
+      - buying one `+2 к шагам` card gives `+2` extra movement now;
+      - buying multiple step cards in the same Shop visit stacks the newly gained amount;
+      - only count step bonus gained during this Shop visit, not the player's old step bonus that was already included in the original roll;
+      - resolve landing/effects normally after that extra movement.
+    - If `shop-unlimited-buy` allows multiple buys from one offer, all newly bought `step-plus` cards in that visit contribute to this immediate extra movement once after the visit.
+    - If the extra movement lands on another Shop field and the player buys more step cards there, those newly gained step cards may again add extra movement from that new Shop visit.
+  - Guardrails:
+    - Do not retroactively reroll dice or rewrite the already-completed movement path.
+    - Do not double-count `step-plus` copies already owned before the roll.
+    - Do not apply extra current movement for face-down/inactive Shop cards.
+    - Do not change Shop deck/discard lifecycle, prices, counts, Google Sheet data, or unrelated card rules.
+    - Prevent infinite loops if a chain of Shop fields and step purchases occurs; use existing movement/landing flow safeguards if available.
+  - UI/logging:
+    - Score/status chips should update as soon as the card is bought.
+    - Add a clear log/toast when immediate step movement is granted, e.g. `Быстрые сапоги сразу дают +2 к шагам`.
+    - If multiple cards are bought, log grouped total if cleaner.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `node --check src/cards.config.js` if touched.
+    - `git diff --check`.
+    - Browser/source smoke:
+      - buy one `step-plus` on ordinary Shop during movement, player moves 2 extra cells after Shop closes;
+      - buy two `step-plus` in one unlimited-buy visit, player moves 4 extra cells after Shop closes;
+      - old pre-owned `step-plus` does not get counted again as extra movement;
+      - buy `battle-plus`, strength chip updates immediately and next battle uses it;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Send GD a context handback when complete.
+  - Completed:
+    - Kept ordinary Shop purchases immediately active by recording the bought card in `player.items` and rendering before the visit continues.
+    - `resolveShop(player)` now tracks only newly bought `step-plus` / `passive-step-bonus` cards from that Shop visit and returns the newly gained step amount.
+    - Landing on an ordinary Shop field now moves the player forward by the returned new step amount after the Shop visit closes.
+    - Multiple newly bought `step-plus` cards stack through the same visit total.
+    - Pre-owned `step-plus` cards are not counted again, because only cards bought inside the current `resolveShop(...)` call contribute.
+    - Extra movement uses `movePlayerSteps(...)`, so the destination landing/effects resolve normally and Shop-field chains use the existing `eventDepth` guard.
+    - Free/debug/reference Shop rewards and pass-through Shop purchases still update owned-card UI/status immediately but do not add current movement from this task.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `node --check src/cards.config.js`.
+    - Passed `git diff --check`.
+
+- DONE GOOD CARD 2026-06-22 01:31 - Limit `Защитный знак` to Bad and Red fields:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-06-22 01:35; context handback added for GD; QA was not involved.
+  - Requested by: `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Status:
+    - Sent to `Dev 3` at 2026-06-22 01:31.
+    - Completed by `Dev 3` at 2026-06-22 01:35.
+  - Summary:
+    - Replace the `Хорошо` card `field-shield` / `Защитный знак` text and behavior.
+  - Current card:
+    - id: `field-shield`.
+    - title: `Защитный знак`.
+    - old description: `Оставь эту карту себе. Когда остановился на клетке, можешь не применять её эффект, а сбросить эту карту`.
+  - New canonical description:
+    - `Оставь эту карту себе. Когда остановился на клетке Плохо или Красное поле, можешь сбросить эту карту и отменить действие поля`.
+  - Behavior:
+    - Held Good status remains visible until used.
+    - Prompt/use `Защитный знак` only when the owner stops on:
+      - ordinary `Плохо` field;
+      - `Красное поле`.
+    - If used on ordinary `Плохо`, skip that field's Bad-card draw entirely and discard the held `Защитный знак` to Good discard.
+    - If used on `Красное поле`, skip the red field effect entirely and discard the held `Защитный знак` to Good discard.
+    - Do not allow this card to cancel other fields anymore.
+    - Do not allow this card to cancel `Очень Плохо`, `Событие`, `Враг`, `VS`, `Лавка Джо`, `Тадам!`, portals, start/finish, or already-started battles.
+    - If red-field TADAM modifiers are attached through the same red-field landing path, using the shield should skip the whole red-field landing effect for that stop.
+  - Sync requirements:
+    - Update `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `good`.
+    - Keep `count: 2`, id `field-shield`, title `Защитный знак`, and no final trailing period.
+    - Bump host/card config cache keys.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static: local config/CSV/Sheet all show the new description.
+    - Browser/source smoke:
+      - player with held `Защитный знак` landing on ordinary `Плохо` can discard it to skip Bad draw;
+      - landing on `Красное поле` can discard it to skip red field effect;
+      - landing on `Очень Плохо` does not offer/use shield and still draws 3 Bad cards;
+      - landing on a non-Bad/non-Red field does not offer/use shield;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Send GD a context handback when complete.
+  - Completed:
+    - Updated `field-shield` / `Защитный знак` description in local config, CSV, and Google Sheet `Cards Config` / `good`.
+    - Added explicit `canUseFieldShieldOnEvent(event)` gate, allowing the held shield prompt only on `bad` and `red`.
+    - Ordinary `Плохо` shield use returns before the Bad draw path, so no Bad card is consumed.
+    - Red-field shield use returns before `resolveRedField(...)`, so base red effect and stacked red-field TADAM modifiers are skipped for that stop.
+    - `Очень Плохо`, Events, monsters, VS, Shop, TADAM, portals, start/finish, and other fields no longer offer/use the shield.
+    - Bumped `cards.config.js` import and host `game.js` cache keys.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/cards.config.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Static readback: local config, CSV, and Google Sheet all show the new exact description with `count: 2`.
+
+- DONE SHOP DECK 2026-06-22 01:21 - Add fixed 3-coin Joe tariff and remove 3 Shop cards:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-06-22 01:28; context handback added for GD; QA was not involved.
+  - Requested by: `GD`.
+  - QA: not involved unless the user explicitly asks.
+  - Status:
+    - Sent to `Dev 3` at 2026-06-22 01:21.
+    - Completed by `Dev 3` at 2026-06-22 01:28.
+  - Summary:
+    - Add a new `Лавка Джо` card with `count: 3`.
+    - Remove three existing `Лавка Джо` cards from the playable Shop deck:
+      - `pre-roll-step-plus5` / `Дорожный рывок`.
+      - `reroll-one-move-die` / `Ещё раз`.
+      - `move-one-farther` / `Еще шажок`.
+  - New Shop card:
+    - Suggested id: `shop-fixed-cost-3`.
+    - Suggested title: `Тариф Джо`.
+    - Suggested shortTitle: `Цена 3`.
+    - Deck: `shop`.
+    - Count: `3`.
+    - Description: `Во время покупок карт Лавка Джо плати только 3 монеты`.
+    - Effect type: `shop-fixed-cost-3`.
+  - Behavior:
+    - Applies only to ordinary `Лавка Джо` field purchases.
+    - Does not affect `Аукцион Джо`, `Черный рынок`, free Shop rewards, Event rewards, monster-defeat rewards, or debug/reference grants.
+    - During ordinary Shop purchases, each bought Shop card costs exactly `3` coins for the owner.
+    - If the owner also has `shop-choice-3-cost-3` / `Привилегия Джо`, they choose from 3 cards and pay 3.
+    - If the owner also has `shop-unlimited-buy` / `Безлимит Джо`, repeat purchases from the same opened offer also cost 3 each.
+    - Treat this fixed cost as overriding ordinary Shop price modifiers such as TADAM discount/surcharge for that owner.
+  - Delete/remove:
+    - Remove `pre-roll-step-plus5`, `reroll-one-move-die`, and `move-one-farther` from `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `shop`.
+    - Remove stale playable UI/pre-roll/post-roll offers, chips, labels, bot valuation hooks, and reference-list entries for the deleted cards.
+    - Defensive legacy save handling may remain only if needed, but new games and Shop offers must not create these cards.
+  - Sync requirements:
+    - Keep `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` synced.
+    - Player-facing `title`, `shortTitle`, and `description` must not end with a final period.
+    - Bump host/card config cache keys.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static: Shop config/CSV/Sheet contains `shop-fixed-cost-3` with `count: 3`.
+    - Static: `pre-roll-step-plus5`, `reroll-one-move-die`, and `move-one-farther` are absent from playable Shop config/CSV/Sheet.
+    - Browser smoke:
+      - ordinary `Лавка Джо` owner with only `Тариф Джо` pays 3 coins;
+      - owner with `Привилегия Джо` sees 3 cards and pays 3;
+      - owner with `Безлимит Джо` can repeat-buy from the same offer at 3 coins each;
+      - deleted cards no longer appear in Shop/reference UI or pre-roll/post-roll action prompts;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - Send GD a context handback when complete.
+  - Completed:
+    - Added `shop-fixed-cost-3` / `Тариф Джо`, `shortTitle: Цена 3`, `count: 3`, effect `{ type: "shop-fixed-cost-3", cost: 3 }`.
+    - Removed `pre-roll-step-plus5`, `reroll-one-move-die`, and `move-one-farther` from playable Shop config, CSV, and Google Sheet `Cards Config` / `shop`.
+    - Ordinary Joe Shop purchases now cost exactly `3` for owners of `Тариф Джо`, overriding TADAM Shop discount/surcharge modifiers.
+    - `Привилегия Джо` still controls 3-card offer size only; `Безлимит Джо` still repeat-buys from the same opened offer, now at the fixed 3 cost when `Тариф Джо` is owned.
+    - Removed active movement-flow calls and action chip/bot valuation hooks for the deleted pre-roll/post-roll Shop cards; old defensive helper code remains unreachable from new playable cards.
+    - Bumped `cards.config.js` import and host `game.js` cache keys.
+  - Checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/cards.config.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+    - Static readback: local config and CSV have 13 Shop card rows / 53 physical copies; `shop-fixed-cost-3` has `count: 3`; deleted IDs are absent.
+    - Google Sheet readback: `shop!A6:N6` contains `shop-fixed-cost-3`; deleted rows are gone from `Cards Config` / `shop`.
+
+- DONE MOVE ONE FARTHER BOARD CLICK 2026-06-22 00:33 - Click highlighted field to choose `Ещё шажок`:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-06-22 00:37; context handback added for GD; QA was not involved.
+  - Context:
+    - User wants to click the board field while choosing whether to use the Shop card `Ещё шажок`.
+    - Current source clue:
+      - `resolveMoveOneFarther(...)` creates `state.pendingMoveOneFarther`;
+      - `renderPostRollTargetOutlines()` highlights `normalCell` and `boostedCell`;
+      - current choice is only via buttons: `data-move-farther-choice="pay"` / `"skip"`;
+      - `resolveMoveOneFartherChoice(choiceId)` already resolves the pending choice.
+    - Work on top of the current dirty tree and do not revert unrelated changes.
+  - Change:
+    - During `state.pendingMoveOneFarther`, make the highlighted target fields clickable on the board.
+    - Clicking the boosted target (`С картой +1`) should resolve as `pay`.
+    - Clicking the normal target (`Без карты`) should resolve as `skip`.
+    - Existing buttons must continue to work.
+    - Phone/controller actions must continue to work.
+  - Edge cases:
+    - If `normalCell === boostedCell` and the outline is combined, clicking the combined field should resolve as `skip` / no card by default, because paying does not change the destination.
+    - If the active pending choice no longer exists, clicks should do nothing.
+    - Ignore clicks from inactive players/other pending states.
+    - Avoid double resolution from rapid clicks: once one choice resolves, further field/button clicks should be ignored.
+  - UI requirements:
+    - Highlighted target cells should look clickable while the choice is pending:
+      - cursor pointer;
+      - hover/focus treatment if practical;
+      - title/aria-label should make the action clear.
+    - Do not make unrelated tiles clickable.
+    - Do not interfere with walk path, portal preview, card-choice preview, or golden markers.
+  - Do not change:
+    - card text/config/counts;
+    - cost/steps of `Ещё шажок`;
+    - movement math;
+    - Shop deck lifecycle;
+    - normal roll flow;
+    - other post-roll effects.
+  - Verification:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser smoke if environment allows:
+      - after movement roll with `Ещё шажок`, two target cells are highlighted;
+      - click boosted cell: pays 3 coins and moves +1 farther;
+      - click normal cell: no payment, normal movement;
+      - buttons still do the same choices;
+      - combined same-target outline click does not charge coins;
+      - phone/controller action still works;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this task done in `project-memory/inbox/for-dev.md`.
+    - Add a context note to `project-memory/inbox/for-gd.md`.
+    - No QA gate unless the user explicitly asks.
+  - Completed:
+    - `renderPostRollTargetOutlines()` now marks `Ещё шажок` target outlines as interactive buttons with `data-move-farther-target`, `data-cell`, `role="button"`, `tabindex="0"`, clear `title`, and `aria-label`.
+    - Clicking the boosted target resolves the existing `resolveMoveOneFartherChoice("pay")`.
+    - Clicking the normal target resolves the existing `resolveMoveOneFartherChoice("skip")`.
+    - Combined same-cell outline defaults to `skip`, so paying is not selected when destination would not change.
+    - Added keyboard activation for focused outlines via Enter/Space.
+    - Existing button path and phone/controller actions still use the same `resolveMoveOneFartherChoice(...)` resolver.
+    - Added hover/focus/pointer CSS only for `.post-roll-target-outline.is-clickable`.
+    - Did not change card text/config/counts, cost/steps, movement math, Shop deck lifecycle, normal roll flow, or other post-roll effects.
+  - Checks:
+    - Passed: `node --check src/game.js`.
+    - Passed: `node --check src/controller.js`.
+    - Passed: `git diff --check`.
+    - Passed static/source checks: board click handler only targets `[data-move-farther-target]`; stale/no pending state returns without resolving; combined target uses `skip`; button/phone resolver path remains.
+    - Browser smoke was not completed: local `127.0.0.1:5173` is unavailable in this environment.
+  - Rework 2026-06-22 00:51:
+    - User reported that clicking the highlighted board field did nothing.
+    - Expanded the interaction from only the outline span to the target tile itself: target tiles now also receive `data-move-farther-target`, `data-move-farther-cell`, `role="button"`, `tabindex="0"`, title/aria-label, and pointer cursor.
+    - Board click handler now catches clicks on tile contents/overlays through the nearest `[data-move-farther-target]`, so clicks on the field area apply the same `pay` / `skip` resolver.
+    - Cleanup removes the tile-level data/roles/classes on each tile-state render.
+    - Checks passed again: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+  - Hotfix 2026-06-22 00:56:
+    - User clarified that press animation happened but the action still did not apply.
+    - Fixed the actual resolver blocker: board-target cell ids are strings like `10-14`, but the handler was converting `dataset.moveFartherCell` with `Number(...)`, producing `NaN` and skipping both `pay` and `skip`.
+    - `resolveMoveOneFartherBoardCell(...)` now compares string cell ids directly.
+    - Kept coordinate fallback for clicks that arrive from overlay/token layers.
+    - Checks passed again: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+  - UI copy rework 2026-06-22 01:01:
+    - User requested replacing `С картой` with `-3 монеты` and removing `Без карты` from the highlighted field display.
+    - Boosted board target label now shows `-3 монеты`.
+    - Normal board target keeps the outline/click action but no longer renders a text badge.
+    - Action panel legend no longer uses `С картой`; it shows the coin cost for the boosted target.
+    - Skip action text changed from `Без карты` to `Не платить` in host and phone/controller action labels.
+    - Checks passed again: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+  - UI float rework 2026-06-22 01:06:
+    - User requested the boosted target cost to use the same visual language as the floating `+n` / `-n` coin marker, not a static chip inside the field.
+    - Removed the text badge from the boosted outline and added persistent `.post-roll-target-cost-float.coin-float.is-negative` with `-${coinAmount(pending.cost)}`.
+    - The cost float has `animation: none` and `opacity: 1`, so it remains visible until the pending choice resolves and tile-state cleanup removes it.
+    - Did not change click/keyboard behavior, cost, steps, movement math, or card config.
+    - Checks passed again: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+
 - DONE FULLSCREEN LOWER SPACING 2026-06-21 13:21 - Add roll-strip-sized gap before lower panels in fullscreen:
   - Owner: `Dev 1`.
   - Dispatch status: completed by Dev 1 at 2026-06-21 13:24; context handback added for GD; QA was not involved.
