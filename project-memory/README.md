@@ -48,6 +48,15 @@ This folder is the shared mailbox for Codex chats working on "Очень Бол�
 - Use a small non-blocking HUD, hidden panel, side/phone actions, or safe auto-confirm where appropriate. Existing buttons may remain as fallback only if they do not block board clicks.
 - Highlight only valid target cells, make selected/current targets readable, and ensure unrelated cells do not accidentally resolve the choice.
 
+## UI Button Style Rules
+
+- Primary bright gold buttons are reserved for true primary actions such as `Бросить`, start/new-game, or a deliberate main confirmation.
+- Utility and icon buttons, including settings, fullscreen, phone-room, reference, history/info, copy, and popup close buttons, should use the shared dark fantasy surface: dark brown/green fill, warm gold border, subtle inset highlight, and restrained shadow.
+- Utility button hover/focus states should stay dark and only lift the border/glow slightly. They must not turn into the bright gold primary-button fill.
+- Active/toggled utility buttons may use a stronger warm border or ring, but should keep the dark surface.
+- New custom utility buttons must override the global `button:hover:not(:disabled)` rule with matching or higher specificity, for example `.my-utility-button:hover:not(:disabled)`, so the generic bright hover cannot leak in.
+- Icon-only buttons need a centered glyph/icon, stable square dimensions, and an `aria-label`/`title` when the icon is not self-explanatory.
+
 ## Movement Trigger Rules
 
 - By default, field effects and card/TADAM triggers that say they happen on stopping, landing, passing, jumping, or sharing a cell work only during forward movement.
@@ -78,6 +87,10 @@ Use `prompts/read-news.md` when the user says "прочти новости".
 
 - Player-facing card text never ends with a final period.
 - If a card has several sentences, periods may stay between sentences, but the final sentence must have no trailing period.
+- Do not mention `лицом вверх` / `лицом вниз` in player-facing text unless the mechanic specifically depends on that state.
+  - If an effect can use any owned `Лавка Джо` card, write simply `карта Лавки Джо` / `карты Лавки Джо`.
+  - If a mechanic excludes face-up or face-down cards, the UI text, disabled reasons, logs, and actual behavior must all say that clearly.
+  - When unsure whether face state is part of the rule or just leftover implementation wording, ask GD/user before changing the rule.
 - Apply this to `Cards Config` player-facing fields such as `title`, `shortTitle`, and `description`, and keep Google Sheet, `src/cards.config.js`, and `cards-google-sheet.csv` aligned.
 - Internal config notes may keep normal punctuation unless they are displayed on a card.
 

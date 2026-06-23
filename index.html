@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260623-0143" />
+    <link rel="stylesheet" href="./styles.css?v=20260624-0233" />
   </head>
   <body data-ui-style="classic" data-font-style="standard">
     <main class="app-shell">
@@ -19,6 +19,7 @@
           <div class="map-wrap">
             <div id="eventToast" class="event-toast" role="button" tabindex="0" aria-live="polite" hidden></div>
             <div id="monsterDefeatBanner" class="monster-defeat-banner" aria-live="polite" hidden></div>
+            <div id="coinDoubleBanner" class="coin-double-banner" aria-live="polite" hidden></div>
             <div id="finalBattleHud" class="final-battle-hud" aria-live="polite" hidden></div>
             <div id="winnerPopup" class="winner-popup" aria-live="polite" hidden></div>
             <div id="choicePanel" class="choice-panel" role="dialog" aria-live="polite" hidden></div>
@@ -27,6 +28,9 @@
           <div class="board-header">
             <div class="dice-panel">
               <span id="diceValue">-</span>
+              <button id="infoHistoryBtn" class="info-history-button" type="button" aria-label="Показать хронику" title="Хроника" aria-haspopup="dialog" aria-expanded="false">
+                <span class="info-history-glyph" aria-hidden="true">i</span>
+              </button>
               <div id="fieldEffect" class="field-effect"></div>
               <div id="turnActions" class="turn-actions" aria-label="Доступные действия"></div>
               <button id="rollBtn">Бросить <img class="dice-icon" src="./assets/icons/dice.png?v=20260524-0305" alt="" aria-hidden="true"></button>
@@ -241,13 +245,6 @@
           </section>
           <div id="referenceOutput" class="reference-output" hidden></div>
         </article>
-        <article class="log-panel">
-          <div class="section-title">
-            <h2>Хроника</h2>
-            <button id="logToggle" class="log-toggle" type="button" aria-expanded="false">Показать 20</button>
-          </div>
-          <ol id="gameLog" class="game-log"></ol>
-        </article>
         <article class="history-panel">
           <div class="section-title">
             <h2>История</h2>
@@ -257,8 +254,24 @@
         </article>
       </section>
 
+      <div id="infoHistoryPopup" class="info-history-popup" role="dialog" aria-modal="true" aria-labelledby="infoHistoryTitle" hidden>
+        <button class="info-history-backdrop" type="button" data-info-history-close aria-label="Закрыть хронику"></button>
+        <section class="info-history-card">
+          <div class="info-history-head">
+            <div>
+              <h2 id="infoHistoryTitle">Хроника</h2>
+            </div>
+            <button id="infoHistoryCloseBtn" class="info-history-close" type="button" aria-label="Закрыть хронику">×</button>
+          </div>
+          <div class="info-history-list-wrap">
+            <div class="info-history-list-title">Последние действия</div>
+            <ol id="gameLog" class="game-log info-history-log"></ol>
+          </div>
+        </section>
+      </div>
+
     </main>
 
-    <script type="module" src="./src/game.js?v=20260623-0143"></script>
+    <script type="module" src="./src/game.js?v=20260624-0230"></script>
   </body>
 </html>

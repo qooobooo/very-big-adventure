@@ -597,7 +597,7 @@ export const cardConfig = {
       id: "monster-strength-plus3",
       count: 4,
       title: "Боевой эликсир",
-      shortTitle: "+3 к монстру",
+      shortTitle: "+3 к силе",
       description: "Во время боя с монстром можешь заплатить 5 монет и получить +3 силы на этот бой",
       effect: { type: "monster-strength-plus3", amount: 3, cost: 5 },
     },

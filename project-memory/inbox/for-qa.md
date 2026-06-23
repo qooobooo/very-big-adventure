@@ -4,6 +4,119 @@ For testing tasks related to "Очень Большая Бродилка" in `/U
 
 ## Open Items
 
+- QA RECHECK REQUEST 2026-06-24 01:44 - Mobile control strip overflow after Art/UI fix:
+  - Owner: `QA 2`.
+  - Requested by: `Art / UI 1` handback after GD-dispatched rework.
+  - Related finding:
+    - Medium severity mobile overflow from `QA INFO FEATURE 2026-06-24 01:25`.
+  - Re-check target:
+    - Viewport around `390x844`.
+    - Dice indicator, `i` info button, current-cell card/action area, and `Бросить` button should all remain visible/usable without horizontal clipping or horizontal scroll.
+    - Info popup should still open/close.
+  - Fix summary:
+    - CSS-only: mobile board-control reflow now applies at plain `@media (max-width: 680px)`, not only `hover: none` / `pointer: coarse`.
+  - Notes:
+    - No gameplay/behavior changes were made by Art/UI 1.
+
+- QA INFO FEATURE 2026-06-24 01:25 - QA 2 independent check for info button/history popup:
+  - Owner: `QA 2`.
+  - Dispatch status: sent directly to QA 2 thread at 2026-06-24 01:25.
+  - Requested by: user via `GD`.
+  - Summary:
+    - Independent QA 2 pass for the same new info button/history popup feature.
+    - User asked to put the task on QA 2 as well.
+    - QA 2 must report findings directly to GD. GD will split findings into Dev/Art tasks and dispatch fixes.
+  - Scope:
+    - New `i` info button between the dice/result indicator and current-cell card.
+    - Popup with current action highlighted and latest 50 chronicle actions.
+    - Old permanent chronicle block removed.
+    - Include QA 1's known findings in awareness, but also look for new issues.
+  - Required checks:
+    - Static:
+      - `node --check src/game.js`.
+      - `node --check src/controller.js` if touched/needed.
+      - `git diff --check`.
+    - Browser/visual smoke if possible:
+      - Info button is actually between dice indicator and current-cell card.
+      - Button looks clickable and consistent with nearby UI.
+      - Clicking opens the popup.
+      - Popup close works.
+      - Popup shows the current action highlighted and readable.
+      - Popup shows up to 50 latest chronicle actions, in useful order, with scrolling.
+      - Old always-visible chronicle block is gone and no empty gap remains where it used to be.
+      - Popup does not break board controls, dice button, card panels, settings/cards/phones/fullscreen buttons.
+      - Desktop and mobile layouts do not overlap, clip important content, or trap scroll.
+      - Opening/closing repeatedly does not duplicate entries, duplicate overlays, or leave stale state.
+      - New game/reset does not keep old popup state or stale chronicle/current action.
+      - Enter/Escape keyboard behavior: Enter must not trigger gameplay behind popup; Escape should close popup.
+      - No console errors.
+    - Edge cases:
+      - Empty/early game chronicle.
+      - More than 50 log entries.
+      - Current action while a modal/card/reveal/pending action is active.
+      - Fullscreen/big-screen mode if available.
+  - Reporting format:
+    - Report findings directly to GD thread with:
+      - severity;
+      - reproduction steps;
+      - expected result;
+      - actual result;
+      - likely owner (`Dev` for behavior/DOM/data, `Art/UI` for visual/layout);
+      - screenshots if useful.
+    - Also update `project-memory/updates.md` and add a note to `project-memory/inbox/for-gd.md`.
+  - Important:
+    - Do not write implementation tasks to Dev/Art yourself for this pass unless GD asks.
+    - Do not change game code.
+
+- QA INFO FEATURE 2026-06-24 00:56 - Check info button/history popup:
+  - Owner: `QA 1`.
+  - Dispatch status: sent directly to QA 1 thread at 2026-06-24 00:56.
+  - Requested by: user via `GD`.
+  - Summary:
+    - Test the new info button/history popup feature.
+    - User says there are many problems.
+    - QA must report findings directly to GD, not only write docs. GD will split findings into Dev/Art tasks and dispatch the team to fix immediately.
+  - Scope:
+    - New `i` info button between the dice/result indicator and current-cell card.
+    - Popup with current action highlighted and latest 50 chronicle actions.
+    - Old permanent chronicle block removed.
+    - Visual polish from Art/UI and behavior integration from Dev.
+  - Required checks:
+    - Static:
+      - `node --check src/game.js`.
+      - `node --check src/controller.js` if touched/needed.
+      - `git diff --check`.
+    - Browser/visual smoke if possible:
+      - Info button is actually between dice indicator and current-cell card.
+      - Button looks clickable and consistent with nearby UI.
+      - Clicking opens the popup.
+      - Popup close works.
+      - Popup shows the current action highlighted and readable.
+      - Popup shows up to 50 latest chronicle actions, in useful order, with scrolling.
+      - Old always-visible chronicle block is gone and no empty gap remains where it used to be.
+      - Popup does not break board controls, dice button, card panels, settings/cards/phones/fullscreen buttons.
+      - Desktop and mobile layouts do not overlap, clip important content, or trap scroll.
+      - Opening/closing repeatedly does not duplicate entries, duplicate overlays, or leave stale state.
+      - New game/reset does not keep old popup state or stale chronicle/current action.
+      - No console errors.
+    - Edge cases:
+      - Empty/early game chronicle.
+      - More than 50 log entries.
+      - Current action while a modal/card/reveal/pending action is active.
+      - Fullscreen/big-screen mode if available.
+  - Reporting format:
+    - Report findings directly to GD thread with:
+      - severity;
+      - reproduction steps;
+      - expected result;
+      - actual result;
+      - likely owner (`Dev` for behavior/DOM/data, `Art/UI` for visual/layout);
+      - screenshots if useful.
+    - Also update `project-memory/updates.md` and add a note to `project-memory/inbox/for-gd.md`.
+  - Important:
+    - Do not write implementation tasks to Dev yourself for this pass unless GD asks. The user explicitly wants GD to redistribute fixes after QA reports.
+    - Do not change game code.
+
 - QA PIPELINE RULE 2026-06-09 00:18 - QA and GD approval are on-demand:
   - QA is skipped by default for new implementation handbacks.
   - GD approval is also skipped by default; handbacks to GD are context notes, not approval requests.

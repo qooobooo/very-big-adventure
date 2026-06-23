@@ -2804,7 +2804,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   min-height: 0;
   height: 100%;
   display: grid;
-  grid-template-columns: 52px minmax(150px, 0.7fr) minmax(260px, 1.3fr) 170px;
+  grid-template-columns: 52px 52px minmax(140px, 0.78fr) minmax(240px, 1.4fr) 136px;
   align-items: stretch;
   justify-content: stretch;
   gap: 10px;
@@ -2867,6 +2867,87 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   animation: dice-tumble 140ms linear infinite;
 }
 
+.info-history-button {
+  position: relative;
+  isolation: isolate;
+  width: 52px;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 247, 232, 0.15);
+  border-radius: 8px;
+  color: rgba(255, 232, 168, 0.84);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.055), rgba(101, 189, 194, 0.045)),
+    rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 8px 18px rgba(0, 0, 0, 0.2);
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.info-history-button::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  z-index: 0;
+  border-radius: 7px;
+  background:
+    linear-gradient(180deg, rgba(255, 247, 232, 0.055), transparent),
+    rgba(0, 0, 0, 0.06);
+  opacity: 0.65;
+}
+
+.info-history-glyph {
+  position: relative;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 225, 145, 0.34);
+  border-radius: 999px;
+  color: currentColor;
+  background:
+    radial-gradient(circle at 42% 28%, rgba(255, 255, 255, 0.12), transparent 38%),
+    rgba(0, 0, 0, 0.12);
+  font-family: Rubik, system-ui, sans-serif;
+  font-size: 1.12rem;
+  font-style: normal;
+  font-weight: 950;
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(37, 21, 8, 0.66);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 2px 5px rgba(0, 0, 0, 0.18);
+}
+
+.info-history-button:hover:not(:disabled),
+.info-history-button:focus-visible,
+.info-history-button.active {
+  border-color: rgba(255, 215, 125, 0.46);
+  color: var(--gold-2);
+  background:
+    linear-gradient(135deg, rgba(217, 170, 76, 0.11), rgba(101, 189, 194, 0.05)),
+    rgba(255, 255, 255, 0.045);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 2px rgba(255, 219, 122, 0.1),
+    0 10px 22px rgba(0, 0, 0, 0.24);
+  outline: none;
+}
+
+.info-history-button:active {
+  transform: translateY(1px);
+}
+
 .turn-actions {
   min-width: 0;
   height: 100%;
@@ -2890,6 +2971,18 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   background:
     linear-gradient(135deg, rgba(217, 170, 76, 0.15), rgba(101, 189, 194, 0.05)),
     rgba(255, 255, 255, 0.04);
+}
+
+#rollBtn {
+  min-width: 0;
+  padding: 0 10px;
+  font-size: 0.94rem;
+  line-height: 1.05;
+}
+
+#rollBtn .dice-icon {
+  width: 1.18em;
+  height: 1.18em;
 }
 
 .action-label,
@@ -6173,6 +6266,12 @@ body.is-game-fullscreen .app-shell > * {
   z-index: 1;
 }
 
+body.is-game-fullscreen .app-shell > .info-history-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+}
+
 .tadam-card {
   display: grid;
   gap: 10px;
@@ -6433,6 +6532,56 @@ body.is-game-fullscreen .app-shell > * {
   color: #ffd777;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.24);
   white-space: nowrap;
+}
+
+.coin-double-banner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 60;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: min(675px, calc(100vw - 32px));
+  padding: 8px 12px 9px;
+  border: 0;
+  border-radius: 4px;
+  color: #fffaf0;
+  background: rgba(21, 18, 13, 0.48);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+  font-size: clamp(1.75rem, 3.72vw, 2.93rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  text-wrap: balance;
+  white-space: nowrap;
+  text-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.6),
+    0 0 10px rgba(255, 229, 159, 0.16);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.96);
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+}
+
+.coin-double-banner[hidden] {
+  display: none;
+}
+
+.coin-double-banner.is-visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.coin-double-banner.is-hiding {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.98);
+}
+
+.coin-double-banner strong {
+  color: #fffaf0;
 }
 
 .event-toast:hover,
@@ -8185,22 +8334,245 @@ button.shop-card-decline:focus-visible {
   scrollbar-color: rgba(255, 215, 125, 0.5) rgba(255, 255, 255, 0.04);
 }
 
-.game-log.is-expanded {
-  max-height: 520px;
-}
-
 .game-log li {
   margin-bottom: 8px;
   line-height: 1.35;
 }
 
-.game-log:not(.is-expanded) li:nth-child(n + 6),
-.game-log.is-expanded li:nth-child(n + 21) {
+.game-log strong {
+  color: var(--gold-2);
+}
+
+.info-history-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 2.1vw, 24px);
+}
+
+.info-history-popup[hidden] {
   display: none;
 }
 
-.game-log strong {
+.info-history-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(216, 169, 71, 0.16), transparent 32%),
+    radial-gradient(circle at 18% 74%, rgba(101, 189, 194, 0.1), transparent 30%),
+    rgba(4, 7, 7, 0.74);
+  cursor: default;
+}
+
+button.info-history-backdrop:hover:not(:disabled),
+button.info-history-backdrop:focus-visible,
+button.info-history-backdrop:active:not(:disabled) {
+  border: 0;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(216, 169, 71, 0.16), transparent 32%),
+    radial-gradient(circle at 18% 74%, rgba(101, 189, 194, 0.1), transparent 30%),
+    rgba(4, 7, 7, 0.74);
+  box-shadow: none;
+  outline: none;
+  transform: none;
+}
+
+.info-history-card {
+  position: relative;
+  isolation: isolate;
+  z-index: 1;
+  width: min(760px, calc(100vw - 28px));
+  max-height: min(84dvh, 760px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 14px;
+  padding: clamp(14px, 2vw, 20px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 215, 125, 0.48);
+  border-radius: 8px;
+  color: var(--ink);
+  background:
+    linear-gradient(180deg, rgba(46, 56, 50, 0.98), rgba(15, 22, 20, 0.98)),
+    radial-gradient(circle at 14% 0%, rgba(255, 215, 125, 0.14), transparent 38%),
+    var(--panel);
+  box-shadow:
+    0 28px 78px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.info-history-card::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  z-index: 0;
+  border: 1px solid rgba(255, 247, 232, 0.06);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.info-history-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.info-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 247, 232, 0.1);
+}
+
+.info-history-head h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.24rem, 2vw, 1.55rem);
+  line-height: 1.05;
+}
+
+.info-history-close {
+  flex: 0 0 auto;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 247, 232, 0.24);
+  border-radius: 8px;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 38% 28%, rgba(255, 255, 255, 0.16), transparent 34%),
+    rgba(255, 255, 255, 0.065);
+  font-size: 0;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.info-history-close::before,
+.info-history-close::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  transform-origin: center;
+}
+
+.info-history-close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.info-history-close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.info-history-close:hover,
+.info-history-close:focus-visible {
+  border-color: rgba(255, 215, 125, 0.62);
+  background:
+    radial-gradient(circle at 38% 28%, rgba(255, 255, 255, 0.2), transparent 34%),
+    rgba(216, 169, 71, 0.14);
+  outline: none;
+}
+
+.info-history-close:active {
+  transform: translateY(1px);
+}
+
+.info-history-list-wrap {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid rgba(255, 247, 232, 0.12);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 34%),
+    rgba(0, 0, 0, 0.16);
+}
+
+.info-history-list-title {
+  display: flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border-bottom: 1px solid rgba(255, 247, 232, 0.08);
   color: var(--gold-2);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.info-history-log {
+  min-height: 0;
+  max-height: min(46dvh, 430px);
+  padding: 12px 16px 14px 40px;
+  background: transparent;
+}
+
+.info-history-log li {
+  margin-bottom: 0;
+  padding: 0 0 9px;
+  border-bottom: 1px solid rgba(255, 247, 232, 0.07);
+}
+
+.info-history-log li + li {
+  padding-top: 9px;
+}
+
+.info-history-log li:first-child {
+  color: var(--ink);
+}
+
+@media (max-width: 680px) {
+  .info-history-popup {
+    place-items: end center;
+    padding: 10px;
+  }
+
+  .info-history-card {
+    width: 100%;
+    max-height: 88dvh;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .info-history-head {
+    padding-bottom: 10px;
+  }
+
+  .info-history-close {
+    width: 38px;
+    height: 38px;
+  }
+
+  .info-history-list-title {
+    min-height: 32px;
+    padding: 0 12px;
+    font-size: 0.66rem;
+  }
+
+  .info-history-log {
+    max-height: 42dvh;
+    padding: 10px 12px 12px 34px;
+    font-size: 0.78rem;
+  }
 }
 
 .log-toggle,
@@ -8606,6 +8978,7 @@ body[data-ui-style="tabletop"] .game-settings,
 body[data-ui-style="tabletop"] .board-panel,
 body[data-ui-style="tabletop"] .side-panel > section,
 body[data-ui-style="tabletop"] .reference-panel,
+body[data-ui-style="tabletop"] .info-history-card,
 body[data-ui-style="tabletop"] .log-panel,
 body[data-ui-style="tabletop"] .history-panel,
 body[data-ui-style="tabletop"] .test-panel {
@@ -8617,6 +8990,7 @@ body[data-ui-style="tabletop"] .test-panel {
 
 body[data-ui-style="tabletop"] .board-header,
 body[data-ui-style="tabletop"] #diceValue,
+body[data-ui-style="tabletop"] .info-history-button,
 body[data-ui-style="tabletop"] .field-effect,
 body[data-ui-style="tabletop"] .turn-actions,
 body[data-ui-style="tabletop"] .settings-panel,
@@ -8629,6 +9003,7 @@ body[data-ui-style="tabletop"] .phone-room-details label,
 body[data-ui-style="tabletop"] .modifier-preset-row,
 body[data-ui-style="tabletop"] .settings-action-pair,
 body[data-ui-style="tabletop"] .reference-toggle-panel,
+body[data-ui-style="tabletop"] .info-history-list-wrap,
 body[data-ui-style="tabletop"] .history-summary span,
 body[data-ui-style="tabletop"] .history-final,
 body[data-ui-style="tabletop"] .history-final-head > span,
@@ -8654,6 +9029,8 @@ body[data-ui-style="tabletop"] input[type="text"] {
 body[data-ui-style="tabletop"] .season-controls #newGameBtn,
 body[data-ui-style="tabletop"] .settings-panel button,
 body[data-ui-style="tabletop"] .header-icon-button,
+body[data-ui-style="tabletop"] .info-history-button,
+body[data-ui-style="tabletop"] .info-history-close,
 body[data-ui-style="tabletop"] .phone-room-copy,
 body[data-ui-style="tabletop"] .phone-room-settings-toggle,
 body[data-ui-style="tabletop"] #createPhoneRoomBtn,
@@ -8673,6 +9050,7 @@ body[data-ui-style="tabletop"] .shop-card-decline {
 body[data-ui-style="tabletop"] .season-controls #newGameBtn:hover:not(:disabled),
 body[data-ui-style="tabletop"] .settings-panel button:hover:not(:disabled),
 body[data-ui-style="tabletop"] .header-icon-button:hover:not(:disabled),
+body[data-ui-style="tabletop"] .info-history-button:hover:not(:disabled),
 body[data-ui-style="tabletop"] .phone-room-copy:hover:not(:disabled),
 body[data-ui-style="tabletop"] .phone-room-settings-toggle:hover:not(:disabled),
 body[data-ui-style="tabletop"] #createPhoneRoomBtn:hover:not(:disabled),
@@ -8689,6 +9067,7 @@ body[data-ui-style="tabletop"] .shop-card-decline:hover:not(:disabled) {
 body[data-ui-style="tabletop"] .season-controls #newGameBtn:active:not(:disabled),
 body[data-ui-style="tabletop"] .settings-panel button:active:not(:disabled),
 body[data-ui-style="tabletop"] .header-icon-button:active:not(:disabled),
+body[data-ui-style="tabletop"] .info-history-button:active:not(:disabled),
 body[data-ui-style="tabletop"] .phone-room-copy:active:not(:disabled),
 body[data-ui-style="tabletop"] .phone-room-settings-toggle:active:not(:disabled),
 body[data-ui-style="tabletop"] #createPhoneRoomBtn:active:not(:disabled),
@@ -8722,6 +9101,8 @@ body[data-ui-style="tabletop"] .shop-card-decline:disabled {
 body[data-ui-style="tabletop"] .header-icon-button.active,
 body[data-ui-style="tabletop"] .header-icon-button[aria-expanded="true"],
 body[data-ui-style="tabletop"] .header-icon-button[aria-pressed="true"],
+body[data-ui-style="tabletop"] .info-history-button.active,
+body[data-ui-style="tabletop"] .info-history-button[aria-expanded="true"],
 body[data-ui-style="tabletop"] .reference-toggle.is-active {
   border-color: rgba(255, 221, 148, 0.74);
   background: linear-gradient(180deg, #704625, #3a2114);
@@ -9000,11 +9381,15 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
   }
 
   .dice-panel {
-    grid-template-columns: 44px minmax(150px, 0.62fr) minmax(280px, 1.38fr) 210px;
+    grid-template-columns: 44px 44px minmax(140px, 0.7fr) minmax(260px, 1.45fr) 150px;
     gap: 8px;
   }
 
   #diceValue {
+    width: 44px;
+  }
+
+  .info-history-button {
     width: 44px;
   }
 
@@ -9014,7 +9399,8 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
   }
 
   #rollBtn {
-    font-size: 0.92rem;
+    padding: 0 8px;
+    font-size: 0.86rem;
   }
 
   .map-wrap {
@@ -9240,7 +9626,7 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
 
   .dice-panel {
     width: 100%;
-    grid-template-columns: 42px minmax(108px, 0.55fr) minmax(184px, 1fr) 111px;
+    grid-template-columns: 42px 42px minmax(104px, 0.58fr) minmax(172px, 1fr) 92px;
     gap: 6px;
     justify-content: stretch;
   }
@@ -9249,6 +9635,11 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
     width: 42px;
     height: 100%;
     font-size: 1.22rem;
+  }
+
+  .info-history-button {
+    width: 42px;
+    font-size: 1.05rem;
   }
 
   .field-effect,
@@ -9322,8 +9713,8 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
 
   #rollBtn {
     min-height: 42px;
-    padding: 0 8px;
-    font-size: 0.82rem;
+    padding: 0 6px;
+    font-size: 0.76rem;
   }
 
   .event-toast {
@@ -9551,6 +9942,58 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
 }
 
 @media (max-width: 680px) {
+  .board-panel {
+    display: grid;
+    grid-template-columns: 42px 42px minmax(0, 1fr) minmax(0, 1.45fr);
+    grid-template-areas:
+      "map map map map"
+      "dice info field actions"
+      "roll roll roll roll";
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .board-header,
+  .dice-panel {
+    display: contents;
+  }
+
+  #diceValue {
+    grid-area: dice;
+    width: 42px;
+    height: 58px;
+  }
+
+  .info-history-button {
+    grid-area: info;
+    width: 42px;
+    height: 58px;
+  }
+
+  .field-effect {
+    grid-area: field;
+    height: 58px;
+  }
+
+  .turn-actions {
+    grid-area: actions;
+    height: 58px;
+  }
+
+  .map-wrap {
+    grid-area: map;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+
+  #rollBtn {
+    grid-area: roll;
+    width: 100%;
+    min-height: 48px;
+    font-size: 0.9rem;
+  }
+
   .season-controls {
     gap: 5px;
     grid-template-columns:
@@ -9604,11 +10047,11 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
 
   .board-panel {
     display: grid;
-    grid-template-columns: 42px minmax(0, 1fr) minmax(0, 1.45fr);
+    grid-template-columns: 42px 42px minmax(0, 1fr) minmax(0, 1.45fr);
     grid-template-areas:
-      "map map map"
-      "dice field actions"
-      "roll roll roll";
+      "map map map map"
+      "dice info field actions"
+      "roll roll roll roll";
     gap: 8px;
     padding: 8px;
   }
@@ -9620,6 +10063,12 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
 
   #diceValue {
     grid-area: dice;
+    height: 58px;
+  }
+
+  .info-history-button {
+    grid-area: info;
+    width: 42px;
     height: 58px;
   }
 

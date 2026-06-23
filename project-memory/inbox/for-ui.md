@@ -4,6 +4,103 @@ For UI/UX and art-asset tasks related to "Очень Большая Бродил
 
 ## Open Items
 
+- DONE 2026-06-24 01:44 - Mobile control strip overflow after info button:
+  - Owner: `Art / UI 1`.
+  - Status:
+    - Completed by `Art / UI 1` at 2026-06-24 01:44.
+    - QA 2 should re-check after this handback.
+  - Dispatch status: sent directly to Art/UI 1 thread at 2026-06-24 01:38 after QA 2 report; QA should re-check after handback.
+  - Requested by: user via `GD` after explicit QA 2 pass.
+  - Source QA task:
+    - `QA INFO FEATURE 2026-06-24 01:25 - QA 2 independent check for info button/history popup`.
+  - Finding - Medium severity, mobile bottom control strip overflows:
+    - Repro:
+      - Set mobile viewport around `390x844`.
+      - Load game and inspect bottom control strip.
+    - Expected:
+      - Dice indicator, info button, current-cell card/action area, and `Бросить` remain visible/usable without horizontal clipping.
+    - Actual:
+      - `#rollBtn` is positioned outside viewport (`x=417`, width `111` at `390px` viewport).
+      - `#turnActions` also extends beyond visible strip (`right=411`).
+      - Added `i` button makes the row tighter; mobile controls need reflow/wrapping.
+  - Required fix:
+    - Reflow/wrap the bottom board control strip on mobile so all controls remain visible and usable.
+    - Preserve the desktop layout unless a tiny adjustment is needed.
+    - Keep the `i` info button between dice/result indicator and current-cell card conceptually; on mobile it may wrap but should remain readable and near that cluster.
+  - Guardrails:
+    - Do not change gameplay, button behavior, chronicle data, card/field rules, dice math, or popup behavior.
+    - Coordinate with Dev 1 only if markup changes are needed; prefer CSS-only if safe.
+    - Work with current dirty tree and do not revert unrelated changes.
+  - Test/verification:
+    - `git diff --check`.
+    - If touching JS: `node --check src/game.js`.
+    - Browser/mobile smoke if possible:
+      - viewport around `390x844`;
+      - dice indicator, info button, field card/action area, and roll button are visible/clickable;
+      - no horizontal clipping/scroll;
+      - popup still opens/closes.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result.
+    - Mention that QA 2 should re-check.
+  - Completed:
+    - CSS-only fix: moved the mobile board-control reflow into the regular `@media (max-width: 680px)` breakpoint instead of relying on `hover: none` / `pointer: coarse`.
+    - At narrow widths, the board panel uses rows for map, `dice / info / field / actions`, and full-width `Бросить`, keeping all bottom controls inside the viewport.
+    - Bumped the `styles.css` cache key in `index.html`.
+    - Did not change gameplay, button behavior, chronicle data, popup behavior, card/field rules, dice math, or JS.
+  - Verification:
+    - `git diff --check`.
+    - Browser/mobile smoke not run in this sandbox; QA 2 should re-check around `390x844`.
+
+- DONE 2026-06-24 00:47 - Info history button and popup visual design:
+  - Owner: `Art / UI 1`.
+  - Status:
+    - Completed by `Art / UI 1` at 2026-06-24 00:47.
+    - QA is not involved.
+  - Dispatch status: attempted Art/UI 2 first, but the old Art/UI 2 thread failed to restore from archive; sent directly to active Art/UI 1 thread at 2026-06-24 00:37; QA is not involved.
+  - Requested by: user via `GD`.
+  - Summary:
+    - Design/polish the new board-control `i` info button and history popup.
+    - The button will sit between the bottom dice/result indicator and the current-cell card.
+    - Clicking opens a popup with the latest chronicle actions.
+  - Visual requirements:
+    - The button icon is a clean `i`, styled like the other game buttons, not a plain browser/system icon.
+    - The popup should feel like the current game UI: dark translucent panel, warm border, readable typography, no bulky tutorial copy.
+    - Popup contains:
+      - title/heading for chronicle/history;
+      - current action highlighted pleasantly at the top or in a clearly visible block;
+      - scrollable list of up to 50 latest actions;
+      - close affordance.
+    - It must not cover the field in a way that blocks normal play when closed.
+    - Desktop and mobile should both stay readable; popup content scrolls instead of overflowing.
+  - Scope:
+    - Art/UI may implement CSS/HTML polish directly if comfortable, or provide concrete styling/classes/assets for Dev 1.
+    - Do not change gameplay, logs content, history data, card/field rules, deck data, or board layout beyond the new button/popup visuals.
+  - Coordination:
+    - Dev 1 owns behavior/integration task `ACTIVE INFO HISTORY POPUP 2026-06-24 00:37`.
+    - If editing the same files, work carefully with the current dirty tree and do not revert unrelated Dev changes.
+  - Test/verification:
+    - `git diff --check`.
+    - If touching JS: `node --check src/game.js`.
+    - Visual smoke if possible: button matches style, popup scrolls, current action highlight is readable.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result.
+  - Completed:
+    - Polished the bottom board-control `i` button with a custom warm glyph, hover/focus/active states, and responsive sizing.
+    - Polished the popup as a dark translucent game panel with warm border, `Хроника` heading, stronger close button, highlighted current action, and a scrollable `Последние действия` list.
+    - Added mobile popup stacking so content scrolls instead of overflowing.
+    - Bumped the `styles.css` cache key in `index.html`.
+    - Did not change gameplay, logs content, history data, card/field rules, deck data, dice math, or board behavior.
+  - Verification:
+    - `git diff --check`.
+    - `node --check src/game.js`.
+    - Browser smoke was not run because the local browser/server path is blocked in this sandbox.
+
 - DONE 2026-06-22 18:53 - TADAM backing lightening pass:
   - Owner: `Art / UI 1`.
   - Status:

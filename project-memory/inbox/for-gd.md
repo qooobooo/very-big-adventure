@@ -4,6 +4,530 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-06-24 02:43 - Dev 1 context handback: Info popup header label removed
+  - Pipeline status:
+    - Direct user UI polish completed.
+  - Context:
+    - User asked to remove the `Инфо` text and align the popup block after removal.
+  - Completed:
+    - Removed the `Инфо` label from the info/history popup header.
+    - Reset `Хроника` header margin/line-height so it aligns cleanly with the close button.
+    - Removed stale CSS for `.info-history-head span`.
+    - Bumped the `styles.css` cache key in `index.html`.
+  - Files changed by Dev 1:
+    - `index.html`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source smoke for removed label, h2 alignment, removed stale span CSS, and CSS cache key.
+  - Notes:
+    - Browser smoke was not run in this sandbox.
+    - Visual-only popup header polish; no gameplay, chronicle data, JS behavior, cards, dice, or saves changed.
+
+- 2026-06-24 02:41 - Dev 1 context handback: Current action moved into chronicle row 0
+  - Pipeline status:
+    - Direct user UI request completed.
+  - Context:
+    - User asked to remove the separate `Текущее действие` block and display current action in the chronicle under number `0`, with the same style as the rest of the chronicle.
+  - Completed:
+    - Removed `#infoHistoryCurrentAction` from the info popup markup and removed its dedicated CSS layout.
+    - Current action now appears as a temporary `<li value="0">` at the top of `#gameLog` while the popup is open.
+    - The temporary current-action row uses the same list styling as other chronicle entries.
+    - The temporary row is removed/re-rendered on popup close, new log entries, and render updates.
+    - Saved history snapshots exclude the temporary row, and the 50-entry cap still applies only to real chronicle entries.
+    - Bumped `styles.css` / `src/game.js` cache keys in `index.html`.
+  - Files changed by Dev 1:
+    - `index.html`
+    - `src/game.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source smoke for removed current-action block, `li value=0`, snapshot exclusion, and cache keys.
+  - Notes:
+    - Browser smoke was not run in this sandbox.
+    - No gameplay, log generation content, dice math, card/field behavior, or save schema changed.
+
+- 2026-06-24 02:26 - Dev 1 context handback: Info popup hides stale field context on roll-ready turns
+  - Pipeline status:
+    - Direct user bug fixed.
+  - Context:
+    - User reported that at the start of a player's turn, before rolling, the info popup still showed the current tile context like `Событие / Тяни карту Событие`.
+  - Completed:
+    - Info popup no longer always renders `fieldEffectText(player.position)`.
+    - Added conditional field-context rendering: field details show for real pending action prompts/choices, but are hidden when the current action is just `Бросить`.
+    - Added a no-field layout variant for the current-action panel.
+    - Bumped the `src/game.js` cache key in `index.html`.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `styles.css`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source smoke for conditional field context, no-field layout, and JS cache key.
+  - Notes:
+    - Browser smoke was not run in this sandbox.
+    - No gameplay, field/card behavior, chronicle entries, dice math, or turn flow changed.
+
+- 2026-06-24 02:19 - Dev 1 context handback: Fullscreen info popup CSS layer fixed
+  - Pipeline status:
+    - Follow-up user bug fixed directly.
+    - QA/user should re-check the `i` popup while fullscreen is active.
+  - Context:
+    - User reported that the info popup opens in fullscreen but is only visible after exiting fullscreen.
+  - Completed:
+    - Root cause: fullscreen has a generic rule for `.app-shell > *` that forces children to `position: relative; z-index: 1`, overriding the popup's `position: fixed`.
+    - Added a narrow fullscreen override for `.app-shell > .info-history-popup` to restore `position: fixed`, `inset: 0`, and high z-index while fullscreen is active.
+    - Bumped the `styles.css` cache key in `index.html`.
+  - Files changed by Dev 1:
+    - `styles.css`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source smoke confirmed fullscreen popup override and cache key.
+  - Notes:
+    - Browser smoke was not run in this sandbox.
+    - No gameplay, chronicle data, log content, dice math, card effects, JS behavior, or unrelated fullscreen layout changed.
+
+- 2026-06-24 01:50 - Dev 1 context handback: Info popup now lives inside fullscreen shell
+  - Pipeline status:
+    - Fullscreen info-popup bug completed.
+    - QA 2 should re-check normal-mode and fullscreen popup open/close after this and the 01:48 info-history rework.
+  - Task:
+    - `ACTIVE INFO FULLSCREEN BUG 2026-06-24 01:46 - Info popup does not open in fullscreen mode`.
+  - Completed:
+    - Moved `#infoHistoryPopup` inside `.app-shell`, the element that enters fullscreen.
+    - This keeps the dialog in the browser fullscreen subtree so it can render above the fullscreen board/layers.
+    - Preserved existing close handlers and normal-mode popup behavior.
+    - Bumped the `src/game.js` cache key in `index.html` for current Dev 1 JS changes.
+  - Files changed by Dev 1:
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source smoke: `#infoHistoryPopup` is now inside `.app-shell`.
+  - Notes:
+    - Browser smoke was not run in this sandbox.
+    - No gameplay, chronicle data, log content, dice math, card effects, or unrelated fullscreen layout changed.
+
+- 2026-06-24 01:48 - Dev 1 context handback: Info popup QA2 stale reveal/current action rework
+  - Pipeline status:
+    - QA2 rework completed after QA 2 findings.
+    - QA 2 should re-check original pending-card/new-game and rolling-action scenarios.
+  - Task:
+    - `ACTIVE INFO HISTORY QA2 REWORK 2026-06-24 01:38 - Reset stale reveal/action and rolling action text`.
+  - Completed:
+    - New-game transient reset now notifies prompt listeners and clears stale action prompt/card reveal state.
+    - Info-popup current action and old chronicle DOM are cleared during new-game reset before the fresh `Игра началась` log.
+    - Good/Bad/TADAM/Event/Shop reveal flows now check reset tokens after card-back and card-face prompts, so an old pending `Открыть` cannot open/apply a previous-game card after `Новая игра`.
+    - Info popup current action now reports active rolling/movement states as `Кубик крутится` / `Идет перемещение` instead of neutral waiting text.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source smoke for reset listeners, stale reveal guards, log cleanup, and rolling/movement current-action text.
+  - Notes:
+    - Browser smoke was not run in this sandbox.
+    - No gameplay rules, card effects, dice math, deck data, log generation wording, or visual layout changed.
+
+- 2026-06-24 01:44 - Art/UI 1 context handback: Mobile info-button control strip overflow fixed
+  - Pipeline status:
+    - Rework completed after QA 2 finding.
+    - QA 2 should re-check.
+  - Task:
+    - `ACTIVE 2026-06-24 01:38 - Mobile control strip overflow after info button`.
+  - Completed:
+    - CSS-only fix for the mobile bottom board-control strip overflow after adding the info button.
+    - Moved the narrow-width board-control reflow into plain `@media (max-width: 680px)` so it applies to browser/QA viewports around `390x844`, not only coarse pointer devices.
+    - Mobile layout now uses rows for map, `dice / info / field / actions`, and full-width `Бросить`, keeping the dice indicator, info button, current-cell card/action area, and roll button inside the viewport.
+    - Bumped the `styles.css` cache key in `index.html`.
+  - Files changed by Art/UI 1:
+    - `styles.css`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/inbox/for-qa.md`
+  - Checks passed:
+    - `git diff --check`
+  - Notes:
+    - No gameplay, button behavior, chronicle data, popup behavior, card/field rules, dice math, or JS changed.
+    - Browser/mobile smoke was not run in this sandbox; QA 2 should re-check at around `390x844`.
+
+- 2026-06-24 01:41 - Dev 1 context handback: Card names no longer iconize coin/dice words
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not requested for this focused title-rendering task.
+  - Task:
+    - `ACTIVE CARD TITLE ICON AUDIT 2026-06-24 01:30 - Do not iconize card names`.
+  - Completed:
+    - Added protected card-name helpers for title/name contexts.
+    - Extended `iconizeHtml(...)` protection from `.card-face-title` to `.card-name` and `.no-iconize`.
+    - Updated title/name render paths across logs/info popup, card/title prompts, Shop/status chips, held Good/Bad/Event status labels, reference debug logs, Shop labels, and Good/Bad/TADAM/Event apply/draw logs.
+    - Preserved icon replacement in descriptions/effects/value text.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source smoke for protected card-title contexts and continued description iconization.
+    - Targeted source smoke: `Монетка из фонтана` remains text in a protected card-name context; `5 монет` / `1 кубик` descriptions still iconize.
+  - Notes:
+    - Browser smoke was not run for this focused task.
+    - No card data, titles, CSV/Google Sheet rows, deck counts, gameplay, log event order, dice math, card effects, or unrelated UI changed.
+
+- QA REPORT 2026-06-24 01:34 - QA 2 independent check for info button/history popup:
+  - Source task:
+    - `QA INFO FEATURE 2026-06-24 01:25 - QA 2 independent check for info button/history popup`.
+  - QA scope:
+    - Independent QA 2 pass after QA 1 findings and Dev 1 rework.
+    - QA 2 did not create Dev/Art tasks directly; GD should distribute fixes.
+  - Static checks:
+    - Passed `node --check src/game.js`.
+    - Passed `node --check src/controller.js`.
+    - Passed `git diff --check`.
+  - Browser target:
+    - `http://localhost:5173/`.
+    - `http://127.0.0.1:5173/` failed at first; `localhost:5173` loaded in Browser.
+    - Board loaded with `225` tiles and no console warnings/errors.
+  - Passed browser coverage:
+    - `#infoHistoryBtn` is between `#diceValue` and `#fieldEffect`.
+    - Button looks and behaves as clickable and toggles active/`aria-expanded`.
+    - Popup opens from the `i` button.
+    - Close via `×`, real outside/backdrop click, and `Escape` works.
+    - `Enter` while popup is open no longer triggers gameplay behind it in the checked flow.
+    - Popup current-action block is highlighted/readable and updates to `Открыть` while card reveal is pending.
+    - Old always-visible chronicle panel is gone: `.log-panel` is absent; only History panel remains in `.lower-grid`.
+    - Latest actions list caps at `50`, is newest-first, and scrolls (`overflow-y: auto`, scrollHeight > clientHeight).
+    - Repeated open/close did not create duplicate `#infoHistoryPopup`, `.info-history-card`, or `.info-history-backdrop`.
+    - No browser console warnings/errors observed.
+  - Findings:
+    - Severity: High.
+      - Likely owner: `Dev`.
+      - Reproduction:
+        1. Start a game on `http://localhost:5173/`.
+        2. Roll/move until a card reveal is pending and the main button says `Открыть`.
+        3. Click `Новая игра`.
+        4. Open the info popup or inspect the main action button.
+        5. Click the still-visible `Открыть`.
+      - Expected:
+        - New game/reset clears transient card reveal state and current action.
+        - Info popup current action should show new game's real action, normally `Бросить`.
+        - Old game's chronicle/card reveal should not remain actionable in new game.
+      - Actual:
+        - After `Новая игра`, player is back on Start, but main button and info popup current action still show stale `Открыть`.
+        - Clicking it opens previous game's pending Good card (`Обратный ход`) in new game.
+        - Info popup log also keeps previous-game entries such as `Пес тянет карту Хорошо: Обратный ход` and `Пес бросает 1`.
+    - Severity: Medium.
+      - Likely owner: `Art/UI`.
+      - Reproduction:
+        1. Set mobile viewport around `390x844`.
+        2. Load the game and inspect bottom control strip.
+      - Expected:
+        - Dice indicator, info button, current-cell card/action area, and `Бросить` remain visible/usable without horizontal clipping.
+      - Actual:
+        - `#rollBtn` is positioned outside viewport (`x=417`, width `111` at `390px` viewport).
+        - `#turnActions` also extends beyond visible control strip (`right=411`).
+        - Added `i` button makes the row tighter; mobile controls need reflow/wrapping.
+    - Severity: Low.
+      - Likely owner: `Dev`.
+      - Reproduction:
+        1. Start a clean game.
+        2. Click `Бросить`.
+        3. Immediately open info popup while dice/movement animation is still running.
+      - Expected:
+        - Highlighted current action describes active transient state, for example rolling/moving/waiting for movement to finish.
+      - Actual:
+        - Current-action block briefly says `Ожидание следующего действия` while dice/movement action is still active.
+        - After animation completes, it updates to correct pending action (`Открыть`).
+  - Inconclusive:
+    - Fullscreen-specific layout was not fully verified. Fullscreen button was enabled, but Browser did not enter fullscreen after click; no console error appeared.
+
+- 2026-06-24 01:14 - Dev 1 context handback: Info history popup QA rework complete
+  - Pipeline status:
+    - Rework completed after QA 1 findings.
+    - QA 1 should re-check.
+  - Task:
+    - `ACTIVE INFO HISTORY QA REWORK 2026-06-24 01:07 - Fix QA findings for info history popup`.
+  - Completed:
+    - Fixed High finding: while the info popup is open, `Enter` cannot leak to the global gameplay shortcut and roll/confirm actions behind the popup.
+    - Popup now stops `Enter`/Space bubbling inside the dialog; document-level `Enter` is also blocked if the popup is open.
+    - Escape still closes the popup.
+    - Fixed Medium finding: `Текущее действие` now summarizes active action prompts/card prompts, choice panels, the visible/enabled roll/action button, pending turn-action strips, or a neutral fallback.
+    - Fixed Low finding: removed dead old chronicle toggle behavior from JS/CSS (`#logToggle`, `logExpanded`, `updateLogLimit`, `is-expanded`, 5/20 hiding).
+    - Preserved the 50-entry chronicle cap and existing `#gameLog` history data path.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source smoke for Enter blocking, Escape close, current-action source priority, legacy chronicle toggle cleanup, and 50-entry cap.
+  - Notes:
+    - Browser smoke was not run in this environment.
+    - Gameplay rules, dice math, card effects, log content generation, history save, deck data, and popup visual styling were not changed beyond required behavior cleanup.
+
+- 2026-06-24 01:05 - QA 1 report: Info button/history popup problems
+  - Context:
+    - Task: `QA INFO FEATURE 2026-06-24 00:56 - Check info button/history popup`.
+    - User explicitly requested QA; QA must report to GD, and GD will split fixes.
+  - Checks passed:
+    - `node --check src/game.js`;
+    - `node --check src/controller.js`;
+    - `git diff --check`.
+  - Browser limitation:
+    - Full browser/visual smoke was not possible in this QA sandbox.
+    - Existing `5173` process did not accept `curl` connections.
+    - Starting `node server.js` on a new port failed with `listen EPERM`.
+    - Playwright launch failed because browser binaries are unavailable in the current bundled runtime.
+    - No screenshots captured.
+  - Static/source passes:
+    - `index.html` places `#infoHistoryBtn` between `#diceValue` and `#fieldEffect`.
+    - Old permanent chronicle block is not present in the lower page layout; `#gameLog` is now inside `#infoHistoryPopup`.
+    - `log(...)` prepends entries and caps the DOM list at 50 items.
+    - Popup has close paths for close button, backdrop, Escape, and new-game cleanup.
+  - Finding 1:
+    - Severity: High.
+    - Likely owner: `Dev`.
+    - Reproduction steps:
+      - Start a normal human turn where the roll button is enabled.
+      - Open the `i` history popup.
+      - Press `Enter` while the popup is open, especially while focus is on the close button or inside the dialog.
+    - Expected result:
+      - The popup should own keyboard input while open; `Enter` should not roll dice or confirm gameplay actions behind the popup.
+    - Actual result:
+      - Source path shows `document.keydown` only special-cases `Escape`; for `Enter`, it continues to `triggerRollButtonAction()` when `ui.rollBtn` is enabled.
+      - `shouldIgnoreEnterShortcut(...)` ignores only `input/select/textarea`, not buttons/dialog/popup state.
+      - This can roll dice or confirm pending action while the player is reading the popup.
+    - Evidence:
+      - `src/game.js`: `openInfoHistoryPopup()` focuses `#infoHistoryCloseBtn`; global keydown still handles `Enter` through `triggerRollButtonAction()`.
+  - Finding 2:
+    - Severity: Medium.
+    - Likely owner: `Dev` for data/behavior; `Art/UI` may review final wording/layout after data is correct.
+    - Reproduction steps:
+      - Start a fresh/normal turn.
+      - Open the `i` history popup.
+      - Read the highlighted `Текущее действие` block.
+      - Repeat while a card reveal/action prompt/pending choice is active.
+    - Expected result:
+      - Current action should summarize the actual next player action, for example `Бросить кубик`, active modal/card prompt, or pending choice.
+    - Actual result:
+      - `renderInfoHistoryCurrentAction()` reads only `#turnActions`.
+      - On ordinary turns `turnActionsText(...)` returns `<span class="action-empty">нет действий</span>`, while the real action is the separate `#rollBtn` (`Бросить кубик`).
+      - During modal/card/pending flows, the popup does not read the modal/action prompt text, so highlighted current action can be misleading or stale.
+    - Evidence:
+      - `src/game.js`: `renderInfoHistoryCurrentAction()` uses `plainTextFromHtml(ui.turnActions?.innerHTML || "") || "Нет действий"`.
+      - `turnActionsText(...)` returns `нет действий` whenever there are no bonus/action chips.
+  - Finding 3:
+    - Severity: Low.
+    - Likely owner: `Dev`.
+    - Reproduction steps:
+      - Inspect the new chronicle popup implementation after removing the old permanent chronicle panel.
+    - Expected result:
+      - Old permanent chronicle toggle code should be removed or adapted to the new popup.
+    - Actual result:
+      - Dead logic remains for `#logToggle`, but `#logToggle` no longer exists in `index.html`.
+      - `updateLogLimit()` still writes `dataset.limit` and toggles old expanded state for a missing toggle; this does not crash but leaves confusing legacy state around the new always-scrollable 50-entry popup.
+    - Evidence:
+      - `src/game.js` queries `document.querySelector("#logToggle")`, registers `ui.logToggle?.addEventListener(...)`, and updates missing toggle text.
+      - `index.html` has no `#logToggle`.
+  - Suggested follow-up:
+    - After fixes, run a browser-capable desktop/mobile smoke for open/close, scroll, repeated open/close, new game/reset, pending card/action prompt, and keyboard behavior.
+
+- 2026-06-24 00:47 - Art/UI 1 context handback: Info history button and popup visual polish
+  - Pipeline status:
+    - Context note for direct GD task.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE 2026-06-24 00:37 - Info history button and popup visual design`.
+  - Completed:
+    - Polished the bottom board-control `i` info button between the dice/result indicator and current-cell card.
+    - Replaced the plain visual `i` with a custom warm glyph inside a compact game-style button with hover/focus/active states.
+    - Polished `#infoHistoryPopup` as a dark translucent game panel with warm border, clear `Хроника` heading, close affordance, highlighted current-action block, and scrollable `Последние действия` list.
+    - Added mobile popup layout so the current action stacks cleanly and the log scrolls within the panel.
+    - Bumped the `styles.css` cache key in `index.html`.
+  - Files changed by Art/UI 1:
+    - `index.html`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `git diff --check`
+    - `node --check src/game.js`
+  - Notes:
+    - UI polish only; no gameplay, log content, history data, card/field rules, deck data, dice math, or board behavior changed.
+    - Browser smoke was not run because local server/browser rendering is blocked in this sandbox.
+
+- 2026-06-24 00:47 - Dev 1 context handback: Chronicle moved into info popup
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE INFO HISTORY POPUP 2026-06-24 00:37 - Move chronicle into info popup`.
+  - Completed:
+    - Added compact `i` info button in the bottom board control strip between the dice/result indicator and current-cell card.
+    - Added `#infoHistoryPopup` with highlighted read-only current action and scrollable latest 50 chronicle actions.
+    - Removed the old permanent `Хроника` article from the lower-page layout so it no longer takes page space.
+    - Preserved the underlying `#gameLog` list/data path, so log generation and history snapshot access remain intact.
+    - Added close behavior via close button, backdrop click, Escape, and new-game transient cleanup.
+    - Added responsive/tabletop-compatible placeholder styling for the popup/button, leaving room for Art/UI polish.
+  - Files changed by Dev 1:
+    - `index.html`
+    - `src/game.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source smoke: info button placement, popup contents, 50-entry log cap, removed permanent chronicle panel, close handlers, and CSS responsive hooks.
+  - Notes:
+    - Browser smoke was not run in this environment.
+    - Gameplay, rules, turn flow, dice math, card effects, log message generation, history save, and deck data were not changed.
+
+- 2026-06-24 00:41 - Dev 3 context handback: Bottom dice indicator shows rolled result
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE DICE UI 2026-06-24 00:30 - Show rolled number in bottom dice indicator`.
+  - Completed:
+    - Fixed `animateDice(...)` ordering so the host bottom-left `#diceValue` is written after the phone dice-result render.
+    - This prevents the shared render path from briefly overwriting the visible board-die result with `-`.
+    - Preserved existing rolling class/button disabled states and final post-roll display.
+    - Dice math, movement distance, bonuses, battle formulas, card effects, random-choice outcomes, and bot behavior were not changed.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+  - Notes:
+    - Browser smoke was not run because the local server cannot listen in this sandbox (`listen EPERM 0.0.0.0:5173`).
+
+- 2026-06-24 00:32 - Dev 1 context handback: Shop face-state copy audit + current field hint capitalization
+  - Pipeline status:
+    - Context note for direct GD tasks.
+    - QA was not involved.
+  - Tasks:
+    - `ACTIVE SHOP FACE STATE AUDIT 2026-06-24 00:21 - Remove unnecessary лицом вверх/вниз wording`.
+    - `ACTIVE FIELD STATUS CAPITALIZATION 2026-06-24 00:27 - Capitalize current field/action hint`.
+  - Completed:
+    - Black Market now counts and exchanges any owned `Лавка Джо` cards, including face-down cards.
+    - Removed Black Market action-rule copy about `лицом вверх`, `нужно ... лицом вверх`, and `Перевернутые карты нельзя обменивать`.
+    - Black Market human/bot selectors can choose any owned Shop card; exchanged cards are still removed from inventory and are not returned to the Shop deck/discard.
+    - `Анти-Плохо` payment now accepts any owned Shop cards and no longer says face-up-only in failure text.
+    - `Дуэль на клетке` can take any owned Shop card from the loser and no longer says/implies `Лавка Джо лицом вверх`.
+    - Kept face-state wording where it is the mechanic or useful state display: `Закрытая лавка`, face-down buyback, inventory markers.
+    - Updated Event `anti-bad` metadata note in CSV and Google Sheet from `cost 2 face-up Shop cards` to `cost 2 Shop cards`.
+    - Capitalized current field/action strip hints: `Тяни карту Хорошо`, `Тяни карту Плохо`, `Тяни карту Событие`, `Возьми карту Тадам и получи 5 монет`, final boss/finish hints, and ordinary-cell fallback.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `cards-google-sheet.csv`
+    - Google Sheet `Cards Config` / `event`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source smoke for Black Market/Anti-Bad/same-cell duel face-state wording and current field/status capitalization.
+  - Notes:
+    - Browser smoke was not run in this environment.
+    - No deck counts, prices, card effects, Shop deck/discard lifecycle, board placement, routing, dice, or gameplay math changed.
+
+- 2026-06-24 00:17 - Dev 1 context handback: Misleading `к монстру` player-bonus copy fixed
+  - Pipeline status:
+    - Context note for direct GD task.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE COPY AUDIT 2026-06-24 00:12 - Replace misleading к монстру player-bonus text`.
+  - Completed:
+    - Updated Black Market option copy from `+10 к монстру и 30 шагов` to `+10 к силе в следующем бою с монстром и 30 шагов`.
+    - Updated Black Market exchange/result text so it says the player gets `+N к силе в следующем бою с монстром`, not that the monster gets stronger.
+    - Updated `Зелье ярости` active-status copy to `+N к силе в следующем бою с монстром`.
+    - Updated Shop card `monster-strength-plus3` / `Боевой эликсир` shortTitle from `+3 к монстру` to `+3 к силе` in local config, CSV, and Google Sheet.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - Google Sheet `Cards Config` / `shop`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `git diff --check`
+    - Static/source smoke: no misleading `+N к монстру` player-bonus text remains; Black Market copy updated; movement phrases `к монстру/порталу` remain; monster-bribe text still says monster strength increases.
+    - Google Sheet readback: `shop/monster-strength-plus3` shortTitle is `+3 к силе`.
+  - Notes:
+    - No gameplay, effects, costs, counts, deck lifecycle, board placement, or monster strength math changed.
+
+- 2026-06-24 00:08 - Dev 1 context handback: Field reference copy cleanup
+  - Pipeline status:
+    - Context note for direct GD task.
+    - QA was not involved.
+  - Task:
+    - `ACTIVE FIELD REFERENCE COPY 2026-06-24 00:03 - Remove finish and clarify field hints`.
+  - Completed:
+    - Removed `Финиш` from `Показать карты и поля` -> `Поля` reference list only.
+    - Rewrote field reference descriptions with uppercase starts and clearer action text.
+    - Expanded `Портал хаоса`: `1-2` назад к ближайшему монстру/порталу; `3-4` к ближайшей Лавке Джо; `5` к ближайшему Хорошо; `6` вперед к ближайшему монстру/порталу.
+    - Kept dynamic current values for Joe Shop price, green/red TADAM modifiers, and `x6 кубиков` constants.
+  - Files changed by Dev 1:
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+    - Static/source smoke: `finish` absent from `referenceFieldTypes`; expected field copy present; green/red use readable dynamic helpers; `Портал хаоса` lists all outcomes.
+  - Notes:
+    - Browser smoke was not run in this environment.
+    - Field behavior, board placement, route, card configs, decks, balance, icons, and unrelated UI were not changed.
+
 - 2026-06-23 00:32 - Dev 3 context handback: Forward-only movement triggers and `Дуэль на клетке`
   - Pipeline status:
     - Context note only under the current pipeline rule.
