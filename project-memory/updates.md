@@ -20,6 +20,90 @@ Open questions:
 - ...
 ```
 
+## 2026-06-23 01:43 - Art/UI 1
+
+Changed:
+- Returned active TADAM cards in the UI block to the same card-face layout path as normal card reveals.
+- Removed the special active-TADAM `status` text variant and the TADAM-slot-specific text overrides that were causing title/body proportions to diverge from normal cards.
+- Bumped the `styles.css` and `src/game.js` cache keys in `index.html`.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI/layout-only change for active TADAM display; no card art, card config text, gameplay rules, counts, CSV, Google Sheet, or deck lifecycle changes.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `git diff --check`.
+- Browser screenshot verification was attempted, but local port binding is blocked and installed Chrome aborts under the sandbox before page render.
+
+Open questions:
+- None.
+
+## 2026-06-23 01:37 - Art/UI 1
+
+Changed:
+- Narrowed the active TADAM mini-card typography follow-up to only the two user-reported problematic cards: `Дуэль на клетке` / `same-cell-duel` and `Обмен удачи` / `good-cashout`.
+- Added card-id-specific status styling so those two mini-cards keep the title visibly larger than the description and avoid the title/body hierarchy looking swapped.
+- Bumped the `styles.css` and `src/game.js` cache keys in `index.html`.
+- Left all other TADAM cards unchanged per user direction.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI/layout-only change for the active TADAM block; no card art, card config text, gameplay rules, counts, CSV, Google Sheet, or deck lifecycle changes.
+
+Open questions:
+- None.
+
+## 2026-06-23 01:24 - Art/UI 2
+
+Changed:
+- Fixed broken choice-dialog layout for owned Joe Shop card selection windows such as `Сбрось Лавку Джо`.
+- Card-choice buttons now place the card title above the description instead of squeezing title and note into competing columns.
+- Marked other Joe Shop card choice flows with the same `choice-button-card` layout: black market exchange, steal/take shop card, flip shop card, shop redistribution, Anti-Bad payment, buyback, and same-cell duel shop reward.
+- Bumped the `styles.css` and `src/game.js` cache keys in `index.html`.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI/layout-only change; card text, card configs, gameplay rules, choices, scoring, and deck behavior were not changed.
+- The fix applies to both `Классический` and `Настольный`.
+
+Open questions:
+- None.
+
+## 2026-06-23 01:17 - Art/UI 1
+
+Changed:
+- Fixed active TADAM cards in the side UI block after user screenshots showed mixed tiny/overflowing text.
+- Active TADAM cards now render a `status` variant with compact per-card effect summaries, while full reveal/reference card faces keep the full card text.
+- Reworked active TADAM mini-card typography without `cqw` units: title/description sizes now use stable clamps, descriptions start directly under the title, and text is clipped within the card bounds.
+- Bumped the `styles.css` and `src/game.js` cache keys in `index.html`.
+- Did not change card art, gameplay rules, card config text/counts, CSV, Google Sheet, deck lifecycle, or unrelated UI.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `git diff --check`.
+- Browser screenshot verification was attempted, but local Chrome headless aborts in this sandbox before page render.
+
+Open questions:
+- None.
+
 ## 2026-06-23 00:34 - Art/UI 2
 
 Changed:

@@ -6226,55 +6226,6 @@ body.is-game-fullscreen .app-shell > * {
     0 0 0 1px rgba(0, 0, 0, 0.38);
 }
 
-.tadam-slot.has-card-face .tadam-card-text {
-  --card-face-title-row: 12px;
-  --card-face-title-size: 0.42rem;
-  --card-face-description-size: 0.305rem;
-  --card-face-description-gap: 1px;
-  --card-face-description-line-height: 0.98;
-  grid-template-rows: max-content minmax(0, 1fr);
-  left: 7%;
-  right: 7%;
-  top: 39.5%;
-  bottom: 3.8%;
-  gap: 2px;
-}
-
-.tadam-slot.has-card-face .tadam-card-text.is-dense {
-  --card-face-title-row: 12px;
-  --card-face-title-size: 0.4rem;
-  --card-face-description-size: 0.29rem;
-  --card-face-description-line-height: 0.96;
-  top: 39%;
-  bottom: 3.5%;
-}
-
-.tadam-slot.has-card-face .tadam-card-text.is-long {
-  --card-face-title-row: 11px;
-  --card-face-title-size: 0.38rem;
-  --card-face-description-size: 0.27rem;
-  --card-face-description-line-height: 0.94;
-  left: 6.2%;
-  right: 6.2%;
-  top: 38%;
-  bottom: 3.2%;
-  gap: 1px;
-}
-
-.tadam-slot.has-card-face .tadam-card-text > .card-face-title {
-  max-height: none;
-  overflow: visible;
-  line-height: 0.98;
-}
-
-.tadam-slot.has-card-face .tadam-card-text > .card-face-description {
-  justify-content: start;
-}
-
-.tadam-slot.has-card-face .tadam-card-text > .card-face-description > span {
-  text-wrap: pretty;
-}
-
 .tadam-slot.is-activating {
   z-index: 2;
 }
@@ -7605,6 +7556,8 @@ button.shop-card-preview.is-selected {
   max-width: 100%;
   max-height: none;
   overflow: visible;
+  font-size: inherit;
+  line-height: inherit;
   overflow-wrap: break-word;
   word-break: normal;
   hyphens: none;
@@ -7955,20 +7908,27 @@ button.shop-card-decline:focus-visible {
 }
 
 .choice-button-card {
+  grid-template-columns: minmax(0, 1fr);
   min-height: 92px;
+  align-content: start;
   align-items: start;
+  gap: 8px;
 }
 
 .choice-button b {
+  min-width: 0;
+  max-width: 100%;
   color: var(--gold-2);
   font-size: 1.05rem;
   line-height: 1.12;
   text-align: left;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .choice-button > span {
   min-width: 0;
+  max-width: 100%;
   padding: 4px 8px;
   border: 1px solid rgba(255, 247, 232, 0.16);
   border-radius: 999px;
@@ -7978,6 +7938,18 @@ button.shop-card-decline:focus-visible {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.choice-button-card > span {
+  justify-self: stretch;
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.22;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .auction-bid-input {

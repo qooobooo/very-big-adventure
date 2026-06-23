@@ -5750,6 +5750,7 @@ async function chooseBlackMarketShopCards(player, count, rewardLabel) {
       .map((card, index) => ({ card, index }))
       .filter(({ card, index }) => !isShopItemFaceDown(card) && !selected.includes(index))
       .map(({ card, index }) => ({
+        className: "choice-button-card",
         id: String(index),
         label: shopCardTitle(card),
         note: cardDisplayText(card),
@@ -8346,6 +8347,7 @@ function leastValuableShopItemIndex(player) {
 
 async function chooseOwnedShopDiscard(player) {
   const choices = player.items.map((card, index) => ({
+    className: "choice-button-card",
     id: String(index),
     label: shopCardTitle(card),
     note: cardDisplayText(card),
@@ -8575,6 +8577,7 @@ function mostValuableShopItemIndex(player, items) {
 
 async function chooseShopCardToSteal(thief, victim) {
   const choices = victim.items.map((card, index) => ({
+    className: "choice-button-card",
     id: String(index),
     label: shopCardTitle(card),
     note: cardDisplayText(card),
@@ -8696,6 +8699,7 @@ async function chooseShopItemsToFlipDown(player, entries, limit) {
   while (remaining.length && selected.length < limit) {
     const choice = await chooseCardAction({
       choices: remaining.map(({ card, index }) => ({
+        className: "choice-button-card",
         id: String(index),
         label: shopCardTitle(card),
         note: cardDisplayText(card),
@@ -9143,6 +9147,7 @@ async function resolveEventShopRedistribution(player) {
 async function chooseShopRedistributionCard(player) {
   if (isBot(player)) return leastValuableShopItemIndex(player);
   const choices = (player.items || []).map((card, index) => ({
+    className: "choice-button-card",
     id: String(index),
     label: shopCardTitle(card),
     note: `${isShopItemFaceDown(card) ? "лицом вниз - " : ""}${cardDisplayText(card)}`,
@@ -9345,6 +9350,7 @@ async function chooseAntiBadShopCards(player, count = 2) {
       .map((card, index) => ({ card, index }))
       .filter(({ card, index }) => !isShopItemFaceDown(card) && !selected.includes(index))
       .map(({ card, index }) => ({
+        className: "choice-button-card",
         id: String(index),
         label: shopCardTitle(card),
         note: cardDisplayText(card),
@@ -9700,6 +9706,7 @@ async function resolveBuyShopCardFromPlayer(player, cost) {
     .filter((target) => target.id !== player.id && target.items.length > 0)
     .flatMap((target) =>
       target.items.map((card) => ({
+        className: "choice-button-card",
         displayKind: "shop-card-owner",
         id: `${target.id}:${card.id}`,
         label: cardDisplayText(card),
@@ -10639,6 +10646,7 @@ async function resolveFaceDownShopBuyback(player, cost = 5) {
     const choice = await chooseCardAction({
       choices: [
         ...entries.map(({ card, index }) => ({
+          className: "choice-button-card",
           id: String(index),
           label: shopCardTitle(card),
           note: `${coinAmount(cost)} - ${cardDisplayText(card)}`,
@@ -11499,6 +11507,7 @@ async function takeSameCellDuelShopCard(winner, loser) {
 async function chooseSameCellDuelShopCard(winner, loser, entries) {
   const choice = await chooseCardAction({
     choices: entries.map(({ card, index }) => ({
+      className: "choice-button-card",
       id: String(index),
       label: shopCardTitle(card),
       note: cardDisplayText(card),
