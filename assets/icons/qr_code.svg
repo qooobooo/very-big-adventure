@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="64 64 384 384" role="img" aria-label="QR-код">
+  <defs>
+    <linearGradient id="qrGold" x1="116" x2="396" y1="104" y2="408" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff0bc"/>
+      <stop offset="0.52" stop-color="#dfad4c"/>
+      <stop offset="1" stop-color="#926024"/>
+    </linearGradient>
+    <filter id="qrShadow" x="-22%" y="-22%" width="144%" height="144%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#020403" flood-opacity="0.46"/>
+    </filter>
+  </defs>
+  <g fill="none" stroke="url(#qrGold)" stroke-linejoin="round" filter="url(#qrShadow)">
+    <rect x="120" y="120" width="94" height="94" rx="12" stroke-width="20"/>
+    <rect x="298" y="120" width="94" height="94" rx="12" stroke-width="20"/>
+    <rect x="120" y="298" width="94" height="94" rx="12" stroke-width="20"/>
+  </g>
+  <g fill="url(#qrGold)" filter="url(#qrShadow)">
+    <rect x="156" y="156" width="22" height="22" rx="4"/>
+    <rect x="334" y="156" width="22" height="22" rx="4"/>
+    <rect x="156" y="334" width="22" height="22" rx="4"/>
+
+    <rect x="242" y="120" width="34" height="34" rx="6"/>
+    <rect x="242" y="180" width="34" height="34" rx="6"/>
+    <rect x="120" y="242" width="34" height="34" rx="6"/>
+    <rect x="180" y="242" width="34" height="34" rx="6"/>
+    <rect x="242" y="242" width="34" height="34" rx="6"/>
+    <rect x="302" y="242" width="34" height="34" rx="6"/>
+    <rect x="362" y="242" width="34" height="34" rx="6"/>
+
+    <rect x="242" y="302" width="34" height="34" rx="6"/>
+    <rect x="302" y="302" width="34" height="34" rx="6"/>
+    <rect x="362" y="302" width="34" height="34" rx="6"/>
+    <rect x="242" y="362" width="34" height="34" rx="6"/>
+    <rect x="302" y="362" width="94" height="34" rx="7"/>
+  </g>
+</svg>

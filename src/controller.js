@@ -3,6 +3,8 @@ const roomStorageKey = "very-big-adventure.controller-room";
 const playerStorageKey = "very-big-adventure.controller-player";
 const defaultControllerMode = "full";
 const controllerModes = new Set([defaultControllerMode, "big-button"]);
+const controllerCoinIconSrc = "./assets/icons/coin.png?v=20260524-0155";
+const controllerDiceIconSrc = "./assets/icons/dice.png?v=20260524-0305";
 const bigChoiceActionKinds = new Set([
   "board-choice",
   "card-choice",
@@ -278,12 +280,19 @@ function render() {
   if (ownClaim) controller.playerId = ownClaim.playerId;
   const player = ownClaim ? players.find((item) => item.id === controller.playerId) || null : null;
   const activePlayer = players.find((item) => item.id === snapshot?.activePlayerId) || null;
+  const cardPreview = snapshot?.cardPreview || null;
+  const hasPlayerCardPreview = Boolean(
+    player && cardPreview && (cardPreview.playerId === null || cardPreview.playerId === player.id),
+  );
 
   ui.joinPanel.hidden = Boolean(room);
   ui.claimPanel.hidden = !room || Boolean(player);
   ui.playerPanel.hidden = !player;
   ui.playerPanel?.classList.toggle("is-big-button", mode === "big-button");
   ui.playerPanel?.classList.toggle("is-full-controller", mode !== "big-button");
+  ui.playerPanel?.classList.toggle("has-card-preview", hasPlayerCardPreview);
+  ui.playerPanel?.classList.remove("has-giant-action", "has-compact-action");
+  document.body.classList.toggle("has-controller-player", Boolean(player));
   document.body.dataset.controllerMode = mode;
 
   if (!room) {
@@ -318,10 +327,10 @@ function render() {
   const diceRoll = shouldShowPhoneDice() ? controllerDiceRollForPlayer(snapshot.diceRoll, player.id) : null;
   syncShake(player, shakeAction);
   if (mode === "big-button") {
-    renderBigButtonPlayerCard(player, activeText);
+    renderBigButtonPlayerCard(player, activeText, connectionError);
     renderBigButtonAction(player, activePlayer, actions, shakeAction, diceRoll);
   } else {
-    renderPlayerCard(player, activeText);
+    renderPlayerCard(player, activeText, connectionError);
     renderActions(actions, { diceRoll, shakeAction });
   }
 }
@@ -339,6 +348,14 @@ function controllerMode() {
 
 function roomShakeEnabled() {
   return Boolean(controller.snapshot?.shakeEnabled ?? controller.room?.shakeEnabled);
+}
+
+function phoneCardsAsText() {
+  const snapshot = controller.snapshot || {};
+  const room = controller.room || {};
+  if ("cardsAsText" in snapshot) return snapshot.cardsAsText !== false;
+  if ("cardsAsText" in room) return room.cardsAsText !== false;
+  return false;
 }
 
 function renderClaimList(players, claimedIds) {
@@ -368,7 +385,7 @@ function renderClaimList(players, claimedIds) {
   }
 }
 
-function renderBigButtonPlayerCard(player, activeText) {
+function renderBigButtonPlayerCard(player, activeText, statusAlert = "") {
   const shopCards = controllerShopCardsMarkup(player.items);
   const artifacts = controllerArtifactsMarkup(player.artifacts);
   ui.playerCard.style.setProperty("--player-color", player.color || "#ffd470");
@@ -379,6 +396,7 @@ function renderBigButtonPlayerCard(player, activeText) {
         <strong>${escapeHtml(player.name)}</strong>
         <small>${escapeHtml(activeText)}</small>
       </div>
+      ${controllerStatusAlertMarkup(statusAlert)}
       <div class="controller-big-stats">
         <span><b>${player.coins}</b><small>монеты</small></span>
         <span><b>${player.totalDice}</b><small>кубики</small></span>
@@ -395,7 +413,7 @@ function renderBigButtonPlayerCard(player, activeText) {
   `;
 }
 
-function renderPlayerCard(player, activeText) {
+function renderPlayerCard(player, activeText, statusAlert = "") {
   const cards = controllerShopCardsMarkup(player.items);
   const artifacts = controllerArtifactsMarkup(player.artifacts);
   ui.playerCard.style.setProperty("--player-color", player.color || "#ffd470");
@@ -408,6 +426,7 @@ function renderPlayerCard(player, activeText) {
         <small>${player.isActive ? "Большой экран ждет твое действие" : "Следи за партией на большом экране"}</small>
       </div>
     </div>
+    ${controllerStatusAlertMarkup(statusAlert)}
     <div class="controller-stat-grid">
       <span class="controller-stat stat-coins"><b>${player.coins}</b><small>монеты</small></span>
       <span class="controller-stat stat-dice"><b>${player.totalDice}</b><small>кубики</small></span>
@@ -421,6 +440,10 @@ function renderPlayerCard(player, activeText) {
     <div class="controller-shop-cards"><small>Лавка Джо</small><div>${cards}</div></div>
     ${controllerCardPreviewMarkup(controller.snapshot?.cardPreview, player.id)}
   `;
+}
+
+function controllerStatusAlertMarkup(text) {
+  return text ? `<div class="controller-status-alert">${escapeHtml(text)}</div>` : "";
 }
 
 function controllerNextBattlePenaltyMarkup(status) {
@@ -454,6 +477,13 @@ function controllerArtifactsMarkup(artifacts = []) {
 
 function controllerShopCardsMarkup(items = []) {
   if (!items.length) return '<span class="controller-shop-card empty-card">нет карт</span>';
+  if (!phoneCardsAsText()) {
+    return items.map((item) => controllerPhoneCardFaceMarkup(item, {
+      count: item.count,
+      faceDown: Boolean(item.faceDown),
+      size: "inventory",
+    })).join("");
+  }
   return items.map((item) => {
     const count = Math.max(1, Number(item.count) || 1);
     const label = item.shortTitle || item.title || "Карта";
@@ -470,6 +500,16 @@ function controllerShopCardsMarkup(items = []) {
 
 function controllerCardPreviewMarkup(preview, playerId) {
   if (!preview || (preview.playerId !== null && preview.playerId !== playerId)) return "";
+  if (!phoneCardsAsText()) {
+    return `
+      <article class="controller-card-preview controller-card-preview-face">
+        ${controllerPhoneCardFaceMarkup(preview, {
+          faceDown: !preview.revealed,
+          size: "preview",
+        })}
+      </article>
+    `;
+  }
   const deckClass = controllerCardPreviewClass(preview.deck);
   const title = preview.revealed ? preview.title || "Карта" : `Карта ${preview.deck || ""}`.trim();
   const body = preview.revealed
@@ -481,6 +521,203 @@ function controllerCardPreviewMarkup(preview, playerId) {
       <strong>${escapeHtml(title || "Карта")}</strong>
       <p>${escapeHtml(body)}</p>
     </article>
+  `;
+}
+
+function controllerPhoneCardFaceMarkup(card, { count = card?.count, faceDown = false, size = "" } = {}) {
+  const deck = card?.deck || "Карта";
+  const deckClass = controllerCardPreviewClass(deck);
+  const revealed = card?.revealed !== false && !faceDown;
+  const countText = Math.max(1, Number(count) || 1) > 1 ? `x${Math.max(1, Number(count) || 1)}` : "";
+  return `
+    <div class="controller-card-face-stage ${size ? `is-${escapeClassName(size)}` : ""}">
+      ${countText ? `<b class="controller-phone-card-count">${escapeHtml(countText)}</b>` : ""}
+      ${controllerCardFaceMarkupForDeck(deckClass, card, { revealed })}
+    </div>
+  `;
+}
+
+function controllerCardFaceMarkupForDeck(deckClass, card, { revealed }) {
+  if (deckClass === "good") return controllerSingleCardFaceMarkup("good", "Хорошо", card, { revealed });
+  if (deckClass === "bad") return controllerSingleCardFaceMarkup("bad", "Плохо", card, { revealed });
+  if (deckClass === "tadam") return controllerSingleCardFaceMarkup("tadam", "ТАДАМ", card, { revealed });
+  if (deckClass === "event") return controllerSingleCardFaceMarkup("event", "Событие", card, { revealed });
+  return controllerShopCardFaceMarkup(card, { revealed });
+}
+
+function controllerSingleCardFaceMarkup(deckClass, fallbackTitle, card, { revealed }) {
+  const description = controllerCardBodyText(card);
+  const title = controllerCardFaceTitleText(card, fallbackTitle);
+  const icon = deckClass === "event" && card?.icon
+    ? `<img class="event-card-artifact-icon" src="${escapeAttribute(card.icon)}" alt="" aria-hidden="true">`
+    : "";
+  const iconClass = icon ? "has-card-face-icon" : "";
+  const densityClass = deckClass === "event"
+    ? controllerEventCardTextDensityClass(description, title)
+    : controllerCardFaceTextDensityClass(description, title);
+  const descriptionDensityClass = controllerCardFaceDescriptionDensityClass(description);
+  const titleDensityClass = controllerCardFaceTitleDensityClass(title);
+  const textClass = `${deckClass}-card-text ${densityClass} ${descriptionDensityClass} ${titleDensityClass} ${iconClass}`.trim();
+  const artStyle = deckClass === "tadam" && revealed && card?.frontArt
+    ? ` style="--card-art: url('${escapeAttribute(card.frontArt)}')"`
+    : "";
+  return `
+    <article class="${deckClass}-card-reveal ${revealed ? "is-revealed" : "is-hidden"}">
+      <span class="${deckClass}-card-preview" role="img" aria-label="${escapeAttribute(revealed ? `${fallbackTitle}: ${title}` : `Карта ${fallbackTitle}`)}"${artStyle}>
+        ${revealed
+          ? `<span class="${textClass}">${controllerCardFaceTextMarkup(card, deckClass, { fallbackTitle, icon })}</span>`
+          : ""}
+      </span>
+    </article>
+  `;
+}
+
+function controllerShopCardFaceMarkup(card, { revealed }) {
+  const description = controllerCardBodyText(card);
+  const title = controllerCardFaceTitleText(card, "Лавка Джо");
+  const descriptionDensityClass = controllerCardFaceDescriptionDensityClass(description);
+  const titleDensityClass = controllerCardFaceTitleDensityClass(title);
+  const textClass = `shop-card-text ${controllerCardFaceTextDensityClass(description, title)} ${descriptionDensityClass} ${titleDensityClass}`.trim();
+  return `
+    <article class="shop-card-reveal ${revealed ? "is-revealed" : "is-hidden"}">
+      <div class="shop-card-row">
+        <span class="shop-card-preview" role="img" aria-label="${escapeAttribute(revealed ? `Лавка Джо: ${title}` : "Карта Лавка Джо")}">
+          ${revealed
+            ? `<span class="${textClass}">${controllerCardFaceTextMarkup(card, "shop", { fallbackTitle: "Лавка Джо" })}</span>`
+            : ""}
+        </span>
+      </div>
+    </article>
+  `;
+}
+
+function controllerCardFaceTextMarkup(card, deckClass, { fallbackTitle = "Карта", icon = "" } = {}) {
+  const title = controllerCardFaceTitleText(card, fallbackTitle);
+  const description = controllerCardBodyText(card);
+  return `
+    <strong class="${deckClass}-card-title card-face-title">${escapeHtml(title)}</strong>
+    ${icon ? `<span class="${deckClass}-card-icon card-face-icon" aria-hidden="true">${icon}</span>` : ""}
+    <span class="${deckClass}-card-description card-face-description">
+      ${controllerCardFaceDescriptionMarkup(description)}
+    </span>
+  `;
+}
+
+function controllerCardBodyText(card) {
+  return card?.description || card?.text || card?.effectText || card?.body || card?.title || "";
+}
+
+function controllerCardFaceTitleText(card, fallbackTitle = "Карта") {
+  return card?.title || card?.shortTitle || fallbackTitle;
+}
+
+function controllerCardFaceTextDensityClass(description, title = "") {
+  const text = String(description || "");
+  const lines = controllerCardFaceDescriptionLines(text).length;
+  const score = text.length + String(title || "").length * 1.25;
+  if (score > 145 || lines >= 4) return "is-long";
+  if (score > 100 || lines >= 3) return "is-dense";
+  return "";
+}
+
+function controllerEventCardTextDensityClass(description, title = "") {
+  const text = String(description || "");
+  const lines = controllerCardFaceDescriptionLines(text).length;
+  const score = text.length + String(title || "").length * 1.1;
+  if (score > 175 || lines >= 4) return "is-long";
+  if (score > 120 || lines >= 3) return "is-dense";
+  return "";
+}
+
+function controllerCardFaceTitleDensityClass(title = "") {
+  const words = String(title || "").trim().split(/\s+/).filter(Boolean);
+  const length = words.join(" ").length;
+  const longestWord = words.reduce((max, word) => Math.max(max, word.length), 0);
+  if (length > 30 || longestWord > 18) return "is-title-long";
+  if (length > 22 || longestWord > 14) return "is-title-dense";
+  return "";
+}
+
+function controllerCardFaceDescriptionDensityClass(description = "") {
+  const text = String(description || "");
+  const lines = controllerCardFaceDescriptionLines(text).length;
+  if (text.length > 160 || lines >= 5) return "is-description-long";
+  if (text.length > 130 || lines >= 4) return "is-description-dense";
+  return "";
+}
+
+function controllerCardFaceDescriptionMarkup(description) {
+  const lines = controllerCardFaceDescriptionLines(description);
+  return (lines.length ? lines : [description])
+    .map((line) => `<span>${controllerIconizeHtml(line)}</span>`)
+    .join("");
+}
+
+function controllerCardFaceDescriptionLines(description) {
+  return controllerMergeLeadingPunctuationLines((String(description || "").match(/[^.!?]+[.!?]?/g) || [])
+    .map((line) => line.trim())
+    .filter(Boolean));
+}
+
+function controllerMergeLeadingPunctuationLines(lines) {
+  return lines.reduce((merged, line) => {
+    if (/^[,.;:!?]/.test(line) && merged.length) {
+      merged[merged.length - 1] += line;
+    } else {
+      merged.push(line);
+    }
+    return merged;
+  }, []);
+}
+
+function controllerCoinIcon() {
+  return `<img class="coin-icon" src="${controllerCoinIconSrc}" alt="" aria-hidden="true">`;
+}
+
+function controllerDiceIcon() {
+  return `<img class="dice-icon" src="${controllerDiceIconSrc}" alt="" aria-hidden="true">`;
+}
+
+function controllerCoinAmount(amount) {
+  return `<span class="coin-amount"><b>${escapeHtml(amount)}</b>${controllerCoinIcon()}</span>`;
+}
+
+function controllerDiceAmount(amount) {
+  return `<span class="dice-amount"><b>${escapeHtml(amount)}</b>${controllerDiceIcon()}</span>`;
+}
+
+function controllerIconizeHtml(value) {
+  const coinized = escapeHtml(value)
+    .replace(/([+-]?\d+)\s*монет(?:ами|ам|ах|а|ы|у)?/gi, (_, amount) => controllerCoinAmount(amount))
+    .replace(/монет(?:ами|ам|ах|а|ы|у)?/gi, controllerCoinIcon());
+  const diceized = coinized
+    .replace(/([+-]?\d+)\s*куб(?:иков|иках|икам|иками|ика|ики|ик|ов|а|ы|у|\.)?/giu, (_, amount) => controllerDiceAmount(amount))
+    .replace(/куб(?:иков|иках|икам|иками|ика|ики|ик|ов|а|ы|у|\.)?/giu, controllerDiceIcon());
+  return controllerKeepIconizedPunctuationTogether(diceized);
+}
+
+function controllerKeepIconizedPunctuationTogether(value) {
+  return String(value)
+    .replace(
+      /(\s*)(<img\b(?=[^>]*\b(?:coin-icon|dice-icon)\b)[^>]*>)\s*([,.;:!?])/g,
+      (_, space, icon, punctuation) => `<span class="card-text-nowrap">${space ? "&nbsp;" : ""}${icon}${punctuation}</span>`,
+    )
+    .replace(
+      /(<span\b(?=[^>]*\b(?:coin-amount|dice-amount)\b)[^>]*>.*?<\/span>)\s*([,.;:!?])/g,
+      '<span class="card-text-nowrap">$1$2</span>',
+    );
+}
+
+function controllerActionContentMarkup(action, fallbackLabel = "Действие") {
+  if (!phoneCardsAsText() && action.card) {
+    return `
+      ${controllerPhoneCardFaceMarkup(action.card, { size: "action" })}
+      ${action.note ? `<small>${escapeHtml(action.note)}</small>` : ""}
+    `;
+  }
+  return `
+    <b>${escapeHtml(action.label || fallbackLabel)}</b>
+    ${action.note ? `<small>${escapeHtml(action.note)}</small>` : ""}
   `;
 }
 
@@ -512,11 +749,12 @@ function shouldShowPhoneDice() {
   return true;
 }
 
-function createPhoneDiceRollStage(roll, { big = false, full = false } = {}) {
+function createPhoneDiceRollStage(roll, { big = false, compact = false, full = false } = {}) {
   const stage = document.createElement("section");
   stage.className = [
     "controller-dice-roll-stage",
     big ? "is-big" : "",
+    compact ? "is-compact" : "",
     full ? "is-full" : "",
     roll.rolling ? "is-rolling" : "is-result",
   ].filter(Boolean).join(" ");
@@ -657,6 +895,9 @@ function renderActions(actions, { diceRoll = null, shakeAction = null } = {}) {
     return;
   }
 
+  const contextBlock = createControllerActionContext(actions);
+  if (contextBlock) ui.actions.append(contextBlock);
+
   const hasSinglePrimaryAction = actions.length === 1 && isFullControllerPrimaryAction(actions[0]);
   for (const action of actions) {
     const button = document.createElement("button");
@@ -668,10 +909,7 @@ function renderActions(actions, { diceRoll = null, shakeAction = null } = {}) {
     ].filter(Boolean).join(" ");
     button.type = "button";
     button.disabled = Boolean(action.disabled);
-    button.innerHTML = `
-      <b>${escapeHtml(action.label || "Действие")}</b>
-      ${action.note ? `<small>${escapeHtml(action.note)}</small>` : ""}
-    `;
+    button.innerHTML = controllerActionContentMarkup(action);
     if (!button.disabled) button.addEventListener("click", () => {
       const snapshot = controller.snapshot;
       const player = snapshot?.players?.find((item) => item.id === controller.playerId) || null;
@@ -681,31 +919,58 @@ function renderActions(actions, { diceRoll = null, shakeAction = null } = {}) {
   }
 }
 
+function createControllerActionContext(actions) {
+  const context = bigChoiceContext(actions);
+  if (!context.kicker && !context.title && !context.summary) return null;
+
+  const block = document.createElement("div");
+  block.className = "controller-action-context controller-detail-copy";
+  block.innerHTML = `
+    ${context.kicker ? `<span>${escapeHtml(context.kicker)}</span>` : ""}
+    ${context.title ? `<b>${escapeHtml(context.title)}</b>` : ""}
+    ${context.summary ? `<small>${escapeHtml(context.summary)}</small>` : ""}
+  `;
+  return block;
+}
+
 function renderBigButtonAction(player, activePlayer, actions, shakeAction, diceRoll = null) {
   ui.actions.innerHTML = "";
   if (diceRoll) {
-    ui.actions.append(createPhoneDiceRollStage(diceRoll, { big: true }));
+    setBigButtonActionLayout("compact");
+    ui.actions.append(createPhoneDiceRollStage(diceRoll, { compact: true }));
     return;
   }
   const auctionBidAction = actions.find(isAuctionBidCustomAction);
   if (auctionBidAction) {
+    setBigButtonActionLayout("compact");
     renderControllerAuctionBid(actions, auctionBidAction);
     return;
   }
   const model = bigButtonActionModel(actions);
 
   if (model.type === "rest") {
+    setBigButtonActionLayout("compact");
     renderBigRestChoice(player, model);
     return;
   }
 
   if (model.type === "detail-list") {
+    setBigButtonActionLayout("compact");
     renderBigDetailChoice(player, model);
     return;
   }
 
   if (model.type === "split") {
+    setBigButtonActionLayout("compact");
     renderBigSplitChoice(player, model);
+    return;
+  }
+
+  const shouldUseGiantButton = Boolean(model.primary && isRollLikeAction(model.primary));
+  setBigButtonActionLayout(shouldUseGiantButton ? "giant" : "compact");
+
+  if (!shouldUseGiantButton) {
+    renderBigCompactPrimaryAction(player, activePlayer, actions, model);
     return;
   }
 
@@ -716,7 +981,33 @@ function renderBigButtonAction(player, activePlayer, actions, shakeAction, diceR
     button.addEventListener("click", () => sendControllerAction(model.primary, player));
   }
 
-  if (!model.primary) {
+  ui.actions.append(stage);
+}
+
+function setBigButtonActionLayout(layout) {
+  ui.playerPanel?.classList.toggle("has-giant-action", layout === "giant");
+  ui.playerPanel?.classList.toggle("has-compact-action", layout !== "giant");
+}
+
+function renderBigCompactPrimaryAction(player, activePlayer, actions, model) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "controller-compact-action-stage";
+  if (model.cancel) wrapper.append(createBigCancelButton(model.cancel, player));
+
+  if (model.primary) {
+    const button = document.createElement("button");
+    button.className = [
+      "controller-action",
+      "controller-big-compact-action",
+      `controller-action-${escapeClassName(actionKind(model.primary) || model.primary.type || "default")}`,
+      bigButtonToneClass(model.primary),
+    ].filter(Boolean).join(" ");
+    button.type = "button";
+    button.disabled = Boolean(model.primary.disabled);
+    button.innerHTML = controllerActionContentMarkup(model.primary);
+    if (!button.disabled) button.addEventListener("click", () => sendControllerAction(model.primary, player));
+    wrapper.append(button);
+  } else {
     const hasMeaningfulChoice = actions.length > 0;
     const activeName = activePlayer?.name || "другого игрока";
     const label = hasMeaningfulChoice ? "Выбор на большом экране" : player.isActive ? "Ждите решения" : "Ждите хода";
@@ -725,11 +1016,23 @@ function renderBigButtonAction(player, activePlayer, actions, shakeAction, diceR
       : player.isActive
       ? "Большой экран готовит следующее действие."
       : `Сейчас ходит ${activeName}.`;
-    button.innerHTML = `<b>${escapeHtml(label)}</b><small>${escapeHtml(note)}</small>`;
-    button.disabled = true;
+    wrapper.append(createBigCompactStatusCard(label, note));
   }
 
-  ui.actions.append(stage);
+  ui.actions.append(wrapper);
+}
+
+function createBigCompactStatusCard(label, note) {
+  const card = document.createElement("div");
+  card.className = "controller-wait-card controller-wait-card-compact";
+  card.innerHTML = `
+    <span class="controller-wait-sigil" aria-hidden="true"></span>
+    <p class="controller-wait-copy">
+      <b>${escapeHtml(label)}</b>
+      <small>${escapeHtml(note)}</small>
+    </p>
+  `;
+  return card;
 }
 
 function renderControllerAuctionBid(actions, bidAction) {
@@ -797,11 +1100,13 @@ function renderBigSplitChoice(player, model) {
     button.type = "button";
     button.disabled = Boolean(action.disabled);
     const badge = bigZoneBadge(action, index);
-    button.innerHTML = `
-      ${badge ? `<span>${escapeHtml(badge)}</span>` : ""}
-      <b>${escapeHtml(bigZoneLabel(action, index))}</b>
-      ${bigZoneNote(action) ? `<small>${escapeHtml(bigZoneNote(action))}</small>` : ""}
-    `;
+    button.innerHTML = action.card && !phoneCardsAsText()
+      ? controllerActionContentMarkup(action, bigZoneLabel(action, index))
+      : `
+        ${badge ? `<span>${escapeHtml(badge)}</span>` : ""}
+        <b>${escapeHtml(bigZoneLabel(action, index))}</b>
+        ${bigZoneNote(action) ? `<small>${escapeHtml(bigZoneNote(action))}</small>` : ""}
+      `;
     if (!button.disabled) button.addEventListener("click", () => sendControllerAction(action, player));
     zones.append(button);
   }
@@ -832,10 +1137,12 @@ function renderBigDetailChoice(player, model) {
     button.className = "controller-detail-choice";
     button.type = "button";
     button.disabled = Boolean(action.disabled);
-    button.innerHTML = `
-      <b>${escapeHtml(action.label || "Выбрать")}</b>
-      ${detailOwnerMarkup(action)}
-    `;
+    button.innerHTML = action.card && !phoneCardsAsText()
+      ? `${controllerActionContentMarkup(action, "Выбрать")}${detailOwnerMarkup(action)}`
+      : `
+        <b>${escapeHtml(action.label || "Выбрать")}</b>
+        ${detailOwnerMarkup(action)}
+      `;
     if (!button.disabled) button.addEventListener("click", () => sendControllerAction(action, player));
     list.append(button);
   }

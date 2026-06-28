@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Скопировать ссылку">
+  <defs>
+    <linearGradient id="copyGold" x1="128" x2="384" y1="96" y2="416" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff0bc"/>
+      <stop offset="0.52" stop-color="#dfad4c"/>
+      <stop offset="1" stop-color="#926024"/>
+    </linearGradient>
+    <filter id="copyShadow" x="-22%" y="-22%" width="144%" height="144%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#020403" flood-opacity="0.46"/>
+    </filter>
+  </defs>
+  <g
+    fill="none"
+    stroke="url(#copyGold)"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="22"
+    filter="url(#copyShadow)"
+  >
+    <rect x="150" y="124" width="166" height="214" rx="22"/>
+    <rect x="196" y="174" width="166" height="214" rx="22"/>
+    <path d="M238 236h78"/>
+    <path d="M238 286h78"/>
+    <path d="M238 336h58"/>
+  </g>
+</svg>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Пересоздать комнату">
+  <defs>
+    <linearGradient id="refreshGold" x1="128" x2="384" y1="96" y2="416" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff0bc"/>
+      <stop offset="0.52" stop-color="#dfad4c"/>
+      <stop offset="1" stop-color="#926024"/>
+    </linearGradient>
+    <filter id="refreshShadow" x="-22%" y="-22%" width="144%" height="144%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#020403" flood-opacity="0.46"/>
+    </filter>
+  </defs>
+  <g filter="url(#refreshShadow)">
+    <g
+      fill="none"
+      stroke="url(#refreshGold)"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="29"
+    >
+      <path d="M386 190a150 150 0 0 0-280 66"/>
+      <path d="M386 190l-12-63"/>
+      <path d="M386 190l-63-12"/>
+      <path d="M126 322a150 150 0 0 0 280-66"/>
+      <path d="M126 322l12 63"/>
+      <path d="M126 322l63 12"/>
+    </g>
+  </g>
+</svg>

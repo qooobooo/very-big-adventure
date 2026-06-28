@@ -253,6 +253,8 @@ h2 {
   display: grid;
   place-items: center;
   padding: 0;
+  font-size: 0;
+  line-height: 0;
 }
 
 .season-controls .header-icon-button {
@@ -287,6 +289,9 @@ h2 {
   width: 1.72rem;
   height: 1.72rem;
   display: block;
+  grid-area: 1 / 1;
+  place-self: center;
+  margin: auto;
   object-fit: contain;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.44));
 }
@@ -305,6 +310,16 @@ h2 {
   filter:
     drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5))
     drop-shadow(0 0 3px rgba(255, 221, 132, 0.06));
+}
+
+.settings-icon,
+.fullscreen-icon,
+.reference-header-icon,
+.phone-header-icon {
+  grid-area: 1 / 1;
+  place-self: center;
+  margin: auto;
+  object-fit: contain;
 }
 
 .phone-room-header-feedback {
@@ -545,9 +560,9 @@ h2 {
   align-self: stretch;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 12px;
-  padding: 18px;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 12px;
   border: 1px solid rgba(255, 247, 232, 0.14);
   border-radius: 8px;
   color: var(--muted);
@@ -568,7 +583,7 @@ h2 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .phone-room-header strong {
@@ -582,13 +597,144 @@ h2 {
   white-space: nowrap;
 }
 
+.phone-room-header-actions {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 36px);
+  justify-content: end;
+  align-items: center;
+  gap: 8px;
+}
+
 .phone-room-header .secondary {
-  min-height: 40px;
-  padding: 0 18px;
+  min-height: 36px;
+  padding: 0 14px;
   border-color: rgba(217, 170, 76, 0.36);
   font-size: 0.82rem;
   font-weight: 900;
   white-space: nowrap;
+}
+
+.phone-room-qr-button,
+.phone-room-refresh-button,
+.phone-room-copy,
+.phone-room-settings-toggle {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0;
+  line-height: 0;
+}
+
+.phone-room-qr-icon,
+.phone-room-refresh-icon,
+.phone-room-copy-icon,
+.phone-room-settings-icon {
+  width: 1.8rem;
+  height: 1.8rem;
+  display: block;
+  grid-area: 1 / 1;
+  place-self: center;
+  margin: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.42));
+}
+
+.phone-room-qr-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 82;
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 2vw, 24px);
+}
+
+.phone-room-qr-popup[hidden] {
+  display: none;
+}
+
+.phone-room-qr-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(216, 169, 71, 0.16), transparent 32%),
+    radial-gradient(circle at 18% 74%, rgba(101, 189, 194, 0.1), transparent 30%),
+    rgba(4, 7, 7, 0.74);
+  cursor: default;
+}
+
+button.phone-room-qr-backdrop:hover:not(:disabled),
+button.phone-room-qr-backdrop:focus-visible,
+button.phone-room-qr-backdrop:active:not(:disabled) {
+  border: 0;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(216, 169, 71, 0.16), transparent 32%),
+    radial-gradient(circle at 18% 74%, rgba(101, 189, 194, 0.1), transparent 30%),
+    rgba(4, 7, 7, 0.74);
+  box-shadow: none;
+  outline: none;
+  transform: none;
+}
+
+.phone-room-qr-card {
+  position: relative;
+  isolation: isolate;
+  z-index: 1;
+  width: min(420px, calc(100vw - 28px), calc(100vh - 28px));
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  padding: clamp(10px, 2vw, 16px);
+  border: 1px solid rgba(255, 215, 125, 0.48);
+  border-radius: 8px;
+  color: var(--ink);
+  background:
+    linear-gradient(180deg, rgba(46, 56, 50, 0.98), rgba(15, 22, 20, 0.98)),
+    radial-gradient(circle at 14% 0%, rgba(255, 215, 125, 0.14), transparent 38%),
+    var(--panel);
+  box-shadow:
+    0 28px 78px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.phone-room-qr-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.phone-room-qr-code {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: clamp(8px, 2vw, 14px);
+  border-radius: 8px;
+}
+
+.phone-room-qr-code svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 6px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.36);
+}
+
+.phone-room-qr-error {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 760;
+  line-height: 1.35;
+  text-align: center;
 }
 
 .phone-room-status,
@@ -601,14 +747,14 @@ h2 {
 
 .phone-room-status {
   grid-column: 1 / -1;
-  padding: 2px 0;
+  padding: 0;
 }
 
 .phone-room-settings .phone-room-controllers {
-  min-height: 34px;
+  min-height: 28px;
   display: grid;
   align-content: center;
-  padding: 8px 10px;
+  padding: 6px 8px;
   border: 1px solid rgba(255, 247, 232, 0.1);
   border-radius: 8px;
   background: rgba(8, 12, 12, 0.18);
@@ -617,30 +763,15 @@ h2 {
 .phone-room-settings {
   grid-column: 1 / -1;
   display: grid;
-  gap: 8px;
-  padding: 8px;
+  gap: 6px;
+  padding: 6px;
   border: 1px solid rgba(255, 247, 232, 0.12);
   border-radius: 8px;
   background: rgba(8, 12, 12, 0.24);
 }
 
-.phone-room-settings-toggle {
-  width: 100%;
-  min-height: 40px;
-  justify-content: center;
-  font-size: 0.82rem;
-  font-weight: 950;
-}
-
-.phone-room-settings-toggle::after {
-  content: "▾";
-  margin-left: 8px;
-  font-size: 0.78em;
-  transition: transform 140ms ease;
-}
-
-.phone-room-settings-toggle[aria-expanded="true"]::after {
-  transform: rotate(180deg);
+.phone-room-settings:has(.phone-room-settings-body[hidden]) {
+  display: none;
 }
 
 .phone-room-settings-body[hidden] {
@@ -708,9 +839,9 @@ h2 {
 .phone-room-details {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(150px, 0.42fr) repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(112px, 0.36fr) minmax(0, 1fr);
   align-items: stretch;
-  gap: 12px;
+  gap: 8px;
 }
 
 .phone-room-details[hidden] {
@@ -722,9 +853,9 @@ h2 {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   min-width: 0;
-  min-height: 76px;
-  gap: 6px;
-  padding: 10px 12px;
+  min-height: 58px;
+  gap: 4px;
+  padding: 7px 9px;
   border: 1px solid rgba(255, 247, 232, 0.12);
   border-radius: 7px;
   background: rgba(8, 12, 12, 0.28);
@@ -740,7 +871,7 @@ h2 {
 
 .phone-room-details b {
   color: var(--ink);
-  font-size: 1.16rem;
+  font-size: 1rem;
   font-weight: 950;
   letter-spacing: 0.08em;
 }
@@ -762,7 +893,7 @@ h2 {
 .phone-room-details > .phone-room-code-card b {
   align-self: end;
   color: #fff7d9;
-  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  font-size: clamp(1.12rem, 2.2vw, 1.42rem);
   line-height: 0.95;
   letter-spacing: 0.1em;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.44);
@@ -770,7 +901,7 @@ h2 {
 
 .phone-room-details input {
   width: 100%;
-  min-height: 38px;
+  min-height: 32px;
   min-width: 0;
   align-self: end;
   padding: 0 8px;
@@ -782,18 +913,12 @@ h2 {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-.phone-room-copy {
-  width: 100%;
-  min-height: 76px;
-  height: 100%;
-  justify-self: stretch;
-  align-self: stretch;
-  white-space: normal;
-}
-
 .controller-body {
-  min-height: 100dvh;
+  width: 100%;
+  height: 100vh;
+  min-height: 0;
   margin: 0;
+  overflow: hidden;
   background:
     radial-gradient(circle at 18% -8%, rgba(51, 159, 166, 0.28), transparent 30%),
     radial-gradient(circle at 86% 10%, rgba(156, 65, 173, 0.24), transparent 34%),
@@ -804,12 +929,31 @@ h2 {
 
 .controller-shell {
   width: min(100%, 480px);
-  min-height: 100dvh;
+  height: 100vh;
+  min-height: 0;
   margin: 0 auto;
   padding: max(14px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
   display: grid;
   align-content: start;
   gap: 14px;
+  overflow: hidden;
+}
+
+@supports (height: 100svh) {
+  .controller-body,
+  .controller-shell {
+    height: 100svh;
+  }
+}
+
+.controller-body.has-controller-player .controller-shell {
+  padding: max(8px, env(safe-area-inset-top)) 10px max(8px, env(safe-area-inset-bottom));
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+}
+
+.controller-body.has-controller-player .controller-top {
+  display: none;
 }
 
 .controller-top {
@@ -844,6 +988,22 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   color: #dbc9a8;
   font-size: 0.94rem;
   line-height: 1.35;
+}
+
+.controller-status-alert {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 143, 143, 0.42);
+  border-radius: 8px;
+  color: #ffe4de;
+  background:
+    linear-gradient(180deg, rgba(255, 136, 112, 0.12), transparent),
+    rgba(88, 31, 28, 0.28);
+  font-size: 0.78rem;
+  font-weight: 850;
+  line-height: 1.18;
+  overflow-wrap: break-word;
 }
 
 .controller-panel {
@@ -989,7 +1149,11 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 
 .controller-player-card {
   display: grid;
+  grid-auto-rows: max-content;
+  align-content: start;
+  align-items: start;
   gap: 13px;
+  min-height: 0;
   position: relative;
 }
 
@@ -1016,6 +1180,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 }
 
 .controller-turn-badge {
+  align-self: start;
   justify-self: start;
   padding: 6px 10px;
   border: 1px solid rgba(255, 226, 154, 0.28);
@@ -1178,6 +1343,194 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   background: rgba(255, 244, 207, 0.06);
 }
 
+.controller-phone-card-face {
+  --controller-card-accent: #ffd77a;
+  position: relative;
+  isolation: isolate;
+  min-width: min(148px, 100%);
+  max-width: 100%;
+  min-height: 178px;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 7px;
+  padding: 11px 10px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--controller-card-accent) 52%, rgba(255, 247, 232, 0.2));
+  border-radius: 10px;
+  color: #fff6d8;
+  background:
+    radial-gradient(circle at 18% 10%, color-mix(in srgb, var(--controller-card-accent) 22%, transparent), transparent 34%),
+    linear-gradient(180deg, color-mix(in srgb, var(--controller-card-accent) 16%, rgba(22, 27, 25, 0.94)), rgba(8, 13, 14, 0.96)),
+    rgba(12, 17, 17, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    0 10px 22px rgba(0, 0, 0, 0.28);
+}
+
+.controller-phone-card-face-good {
+  --controller-card-accent: #71d288;
+}
+
+.controller-phone-card-face-bad {
+  --controller-card-accent: #d86b60;
+}
+
+.controller-phone-card-face-tadam {
+  --controller-card-accent: #c780ff;
+}
+
+.controller-phone-card-face-event {
+  --controller-card-accent: #e0b84f;
+}
+
+.controller-phone-card-face-shop {
+  --controller-card-accent: #ffd77a;
+}
+
+.controller-phone-card-face.is-hidden {
+  place-items: center;
+  min-height: 148px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255, 228, 142, 0.16), transparent 34%),
+    repeating-linear-gradient(135deg, rgba(255, 232, 158, 0.08) 0 4px, transparent 4px 12px),
+    rgba(24, 20, 18, 0.96);
+}
+
+.controller-phone-card-face.is-inventory {
+  min-width: 120px;
+  width: min(148px, calc(50vw - 34px));
+  min-height: 154px;
+  flex: 0 1 148px;
+}
+
+.controller-phone-card-face.is-preview {
+  width: min(230px, 100%);
+  min-height: 260px;
+  margin: 0 auto;
+}
+
+.controller-phone-card-face.is-action {
+  width: min(250px, 100%);
+  min-height: 224px;
+  margin: 0 auto;
+}
+
+.controller-phone-card-deck {
+  justify-self: start;
+  max-width: 100%;
+  padding: 3px 7px;
+  border: 1px solid color-mix(in srgb, var(--controller-card-accent) 48%, transparent);
+  border-radius: 999px;
+  color: #fff1bf;
+  background: color-mix(in srgb, var(--controller-card-accent) 16%, rgba(10, 12, 13, 0.42));
+  font-size: 0.62rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.controller-phone-card-face strong {
+  max-width: 100%;
+  color: #fff7da;
+  font-size: clamp(0.9rem, 4.2vw, 1.1rem);
+  line-height: 1.05;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+.controller-phone-card-face p {
+  margin: 0;
+  max-width: 100%;
+  color: rgba(255, 246, 220, 0.84);
+  font-size: clamp(0.68rem, 3vw, 0.82rem);
+  font-weight: 760;
+  line-height: 1.16;
+  overflow-wrap: break-word;
+}
+
+.controller-phone-card-count {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: #2e1c0d;
+  background: #ffd978;
+  font-size: 0.72rem;
+  font-weight: 950;
+  line-height: 1.1;
+}
+
+.controller-card-face-stage {
+  --reveal-card-width: clamp(102px, 29vw, 142px);
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  display: grid;
+  place-items: center;
+  margin-inline: auto;
+}
+
+.controller-card-face-stage.is-preview {
+  --reveal-card-width: min(168px, 43vw, 16.5vh);
+  --reveal-card-width: min(168px, 43vw, 16.5svh);
+}
+
+.controller-card-face-stage.is-action {
+  --reveal-card-width: clamp(112px, 33vw, 154px);
+}
+
+.controller-card-face-stage.is-inventory {
+  --reveal-card-width: clamp(70px, 21vw, 98px);
+}
+
+.controller-card-face-stage .good-card-reveal,
+.controller-card-face-stage .bad-card-reveal,
+.controller-card-face-stage .tadam-card-reveal,
+.controller-card-face-stage .event-card-reveal,
+.controller-card-face-stage .shop-card-reveal {
+  width: var(--reveal-card-width);
+}
+
+.controller-card-face-stage .shop-card-row {
+  flex-wrap: nowrap;
+}
+
+.controller-card-face-stage .good-card-preview,
+.controller-card-face-stage .bad-card-preview,
+.controller-card-face-stage .tadam-card-preview,
+.controller-card-face-stage .event-card-preview,
+.controller-card-face-stage .shop-card-preview {
+  position: relative;
+  width: var(--reveal-card-width);
+  aspect-ratio: 63 / 88;
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid rgba(255, 236, 166, 0.54);
+  border-radius: 12px;
+  box-shadow:
+    0 10px 18px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(0, 0, 0, 0.44);
+  pointer-events: none;
+}
+
+.controller-card-face-stage .good-card-preview,
+.controller-card-face-stage .bad-card-preview,
+.controller-card-face-stage .tadam-card-preview,
+.controller-card-face-stage .event-card-preview {
+  background: var(--card-art) center / cover no-repeat;
+}
+
+.controller-card-face-stage .shop-card-preview {
+  background: var(--shop-card-art) center / cover no-repeat;
+}
+
 .controller-card-preview {
   min-width: 0;
   max-height: clamp(132px, 24dvh, 220px);
@@ -1201,6 +1554,27 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   grid-column: 1 / -1;
 }
 
+.controller-card-preview-face {
+  container-type: size;
+  max-height: none;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  overflow: visible;
+}
+
+.controller-card-preview-face .controller-card-face-stage.is-preview {
+  --controller-preview-card-width: min(calc(100vw - 54px), 54.4vh, 420px);
+  --controller-preview-card-width: min(calc(100vw - 54px), 54.4svh, 420px);
+  --card-face-width: var(--controller-preview-card-width);
+  --reveal-card-width: var(--controller-preview-card-width);
+  container-type: inline-size;
+  width: var(--reveal-card-width);
+  max-width: 100%;
+  align-content: center;
+}
+
 .controller-card-preview-good {
   --controller-card-accent: #71d288;
 }
@@ -1221,7 +1595,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   --controller-card-accent: #ffd77a;
 }
 
-.controller-card-preview span {
+.controller-card-preview:not(.controller-card-preview-face) span {
   justify-self: start;
   max-width: 100%;
   padding: 3px 8px;
@@ -1239,7 +1613,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   white-space: nowrap;
 }
 
-.controller-card-preview strong {
+.controller-card-preview:not(.controller-card-preview-face) strong {
   max-width: 100%;
   color: #fff7da;
   font-size: clamp(1rem, 4.8vw, 1.28rem);
@@ -1250,7 +1624,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   text-wrap: balance;
 }
 
-.controller-card-preview p {
+.controller-card-preview:not(.controller-card-preview-face) p {
   margin: 0;
   max-width: 100%;
   color: rgba(255, 246, 220, 0.84);
@@ -1274,20 +1648,18 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   align-content: center;
   gap: 18px;
   padding: 24px 18px;
-  border: 1px solid rgba(255, 222, 143, 0.56);
+  border: 1px solid rgba(255, 222, 143, 0.34);
   border-radius: 8px;
   background:
-    radial-gradient(circle at 50% 18%, rgba(255, 242, 170, 0.26), transparent 34%),
-    radial-gradient(circle at 18% 78%, rgba(126, 78, 255, 0.22), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 18%),
-    linear-gradient(180deg, #ffbd48, #d5772c 62%, #713044);
+    radial-gradient(circle at 18% 16%, rgba(87, 192, 188, 0.14), transparent 34%),
+    linear-gradient(180deg, rgba(255, 244, 207, 0.06), transparent 38%),
+    rgba(10, 16, 17, 0.72);
   color: #fff8df;
   text-align: center;
   box-shadow:
-    inset 0 1px rgba(255, 255, 255, 0.3),
-    inset 0 -3px rgba(75, 22, 20, 0.26),
-    0 18px 34px rgba(0, 0, 0, 0.38),
-    0 0 28px rgba(255, 157, 58, 0.24);
+    inset 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 -2px rgba(0, 0, 0, 0.18),
+    0 12px 24px rgba(0, 0, 0, 0.28);
   perspective: 640px;
   perspective-origin: 50% 36%;
   overflow: hidden;
@@ -1298,8 +1670,45 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   height: 100%;
 }
 
+.controller-dice-roll-stage.is-full {
+  align-content: center;
+  justify-content: center;
+}
+
+.controller-dice-roll-stage.is-full .controller-dice-roll-copy {
+  display: none;
+}
+
+.controller-dice-roll-stage.is-full .controller-dice-roll-faces {
+  width: min(100%, 360px);
+  min-height: clamp(180px, 42vw, 260px);
+}
+
+.controller-dice-roll-stage.is-full .controller-field-die {
+  --die-size: clamp(72px, 23vw, 116px) !important;
+  --die-depth: clamp(36px, 11.5vw, 58px) !important;
+}
+
 .controller-dice-roll-stage.is-big {
-  min-height: var(--controller-big-action-height, clamp(380px, 64dvh, 660px));
+  min-height: 0;
+}
+
+.controller-dice-roll-stage.is-compact {
+  height: var(--controller-compact-action-height, 96px);
+  min-height: var(--controller-compact-action-height, 96px);
+  max-height: var(--controller-compact-action-height, 96px);
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background:
+    radial-gradient(circle at 14% 45%, rgba(87, 192, 188, 0.12), transparent 38%),
+    linear-gradient(180deg, rgba(255, 244, 207, 0.06), transparent 42%),
+    rgba(10, 16, 17, 0.7);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.1),
+    0 10px 20px rgba(0, 0, 0, 0.24);
 }
 
 .controller-dice-roll-faces {
@@ -1327,6 +1736,38 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 
 .controller-dice-roll-stage.is-rolling .controller-field-die {
   animation-delay: calc(var(--die-index, 0) * 0.06s);
+}
+
+.controller-dice-roll-stage.is-compact .controller-dice-roll-faces {
+  width: auto;
+  justify-self: center;
+  max-width: 120px;
+  min-height: 52px;
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+
+.controller-dice-roll-stage.is-compact .controller-field-die {
+  --die-size: clamp(34px, 9vw, 42px) !important;
+  --die-depth: clamp(17px, 4.5vw, 21px) !important;
+}
+
+.controller-dice-roll-stage.is-compact .controller-dice-roll-copy {
+  display: none;
+}
+
+.controller-dice-roll-stage.is-compact .controller-dice-roll-copy span {
+  font-size: clamp(0.62rem, 2.7vw, 0.76rem);
+}
+
+.controller-dice-roll-stage.is-compact .controller-dice-roll-copy b {
+  font-size: clamp(1rem, 4.8vw, 1.24rem);
+  line-height: 1.06;
+}
+
+.controller-dice-roll-stage.is-compact .controller-dice-roll-copy small {
+  font-size: clamp(0.72rem, 3.2vw, 0.88rem);
+  line-height: 1.16;
 }
 
 .controller-dice-roll-stage.is-result .controller-field-die,
@@ -1391,6 +1832,44 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   hyphens: none;
 }
 
+.controller-action .controller-phone-card-face,
+.controller-detail-choice .controller-phone-card-face,
+.controller-choice-zone .controller-phone-card-face,
+.controller-action .controller-card-face-stage,
+.controller-detail-choice .controller-card-face-stage,
+.controller-choice-zone .controller-card-face-stage {
+  pointer-events: none;
+}
+
+.controller-actions:has(.controller-card-face-stage) {
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  align-content: start;
+}
+
+.controller-action:has(.controller-card-face-stage),
+.controller-detail-choice:has(.controller-card-face-stage),
+.controller-choice-zone:has(.controller-card-face-stage),
+.controller-action:has(.controller-phone-card-face),
+.controller-detail-choice:has(.controller-phone-card-face),
+.controller-choice-zone:has(.controller-phone-card-face) {
+  gap: 9px;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  padding: 9px 8px;
+}
+
+.controller-action:has(.controller-card-face-stage) small,
+.controller-detail-choice:has(.controller-card-face-stage) small,
+.controller-choice-zone:has(.controller-card-face-stage) small,
+.controller-action:has(.controller-phone-card-face) small,
+.controller-detail-choice:has(.controller-phone-card-face) small,
+.controller-choice-zone:has(.controller-phone-card-face) small {
+  color: rgba(255, 246, 220, 0.78);
+  font-size: clamp(0.72rem, 3.4vw, 0.9rem);
+  font-weight: 850;
+}
+
 .controller-action small,
 .player-claim-button small {
   color: rgba(255, 246, 220, 0.76);
@@ -1400,7 +1879,8 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 }
 
 .controller-player-panel.is-full-controller {
-  min-height: calc(100dvh - 146px);
+  height: 100%;
+  min-height: 0;
   align-content: stretch;
   grid-template-rows: auto minmax(0, 1fr);
 }
@@ -1420,12 +1900,13 @@ body[data-controller-mode="big-button"] .controller-top h1 {
     inset 0 -2px rgba(0, 0, 0, 0.22),
     0 14px 28px rgba(0, 0, 0, 0.32),
     0 0 20px rgba(68, 199, 165, 0.16);
-  height: 100%;
-  min-height: clamp(260px, 46dvh, 520px);
+  height: auto;
+  min-height: 66px;
   justify-items: center;
   align-content: center;
-  gap: 10px;
-  padding: 24px 18px;
+  align-self: end;
+  gap: 4px;
+  padding: 10px 12px;
   text-align: center;
 }
 
@@ -1440,32 +1921,264 @@ body[data-controller-mode="big-button"] .controller-top h1 {
     inset 0 -3px rgba(75, 22, 20, 0.26),
     0 18px 34px rgba(0, 0, 0, 0.38),
     0 0 28px rgba(255, 157, 58, 0.28);
+  height: 100%;
+  min-height: clamp(260px, 46dvh, 520px);
+  gap: 10px;
+  padding: 24px 18px;
 }
 
 .controller-player-panel.is-full-controller .controller-action.is-full-primary b {
   max-width: 100%;
-  font-size: clamp(1.72rem, 10.2vw, 4rem);
-  line-height: 0.98;
+  font-size: clamp(1rem, 5.4vw, 1.22rem);
+  line-height: 1.12;
   text-wrap: balance;
 }
 
 .controller-player-panel.is-full-controller .controller-action.is-full-primary small {
   max-width: 30ch;
-  font-size: clamp(0.88rem, 4.5vw, 1.14rem);
-  line-height: 1.18;
+  font-size: 0.76rem;
+  line-height: 1.25;
   text-align: center;
 }
 
+.controller-player-panel.is-full-controller .controller-action.is-full-primary.is-roll b {
+  font-size: clamp(1.72rem, 10.2vw, 4rem);
+  line-height: 0.98;
+}
+
+.controller-player-panel.is-full-controller .controller-action.is-full-primary.is-roll small {
+  font-size: clamp(0.88rem, 4.5vw, 1.14rem);
+  line-height: 1.18;
+}
+
+.controller-player-panel.has-card-preview .controller-card-preview {
+  max-height: 170px;
+  max-height: min(170px, 23svh);
+  overflow: hidden auto;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview {
+  grid-template-rows: minmax(0, 1fr) clamp(132px, 20svh, 190px);
+  gap: 8px;
+  overflow: hidden;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-player-card {
+  height: 100%;
+  min-height: 0;
+  align-content: start;
+  gap: 9px;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-turn-badge {
+  min-height: 0;
+  align-self: start;
+  display: inline-grid;
+  place-items: center;
+  padding: 6px 11px;
+  line-height: 1.05;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-player-head {
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 8px;
+  padding: 0;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-avatar.large {
+  width: 54px;
+  height: 54px;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-player-head strong {
+  font-size: clamp(1.28rem, 6vw, 1.62rem);
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-player-head small {
+  font-size: clamp(0.78rem, 3.8vw, 0.94rem);
+  line-height: 1.18;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-stat-grid {
+  gap: 6px;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-stat {
+  min-height: 58px;
+  display: grid;
+  align-content: center;
+  padding: 6px 3px;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-stat-grid b {
+  font-size: clamp(1.04rem, 5.2vw, 1.26rem);
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-stat-grid small {
+  font-size: 0.58rem;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-shop-cards {
+  gap: 5px;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-shop-cards small {
+  font-size: 0.7rem;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-actions {
+  min-height: 0;
+  align-content: end;
+  align-items: end;
+  overflow: hidden;
+}
+
+.controller-player-panel.has-card-preview .controller-card-preview {
+  gap: 6px;
+  padding: 10px 12px;
+}
+
+.controller-player-panel.has-card-preview .controller-card-preview:not(.controller-card-preview-face) span {
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.15;
+}
+
+.controller-player-panel.has-card-preview .controller-card-preview:not(.controller-card-preview-face) strong {
+  font-size: clamp(1rem, 4.8vw, 1.2rem);
+}
+
+.controller-player-panel.has-card-preview .controller-card-preview:not(.controller-card-preview-face) p {
+  font-size: clamp(0.82rem, 3.8vw, 0.94rem);
+  line-height: 1.22;
+}
+
+.controller-player-panel.has-card-preview .controller-card-preview-face {
+  max-height: none;
+  padding: 6px;
+  overflow: visible;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary {
+  height: auto;
+  min-height: 66px;
+  gap: 4px;
+  padding: 10px 12px;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary.is-roll {
+  height: 100%;
+  min-height: 0;
+  gap: 6px;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary.is-roll b {
+  font-size: clamp(1.42rem, min(8.8vw, 5.8svh), 3rem);
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary.is-roll small {
+  font-size: clamp(0.68rem, min(3.4vw, 1.85svh), 0.94rem);
+}
+
 .controller-player-panel.is-big-button {
-  --controller-big-action-height: clamp(380px, 64dvh, 660px);
-  min-height: calc(100dvh - 146px);
+  --controller-big-action-height: 100%;
+  --controller-compact-action-height: 96px;
+  height: 100%;
+  min-height: 0;
   align-content: stretch;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+  gap: 10px;
+  overflow: hidden;
+}
+
+.controller-player-panel.is-big-button.has-giant-action {
+  grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+  align-content: stretch;
+}
+
+.controller-player-panel.is-big-button.has-compact-action {
+  grid-template-rows: minmax(0, auto) auto;
+  align-content: space-between;
+}
+
+.controller-body.has-controller-player .controller-player-panel {
+  height: 100%;
+  min-height: 0;
+}
+
+.controller-player-panel.is-full-controller {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .controller-player-panel.is-big-button .controller-actions {
-  min-height: var(--controller-big-action-height);
+  height: 100%;
+  min-height: 0;
+  align-content: stretch;
+  overflow: hidden;
+}
+
+.controller-player-panel.is-big-button .controller-player-card {
+  min-height: 0;
+  max-height: 330px;
+  max-height: min(42svh, 330px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.controller-player-panel.is-big-button.has-card-preview {
+  grid-template-rows: minmax(0, 1fr) minmax(140px, 0.58fr);
+}
+
+.controller-player-panel.is-big-button.has-card-preview.has-compact-action {
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-content: stretch;
+}
+
+.controller-player-panel.is-big-button.has-card-preview .controller-player-card {
+  height: 100%;
+  max-height: none;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+}
+
+.controller-player-panel.is-big-button.has-card-preview .controller-actions {
+  min-height: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.controller-player-panel.is-big-button.has-compact-action .controller-actions {
+  height: auto;
+  align-self: end;
   align-content: end;
+}
+
+.controller-player-panel.is-big-button.has-card-preview .controller-card-preview {
+  max-height: 140px;
+  max-height: min(140px, 20svh);
+}
+
+.controller-player-panel.is-big-button.has-card-preview .controller-big-button {
+  min-height: 0;
+  gap: 6px;
+  padding: 10px 12px;
+}
+
+.controller-player-panel.is-big-button.has-card-preview .controller-big-button::before {
+  font-size: clamp(1.35rem, 5.6svh, 3.2rem);
+}
+
+.controller-player-panel.is-big-button.has-card-preview .controller-big-button b {
+  font-size: clamp(1.42rem, min(9.4vw, 6.4svh), 3.3rem);
+}
+
+.controller-player-panel.is-big-button.has-card-preview .controller-big-button small {
+  font-size: clamp(0.68rem, min(3.3vw, 1.9svh), 0.94rem);
 }
 
 .controller-big-card {
@@ -1581,17 +2294,44 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 
 .controller-shake-stage.is-big {
   width: 100%;
-  height: var(--controller-big-action-height);
-  min-height: var(--controller-big-action-height);
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr) auto;
   align-content: stretch;
+}
+
+.controller-compact-action-stage {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  align-self: end;
+}
+
+.controller-big-compact-action {
+  height: var(--controller-compact-action-height, 96px);
+  min-height: var(--controller-compact-action-height, 96px);
+  max-height: var(--controller-compact-action-height, 96px);
+  justify-items: center;
+  gap: 5px;
+  padding: 12px 14px;
+  text-align: center;
+}
+
+.controller-big-compact-action b {
+  font-size: clamp(1rem, 4.8vw, 1.24rem);
+}
+
+.controller-big-compact-action small {
+  font-size: clamp(0.72rem, 3.2vw, 0.88rem);
+  line-height: 1.16;
 }
 
 .controller-big-choice-stage {
   align-self: end;
   width: 100%;
-  height: var(--controller-big-action-height);
-  min-height: var(--controller-big-action-height);
-  max-height: var(--controller-big-action-height);
+  height: 100%;
+  min-height: 0;
+  max-height: none;
   display: grid;
   grid-template-rows: minmax(0, 1fr);
   gap: 10px;
@@ -1604,8 +2344,9 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 .controller-big-detail-stage {
   align-self: end;
   width: 100%;
-  height: var(--controller-big-action-height);
-  max-height: var(--controller-big-action-height);
+  height: 100%;
+  min-height: 0;
+  max-height: none;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 8px;
@@ -1645,6 +2386,32 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   font-size: clamp(0.68rem, 3.1vw, 0.82rem);
   font-weight: 820;
   line-height: 1.22;
+}
+
+.controller-action-context {
+  width: 100%;
+  min-width: 0;
+  max-height: min(32svh, 190px);
+  justify-self: stretch;
+  align-self: end;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 10px 12px;
+  border: 1px solid rgba(241, 206, 120, 0.32);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 218, 130, 0.13), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 22%),
+    linear-gradient(180deg, rgba(31, 44, 39, 0.94), rgba(14, 20, 18, 0.96));
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.08),
+    0 10px 20px rgba(0, 0, 0, 0.24);
+  -webkit-overflow-scrolling: touch;
+}
+
+.controller-action-context b,
+.controller-action-context small {
+  overflow-wrap: anywhere;
 }
 
 .controller-detail-list {
@@ -1846,7 +2613,8 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 
 .controller-big-rest-stage {
   width: 100%;
-  min-height: clamp(330px, 52dvh, 560px);
+  height: 100%;
+  min-height: 0;
   display: grid;
   grid-template-rows: repeat(3, minmax(0, 1fr));
   align-content: end;
@@ -1918,13 +2686,16 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: var(--controller-big-action-height, clamp(380px, 64dvh, 660px));
+  min-height: 0;
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 12px;
-  padding: 24px 18px;
+  gap: 8px;
+  gap: clamp(7px, 1.5svh, 12px);
+  padding: 14px;
+  padding: clamp(12px, 2.4svh, 24px) 14px;
   text-align: center;
+  overflow: hidden;
 }
 
 .controller-big-button.is-roll {
@@ -1977,14 +2748,16 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   content: "⚂";
   display: block;
   color: rgba(255, 244, 207, 0.82);
-  font-size: clamp(2.4rem, 15vw, 5.4rem);
+  font-size: clamp(2rem, 13vw, 5.4rem);
+  font-size: clamp(1.8rem, 9svh, 5.4rem);
   line-height: 1;
 }
 
 .controller-big-button b {
   max-width: 100%;
   color: #fff8df;
-  font-size: clamp(1.78rem, 11.5vw, 4.35rem);
+  font-size: clamp(1.55rem, 10.4vw, 3.6rem);
+  font-size: clamp(1.55rem, min(10.5vw, 8svh), 4.35rem);
   line-height: 0.98;
   overflow-wrap: break-word;
   word-break: keep-all;
@@ -1995,8 +2768,9 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 .controller-big-button small {
   max-width: 28ch;
   color: rgba(255, 246, 220, 0.82);
-  font-size: clamp(0.9rem, 4.8vw, 1.18rem);
-  line-height: 1.2;
+  font-size: clamp(0.78rem, 4vw, 1.04rem);
+  font-size: clamp(0.76rem, min(4.1vw, 2.2svh), 1.18rem);
+  line-height: 1.16;
 }
 
 .controller-big-button:disabled {
@@ -2038,15 +2812,54 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 }
 
 .controller-wait-card {
-  min-height: 96px;
+  min-height: clamp(128px, 16svh, 168px);
   display: grid;
   place-items: center;
   gap: 8px;
-  padding: 14px;
+  padding: 18px 16px;
   border: 1px dashed rgba(255, 222, 143, 0.3);
   border-radius: 8px;
   background: rgba(255, 244, 207, 0.05);
   text-align: center;
+}
+
+.controller-wait-card-compact {
+  height: var(--controller-compact-action-height, 96px);
+  min-height: var(--controller-compact-action-height, 96px);
+  max-height: var(--controller-compact-action-height, 96px);
+  grid-template-columns: auto minmax(0, 1fr);
+  place-items: center start;
+  padding: 12px;
+  text-align: left;
+}
+
+.controller-wait-card:not(.controller-wait-card-compact) .controller-muted {
+  max-width: min(100%, 30ch);
+  margin: 0;
+  font-size: clamp(1rem, 4.6vw, 1.18rem);
+  line-height: 1.22;
+  text-wrap: balance;
+}
+
+.controller-wait-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.controller-wait-copy b {
+  color: #fff1c7;
+  font-size: clamp(1rem, 4.8vw, 1.24rem);
+  line-height: 1.08;
+  overflow-wrap: break-word;
+}
+
+.controller-wait-copy small {
+  color: rgba(255, 246, 220, 0.72);
+  font-size: clamp(0.72rem, 3.2vw, 0.88rem);
+  font-weight: 800;
+  line-height: 1.16;
+  overflow-wrap: break-word;
 }
 
 .controller-wait-sigil {
@@ -2077,20 +2890,20 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   }
 
   .controller-player-panel.is-big-button {
-    --controller-big-action-height: clamp(360px, 62dvh, 560px);
-    min-height: calc(100dvh - 128px);
+    --controller-big-action-height: 100%;
+    min-height: 0;
   }
 
   .controller-player-panel.is-full-controller {
-    min-height: calc(100dvh - 128px);
+    min-height: 0;
   }
 
-  .controller-player-panel.is-full-controller .controller-action.is-full-primary {
+  .controller-player-panel.is-full-controller .controller-action.is-full-primary.is-roll {
     min-height: clamp(240px, 44dvh, 460px);
     padding: 20px 14px;
   }
 
-  .controller-player-panel.is-full-controller .controller-action.is-full-primary b {
+  .controller-player-panel.is-full-controller .controller-action.is-full-primary.is-roll b {
     font-size: clamp(1.48rem, 9.6vw, 3.25rem);
   }
 
@@ -2100,18 +2913,30 @@ body[data-controller-mode="big-button"] .controller-top h1 {
     padding: 20px 12px;
   }
 
+  .controller-dice-roll-stage.is-compact {
+    height: var(--controller-compact-action-height, 96px);
+    min-height: var(--controller-compact-action-height, 96px);
+    max-height: var(--controller-compact-action-height, 96px);
+    gap: 8px;
+    padding: 10px;
+  }
+
   .controller-dice-roll-copy b {
     font-size: clamp(1.42rem, 9vw, 3.1rem);
   }
 
+  .controller-dice-roll-stage.is-compact .controller-dice-roll-copy b {
+    font-size: clamp(0.98rem, 4.8vw, 1.18rem);
+  }
+
   .controller-player-panel.is-big-button .controller-actions {
-    min-height: var(--controller-big-action-height);
+    min-height: 0;
   }
 
   .controller-big-choice-stage {
-    height: var(--controller-big-action-height);
-    min-height: var(--controller-big-action-height);
-    max-height: var(--controller-big-action-height);
+    height: 100%;
+    min-height: 0;
+    max-height: none;
     grid-template-rows: minmax(0, 1fr);
     gap: 8px;
   }
@@ -2121,7 +2946,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   }
 
   .controller-big-detail-stage {
-    min-height: min(400px, var(--controller-big-action-height));
+    min-height: 0;
     gap: 7px;
     padding: 8px;
   }
@@ -2153,7 +2978,8 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   }
 
   .controller-big-rest-stage {
-    min-height: clamp(300px, 52dvh, 500px);
+    height: 100%;
+    min-height: 0;
     gap: 8px;
   }
 
@@ -2181,6 +3007,281 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 
   .controller-big-button b {
     font-size: clamp(1.55rem, 10.4vw, 3.6rem);
+  }
+}
+
+@media (max-height: 760px) {
+  .controller-body.has-controller-player .controller-shell {
+    padding: max(6px, env(safe-area-inset-top)) 8px max(6px, env(safe-area-inset-bottom));
+  }
+
+  .controller-body.has-controller-player .controller-panel {
+    gap: 8px;
+    padding: 9px;
+  }
+
+  .controller-player-panel.is-big-button {
+    --controller-compact-action-height: 88px;
+    gap: 8px;
+  }
+
+  .controller-player-panel.is-big-button .controller-player-card {
+    max-height: 285px;
+    max-height: min(40svh, 285px);
+  }
+
+  .controller-player-panel.is-big-button.has-card-preview {
+    grid-template-rows: minmax(0, 1fr) minmax(118px, 0.52fr);
+  }
+
+  .controller-player-panel.is-big-button.has-card-preview.has-compact-action {
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .controller-player-panel.is-big-button.has-card-preview .controller-player-card {
+    max-height: none;
+  }
+
+  .controller-player-panel.is-big-button.has-card-preview .controller-big-button {
+    padding: 8px 10px;
+  }
+
+  .controller-player-panel.has-card-preview .controller-card-preview {
+    max-height: 140px;
+    max-height: min(140px, 20svh);
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview {
+    grid-template-rows: minmax(0, 1fr) clamp(112px, 18svh, 150px);
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-player-card {
+    gap: 7px;
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-turn-badge {
+    padding: 5px 10px;
+    font-size: 0.72rem;
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-player-head {
+    grid-template-columns: 50px minmax(0, 1fr);
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-avatar.large {
+    width: 48px;
+    height: 48px;
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-stat {
+    min-height: 50px;
+    padding: 5px 2px;
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-stat-grid b {
+    font-size: clamp(0.96rem, 4.7vw, 1.16rem);
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-card-preview {
+    padding: 9px 10px;
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary.is-roll {
+    gap: 5px;
+    padding: 8px 10px;
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary.is-roll b {
+    font-size: clamp(1.3rem, min(8.2vw, 5svh), 2.45rem);
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary.is-roll small {
+    font-size: clamp(0.64rem, min(3.2vw, 1.75svh), 0.82rem);
+  }
+
+  .controller-big-card {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 6px 8px;
+  }
+
+  .controller-big-card .controller-avatar {
+    width: 44px;
+    height: 44px;
+  }
+
+  .controller-big-identity strong {
+    font-size: clamp(1.05rem, 5.2vw, 1.42rem);
+  }
+
+  .controller-big-identity small {
+    font-size: 0.78rem;
+    line-height: 1.1;
+  }
+
+  .controller-big-stats {
+    gap: 5px;
+  }
+
+  .controller-big-stats span {
+    padding: 5px 2px;
+  }
+
+  .controller-big-stats b {
+    font-size: clamp(0.88rem, 4.2vw, 1.08rem);
+  }
+
+  .controller-big-stats small {
+    font-size: 0.56rem;
+  }
+
+  .controller-status-alert {
+    padding: 6px 8px;
+    font-size: 0.72rem;
+  }
+
+  .controller-shop-card {
+    padding: 5px 7px;
+    font-size: 0.74rem;
+  }
+
+  .controller-dice-roll-stage.is-big {
+    gap: 10px;
+    padding: 12px 10px;
+  }
+
+  .controller-dice-roll-stage.is-big .controller-dice-roll-faces {
+    min-height: clamp(84px, 22vw, 120px);
+  }
+
+  .controller-dice-roll-stage.is-big .controller-dice-roll-copy b {
+    font-size: clamp(1.24rem, min(8vw, 6svh), 2.5rem);
+  }
+
+  .controller-dice-roll-stage.is-big .controller-dice-roll-copy small {
+    font-size: clamp(0.72rem, min(3.4vw, 2svh), 0.92rem);
+  }
+
+  .controller-dice-roll-stage.is-compact {
+    height: var(--controller-compact-action-height, 88px);
+    min-height: var(--controller-compact-action-height, 88px);
+    max-height: var(--controller-compact-action-height, 88px);
+  }
+
+  .controller-choice-zone,
+  .controller-big-cancel,
+  .controller-rest-choice {
+    gap: 5px;
+    padding: 10px 8px;
+  }
+}
+
+@media (max-height: 680px) {
+  .controller-player-panel.is-big-button {
+    --controller-compact-action-height: 82px;
+  }
+
+  .controller-player-panel.is-big-button .controller-player-card {
+    max-height: 245px;
+    max-height: min(38svh, 245px);
+  }
+
+  .controller-player-panel.is-big-button.has-card-preview {
+    grid-template-rows: minmax(0, 1fr) minmax(96px, 0.44fr);
+  }
+
+  .controller-player-panel.is-big-button.has-card-preview.has-compact-action {
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .controller-player-panel.is-big-button.has-card-preview .controller-player-card {
+    max-height: none;
+  }
+
+  .controller-player-panel.has-card-preview .controller-card-preview {
+    max-height: 118px;
+    max-height: min(118px, 18svh);
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview {
+    grid-template-rows: minmax(0, 1fr) clamp(92px, 16svh, 124px);
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-player-card {
+    gap: 6px;
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-player-head {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-avatar.large {
+    width: 42px;
+    height: 42px;
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-stat {
+    min-height: 44px;
+    padding: 4px 2px;
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-card-preview {
+    gap: 5px;
+    padding: 8px 9px;
+  }
+
+  .controller-big-button {
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary.is-roll {
+    gap: 4px;
+    padding: 7px 8px;
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary.is-roll b {
+    font-size: clamp(1.12rem, min(7.6vw, 4.4svh), 2rem);
+  }
+
+  .controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary.is-roll small {
+    font-size: clamp(0.58rem, min(2.9vw, 1.55svh), 0.72rem);
+  }
+
+  .controller-player-panel.is-big-button.has-card-preview .controller-big-button {
+    gap: 5px;
+    padding: 7px 8px;
+  }
+
+  .controller-big-button::before {
+    font-size: clamp(1.42rem, 7svh, 3.4rem);
+  }
+
+  .controller-player-panel.is-big-button.has-card-preview .controller-big-button::before {
+    font-size: clamp(1.18rem, 4.8svh, 2.5rem);
+  }
+
+  .controller-big-button b {
+    font-size: clamp(1.35rem, min(9.6vw, 7svh), 3rem);
+  }
+
+  .controller-player-panel.is-big-button.has-card-preview .controller-big-button b {
+    font-size: clamp(1.24rem, min(8.8vw, 5.5svh), 2.55rem);
+  }
+
+  .controller-big-button small {
+    font-size: clamp(0.68rem, min(3.6vw, 2svh), 0.9rem);
+  }
+
+  .controller-player-panel.is-big-button.has-card-preview .controller-big-button small {
+    font-size: clamp(0.62rem, min(3vw, 1.65svh), 0.78rem);
+  }
+
+  .controller-dice-roll-stage.is-compact,
+  .controller-wait-card-compact,
+  .controller-big-compact-action {
+    height: var(--controller-compact-action-height, 82px);
+    min-height: var(--controller-compact-action-height, 82px);
+    max-height: var(--controller-compact-action-height, 82px);
   }
 }
 
@@ -5507,6 +6608,10 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   pointer-events: none;
 }
 
+.token-layer[hidden] {
+  display: none;
+}
+
 .node {
   position: absolute;
   width: min(112px, 13.2%);
@@ -6021,6 +7126,17 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   order: 2;
 }
 
+@media (min-width: 1181px) {
+  .side-panel:has(.phone-room-panel:not([hidden])) {
+    grid-template-rows: auto minmax(min-content, 1fr);
+    align-content: stretch;
+  }
+
+  .side-panel:has(.phone-room-panel:not([hidden])) .game-settings {
+    align-self: stretch;
+  }
+}
+
 .side-panel > section,
 .reference-panel,
 .log-panel,
@@ -6266,7 +7382,8 @@ body.is-game-fullscreen .app-shell > * {
   z-index: 1;
 }
 
-body.is-game-fullscreen .app-shell > .info-history-popup {
+body.is-game-fullscreen .app-shell > .info-history-popup,
+body.is-game-fullscreen .app-shell > .phone-room-qr-popup {
   position: fixed;
   inset: 0;
   z-index: 120;
@@ -6831,6 +7948,60 @@ body.is-game-fullscreen .app-shell > .info-history-popup {
   border-radius: 7px;
   color: #fff1b8;
   background: rgba(255, 215, 125, 0.08);
+}
+
+.roll-result-highlight {
+  position: relative;
+  display: block;
+  max-width: 100%;
+  padding: 10px 12px 10px 17px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 215, 125, 0.5);
+  border-radius: 8px;
+  color: #fff7d6;
+  background:
+    radial-gradient(circle at 12% 16%, rgba(255, 232, 150, 0.16), transparent 38%),
+    linear-gradient(135deg, rgba(92, 74, 39, 0.7), rgba(23, 43, 38, 0.78)),
+    rgba(20, 25, 22, 0.96);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 0 0 1px rgba(255, 247, 232, 0.03),
+    0 8px 18px rgba(0, 0, 0, 0.24);
+  line-height: 1.32;
+  text-shadow: 0 1px 0 rgba(10, 6, 3, 0.42);
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+  cursor: default;
+}
+
+.roll-result-highlight::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 8px;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffe08a, #c28630);
+  box-shadow: 0 0 10px rgba(255, 215, 125, 0.26);
+}
+
+.roll-result-highlight strong {
+  color: #ffe08a;
+  font-weight: 950;
+}
+
+.roll-result-highlight .coin-icon,
+.roll-result-highlight .dice-icon {
+  margin-inline: 0.04em;
+  vertical-align: -0.16em;
+  filter:
+    drop-shadow(0 1px 1px rgba(0, 0, 0, 0.48))
+    drop-shadow(0 0 4px rgba(255, 215, 125, 0.18));
+}
+
+.event-toast.roll-context-status .roll-result-highlight::before {
+  display: none;
 }
 
 .roll-context-participants {
@@ -7516,11 +8687,6 @@ button.shop-card-preview.is-selected {
 .tadam-card-text.is-dense,
 .event-card-text.is-dense,
 .shop-card-text.is-dense {
-  --card-face-title-row: clamp(21px, 3.8vw, 29px);
-  --card-face-title-size: clamp(0.58rem, 1vw, 0.76rem);
-  --card-face-description-size: clamp(0.46rem, 0.86vw, 0.64rem);
-  --card-face-description-gap: clamp(1px, 0.24vw, 4px);
-  --card-face-description-line-height: 1.04;
   left: 9%;
   right: 9%;
   top: 42.5%;
@@ -7534,17 +8700,50 @@ button.shop-card-preview.is-selected {
 .tadam-card-text.is-long,
 .event-card-text.is-long,
 .shop-card-text.is-long {
-  --card-face-title-row: clamp(20px, 3.5vw, 27px);
-  --card-face-title-size: clamp(0.54rem, 0.88vw, 0.68rem);
-  --card-face-description-size: clamp(0.4rem, 0.72vw, 0.54rem);
-  --card-face-description-gap: clamp(1px, 0.18vw, 3px);
-  --card-face-description-line-height: 1.02;
   left: 8.5%;
   right: 8.5%;
   top: 42.5%;
   bottom: 5.4%;
   gap: clamp(2px, 0.32vw, 5px);
   justify-content: stretch;
+}
+
+.good-card-text.is-description-dense,
+.bad-card-text.is-description-dense,
+.tadam-card-text.is-description-dense,
+.event-card-text.is-description-dense,
+.shop-card-text.is-description-dense {
+  --card-face-description-size: clamp(0.46rem, 0.86vw, 0.64rem);
+  --card-face-description-gap: clamp(1px, 0.24vw, 4px);
+  --card-face-description-line-height: 1.04;
+}
+
+.good-card-text.is-description-long,
+.bad-card-text.is-description-long,
+.tadam-card-text.is-description-long,
+.event-card-text.is-description-long,
+.shop-card-text.is-description-long {
+  --card-face-description-size: clamp(0.4rem, 0.72vw, 0.54rem);
+  --card-face-description-gap: clamp(1px, 0.18vw, 3px);
+  --card-face-description-line-height: 1.02;
+}
+
+.good-card-text.is-title-dense,
+.bad-card-text.is-title-dense,
+.tadam-card-text.is-title-dense,
+.event-card-text.is-title-dense,
+.shop-card-text.is-title-dense {
+  --card-face-title-row: clamp(21px, 3.8vw, 29px);
+  --card-face-title-size: clamp(0.58rem, 1vw, 0.76rem);
+}
+
+.good-card-text.is-title-long,
+.bad-card-text.is-title-long,
+.tadam-card-text.is-title-long,
+.event-card-text.is-title-long,
+.shop-card-text.is-title-long {
+  --card-face-title-row: clamp(20px, 3.5vw, 27px);
+  --card-face-title-size: clamp(0.54rem, 0.88vw, 0.68rem);
 }
 
 .good-card-text.has-card-face-icon,
@@ -7566,8 +8765,6 @@ button.shop-card-preview.is-selected {
 .event-card-text.has-card-face-icon.is-dense,
 .shop-card-text.has-card-face-icon.is-dense {
   --card-face-icon-row: clamp(20px, 3.6vw, 27px);
-  --card-face-description-size: clamp(0.42rem, 0.76vw, 0.56rem);
-  --card-face-description-gap: clamp(1px, 0.18vw, 3px);
 }
 
 .good-card-text.has-card-face-icon.is-long,
@@ -7576,10 +8773,26 @@ button.shop-card-preview.is-selected {
 .event-card-text.has-card-face-icon.is-long,
 .shop-card-text.has-card-face-icon.is-long {
   --card-face-icon-row: clamp(14px, 3vw, 24px);
+  gap: clamp(1px, 0.22vw, 3px);
+}
+
+.good-card-text.has-card-face-icon.is-description-dense,
+.bad-card-text.has-card-face-icon.is-description-dense,
+.tadam-card-text.has-card-face-icon.is-description-dense,
+.event-card-text.has-card-face-icon.is-description-dense,
+.shop-card-text.has-card-face-icon.is-description-dense {
+  --card-face-description-size: clamp(0.42rem, 0.76vw, 0.56rem);
+  --card-face-description-gap: clamp(1px, 0.18vw, 3px);
+}
+
+.good-card-text.has-card-face-icon.is-description-long,
+.bad-card-text.has-card-face-icon.is-description-long,
+.tadam-card-text.has-card-face-icon.is-description-long,
+.event-card-text.has-card-face-icon.is-description-long,
+.shop-card-text.has-card-face-icon.is-description-long {
   --card-face-description-size: clamp(0.36rem, 0.66vw, 0.5rem);
   --card-face-description-gap: 1px;
   --card-face-description-line-height: 1;
-  gap: clamp(1px, 0.22vw, 3px);
 }
 
 .event-card-text.has-large-artifact-icon {
@@ -9032,6 +10245,7 @@ body[data-ui-style="tabletop"] .header-icon-button,
 body[data-ui-style="tabletop"] .info-history-button,
 body[data-ui-style="tabletop"] .info-history-close,
 body[data-ui-style="tabletop"] .phone-room-copy,
+body[data-ui-style="tabletop"] .phone-room-qr-button,
 body[data-ui-style="tabletop"] .phone-room-settings-toggle,
 body[data-ui-style="tabletop"] #createPhoneRoomBtn,
 body[data-ui-style="tabletop"] #exactMoveBtn,
@@ -9052,6 +10266,7 @@ body[data-ui-style="tabletop"] .settings-panel button:hover:not(:disabled),
 body[data-ui-style="tabletop"] .header-icon-button:hover:not(:disabled),
 body[data-ui-style="tabletop"] .info-history-button:hover:not(:disabled),
 body[data-ui-style="tabletop"] .phone-room-copy:hover:not(:disabled),
+body[data-ui-style="tabletop"] .phone-room-qr-button:hover:not(:disabled),
 body[data-ui-style="tabletop"] .phone-room-settings-toggle:hover:not(:disabled),
 body[data-ui-style="tabletop"] #createPhoneRoomBtn:hover:not(:disabled),
 body[data-ui-style="tabletop"] #exactMoveBtn:hover:not(:disabled),
@@ -9069,6 +10284,7 @@ body[data-ui-style="tabletop"] .settings-panel button:active:not(:disabled),
 body[data-ui-style="tabletop"] .header-icon-button:active:not(:disabled),
 body[data-ui-style="tabletop"] .info-history-button:active:not(:disabled),
 body[data-ui-style="tabletop"] .phone-room-copy:active:not(:disabled),
+body[data-ui-style="tabletop"] .phone-room-qr-button:active:not(:disabled),
 body[data-ui-style="tabletop"] .phone-room-settings-toggle:active:not(:disabled),
 body[data-ui-style="tabletop"] #createPhoneRoomBtn:active:not(:disabled),
 body[data-ui-style="tabletop"] #exactMoveBtn:active:not(:disabled),
@@ -9085,6 +10301,7 @@ body[data-ui-style="tabletop"] .season-controls #newGameBtn:disabled,
 body[data-ui-style="tabletop"] .settings-panel button:disabled,
 body[data-ui-style="tabletop"] .header-icon-button:disabled,
 body[data-ui-style="tabletop"] .phone-room-copy:disabled,
+body[data-ui-style="tabletop"] .phone-room-qr-button:disabled,
 body[data-ui-style="tabletop"] .phone-room-settings-toggle:disabled,
 body[data-ui-style="tabletop"] #createPhoneRoomBtn:disabled,
 body[data-ui-style="tabletop"] #exactMoveBtn:disabled,
@@ -9275,6 +10492,7 @@ body[data-ui-style="tabletop"] .season-controls #newGameBtn:focus-visible,
 body[data-ui-style="tabletop"] .settings-panel button:focus-visible,
 body[data-ui-style="tabletop"] .header-icon-button:focus-visible,
 body[data-ui-style="tabletop"] .phone-room-copy:focus-visible,
+body[data-ui-style="tabletop"] .phone-room-qr-button:focus-visible,
 body[data-ui-style="tabletop"] .phone-room-settings-toggle:focus-visible,
 body[data-ui-style="tabletop"] #createPhoneRoomBtn:focus-visible,
 body[data-ui-style="tabletop"] #exactMoveBtn:focus-visible,
@@ -9595,6 +10813,25 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
     gap: 8px;
     margin-top: 8px;
     padding: 10px;
+  }
+
+  .phone-room-header-actions {
+    grid-template-columns: repeat(4, 34px);
+    gap: 6px;
+  }
+
+  .phone-room-header .secondary {
+    min-height: 34px;
+  }
+
+  .phone-room-qr-button,
+  .phone-room-refresh-button,
+  .phone-room-copy,
+  .phone-room-settings-toggle {
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    min-height: 34px;
   }
 
   .phone-room-settings {
@@ -10304,4 +11541,376 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
     max-height: 100%;
     overflow: auto;
   }
+}
+
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) {
+  grid-template-rows: minmax(0, 1fr) clamp(128px, 18svh, 178px);
+  gap: 10px;
+  overflow: hidden;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview:has(.controller-card-preview-face) .controller-player-card {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-preview-face {
+  flex: 1 1 auto;
+  max-height: none;
+  min-height: 0;
+  display: grid;
+  align-items: stretch;
+  justify-items: center;
+  padding: 8px;
+  overflow: visible;
+}
+
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-preview-face .controller-card-face-stage.is-preview {
+  --controller-preview-card-width: min(calc(100vw - 54px), 54.4vh, 420px);
+  --controller-preview-card-width: min(calc(100vw - 54px), 54.4svh, 420px);
+  --card-face-width: var(--controller-preview-card-width);
+  --reveal-card-width: var(--controller-preview-card-width);
+  width: var(--reveal-card-width);
+  max-width: 100%;
+  align-content: center;
+}
+
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-face-stage.is-preview .good-card-reveal,
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-face-stage.is-preview .bad-card-reveal,
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-face-stage.is-preview .tadam-card-reveal,
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-face-stage.is-preview .event-card-reveal,
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-face-stage.is-preview .shop-card-reveal {
+  width: var(--reveal-card-width);
+}
+
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-face-stage.is-preview .shop-card-row {
+  width: 100%;
+}
+
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-face-stage.is-preview .good-card-preview,
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-face-stage.is-preview .bad-card-preview,
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-face-stage.is-preview .tadam-card-preview,
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-face-stage.is-preview .event-card-preview,
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-face-stage.is-preview .shop-card-preview {
+  width: var(--reveal-card-width);
+  height: auto;
+}
+
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-actions {
+  min-height: 0;
+  height: 100%;
+  align-content: end;
+  align-items: end;
+  overflow: visible;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview:has(.controller-card-preview-face) .controller-action.is-full-primary.is-roll {
+  height: 100%;
+  min-height: 0;
+  padding: 16px 14px;
+}
+
+.phone-room-header-actions > .phone-room-qr-button,
+.phone-room-header-actions > .phone-room-refresh-button,
+.phone-room-header-actions > .phone-room-copy,
+.phone-room-header-actions > .phone-room-settings-toggle {
+  position: relative;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  font-size: 0;
+  line-height: 0;
+}
+
+.phone-room-header-actions > .phone-room-qr-button > img,
+.phone-room-header-actions > .phone-room-refresh-button > img,
+.phone-room-header-actions > .phone-room-copy > img,
+.phone-room-header-actions > .phone-room-settings-toggle > img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 27px;
+  height: 27px;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  display: block;
+  object-fit: contain;
+  transform: translate(-50%, -50%);
+  transform-origin: 50% 50%;
+}
+
+@media (max-width: 640px) {
+  .phone-room-header-actions > .phone-room-qr-button,
+  .phone-room-header-actions > .phone-room-refresh-button,
+  .phone-room-header-actions > .phone-room-copy,
+  .phone-room-header-actions > .phone-room-settings-toggle {
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    min-height: 34px;
+  }
+
+  .phone-room-header-actions > .phone-room-qr-button > img,
+  .phone-room-header-actions > .phone-room-refresh-button > img,
+  .phone-room-header-actions > .phone-room-copy > img,
+  .phone-room-header-actions > .phone-room-settings-toggle > img {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+.controller-player-panel {
+  --controller-bottom-action-height: var(--controller-compact-action-height, 96px);
+}
+
+.controller-player-panel.is-full-controller,
+.controller-player-panel.is-big-button,
+.controller-player-panel.is-big-button.has-giant-action,
+.controller-player-panel.is-big-button.has-compact-action,
+.controller-player-panel.is-full-controller.has-card-preview,
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face),
+.controller-player-panel.is-big-button.has-card-preview,
+.controller-player-panel.is-big-button.has-card-preview.has-compact-action {
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-content: stretch;
+}
+
+.controller-player-panel.is-full-controller .controller-actions,
+.controller-player-panel.is-big-button .controller-actions,
+.controller-player-panel.is-big-button.has-compact-action .controller-actions,
+.controller-player-panel.is-big-button.has-card-preview .controller-actions,
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-actions {
+  height: auto;
+  min-height: 0;
+  align-self: end;
+  align-content: end;
+  align-items: end;
+  overflow: visible;
+}
+
+.controller-player-panel.is-full-controller .controller-actions > button.controller-action,
+.controller-player-panel.is-full-controller .controller-action.is-full-primary,
+.controller-player-panel.is-full-controller .controller-action.is-full-primary.is-roll,
+.controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary,
+.controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary.is-roll,
+.controller-player-panel.is-full-controller.has-card-preview:has(.controller-card-preview-face) .controller-action.is-full-primary.is-roll,
+.controller-player-panel.is-big-button .controller-big-button,
+.controller-player-panel.is-big-button .controller-big-compact-action,
+.controller-player-panel.is-big-button.has-card-preview .controller-big-button,
+.controller-player-panel.is-big-button.has-card-preview .controller-big-compact-action {
+  height: var(--controller-bottom-action-height);
+  min-height: var(--controller-bottom-action-height);
+  max-height: var(--controller-bottom-action-height);
+  gap: 5px;
+  padding: 10px 12px;
+  align-self: end;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.controller-player-panel.is-big-button .controller-shake-stage.is-big {
+  height: auto;
+  min-height: 0;
+  grid-template-rows: auto;
+  align-self: end;
+  align-content: end;
+}
+
+.controller-player-panel.is-big-button .controller-big-button::before {
+  display: none;
+}
+
+.controller-player-panel.is-full-controller .controller-actions > button.controller-action b,
+.controller-player-panel.is-full-controller .controller-action.is-full-primary b,
+.controller-player-panel.is-full-controller .controller-action.is-full-primary.is-roll b,
+.controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary.is-roll b,
+.controller-player-panel.is-big-button .controller-big-button b,
+.controller-player-panel.is-big-button .controller-big-compact-action b,
+.controller-player-panel.is-big-button.has-card-preview .controller-big-button b {
+  font-size: clamp(1rem, 4.8vw, 1.24rem);
+  line-height: 1.08;
+}
+
+.controller-player-panel.is-full-controller .controller-actions > button.controller-action small,
+.controller-player-panel.is-full-controller .controller-action.is-full-primary small,
+.controller-player-panel.is-full-controller .controller-action.is-full-primary.is-roll small,
+.controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary.is-roll small,
+.controller-player-panel.is-big-button .controller-big-button small,
+.controller-player-panel.is-big-button .controller-big-compact-action small,
+.controller-player-panel.is-big-button.has-card-preview .controller-big-button small {
+  display: none;
+}
+
+.controller-player-panel.is-full-controller .controller-actions > button.controller-action,
+.controller-player-panel.is-full-controller .controller-action.is-full-primary,
+.controller-player-panel.is-full-controller .controller-action.is-full-primary.is-roll,
+.controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary,
+.controller-player-panel.is-full-controller.has-card-preview .controller-action.is-full-primary.is-roll,
+.controller-player-panel.is-full-controller.has-card-preview:has(.controller-card-preview-face) .controller-action.is-full-primary.is-roll,
+.controller-player-panel.is-big-button .controller-big-button,
+.controller-player-panel.is-big-button .controller-big-compact-action,
+.controller-player-panel.is-big-button.has-card-preview .controller-big-button,
+.controller-player-panel.is-big-button.has-card-preview .controller-big-compact-action {
+  gap: 0;
+  place-items: center;
+}
+
+@media (max-height: 760px) {
+  .controller-player-panel {
+    --controller-bottom-action-height: 88px;
+  }
+}
+
+@media (max-height: 680px) {
+  .controller-player-panel {
+    --controller-bottom-action-height: 82px;
+  }
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-player-card:has(.controller-card-preview-face) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-player-card:has(.controller-card-preview-face) .controller-card-preview-face {
+  width: 100%;
+  flex: 1 1 0;
+  align-self: stretch;
+  max-height: none;
+  min-height: 0;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  overflow: visible;
+}
+
+.controller-player-panel.is-full-controller.has-card-preview .controller-card-preview-face .controller-card-face-stage.is-preview,
+.controller-player-panel.is-full-controller.has-card-preview .controller-player-card:has(.controller-card-preview-face) .controller-card-face-stage.is-preview {
+  --controller-preview-card-width: min(calc(100vw - 72px), 36vh, 360px);
+  --controller-preview-card-width: min(calc(100vw - 72px), 36svh, 360px);
+  --card-face-width: var(--controller-preview-card-width);
+  --reveal-card-width: var(--controller-preview-card-width);
+  width: var(--reveal-card-width);
+  max-width: 100%;
+}
+
+.controller-card-preview-face .controller-card-face-stage.is-preview .good-card-text,
+.controller-card-preview-face .controller-card-face-stage.is-preview .bad-card-text,
+.controller-card-preview-face .controller-card-face-stage.is-preview .tadam-card-text,
+.controller-card-preview-face .controller-card-face-stage.is-preview .event-card-text,
+.controller-card-preview-face .controller-card-face-stage.is-preview .shop-card-text {
+  --card-face-title-row: clamp(32px, 14.7cqw, 52px);
+  --card-face-title-size: clamp(0.82rem, 6cqw, 1.36rem);
+  --card-face-description-size: clamp(0.74rem, 5.4cqw, 1.2rem);
+  --card-face-description-gap: clamp(4px, 1.4cqw, 7px);
+  --card-face-description-line-height: 1.06;
+  gap: clamp(5px, 1.8cqw, 9px);
+}
+
+.controller-card-preview-face .controller-card-face-stage.is-preview .good-card-text.is-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .bad-card-text.is-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .tadam-card-text.is-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .event-card-text.is-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .shop-card-text.is-dense {
+  gap: clamp(4px, 1.45cqw, 7px);
+}
+
+.controller-card-preview-face .controller-card-face-stage.is-preview .good-card-text.is-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .bad-card-text.is-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .tadam-card-text.is-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .event-card-text.is-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .shop-card-text.is-long {
+  gap: clamp(3px, 1.15cqw, 6px);
+}
+
+.controller-card-preview-face .controller-card-face-stage.is-preview .good-card-text.is-description-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .bad-card-text.is-description-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .tadam-card-text.is-description-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .event-card-text.is-description-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .shop-card-text.is-description-dense {
+  --card-face-description-size: clamp(0.64rem, 4.7cqw, 1.04rem);
+  --card-face-description-gap: clamp(3px, 1.1cqw, 6px);
+  --card-face-description-line-height: 1.04;
+}
+
+.controller-card-preview-face .controller-card-face-stage.is-preview .good-card-text.is-description-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .bad-card-text.is-description-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .tadam-card-text.is-description-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .event-card-text.is-description-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .shop-card-text.is-description-long {
+  --card-face-description-size: clamp(0.54rem, 4cqw, 0.9rem);
+  --card-face-description-gap: clamp(2px, 0.85cqw, 5px);
+  --card-face-description-line-height: 1.02;
+}
+
+.controller-card-preview-face .controller-card-face-stage.is-preview .good-card-text.is-title-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .bad-card-text.is-title-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .tadam-card-text.is-title-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .event-card-text.is-title-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .shop-card-text.is-title-dense {
+  --card-face-title-row: clamp(29px, 13.3cqw, 48px);
+  --card-face-title-size: clamp(0.76rem, 5.6cqw, 1.22rem);
+}
+
+.controller-card-preview-face .controller-card-face-stage.is-preview .good-card-text.is-title-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .bad-card-text.is-title-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .tadam-card-text.is-title-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .event-card-text.is-title-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .shop-card-text.is-title-long {
+  --card-face-title-row: clamp(27px, 12.4cqw, 44px);
+  --card-face-title-size: clamp(0.68rem, 5cqw, 1.08rem);
+}
+
+.controller-card-preview-face .controller-card-face-stage.is-preview .good-card-text.has-card-face-icon,
+.controller-card-preview-face .controller-card-face-stage.is-preview .bad-card-text.has-card-face-icon,
+.controller-card-preview-face .controller-card-face-stage.is-preview .tadam-card-text.has-card-face-icon,
+.controller-card-preview-face .controller-card-face-stage.is-preview .event-card-text.has-card-face-icon,
+.controller-card-preview-face .controller-card-face-stage.is-preview .shop-card-text.has-card-face-icon {
+  --card-face-icon-row: clamp(30px, 13.8cqw, 50px);
+  --card-face-description-size: clamp(0.62rem, 4.6cqw, 1rem);
+}
+
+.controller-card-preview-face .controller-card-face-stage.is-preview .good-card-text.has-card-face-icon.is-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .bad-card-text.has-card-face-icon.is-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .tadam-card-text.has-card-face-icon.is-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .event-card-text.has-card-face-icon.is-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .shop-card-text.has-card-face-icon.is-dense {
+  --card-face-icon-row: clamp(27px, 12.4cqw, 44px);
+}
+
+.controller-card-preview-face .controller-card-face-stage.is-preview .good-card-text.has-card-face-icon.is-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .bad-card-text.has-card-face-icon.is-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .tadam-card-text.has-card-face-icon.is-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .event-card-text.has-card-face-icon.is-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .shop-card-text.has-card-face-icon.is-long {
+  --card-face-icon-row: clamp(24px, 11cqw, 38px);
+}
+
+.controller-card-preview-face .controller-card-face-stage.is-preview .good-card-text.has-card-face-icon.is-description-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .bad-card-text.has-card-face-icon.is-description-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .tadam-card-text.has-card-face-icon.is-description-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .event-card-text.has-card-face-icon.is-description-dense,
+.controller-card-preview-face .controller-card-face-stage.is-preview .shop-card-text.has-card-face-icon.is-description-dense {
+  --card-face-description-size: clamp(0.56rem, 4.2cqw, 0.9rem);
+}
+
+.controller-card-preview-face .controller-card-face-stage.is-preview .good-card-text.has-card-face-icon.is-description-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .bad-card-text.has-card-face-icon.is-description-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .tadam-card-text.has-card-face-icon.is-description-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .event-card-text.has-card-face-icon.is-description-long,
+.controller-card-preview-face .controller-card-face-stage.is-preview .shop-card-text.has-card-face-icon.is-description-long {
+  --card-face-description-size: clamp(0.5rem, 3.7cqw, 0.8rem);
 }

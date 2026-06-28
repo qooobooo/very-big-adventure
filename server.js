@@ -104,6 +104,7 @@ function serializeRoom(room, request = null) {
     joinUrl: request ? controllerUrl(request, room.code) : `/controller.html?room=${encodeURIComponent(room.code)}`,
     lanUrls: getLanUrls(room.code),
     diceVisible: room.diceVisible !== false,
+    cardsAsText: Boolean(room.cardsAsText),
     mode: normalizeRoomMode(room.mode),
     shakeEnabled: Boolean(room.shakeEnabled),
     snapshot: room.snapshot,
@@ -168,7 +169,7 @@ function closeRoom(room, { reason = "room-closed" } = {}) {
   rooms.delete(room.code);
 }
 
-function createRoom(request, { diceVisible = true, mode = defaultRoomMode, shakeEnabled = false } = {}) {
+function createRoom(request, { cardsAsText = false, diceVisible = true, mode = defaultRoomMode, shakeEnabled = false } = {}) {
   const code = createRoomCode();
   const room = {
     clients: new Set(),
@@ -176,6 +177,7 @@ function createRoom(request, { diceVisible = true, mode = defaultRoomMode, shake
     controllers: new Map(),
     createdAt: Date.now(),
     hostId: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    cardsAsText: Boolean(cardsAsText),
     diceVisible: Boolean(diceVisible),
     mode: normalizeRoomMode(mode),
     shakeEnabled: Boolean(shakeEnabled),
@@ -198,7 +200,12 @@ async function handleApi(request, response, url) {
 
   if (request.method === "POST" && url.pathname === "/api/rooms") {
     const body = await readJsonBody(request);
-    const room = createRoom(request, { diceVisible: body.diceVisible, mode: body.mode, shakeEnabled: body.shakeEnabled });
+    const room = createRoom(request, {
+      cardsAsText: body.cardsAsText,
+      diceVisible: body.diceVisible,
+      mode: body.mode,
+      shakeEnabled: body.shakeEnabled,
+    });
     sendJson(response, 201, {
       hostId: room.hostId,
       room: serializeRoom(room, request),

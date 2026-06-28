@@ -20,6 +20,1518 @@ Open questions:
 - ...
 ```
 
+## 2026-06-29 02:29 - Dev 1
+
+Changed:
+- Added a settings checkbox `Скрыть игроков`.
+- When enabled, the board token layer is hidden and player tokens are removed from the visible field; gameplay positions/state are unchanged.
+- Added the setting to the history/settings snapshot and bumped host CSS/JS cache keys.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- The checkbox is display-only. It does not affect movement, targeting, turn order, player status panels, phone controllers, or saves beyond recording the current setting value.
+- Checks passed: `node --check src/game.js`; `git diff --check`; static readback for `hidePlayers` wiring and `.token-layer[hidden]`.
+
+Open questions:
+- None.
+
+## 2026-06-29 02:23 - Dev 3
+
+Changed:
+- Added three new `Хорошо` cards with `count: 2`: `Гонка`, `Вольный шаг`, and `Бросок удачи`.
+- Synced local config, CSV mirror, and live Google Sheet `Cards Config` / `good`.
+- Implemented Good-card runtime handlers:
+  - `Гонка`: roll 1 die + step bonuses, then gain 20 / 10 / 5 coins by total.
+  - `Вольный шаг`: roll 1 die + step bonuses, then choose any forward distance up to the total with board-click target selection support.
+  - `Бросок удачи`: 1-2 draws TADAM, 3-4 draws Good, 5-6 draws Joe Shop.
+- Bumped host game/card config cache key.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- Google Sheet `Cards Config` / `good!A22:N24`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- The new Good `Вольный шаг` reuses the non-blocking board target selection pattern from the Event version.
+- Existing Event `Кубик судьбы` still keeps its old 1-2 Bad / 3-4 Good / 5-6 Shop rule; new Good `Бросок удачи` has its own 1-2 TADAM branch.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-29 02:17 - GD
+
+Changed:
+- Rebuilt the one-sheet A4 PnP version of `field2` to visually match the in-game board more closely.
+- Added game-like dark/brown tile frames, gold Shop frames, red monster frames, and in-game style monster strength / defeat reward labels.
+- Render-checked the revised PDF back to PNG preview.
+
+Files:
+- `output/pdf/very_big_adventure_field2_a4_one_sheet.pdf`
+- `output/pdf/very_big_adventure_field2_a4_one_sheet_source.png`
+- `output/pdf/very_big_adventure_field2_a4_one_sheet_preview.png`
+- `tmp/pdfs/field2_one_sheet_v2.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is the current one-page A4 board candidate for live PnP testing.
+- Rules/game code were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-29 02:12 - Dev 3
+
+Changed:
+- Updated Event cards `Сплочение` and `Бой за старт` text to the new team-monster wording from the user screenshot.
+- Changed both shared battle targets from old `6 * playerCount` to `5 * total player dice count`.
+- Synced local config, CSV mirror, and live Google Sheet `Cards Config` / `event`.
+- Bumped host game/card config cache key.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- Google Sheet `Cards Config` / `event!A2:N2`, `event!A9:N9`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Rewards/losses stayed the same: `Сплочение` win all +10, loss all -5; `Бой за старт` win all +10, loss sends all players to Start without field effect.
+- The new formula uses current total dice per player via `totalDiceForPlayer(...)`, so dice bonuses affect the team battle target as requested by the card text.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-29 02:04 - GD
+
+Changed:
+- Prepared first PnP print files for `field2` as A4 color PDFs.
+- Generated a whole-board A4 overview PDF and a 3x3 tiled A4 PDF where each page contains exactly 5x5 board cells.
+- Render-checked the generated PDFs back to PNG previews.
+
+Files:
+- `output/pdf/very_big_adventure_field2_a4_overview.pdf`
+- `output/pdf/very_big_adventure_field2_a4_tiled_3x3.pdf`
+- `output/pdf/very_big_adventure_field2_print_source.png`
+- `output/pdf/very_big_adventure_field2_a4_tiled_3x3_preview.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- PnP board is generated from current `field2` config and current tile/icon assets.
+- Main playable print file is the 9-page tiled PDF; print at 100% on A4 color.
+
+## 2026-06-29 02:54 - Dev 3
+
+Changed:
+- Renamed Shop card `shop-fixed-cost-3` from `Тариф Джо` to `Скидка от Джо`.
+- Synced the title in local config, CSV mirror, and live Google Sheet `Cards Config` / `shop`.
+- Bumped host card config/game cache key.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- Google Sheet `Cards Config` / `shop!C6`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Only the title changed; id, shortTitle, description, effect, cost, count, and behavior stayed unchanged.
+- Google Sheet readback confirmed `shop!A6:N6` title `Скидка от Джо`.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-29 02:48 - Dev 3
+
+Changed:
+- Renamed Shop card `monster-bribe-plus1` from `Темная взятка` to `Еда монстру`.
+- Synced the title in local config, CSV mirror, and live Google Sheet `Cards Config` / `shop`.
+- Bumped host card config/game cache key.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- Google Sheet `Cards Config` / `shop!C7`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Only the title changed; id, shortTitle, description, effect, cost, count, and behavior stayed unchanged.
+- Google Sheet readback confirmed `shop!A7:N7` title `Еда монстру`.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-29 01:53 - Dev 1
+
+Changed:
+- Rechecked the live Google Sheet `Games Log` final columns from the user screenshot.
+- Updated `project-memory/apps-script-games-log-final-fields-patch.js` so the save endpoint patch maps rows by the live Sheet header names instead of stale fixed header arrays.
+- Covered current `Games!P:Y` final columns and `Players!V:AI` final per-player columns, including false-y values like `finalBossWon: false`.
+
+Files:
+- `project-memory/apps-script-games-log-final-fields-patch.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Live readback: `Games!P1:Y12` and `Players!V1:AI12` currently contain only headers, so existing rows still have blank final columns.
+- Local game snapshot code already emits the final fields via `buildFinalHistorySheetExport()` / `sheetExport`.
+- The Apps Script project for the deployed Web App was not visible in connected Drive and `clasp` is unavailable, so the live Web App cannot be redeployed from this chat. Apply the updated patch in Apps Script and deploy a new Web App version before expecting the linked Sheet to fill these columns.
+- Checks passed: `node --check project-memory/apps-script-games-log-final-fields-patch.js`; fake Apps Script mapping test for Games and Players final columns; live Sheet header/readback; `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- Who has edit/deploy access to the live Apps Script Web App behind `src/game.js` `googleSheetsSaveUrl`?
+
+## 2026-06-29 01:40 - GD
+
+Changed:
+- Removed the `passThroughMode` column from the live Google Sheet `Games Log` / `Games`.
+
+Files:
+- Google Sheet `Games Log`
+- `project-memory/updates.md`
+
+Notes for others:
+- Verified neighboring headers now read `diceCount`, `botSpeed`, `tadamPlayed`.
+
+## 2026-06-29 02:44 - Dev 3
+
+Changed:
+- Synced the live Google Sheet `Cards Config` after the recent Good/Shop card data changes.
+- Added `good/player-battle-potion` / `Зелье дуэли` to Google Sheet tab `good`.
+- Replaced `shop/duplicate-dice-reward` / `Дубль на удачу` in Google Sheet tab `shop` with:
+  - `shop/duplicate-dice-coins` / `Дубль на монеты`, count `3`;
+  - `shop/duplicate-dice-steps` / `Дубль на шаги`, count `3`.
+- Added shared Google Sheet links for `Cards Config` and `Games Log` to `project-memory/README.md`.
+- Added `Games Log` link and updated the card Sheet/CSV column order in `project-memory/handoff.md`.
+
+Files:
+- Google Sheet `Cards Config`
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Live Sheet readback passed:
+  - `good!A17:N19` includes `player-battle-potion`;
+  - `shop!A8:N9` includes both split duplicate-dice cards;
+  - `shop` count total is `56`;
+  - searching `shop` for `duplicate-dice-reward` returns no rows.
+- `Games Log` link: `https://docs.google.com/spreadsheets/d/1uC1xUk52IbpHfm9tNtHT2_cmFSNQIKCkct88TsqmmV8/edit`.
+
+Open questions:
+- None.
+
+## 2026-06-29 02:32 - Dev 3
+
+Changed:
+- Split Shop card `duplicate-dice-reward` / `Дубль на удачу` into two separate Joe Shop cards:
+  - `duplicate-dice-coins` / `Дубль на монеты`: duplicate movement dice grants `5` coins.
+  - `duplicate-dice-steps` / `Дубль на шаги`: duplicate movement dice grants `5` forward steps.
+- Removed the old duplicate-dice choice prompt from the active runtime path.
+- Updated bot Shop-card scoring for the two separate effects.
+- Synced local `src/cards.config.js` and `cards-google-sheet.csv`.
+- Bumped host card config/game cache key.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Each new card currently uses the old card's `count: 3`, so the local Shop configured total is now `56`.
+- Google Sheet native write tool was not exposed in this chat; local CSV has the exact new rows for later Sheet sync.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-29 01:24 - GD
+
+Changed:
+- Updated `Длительность` in the live Google Sheet `Games Log` / `Games` to hide zero-value days and hours.
+- Short durations now display as `9м` / `1ч 12м`; days appear only when non-zero.
+
+Files:
+- Google Sheet `Games Log`
+- `project-memory/updates.md`
+
+Notes for others:
+- Formula-only spreadsheet display change; game data was not changed.
+
+## 2026-06-29 01:21 - GD
+
+Changed:
+- Added `Длительность` next to `elapsedMs` in the live Google Sheet `Games Log` / `Games`.
+- `Длительность` is calculated from `elapsedMs` and displayed as `0д 0ч 9м` / `1д 21ч 35м` style text.
+
+Files:
+- Google Sheet `Games Log`
+- `project-memory/updates.md`
+
+Notes for others:
+- Only the `Games` source tab was changed; `Players` and `Сводка` were not changed in this pass.
+
+## 2026-06-29 02:15 - Dev 3
+
+Changed:
+- Added a new `Хорошо` held card `player-battle-potion` / `Зелье дуэли`.
+- Card text: `В битве с игроками можешь сбросить эту карту и получить +3 к силе`.
+- The card is kept as a visible pending Good status until used, then discards to the Good discard pile.
+- Hooked the optional `+3` into player-vs-player battle rolls through `rollPlayerBattlePower(...)`: VS, same-cell duel, and final PvP boss battle.
+- Updated PvP/final battle log formula text to show `+ 3 Зелье дуэли` when used.
+- Bumped the host `src/game.js` and `cards.config.js` cache key path.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Google Sheet native write tool was not exposed in this chat; local `cards-google-sheet.csv` has the exact new row for later Sheet sync.
+- The new card is not used in monster/team battles; existing `Зелье силы` remains the monster-battle card.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-29 01:08 - GD
+
+Changed:
+- Updated the live Google Sheet `Games Log` source tabs directly: `Games` now starts with numeric `ID`, separate `Дата`, and separate `Время`.
+- Updated `Players` directly: rows now start with numeric `ID партии`, separate `Дата`, and separate `Время`.
+- Kept the game/player relationship by mapping each `Players` row to the same numeric party ID from `Games`.
+
+Files:
+- Google Sheet `Games Log`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Сводка` was intentionally not updated in this pass; user asked to ignore it for now and work directly in `Games` / `Players`.
+- Existing columns were shifted right, not manually reworked beyond the new leading ID/date/time columns.
+
+## 2026-06-29 00:52 - Art / UI 1
+
+Changed:
+- Made card-face descriptions keep the same base font size as `Эхо ТАДАМ!` across normal, dense, and long card layouts.
+- Added separate description-only shrink classes for genuinely large rule texts, instead of shrinking every dense/long description.
+- Applied the same description sizing logic to host card faces and phone-controller card previews.
+- Bumped host/controller CSS and JS cache keys.
+
+Files:
+- `index.html`
+- `controller.html`
+- `styles.css`
+- `src/game.js`
+- `src/controller.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only card typography change; card texts, rules, counts, deck data, and gameplay behavior were not changed.
+- `Дубль на удачу`, `Эхо ТАДАМ!`, and `Привилегия Джо` now share the same description font size; very large descriptions like `Темная взятка` still get a protective shrink class.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-29 00:56 - GD
+
+Changed:
+- Updated Google Sheet `Games Log` / `Сводка`.
+- In both `Партии` and `Игроки` blocks, `ID партии` now displays as a simple numeric sequence (`1`, `2`, `3`, ...).
+- Date and time are split into separate columns in both blocks.
+
+Files:
+- Google Sheet `Games Log`
+- `project-memory/updates.md`
+
+Notes for others:
+- Source sheets `Games` and `Players` remain unchanged.
+- The summary uses formulas with the spreadsheet's Russian-locale argument separator.
+
+Open questions:
+- None.
+
+## 2026-06-29 00:00 - GD
+
+Changed:
+- Added a new Google Sheet tab `Сводка` to the `Games Log` spreadsheet.
+- The tab displays readable summary metrics and two formatted live-linked blocks:
+  - `Партии` from `Games!A:X`;
+  - `Игроки` from `Players!A:AG`.
+- The blocks use Russian headers and formulas, so new rows from the source sheets are pulled into the summary within the current source ranges.
+
+Files:
+- Google Sheet `Games Log`
+- `project-memory/updates.md`
+
+Notes for others:
+- Source sheets `Games` and `Players` were not changed.
+- The new tab is for readable inspection; it preserves all source columns in formatted sections.
+
+Open questions:
+- None.
+
+## 2026-06-29 00:09 - Art / UI 1
+
+Changed:
+- Made card-face titles keep one consistent size across normal, dense, and long card-description layouts.
+- Added separate title-only shrink classes for genuinely long titles, so descriptions can compress without shrinking short titles.
+- Applied the same title sizing logic to host card faces and phone-controller card previews.
+- Bumped host/controller CSS and JS cache keys.
+
+Files:
+- `index.html`
+- `controller.html`
+- `styles.css`
+- `src/game.js`
+- `src/controller.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only card typography change; card texts, rules, counts, deck data, and gameplay behavior were not changed.
+- Current configured card titles do not trigger the new title shrink class; it is reserved for future very long titles.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-26 18:26 - Art / UI 2
+
+Changed:
+- Hid the secondary note line on the phone controller bottom action button, including `подтвердить на большом экране`.
+- Kept only the current action label (`Применить`, `Бросить`, `В бой`, etc.) visible and centered in the button.
+- Bumped the controller stylesheet cache key.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only controller change; action payloads, phone protocol, card previews, and gameplay were not changed.
+- The note text remains in controller data/markup, but is hidden inside the bottom CTA surfaces.
+
+Open questions:
+- None.
+
+## 2026-06-26 18:22 - Art / UI 1
+
+Changed:
+- Scaled phone full-controller card-preview typography with the enlarged visual card.
+- Reused the existing card-face typography variables for preview cards, but made their values proportional to the preview card container width.
+- Bumped the controller stylesheet cache key.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only controller change; card data, gameplay, action behavior, and the compact bottom button size were not changed.
+- Text sizing uses `cqw` inside `.controller-card-face-stage.is-preview` so title/description scale with the card face rather than the phone viewport/global mobile card width.
+- `git diff --check` passed.
+
+Open questions:
+- None.
+
+## 2026-06-26 18:16 - Art / UI 1
+
+Changed:
+- Fixed the phone full-controller visual card preview sizing not changing after the previous attempt.
+- Propagated the enlarged preview size into local `--card-face-width` as well as `--reveal-card-width`, so inner revealed card layers no longer fall back to the global small mobile card width.
+- Added a non-`:has(...)` full-controller selector for the preview stage and bumped the controller stylesheet cache key again.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Root cause of the no-op: `.good-card-reveal` / related reveal layers define their own `--reveal-card-width: var(--card-face-width)`, so changing only the parent `--reveal-card-width` did not affect the actual card face.
+- Visual/layout-only controller change; button size, controller actions, card data, and gameplay were not changed.
+- `git diff --check` passed.
+
+Open questions:
+- None.
+
+## 2026-06-26 18:05 - Art / UI 2
+
+Changed:
+- In full-controller phone dice display, removed roll/result text while dice are visible.
+- Centered and slightly enlarged the full-controller dice faces so only the dice remain in the block.
+- Kept compact dice blocks and big-button controller dice layout unchanged.
+- Bumped the controller stylesheet cache key.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only change; dice logic, result data, phone room protocol, controller actions, and gameplay were not changed.
+- Checks passed: `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run in this sandbox.
+- QA not requested.
+
+Open questions:
+- None.
+
+## 2026-06-26 18:00 - Art / UI 1
+
+Changed:
+- Analyzed why full-controller card previews stayed small on phone despite the larger preview area.
+- Replaced the invalid `calc(... * 0.716)` / container-unit sizing path for controller card previews with stable precomputed `vh`/`svh` viewport clamps.
+- Kept the compact bottom action button size unchanged and bumped the controller stylesheet cache key.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Root cause: mobile browsers ignored the reveal width declarations that used CSS multiplication, so previews fell back to the base small `--reveal-card-width`.
+- The duplicate `vh` then `svh` declarations are intentional: `vh` is a compatibility fallback, `svh` wins where supported.
+- `git diff --check` passed.
+
+Open questions:
+- None.
+
+## 2026-06-26 17:48 - Art / UI 1
+
+Changed:
+- Fixed phone full-controller card preview layout after compacting the bottom action button.
+- Restored stretch layout for the player card when a visual card preview is present, preventing the narrow left rail.
+- Let the visual card preview use the available free space while keeping the bottom action button size unchanged.
+- Bumped the controller stylesheet cache key.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only controller layout change; action button height, action payloads, dice logic, room protocol, and gameplay were not changed.
+- Keep the bottom action button compact; this fix only changes the card preview area above it.
+- Checks passed: `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-26 17:30 - Art / UI 1
+
+Changed:
+- Fixed phone controller player-card layout after compacting the bottom action button.
+- Prevented internal player-card grid rows from stretching vertically across the available space.
+- Kept the compact bottom action button size unchanged and bumped the controller stylesheet cache key.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only controller layout change; action button height, action payloads, dice logic, room protocol, and gameplay were not changed.
+- Checks passed: `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-26 17:29 - Dev 3
+
+Changed:
+- Enlarged phone full-controller card preview sizing so the active revealed card uses the available preview space instead of staying small in the center.
+- Added direct non-`:has(...)` sizing for `.controller-card-preview-face .controller-card-face-stage.is-preview`, with container-unit sizing and a larger viewport fallback.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- QA was not involved. This is a direct user-requested phone controller UI fix.
+- The change targets the active card preview only, not the player's small inventory cards.
+- Checks passed: `node --check src/controller.js`; `node --check src/game.js`; `git diff --check`.
+- Browser/screenshot smoke was attempted, but this sandbox blocks local server binding, Playwright bundled Chromium is not installed, system Chrome exits with `EPERM/SIGABRT`, and QuickLook preview fails sandbox initialization. Static CSS sizing estimate: about `419x585` card on `473x1024`, about `336x469` on `390x844`.
+
+Open questions:
+- None.
+
+## 2026-06-26 17:15 - Art / UI 1
+
+Changed:
+- Made phone controller action CTAs compact in every state: roll, ordinary action, card/preview continuation, and big-button mode.
+- Forced the lower action area to use a small bottom row instead of stretching the button to fill available space.
+- Bumped the controller stylesheet cache key.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only controller layout change; action payloads, dice logic, room protocol, gameplay, and host UI behavior were not changed.
+- The compact action height is 96px by default, 88px on shorter screens, and 82px on very short screens.
+- Checks passed: `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-26 17:01 - Dev 3
+
+Changed:
+- Added full action context text to phone full-controller actions: kicker/title/summary from host choice dialogs now render above the phone action buttons.
+- Threaded the same context through card choices, board/portal choices, preview-return actions, and roll-context prompt choices where available.
+- Added a compact non-button controller context panel style.
+
+Files:
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- QA was not involved. This is a direct user-requested controller UI fix.
+- `Текст вместо карт` still controls only card-face vs text rendering; the action context panel is always text in full-controller mode.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-26 17:00 - Art / UI 1
+
+Changed:
+- Refined the phone-room recreate icon with rounder circular arcs and cleaner V-shaped arrowheads.
+- Updated the refresh icon cache key in the host UI.
+
+Files:
+- `index.html`
+- `assets/icons/refresh_room.svg`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only icon asset adjustment; phone room creation logic and button behavior were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 16:56 - Art / UI 1
+
+Changed:
+- Reduced the phone-room QR icon visual size by adding more internal SVG padding.
+- Updated the QR icon cache key in the host UI.
+
+Files:
+- `index.html`
+- `assets/icons/qr_code.svg`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only icon asset adjustment; QR popup behavior, phone room logic, and controller protocol were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 16:52 - Art / UI 1
+
+Changed:
+- Redrew the phone-room copy icon as a centered straight SVG with two aligned document sheets.
+- Updated the copy icon cache key in the host UI.
+
+Files:
+- `index.html`
+- `assets/icons/copy_link.svg`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only icon asset change; copy behavior, phone room logic, and controller protocol were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 16:48 - Art / UI 1
+
+Changed:
+- Redrew the phone-room recreate/refresh icon as a centered symmetric SVG.
+- Updated the refresh icon cache key in the host UI.
+
+Files:
+- `index.html`
+- `assets/icons/refresh_room.svg`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only icon asset change; phone room creation logic and button behavior were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 13:47 - Art / UI 1
+
+Changed:
+- Reworked phone-room icon centering with a final high-priority CSS rule that positions each SVG image from the exact button center.
+- Updated cache keys for all four phone-room icons, not only QR, so browser reloads QR, refresh, copy, and settings icons together.
+- Bumped the shared stylesheet cache key.
+
+Files:
+- `index.html`
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only phone-room button alignment change; no phone room behavior, controller protocol, gameplay, or settings logic changed.
+- Checks passed: `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-26 12:12 - Art / UI 1
+
+Changed:
+- Centered host header and phone-room icon buttons by giving icon-only buttons fixed square sizing with zero text line-height.
+- Centered icon images inside their grid cells and corrected the QR icon viewport so the glyph sits optically centered.
+- Bumped shared CSS cache keys and the QR icon cache key.
+
+Files:
+- `index.html`
+- `controller.html`
+- `styles.css`
+- `assets/icons/qr_code.svg`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only icon alignment change; no room logic, phone protocol, gameplay, or settings behavior changed.
+- Checks passed: `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-26 12:10 - Dev 3
+
+Changed:
+- Updated battle pre-roll CTA labels to `В бой` for ordinary monster battles, final monster entry, VS rolls, final boss/challenger rolls, `Сплочение`, `Бой за старт`, `Меч Героя`, and same-cell duel battle rolls.
+- Phone controllers inherit the same `В бой` label through the existing action prompt snapshot; no controller-side hardcoded label change was needed.
+- Left non-battle `Далее` and non-battle `Бросить кубик` prompts unchanged.
+- Added `В бой` to the same bot prompt delay bucket as `Бросить кубик`.
+- Bumped the host `src/game.js` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run in this sandbox.
+- Battle math, dice flow, animation/HUD layout, phone protocol, controller mode behavior, and non-battle prompts were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 12:07 - Art / UI 2
+
+Changed:
+- Increased the full phone-controller waiting block so `Ждем ход или решение на большом экране` fits cleanly.
+- Prevented the low-height compact-action rule from shrinking the normal `.controller-wait-card` to 82px.
+- Kept the compact big-button wait card constrained through `.controller-wait-card-compact`.
+- Bumped the controller stylesheet cache key.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only change; controller actions, room protocol, dice logic, gameplay, and host UI behavior were not changed.
+- Checks passed: `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run in this sandbox.
+- QA not requested.
+
+Open questions:
+- None.
+
+## 2026-06-26 11:57 - GD
+
+Changed:
+- Added Dev 3 task `ACTIVE BATTLE CTA TEXT 2026-06-26 11:57 - Use В бой before battle rolls`.
+- Design decision: when the next confirmation starts a battle dice roll, host and phone CTA should say `В бой` instead of `Далее`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a label/UX task only.
+- Do not globally replace `Далее`; keep it for non-battle reveals and ordinary confirmations.
+- Host and phone should stay consistent through the existing action prompt/snapshot source if possible.
+
+Open questions:
+- None.
+
+## 2026-06-26 03:30 - Art / UI 1
+
+Changed:
+- Full-controller `full-primary` phone buttons now keep the normal controller button height unless the action is an actual roll.
+- Fixed card-preview/continue actions like `Далее` so they align to the lower action area without stretching into a giant CTA.
+- Kept giant button styling scoped to `.is-roll` and bumped the controller CSS cache key.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only controller layout change; gameplay, action payloads, dice logic, room protocol, and card data were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 03:25 - Art / UI 2
+
+Changed:
+- Converted `Скопировать ссылку` and `Настройки телефонов` into the same square phone-room icon buttons as QR/refresh.
+- Moved `Настройки телефонов` to the right edge of the phone-room action row.
+- Moved `Скопировать ссылку` directly left of the settings button.
+- Added new centered gold-outline copy icon: `assets/icons/copy_link.svg`.
+- Hid the phone settings body container when collapsed and removed the old full-width settings toggle row.
+- Updated phone details layout after moving the copy action out of that row.
+- Bumped CSS, `src/game.js`, and copy icon cache keys in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `assets/icons/copy_link.svg`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI-only behavior change for icon-only copy/settings buttons; room creation/recreation logic, QR popup behavior, phone protocol, gameplay, and controller code were not changed.
+- Checks passed: `node --check src/game.js`; SVG XML validation for phone-room icons.
+- Browser smoke was not run in this sandbox.
+- QA not requested.
+
+Open questions:
+- None.
+
+## 2026-06-26 03:26 - Art / UI 1
+
+Changed:
+- Removed all visible text from compact phone controller dice rolling/result blocks.
+- Centered the dice faces inside those compact status blocks.
+- Bumped the controller CSS cache key in `controller.html`.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only change; dice logic, result data, action payloads, and room protocol were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 03:24 - Art / UI 1
+
+Changed:
+- Made phone controller `Кубики крутятся` and `Результат броска` compact dice status blocks use the same fixed height.
+- Added a shared compact action height variable for big-button mode so dice status, compact actions, and compact wait cards stay aligned across low-height breakpoints.
+- Bumped the controller CSS cache key in `controller.html`.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only change; dice logic, controller behavior, action payloads, and room protocol were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 03:21 - Art / UI 1
+
+Changed:
+- Removed the orange backing from phone controller dice rolling/result stages.
+- Dice roll status panels now use the same dark translucent visual family as other controller status blocks.
+- Bumped the controller CSS cache key in `controller.html`.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only change; dice logic, action payloads, controller behavior, and card data were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 03:20 - Dev 3
+
+Changed:
+- Increased phone controller board-style card preview size by removing the old `300px` cap.
+- Card preview now scales from available viewport width and preview height, using more of the free card area.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/controller.js`; `node --check src/game.js`; `node --check server.js`; `git diff --check`.
+- Browser smoke could not run in this sandbox because local server listen is blocked by `EPERM`.
+- No game rules, controller actions, phone room protocol, card data, or deck behavior changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 03:20 - Art / UI 2
+
+Changed:
+- Recentered the phone room QR and refresh button icons by tightening their SVG viewBoxes.
+- Added explicit center alignment for both phone-room icon images.
+- Bumped CSS and icon cache keys in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `assets/icons/qr_code.svg`
+- `assets/icons/refresh_room.svg`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only change; room creation/recreation logic, QR popup behavior, phone protocol, gameplay, and controller code were not changed.
+- Browser smoke was not run in this sandbox.
+- QA not requested.
+
+Open questions:
+- None.
+
+## 2026-06-26 03:18 - Dev 3
+
+Changed:
+- Fixed phone controller board-style card preview collapsing to a tiny dot.
+- Replaced the height-stretched card preview sizing with a stable width-based size that still uses available screen space.
+- Bumped the shared stylesheet cache key for host and phone controller.
+
+Files:
+- `index.html`
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/controller.js`; `node --check src/game.js`; `node --check server.js`; `git diff --check`.
+- Browser smoke could not run in this sandbox because local server listen is blocked by `EPERM`.
+- No game rules, controller actions, phone room protocol, card data, or deck behavior changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 03:07 - Art / UI 2
+
+Changed:
+- Replaced the visible `Создать/Пересоздать комнату` phone-room button text with a square refresh icon button.
+- Added a new centered gold-outline refresh icon: `assets/icons/refresh_room.svg`.
+- Kept the button accessible by updating its `title`/`aria-label` between `Создать комнату` and `Пересоздать комнату`.
+- Bumped CSS, refresh icon, and `src/game.js` cache keys in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `assets/icons/refresh_room.svg`
+- `project-memory/updates.md`
+
+Notes for others:
+- UI-only behavior change for preserving the icon button label; room creation/recreation logic, QR popup behavior, phone protocol, gameplay, and controller code were not changed.
+- QA not requested.
+
+Open questions:
+- None.
+
+## 2026-06-26 03:15 - Dev 3
+
+Changed:
+- Enlarged the phone controller board-style card preview layout so the revealed card uses the free space in the player panel instead of staying in a small centered preview.
+- Made the full-controller action row a fixed/clamped block when a board-style card preview is visible, so the primary button fills that block.
+- Bumped the shared stylesheet cache key for host and phone controller.
+
+Files:
+- `index.html`
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/controller.js`; `node --check src/game.js`; `node --check server.js`; `git diff --check`.
+- Browser smoke could not run in this sandbox because local server listen is blocked by `EPERM`.
+- No game rules, controller actions, phone room protocol, card data, or deck behavior changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 03:10 - Art / UI 1
+
+Changed:
+- Phone controller big-button mode now treats only an actual roll action as the giant CTA.
+- Dice rolling/result states render as compact lower strips instead of reusing the giant button-sized stage.
+- Non-roll primary/fallback actions in big-button mode now render as compact action/wait strips matching the `Ждем ход или решение на большом экране.` block height.
+- Added compact dice sizing/text styles and bumped `controller.html` cache keys for `styles.css` and `src/controller.js`.
+
+Files:
+- `controller.html`
+- `src/controller.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only controller change; gameplay, dice math, room protocol, cards, and action payloads were not changed.
+- Checks passed: `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was attempted, but local server listen is blocked by sandbox `EPERM`, so visual verification should be done in the actual browser.
+
+Open questions:
+- None.
+
+## 2026-06-26 03:05 - Dev 3
+
+Changed:
+- Phone controller card mode now renders actual board-style card faces using the same `good/bad/tadam/event/shop-card-reveal`, `*-card-preview`, and `*-card-text` structures instead of separate text-like phone cards.
+- Added compact phone sizing for preview/action/inventory cards so revealed cards fit immediately in the controller instead of requiring internal card scrolling.
+- Card action buttons now lay out in a compact grid when possible, so multiple card choices are visible at once.
+- Included card front art/icon metadata in phone card snapshots for matching TADAM/Event visuals.
+- Bumped host/controller CSS and JS cache keys.
+
+Files:
+- `index.html`
+- `controller.html`
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check server.js`; `git diff --check`.
+- Browser smoke could not run here: local server listen is blocked by sandbox `EPERM`.
+- No game rules, card effects, room protocol actions, deck data, or card counts changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 02:58 - Art / UI 2
+
+Changed:
+- Centered the phone room QR icon by tightening the SVG viewBox around the actual glyph.
+- Increased the QR icon render size by 20% inside the button.
+- Bumped CSS and QR SVG cache keys in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `assets/icons/qr_code.svg`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only change; QR popup behavior, room creation, phone protocol, gameplay, and controller JS were not changed.
+- SVG XML validation passed; browser smoke was not run in this sandbox.
+- QA not requested.
+
+Open questions:
+- None.
+
+## 2026-06-26 02:53 - Art / UI 2
+
+Changed:
+- Redrew the phone room QR button icon in the shared gold outline header-icon style.
+- Simplified the QR glyph to large even modules/finder marks so it reads better inside the small square button.
+- Slightly increased the QR icon render size inside the button and bumped CSS/icon cache keys.
+
+Files:
+- `index.html`
+- `styles.css`
+- `assets/icons/qr_code.svg`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only change; QR popup behavior, room creation, phone protocol, gameplay, and controller JS were not changed.
+- Browser smoke was not run in this sandbox.
+- QA not requested.
+
+Open questions:
+- None.
+
+## 2026-06-26 02:50 - Art / UI 1
+
+Changed:
+- Tightened the phone full-controller layout for the card-preview + primary action state.
+- Fixed stretched internal rows in the player card by pinning content to the top instead of letting badge/stat rows expand.
+- Reduced the stat blocks, player header, shop section, and preview spacing in this state.
+- Changed the primary action row from a fractional grid row to a clamped fixed-height row so the button shrinks predictably and no longer eats the layout.
+- Increased usable card-preview height and improved the preview deck pill line-height so labels like `Хорошо` fit.
+- Bumped the controller stylesheet cache key.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout only; no controller actions, card preview data, phone protocol, dice/shake logic, or gameplay changed.
+- Checks passed: `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-26 02:48 - Dev 3
+
+Changed:
+- Added phone setting `Текст вместо карт`.
+- Default is unchecked: phone controller shows card-like faces unless `Текст вместо карт` is enabled.
+- When enabled, phone controller uses the previous text-only card display.
+- Card-like phone display covers:
+  - owned `Лавка Джо` cards in the player panel;
+  - current card preview/opening flow;
+  - Shop/card-choice actions that represent actual cards.
+- Added full card data to phone snapshots/actions where needed: title, shortTitle, description, deck, revealed/face-down state, count.
+- Propagated `cardsAsText` through phone room creation, room serialization, and live snapshot updates.
+- Bumped host/controller CSS and JS cache keys.
+
+Files:
+- `index.html`
+- `controller.html`
+- `server.js`
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check server.js`; `git diff --check`.
+- Browser smoke was not run in this sandbox.
+- Phone actions/protocol semantics, game rules, card effects, room creation flow, dice behavior, and card data/counts were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 02:39 - Art / UI 2
+
+Changed:
+- Removed the two intermediate visual frames inside the phone room QR popup.
+- Kept the QR popup block size and spacing unchanged.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only change; QR generation, close behavior, phone room logic, gameplay, and controller JS were not changed.
+- Browser smoke was not run in this sandbox.
+- QA not requested.
+
+Open questions:
+- None.
+
+## 2026-06-26 02:34 - Art / UI 2
+
+Changed:
+- Moved the phone room QR button to the left of `Создать/Пересоздать комнату`.
+- Tightened QR icon-button sizing and centering so the glyph sits in the middle of the square button.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only change; QR popup behavior, room creation, phone controller protocol, gameplay, and controller JS were not changed.
+- Browser smoke was not run in this sandbox.
+- QA not requested.
+
+Open questions:
+- None.
+
+## 2026-06-26 02:29 - Art / UI 1
+
+Changed:
+- Fixed the phone controller full-controller layout when a card preview is visible above the main action button.
+- Added full-controller-specific `has-card-preview` sizing: the player/card area gets an internal scroll if needed, while the primary action button shrinks first.
+- Capped card-preview height and restored internal scrolling so preview text cannot paint over the action button.
+- Added low-height breakpoints for this state and bumped the controller stylesheet cache key.
+
+Files:
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout only; no controller actions, phone protocol, card preview behavior, room data, dice/shake logic, or gameplay changed.
+- Checks passed: `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-26 02:20 - Art / UI 2
+
+Changed:
+- Simplified the phone room QR popup to show only the QR block.
+- Removed the visible title/header, close button, and URL field from the popup card.
+- Made the popup card square and let the QR code fill the square card.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only change; QR generation, close via backdrop/Escape, phone room logic, gameplay, dice, and controller JS were not changed.
+- Browser smoke was not run in this sandbox.
+- QA not requested.
+
+Open questions:
+- None.
+
+## 2026-06-26 02:17 - Art / UI 2
+
+Changed:
+- Aligned the open phone room/settings block with the bottom of the board controls on wide layouts.
+- Added a wide-layout-only stretch rule: when `.phone-room-panel` is open, `.game-settings` fills the remaining side-panel height below `ТАДАМ!`.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only change; no phone room logic, QR popup behavior, gameplay, dice, or controller JS changed.
+- Uses `:has(...)`, which is already used elsewhere in the stylesheet.
+- Browser smoke was not run in this sandbox.
+- QA not requested.
+
+Open questions:
+- None.
+
+## 2026-06-26 02:16 - Dev 3
+
+Changed:
+- Fixed the phone room QR popup in fullscreen / big-screen mode.
+- Added `.phone-room-qr-popup` to the fullscreen overlay exception that already existed for `.info-history-popup`.
+- Bumped the host `styles.css` cache key in `index.html`.
+- Added `Popup Fullscreen Rules` to `project-memory/README.md`: popups/dialogs/modals opened from host UI must also open visibly in fullscreen mode.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/README.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was not run in this sandbox.
+- QR popup logic, room creation, controller protocol, and game rules were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 02:14 - Art / UI 1
+
+Changed:
+- Synced the phone controller card-choice field-preview action text with the large-screen choice panel.
+- Phone now shows `Просмотр поля` with `вернуться: «К выбору»` instead of the generic `Показать поле` / `вернуться к выбору` for card-choice field preview.
+- Bumped the host `src/game.js` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Text/UI only; no choice resolution, phone protocol, field preview behavior, gameplay, or card rules changed.
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-06-26 02:11 - Dev 3
+
+Changed:
+- Completed `ACTIVE PHONE QR POPUP 2026-06-26 01:42 - Wire phone room QR button`.
+- Wired `#phoneRoomQrBtn` to open a QR popup for the current phone controller join URL.
+- Added a local SVG QR generator in `src/game.js`; no external QR service or CDN is required.
+- Added popup markup and styling with close button, backdrop close, Escape close, current URL readout, and disabled QR button state when no room URL exists or the room is being recreated.
+- Bumped the host `src/game.js` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Static QR smoke passed by generating a 37x37 SVG QR matrix for a typical LAN controller URL.
+- Browser smoke was not run in this sandbox.
+- Room creation, phone controller protocol, dice/controller behavior, and controller page logic were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-26 02:08 - Art / UI 1
+
+Changed:
+- Fixed the phone controller big-button layout when a card preview is visible above the main action.
+- Added a `has-card-preview` state to the controller player panel so CSS can reserve separate vertical zones for the player/card preview area and the action button.
+- Made the big action button shrink more aggressively in that state, including low-height breakpoints, so the preview and button do not paint over each other.
+- Bumped controller CSS/JS cache keys.
+
+Files:
+- `controller.html`
+- `src/controller.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- No gameplay, room data, card text, dice/shake logic, or controller action behavior changed.
+- Checks passed: `node --check src/controller.js`; `git diff --check`.
+- In-app browser static visual smoke was attempted, but the browser policy blocked opening a generated local HTML preview; viewport override was reset afterward.
+
+Open questions:
+- None.
+
+## 2026-06-26 01:42 - Art / UI 2
+
+Changed:
+- Compactified the phone room panel so the open block is shorter and better aligns with the bottom board controls / `Бросить` button.
+- Added an inert QR button next to `Создать комнату` / `Пересоздать комнату`.
+- Drew a new QR icon for that button: `assets/icons/qr_code.svg`.
+- Added Dev task `ACTIVE PHONE QR POPUP 2026-06-26 01:42 - Wire phone room QR button`.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `assets/icons/qr_code.svg`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout only; no room creation, phone controller protocol, popup behavior, gameplay, dice, or controller JS changed.
+- QR popup functionality is intentionally left for Dev via `#phoneRoomQrBtn`.
+- Browser smoke was not run in this sandbox.
+- QA not requested.
+
+Open questions:
+- None.
+
+## 2026-06-26 01:33 - Art / UI 1
+
+Changed:
+- Reworked the phone controller player screen so it uses the stable visible viewport and does not grow below the browser bottom bar.
+- Hid the decorative controller header after a player is selected, removing `Очень Большая Бродилка`, `Телефон игрока`, and the top room/status line from the active player UI.
+- Moved connection errors into a compact in-panel alert so useful status is not lost when the header is hidden.
+- Rebuilt big-button mode sizing so the player card and action area live inside a fixed-height panel; action/button stages shrink instead of expanding the whole page.
+- Added compact low-height rules for big roll, dice result, split choice, detail choice, and rest choice states.
+- Added `viewport-fit=cover` and bumped controller cache keys.
+
+Files:
+- `controller.html`
+- `src/controller.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- No gameplay, room data, controller actions, shake/dice behavior, or action text changed.
+- Checks passed: `node --check src/controller.js`; `git diff --check`.
+- Browser smoke was attempted but blocked by this sandbox: `server.js` cannot listen (`EPERM 127.0.0.1:5174`), and bundled Playwright has no installed browser binary.
+
+Open questions:
+- None.
+
+## 2026-06-26 01:36 - Art / UI 2
+
+Changed:
+- Created a new painted strength display sword icon in the current game-art style.
+- Replaced the earlier vector-style attempt with a transparent raster PNG.
+
+Files:
+- `assets/icons/strength_sword_512.png` - PNG, 512x512 RGBA, visual-only.
+- `project-memory/updates.md`
+
+Notes for others:
+- The icon is not wired into UI/game code yet.
+- Designed as a compact HUD/stat icon, separate from the detailed `artifact_hero_sword_512.png`.
+- Source was generated with a flat chroma-key background, then locally converted to alpha.
+- QA not requested.
+
+Open questions:
+- None.
+
+## 2026-06-26 01:35 - Dev 3
+
+Changed:
+- Completed `ACTIVE TEXT CLEANUP 2026-06-26 01:19 - Remove по маршруту terminology`.
+- Removed current player-facing `по маршруту` wording from Event `Справедливость`, artifact/Event `Волшебный кошель`, `Назад к сопернику` fallback log, and related tie-break reason labels.
+- Synced affected Event rows in local config/CSV and Google Sheet `Cards Config` / `event`.
+- Preserved card ids/counts/effects, route order, deck lifecycle, rules, and artifact behavior.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; `git diff --check`.
+- Static source/config/CSV search passed: no `по маршруту` / `По маршруту` in `src`, `cards-google-sheet.csv`, `index.html`, or `styles.css`.
+- Google Sheet readback confirmed `event!L3`, `event!N3`, and `event!L7` no longer contain the phrase.
+- Historical project-memory entries were not edited only for old phrasing.
+
+Open questions:
+- None.
+
+## 2026-06-26 01:19 - GD
+
+Changed:
+- Added Dev 3 task `ACTIVE TEXT CLEANUP 2026-06-26 01:19 - Remove по маршруту terminology`.
+- Design decision: current player-facing text should not use `по маршруту`; use only `первый игрок` and `последний игрок`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Scope is text/data sync only: local card config, CSV, Google Sheet, and runtime/UI strings.
+- Do not change card rules, counts, ids, artifact behavior, route order, or historical memory entries.
+
+Open questions:
+- None.
+
+## 2026-06-24 13:19 - Art / UI 1
+
+Changed:
+- Polished the reusable `.roll-result-highlight` style for resolved roll-result lines in card/field/dialog windows.
+- Added a dark fantasy highlight panel with warm border, subtle gold side accent, restrained glow, better wrapping, and inline coin/dice icon support.
+- Kept the highlight non-clickable in feel: no hover treatment and `cursor: default`.
+- Bumped the `styles.css` cache key in `index.html`.
+- Marked the Art/UI inbox task done and added a GD context note.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only CSS/docs handback. Dev 3 already wired the `resultHighlight` usage across roll outcome dialogs.
+- No gameplay, text content, dice logic, card effects, deck data, modal flow, or JS changed by Art/UI 1.
+- Browser smoke was not run in this sandbox.
+
+Open questions:
+- None.
+
+## 2026-06-24 13:19 - Dev 3
+
+Changed:
+- Completed `ACTIVE ROLL RESULT HIGHLIGHT 2026-06-24 13:10 - Highlight rolled-result text in all roll outcome dialogs`.
+- Added reusable `resultHighlight` support to roll-context rendering; highlighted final result lines receive `.roll-result-highlight`.
+- Added a clean baseline style for `.roll-context-result.roll-result-highlight`; Art/UI 1 can polish further.
+- Applied the highlight to final roll outcome dialogs for:
+  - `Портал хаоса`;
+  - `Кубик удачи`;
+  - `Кубик неприятностей`;
+  - shared Event choice rolls such as `Кубик судьбы` and `Общий жребий`;
+  - `Большой приз`;
+  - Joe Auction tie roll result;
+  - `Игра Джо`;
+  - shared player tie-break results.
+- Option rows such as `1-2`, `3-4`, `5-6` remain unhighlighted.
+- Bumped host `styles.css` and `game.js` cache keys.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- QA was not involved.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+- Static/source smoke confirmed `resultHighlight` is only on resolved result contexts, while rolling status lines and option rows are not highlighted.
+- Browser smoke was not run because the local server cannot listen in this sandbox (`listen EPERM 0.0.0.0:5173`).
+- Dice math, probabilities, card effects, rewards/penalties, text wording, and turn flow were not changed.
+
+Open questions:
+- None.
+
+## 2026-06-24 13:10 - GD
+
+Changed:
+- Wrote Art/UI 1 task `ACTIVE 2026-06-24 13:10 - Roll result highlight style`.
+- Wrote Dev 3 task `ACTIVE ROLL RESULT HIGHLIGHT 2026-06-24 13:10 - Highlight rolled-result text in all roll outcome dialogs`.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-dev.md`
+
+Notes for others:
+- User wants the rolled-result line such as `Выпало 4: ...` to be pleasantly highlighted in these dialogs.
+- Apply the pattern to all similar roll-result windows, not only the screenshot case.
+
+Open questions:
+- None.
+
 ## 2026-06-24 02:43 - Dev 1
 
 Changed:

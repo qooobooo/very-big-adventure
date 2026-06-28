@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260624-0233" />
+    <link rel="stylesheet" href="./styles.css?v=20260629-0330" />
   </head>
   <body data-ui-style="classic" data-font-style="standard">
     <main class="app-shell">
@@ -82,7 +82,20 @@
             <section class="phone-room-panel" aria-label="Мобильные контроллеры" hidden>
               <div class="phone-room-header">
                 <strong>Телефоны</strong>
-                <button id="createPhoneRoomBtn" class="secondary" type="button">Создать комнату</button>
+                <div class="phone-room-header-actions">
+                  <button id="phoneRoomQrBtn" class="secondary phone-room-qr-button" type="button" title="Показать QR-код" aria-label="Показать QR-код" aria-haspopup="dialog" aria-expanded="false" disabled>
+                    <img class="phone-room-qr-icon" src="./assets/icons/qr_code.svg?v=20260626-1656" alt="" aria-hidden="true">
+                  </button>
+                  <button id="createPhoneRoomBtn" class="secondary phone-room-refresh-button" type="button" title="Создать комнату" aria-label="Создать комнату">
+                    <img class="phone-room-refresh-icon" src="./assets/icons/refresh_room.svg?v=20260626-1700" alt="" aria-hidden="true">
+                  </button>
+                  <button id="copyPhoneRoomUrlBtn" class="secondary phone-room-copy" type="button" title="Скопировать ссылку" aria-label="Скопировать ссылку" disabled>
+                    <img class="phone-room-copy-icon" src="./assets/icons/copy_link.svg?v=20260626-1652" alt="" aria-hidden="true">
+                  </button>
+                  <button id="phoneRoomSettingsToggle" class="secondary phone-room-settings-toggle" type="button" title="Настройки телефонов" aria-label="Настройки телефонов" aria-expanded="false" aria-controls="phoneRoomSettingsBody">
+                    <img class="phone-room-settings-icon" src="./assets/icons/settings_gear.svg?v=20260626-0342" alt="" aria-hidden="true">
+                  </button>
+                </div>
               </div>
               <div id="phoneRoomStatus" class="phone-room-status">Комната не создана</div>
               <div id="phoneRoomDetails" class="phone-room-details" hidden>
@@ -94,12 +107,8 @@
                   <span>Ссылка</span>
                   <input id="phoneRoomUrl" type="text" readonly value="" />
                 </label>
-                <button id="copyPhoneRoomUrlBtn" class="secondary phone-room-copy" type="button">Скопировать ссылку</button>
               </div>
               <section class="phone-room-settings" aria-label="Настройки телефонов">
-                <button id="phoneRoomSettingsToggle" class="secondary phone-room-settings-toggle" type="button" aria-expanded="false" aria-controls="phoneRoomSettingsBody">
-                  Настройки телефонов
-                </button>
                 <div id="phoneRoomSettingsBody" class="phone-room-settings-body" hidden>
                   <div class="phone-room-settings-grid">
                     <label class="phone-room-mode">
@@ -112,6 +121,10 @@
                     <label class="cheat-toggle phone-dice-toggle">
                       <input id="phoneRoomDice" type="checkbox" />
                       <span>Не отображать кубики</span>
+                    </label>
+                    <label class="cheat-toggle phone-card-text-toggle">
+                      <input id="phoneRoomCardsText" type="checkbox" />
+                      <span>Текст вместо карт</span>
                     </label>
                   </div>
                   <div id="phoneRoomControllers" class="phone-room-controllers"></div>
@@ -200,6 +213,10 @@
                 <input id="showWalkPath" type="checkbox" />
                 <span>Показывать контур хода</span>
               </label>
+              <label class="cheat-toggle">
+                <input id="hidePlayers" type="checkbox" />
+                <span>Скрыть игроков</span>
+              </label>
             </div>
           </section>
           <section class="tadam-card">
@@ -270,8 +287,15 @@
         </section>
       </div>
 
+      <div id="phoneRoomQrPopup" class="phone-room-qr-popup" role="dialog" aria-modal="true" aria-label="QR-код комнаты" hidden>
+        <button class="phone-room-qr-backdrop" type="button" data-phone-room-qr-close aria-label="Закрыть QR-код"></button>
+        <section class="phone-room-qr-card">
+          <div id="phoneRoomQrCode" class="phone-room-qr-code" aria-label="QR-код для подключения телефона"></div>
+        </section>
+      </div>
+
     </main>
 
-    <script type="module" src="./src/game.js?v=20260624-0230"></script>
+    <script type="module" src="./src/game.js?v=20260629-0330"></script>
   </body>
 </html>

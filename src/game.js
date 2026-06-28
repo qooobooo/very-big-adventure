@@ -1,4 +1,4 @@
-import { cardConfig } from "./cards.config.js?v=20260623-0014";
+import { cardConfig } from "./cards.config.js?v=20260629-0324";
 import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260622-2347";
 
 const boardEl = document.querySelector("#board");
@@ -40,6 +40,7 @@ const ui = {
   fieldEffect: document.querySelector("#fieldEffect"),
   fontStyle: document.querySelector("#fontStyle"),
   fullscreenBtn: document.querySelector("#fullscreenBtn"),
+  hidePlayers: document.querySelector("#hidePlayers"),
   infoHistoryBtn: document.querySelector("#infoHistoryBtn"),
   infoHistoryCloseBtn: document.querySelector("#infoHistoryCloseBtn"),
   infoHistoryPopup: document.querySelector("#infoHistoryPopup"),
@@ -50,11 +51,17 @@ const ui = {
   newGameBtn: document.querySelector("#newGameBtn"),
   phoneRoomCode: document.querySelector("#phoneRoomCode"),
   phoneRoomControllers: document.querySelector("#phoneRoomControllers"),
+  phoneRoomCardsText: document.querySelector("#phoneRoomCardsText"),
   phoneRoomDetails: document.querySelector("#phoneRoomDetails"),
   phoneRoomDice: document.querySelector("#phoneRoomDice"),
   phoneRoomHeaderBtn: document.querySelector("#phoneRoomHeaderBtn"),
   phoneRoomHeaderFeedback: document.querySelector("#phoneRoomHeaderFeedback"),
   phoneRoomMode: document.querySelector("#phoneRoomMode"),
+  phoneRoomQrBtn: document.querySelector("#phoneRoomQrBtn"),
+  phoneRoomQrCloseBtn: document.querySelector("#phoneRoomQrCloseBtn"),
+  phoneRoomQrCode: document.querySelector("#phoneRoomQrCode"),
+  phoneRoomQrLink: document.querySelector("#phoneRoomQrLink"),
+  phoneRoomQrPopup: document.querySelector("#phoneRoomQrPopup"),
   phoneRoomSettingsBody: document.querySelector("#phoneRoomSettingsBody"),
   phoneRoomSettingsToggle: document.querySelector("#phoneRoomSettingsToggle"),
   phoneRoomShake: document.querySelector("#phoneRoomShake"),
@@ -424,6 +431,7 @@ const phoneRoom = {
   diceVisible: true,
   mode: defaultPhoneRoomMode,
   panelOpen: false,
+  cardsAsText: false,
   shakeEnabled: false,
   snapshotTimer: null,
 };
@@ -494,6 +502,10 @@ function phoneRoomShakeEnabled() {
 
 function phoneRoomDiceVisible() {
   return !Boolean(ui.phoneRoomDice?.checked);
+}
+
+function phoneRoomCardsAsText() {
+  return ui.phoneRoomCardsText ? Boolean(ui.phoneRoomCardsText.checked) : Boolean(phoneRoom.cardsAsText);
 }
 
 function applyUiStyle() {
@@ -806,6 +818,7 @@ function collectGameSettings() {
     fontStyle: selectedFontStyle(),
     monsterStrengthMode: monsterStrengthMode(),
     playerCount,
+    hidePlayers: Boolean(ui.hidePlayers?.checked),
     showWalkPath: Boolean(ui.showWalkPath?.checked),
     startingCoins: selectedStartingCoins(),
     uiStyle: selectedUiStyle(),
@@ -1697,8 +1710,11 @@ function scoreShopCard(player, card) {
   } else if (effect.type === "monster-bribe-plus1") {
     score = (state.players.length > 1 ? 13 : 2) * personality.chaos;
     if (gate?.pressure > 0.65) score -= 8 / personality.risk;
-  } else if (effect.type === "duplicate-dice-reward") {
-    score = (totalDiceForPlayer(player) >= 2 ? 22 : 12) * Math.max(personality.economy, personality.progress);
+  } else if (effect.type === "duplicate-dice-coins") {
+    score = (totalDiceForPlayer(player) >= 2 ? 20 : 10) * personality.economy;
+    if (playerDiceBonus(player) >= 1) score += 4;
+  } else if (effect.type === "duplicate-dice-steps") {
+    score = (totalDiceForPlayer(player) >= 2 ? 22 : 11) * personality.progress;
     if (playerDiceBonus(player) >= 1) score += 5;
   } else if (effect.type === "tadam-income") {
     score = (phase === "early" ? 24 : phase === "mid" ? 18 : 8) * personality.economy;
@@ -2622,6 +2638,12 @@ function renderGoldenMarkerSelectionOutlines(pending) {
 function renderTokens() {
   const tokenLayer = boardEl.querySelector(".token-layer");
   if (!tokenLayer) return;
+  const hidePlayers = Boolean(ui.hidePlayers?.checked);
+  tokenLayer.hidden = hidePlayers;
+  if (hidePlayers) {
+    tokenLayer.querySelectorAll(".map-token").forEach((token) => token.remove());
+    return;
+  }
 
   const aliveIds = new Set(state.players.map((player) => String(player.id)));
   tokenLayer.querySelectorAll(".map-token").forEach((token) => {
@@ -2738,6 +2760,22 @@ function phoneControllersEnabled() {
   return Boolean(phoneRoom.enabled);
 }
 
+function phoneCardSnapshot(card, deck = "Карта", { revealed = true, count = 1, faceDown = false } = {}) {
+  if (!card) return null;
+  return {
+    count: Math.max(1, Number(count) || 1),
+    deck,
+    description: plainText(cardDisplayText(card)),
+    faceDown: Boolean(faceDown),
+    frontArt: card.frontArt || "",
+    id: card.id || "",
+    icon: card.icon || "",
+    revealed: Boolean(revealed && !faceDown),
+    shortTitle: plainText(card.shortTitle || card.title || "Карта"),
+    title: plainText(card.title || card.shortTitle || "Карта"),
+  };
+}
+
 function phonePlayerSnapshot(player) {
   return {
     battleBonus: playerBattleBonus(player),
@@ -2747,13 +2785,11 @@ function phonePlayerSnapshot(player) {
     diceBonus: playerDiceBonus(player),
     id: player.id,
     isActive: player.id === currentPlayer()?.id && !state.finished,
-    items: groupedShopItems(player.items).map(({ count, item }) => ({
+    items: groupedShopItems(player.items).map(({ count, item }) => phoneCardSnapshot(item, "Лавка Джо", {
       count,
       faceDown: isShopItemFaceDown(item),
-      id: item.id,
-      shortTitle: item.shortTitle || item.title,
-      title: item.title,
-    })),
+      revealed: !isShopItemFaceDown(item),
+    })).filter(Boolean),
     artifacts: playerArtifacts(player),
     name: player.name,
     pendingBad: pendingBadCards(player).map((card) => ({
@@ -2787,6 +2823,7 @@ function phoneGameSnapshot() {
     availableActions: Object.fromEntries(state.players.map((player) => [player.id, phoneActionsForPlayer(player)])),
     board: activeBoardConfig?.id || null,
     cardPreview: phoneCardPreviewSnapshot(),
+    cardsAsText: Boolean(phoneRoom.cardsAsText),
     controllerMode: phoneRoom.mode,
     diceVisible: phoneRoom.diceVisible,
     diceRoll: phoneDiceRollSnapshot(),
@@ -2799,6 +2836,15 @@ function phoneGameSnapshot() {
     turnLabel: actionPromptResolver ? actionPromptButtonLabel : ui.rollBtn?.textContent?.trim() || "Бросить",
     updatedAt: Date.now(),
   };
+}
+
+function phoneActionContext({ kicker = "", title = "", summary = "" } = {}) {
+  const context = {
+    contextKicker: plainText(kicker || ""),
+    contextSummary: plainText(summary || ""),
+    contextTitle: plainText(title || ""),
+  };
+  return context.contextKicker || context.contextSummary || context.contextTitle ? context : {};
 }
 
 function actionPromptRollContextSnapshot() {
@@ -2819,11 +2865,8 @@ function phoneCardPreviewSnapshot() {
   const preview = state?.phoneCardPreview;
   if (!preview?.card) return null;
   return {
-    deck: preview.deck || "",
-    description: plainText(cardDisplayText(preview.card)),
+    ...phoneCardSnapshot(preview.card, preview.deck || "Карта", { revealed: Boolean(preview.revealed) }),
     playerId: preview.playerId ?? null,
-    revealed: Boolean(preview.revealed),
-    title: plainText(preview.card.title || preview.card.shortTitle || ""),
   };
 }
 
@@ -2963,6 +3006,7 @@ function phoneActionsForPlayer(player) {
     const cost = state.pendingShop.cost ?? joeShopCardCost();
     return [
       ...state.pendingShop.offer.map((card) => ({
+        card: phoneCardSnapshot(card, "Лавка Джо", { revealed: true }),
         id: card.id,
         kind: "shop",
         label: cardDisplayText(card),
@@ -2981,22 +3025,19 @@ function phoneActionsForPlayer(player) {
   if (fieldPreviewActions.length) return fieldPreviewActions;
 
   if (state.pendingCardChoice?.playerId === player.id && !state.pendingCardChoice.previewField) {
+    const context = phoneActionContext(state.pendingCardChoice);
     if (state.pendingCardChoice.kind === "joe-auction-bid") {
       const limits = auctionBidLimits(player);
       return [
         {
-          contextKicker: plainText(state.pendingCardChoice.kicker || ""),
-          contextSummary: plainText(state.pendingCardChoice.summary || ""),
-          contextTitle: plainText(state.pendingCardChoice.title || ""),
+          ...context,
           id: "pass",
           kind: "auction-bid",
           label: "Пас",
           note: "0 монет",
         },
         {
-          contextKicker: plainText(state.pendingCardChoice.kicker || ""),
-          contextSummary: plainText(state.pendingCardChoice.summary || ""),
-          contextTitle: plainText(state.pendingCardChoice.title || ""),
+          ...context,
           disabled: limits.max < limits.min,
           id: "custom",
           kind: "auction-bid",
@@ -3010,14 +3051,13 @@ function phoneActionsForPlayer(player) {
     }
     return [
       ...state.pendingCardChoice.choices.map((choice) => ({
-        contextKicker: plainText(state.pendingCardChoice.kicker || ""),
-        contextSummary: plainText(state.pendingCardChoice.summary || ""),
-        contextTitle: plainText(state.pendingCardChoice.title || ""),
+        ...context,
         disabled: Boolean(choice.disabled),
         displayKind: phoneCardChoiceDisplayKind(state.pendingCardChoice, choice),
         id: choice.id,
         kind: "card-choice",
         label: plainText(choice.label),
+        card: choice.card ? phoneCardSnapshot(choice.card, choice.deck || "Карта", { revealed: choice.revealed !== false }) : null,
         note: plainText(choice.note || ""),
         noteClass: choice.noteClass || "",
         ownerColor: choice.ownerColor || "",
@@ -3030,8 +3070,10 @@ function phoneActionsForPlayer(player) {
   }
 
   if (state.pendingChoice?.playerId === player.id && !state.pendingChoice.previewField) {
+    const context = phonePendingChoiceContext(state.pendingChoice);
     return [
       ...state.pendingChoice.choices.map((choice) => ({
+        ...context,
         id: choice.cell,
         kind: "board-choice",
         label: plainText(choice.label),
@@ -3042,8 +3084,11 @@ function phoneActionsForPlayer(player) {
   }
 
   if (actionPromptChoiceOptions.length > 0 && actionPromptAutoPlayerId === player.id) {
+    const context = phoneActionPromptContext();
     return actionPromptChoiceOptions.map((choice) => ({
+      ...context,
       displayKind: choice.displayKind || "",
+      card: choice.card ? phoneCardSnapshot(choice.card, choice.deck || "Карта", { revealed: choice.revealed !== false }) : null,
       id: choice.id,
       kind: "prompt-choice",
       label: plainText(choice.label),
@@ -3053,8 +3098,10 @@ function phoneActionsForPlayer(player) {
 
   if (actionPromptResolver && (actionPromptAutoPlayerId === player.id || (actionPromptAutoPlayerId === null && player.id === currentPlayer()?.id))) {
     const rollContextNote = phoneRollContextNote();
+    const context = phoneActionPromptContext();
     return [
       {
+        ...context,
         id: "continue",
         kind: "roll",
         label: actionPromptButtonLabel,
@@ -3084,6 +3131,7 @@ function phoneFieldPreviewActionsForPlayer(player) {
     }
     return [
       {
+        ...phoneActionContext(state.pendingCardChoice),
         id: "return-card-choice",
         kind: "field-preview-return",
         label: "Вернуться к выбору",
@@ -3095,6 +3143,7 @@ function phoneFieldPreviewActionsForPlayer(player) {
   if (state.pendingChoice?.playerId === player.id && state.pendingChoice.previewField) {
     return [
       {
+        ...phonePendingChoiceContext(state.pendingChoice),
         id: "return-board-choice",
         kind: "field-preview-return",
         label: "Вернуться к выбору",
@@ -3107,16 +3156,16 @@ function phoneFieldPreviewActionsForPlayer(player) {
 }
 
 function phoneCardChoiceActionsWithPreviewReturn(pending) {
+  const context = phoneActionContext(pending);
   return [
     ...pending.choices.map((choice) => ({
-      contextKicker: plainText(pending.kicker || ""),
-      contextSummary: plainText(pending.summary || ""),
-      contextTitle: plainText(pending.title || ""),
+      ...context,
       disabled: Boolean(choice.disabled),
       displayKind: phoneCardChoiceDisplayKind(pending, choice),
       id: choice.id,
       kind: "card-choice",
       label: plainText(choice.label),
+      card: choice.card ? phoneCardSnapshot(choice.card, choice.deck || "Карта", { revealed: choice.revealed !== false }) : null,
       note: plainText(choice.note || ""),
       noteClass: choice.noteClass || "",
       ownerColor: choice.ownerColor || "",
@@ -3125,6 +3174,7 @@ function phoneCardChoiceActionsWithPreviewReturn(pending) {
       price: choice.price ?? null,
     })),
     {
+      ...context,
       id: "return-card-choice",
       kind: "field-preview-return",
       label: "Скрыть поле",
@@ -3133,14 +3183,49 @@ function phoneCardChoiceActionsWithPreviewReturn(pending) {
   ];
 }
 
+function phonePendingChoiceContext(pending) {
+  if (!pending) return {};
+  const player = state.players.find((item) => item.id === pending.playerId) || currentPlayer();
+  const playerLabel = player ? playerChoiceBadge(player) : "Игрок";
+  if (pending.kind === "portal") {
+    return phoneActionContext({
+      kicker: "Портал",
+      title: "Куда переместиться?",
+      summary: `${playerLabel} стоит на открытом портале. Осталось ${pending.remaining} шага.`,
+    });
+  }
+  if (pending.kind === "chaos-portal") {
+    return phoneActionContext({
+      kicker: "Портал хаоса",
+      title: "Куда отправиться?",
+      summary: `${playerLabel} выбросил 6 и удерживает портал открытым.`,
+    });
+  }
+  return phoneActionContext({
+    kicker: "Развилка",
+    title: "Куда идти дальше?",
+    summary: `${playerLabel}: клетка ${cellLabel(pending.currentCell)}. Осталось ${pending.remaining} шага.`,
+  });
+}
+
+function phoneActionPromptContext() {
+  const context = actionPromptRollContextSnapshot();
+  if (!context) return {};
+  return phoneActionContext({
+    kicker: context.kicker,
+    title: context.title,
+    summary: context.result || context.reason || context.criterion,
+  });
+}
+
 function phoneFieldPreviewOpenActionsForPendingCardChoice(pending) {
   if (!cardChoiceCanPreviewField(pending)) return [];
   return [
     {
       id: "show-card-choice-field",
       kind: "field-preview",
-      label: "Показать поле",
-      note: "вернуться к выбору",
+      label: "Просмотр поля",
+      note: "вернуться: «К выбору»",
     },
   ];
 }
@@ -3200,26 +3285,34 @@ function renderPhoneRoomPanel() {
   if (!phoneRoom.panelOpen) return;
   if (!enabled) {
     if (ui.phoneRoomStatus) ui.phoneRoomStatus.textContent = "Телефонный режим выключен";
+    if (ui.phoneRoomQrBtn) ui.phoneRoomQrBtn.disabled = true;
+    if (ui.copyPhoneRoomUrlBtn) ui.copyPhoneRoomUrlBtn.disabled = true;
     return;
   }
 
   if (ui.createPhoneRoomBtn) {
+    const roomButtonLabel = phoneRoom.code ? "Пересоздать комнату" : "Создать комнату";
     ui.createPhoneRoomBtn.disabled = phoneRoom.inFlight;
-    ui.createPhoneRoomBtn.textContent = phoneRoom.code ? "Пересоздать комнату" : "Создать комнату";
+    ui.createPhoneRoomBtn.title = roomButtonLabel;
+    ui.createPhoneRoomBtn.setAttribute("aria-label", roomButtonLabel);
   }
   if (ui.phoneRoomMode && !phoneRoom.code) ui.phoneRoomMode.value = selectedPhoneRoomMode();
 
   if (!phoneRoom.code) {
     if (ui.phoneRoomStatus) ui.phoneRoomStatus.textContent = "Комната не создана";
     if (ui.phoneRoomDetails) ui.phoneRoomDetails.hidden = true;
+    if (ui.phoneRoomQrBtn) ui.phoneRoomQrBtn.disabled = true;
+    if (ui.copyPhoneRoomUrlBtn) ui.copyPhoneRoomUrlBtn.disabled = true;
+    closePhoneRoomQrPopup();
     return;
   }
 
   const modeLabel = phoneRoom.mode === "big-button" ? "Большая кнопка" : "Полный контроллер";
   const shakeLabel = phoneRoom.shakeEnabled ? ", шейк" : "";
   const diceLabel = phoneRoom.diceVisible ? "" : ", без кубиков";
+  const cardsLabel = phoneRoom.cardsAsText ? ", текст карт" : ", карты";
   if (ui.phoneRoomStatus) {
-    ui.phoneRoomStatus.textContent = `Телефонов ${phoneRoom.controllers.length}, ${modeLabel}${shakeLabel}${diceLabel}`;
+    ui.phoneRoomStatus.textContent = `Телефонов ${phoneRoom.controllers.length}, ${modeLabel}${shakeLabel}${diceLabel}${cardsLabel}`;
   }
   if (ui.phoneRoomDetails) ui.phoneRoomDetails.hidden = false;
   if (ui.phoneRoomCode) ui.phoneRoomCode.textContent = phoneRoom.code;
@@ -3227,6 +3320,8 @@ function renderPhoneRoomPanel() {
   const phoneJoinUrl = phoneRoom.joinUrl || fallbackJoinUrl;
   if (ui.phoneRoomUrl) ui.phoneRoomUrl.value = phoneJoinUrl;
   if (ui.copyPhoneRoomUrlBtn) ui.copyPhoneRoomUrlBtn.disabled = !phoneJoinUrl;
+  if (ui.phoneRoomQrBtn) ui.phoneRoomQrBtn.disabled = phoneRoom.inFlight || !phoneJoinUrl;
+  renderPhoneRoomQrPopup();
   if (ui.phoneRoomControllers) {
     const controllerNames = phoneRoom.controllers
       .map((controller) => controller.playerName || `Игрок ${controller.playerId + 1}`)
@@ -3246,6 +3341,7 @@ async function createPhoneRoom({ recreate = true } = {}) {
   }
   phoneRoom.inFlight = true;
   renderPhoneRoomPanel();
+  let createdRoom = false;
   try {
     if (recreate) {
       await closeCurrentPhoneRoom({ silent: true });
@@ -3253,6 +3349,7 @@ async function createPhoneRoom({ recreate = true } = {}) {
     const response = await fetchJson("/api/rooms", {
       body: JSON.stringify({
         diceVisible: phoneRoomDiceVisible(),
+        cardsAsText: phoneRoomCardsAsText(),
         mode: selectedPhoneRoomMode(),
         shakeEnabled: phoneRoomShakeEnabled(),
       }),
@@ -3264,6 +3361,7 @@ async function createPhoneRoom({ recreate = true } = {}) {
     connectPhoneHostEvents();
     publishPhoneSnapshot({ force: true });
     log(`Создана комната для телефонов: <strong>${phoneRoom.code}</strong>.`);
+    createdRoom = true;
     return true;
   } catch {
     if (ui.phoneRoomStatus) ui.phoneRoomStatus.textContent = "Не удалось создать комнату. Проверь сервер.";
@@ -3271,6 +3369,7 @@ async function createPhoneRoom({ recreate = true } = {}) {
   } finally {
     phoneRoom.inFlight = false;
     renderPhoneRoomPanel();
+    if (createdRoom && phoneRoom.code) openPhoneRoomQrPopup();
   }
 }
 
@@ -3298,14 +3397,18 @@ function resetPhoneRoomState() {
   phoneRoom.localJoinUrl = "";
   phoneRoom.lastSnapshotJson = "";
   phoneRoom.diceVisible = phoneRoomDiceVisible();
+  phoneRoom.cardsAsText = phoneRoomCardsAsText();
   phoneRoom.mode = selectedPhoneRoomMode();
   phoneRoom.shakeEnabled = phoneRoomShakeEnabled();
   if (ui.phoneRoomUrl) ui.phoneRoomUrl.value = "";
   if (ui.phoneRoomCode) ui.phoneRoomCode.textContent = "-";
   if (ui.copyPhoneRoomUrlBtn) {
     ui.copyPhoneRoomUrlBtn.disabled = true;
-    ui.copyPhoneRoomUrlBtn.textContent = "Скопировать ссылку";
+    ui.copyPhoneRoomUrlBtn.title = "Скопировать ссылку";
+    ui.copyPhoneRoomUrlBtn.setAttribute("aria-label", "Скопировать ссылку");
   }
+  if (ui.phoneRoomQrBtn) ui.phoneRoomQrBtn.disabled = true;
+  closePhoneRoomQrPopup();
 }
 
 function applyPhoneRoom(room, hostId = null) {
@@ -3320,6 +3423,10 @@ function applyPhoneRoom(room, hostId = null) {
     phoneRoom.diceVisible = room.diceVisible !== false;
     syncPhoneRoomDiceCheckbox();
   }
+  if ("cardsAsText" in room) {
+    phoneRoom.cardsAsText = Boolean(room.cardsAsText);
+    syncPhoneRoomCardsTextCheckbox();
+  }
   phoneRoom.mode = normalizePhoneRoomMode(room.mode);
   if (ui.phoneRoomMode) ui.phoneRoomMode.value = phoneRoom.mode;
   phoneRoom.shakeEnabled = Boolean(room.shakeEnabled);
@@ -3328,6 +3435,10 @@ function applyPhoneRoom(room, hostId = null) {
 
 function syncPhoneRoomDiceCheckbox() {
   if (ui.phoneRoomDice) ui.phoneRoomDice.checked = !phoneRoom.diceVisible;
+}
+
+function syncPhoneRoomCardsTextCheckbox() {
+  if (ui.phoneRoomCardsText) ui.phoneRoomCardsText.checked = Boolean(phoneRoom.cardsAsText);
 }
 
 function syncPhoneRoomHeaderButton() {
@@ -3514,6 +3625,360 @@ function stopPhoneRoomEvents() {
   window.clearTimeout(phoneRoom.snapshotTimer);
 }
 
+function currentPhoneRoomJoinUrl() {
+  if (!phoneRoom.code) return "";
+  const fallbackJoinUrl = `${window.location.origin}/controller.html?room=${phoneRoom.code}`;
+  return ui.phoneRoomUrl?.value || phoneRoom.joinUrl || fallbackJoinUrl;
+}
+
+function phoneRoomQrPopupOpen() {
+  return Boolean(ui.phoneRoomQrPopup && !ui.phoneRoomQrPopup.hidden);
+}
+
+function openPhoneRoomQrPopup() {
+  const url = currentPhoneRoomJoinUrl();
+  if (!url) {
+    if (ui.phoneRoomStatus) ui.phoneRoomStatus.textContent = "Сначала создай комнату для телефонов";
+    if (ui.phoneRoomQrBtn) ui.phoneRoomQrBtn.disabled = true;
+    return;
+  }
+
+  renderPhoneRoomQrPopup(url);
+  if (!ui.phoneRoomQrPopup) return;
+  ui.phoneRoomQrPopup.hidden = false;
+  ui.phoneRoomQrBtn?.setAttribute("aria-expanded", "true");
+  ui.phoneRoomQrCloseBtn?.focus({ preventScroll: true });
+}
+
+function closePhoneRoomQrPopup() {
+  if (!ui.phoneRoomQrPopup) return;
+  ui.phoneRoomQrPopup.hidden = true;
+  ui.phoneRoomQrBtn?.setAttribute("aria-expanded", "false");
+}
+
+function renderPhoneRoomQrPopup(url = currentPhoneRoomJoinUrl()) {
+  if (!phoneRoomQrPopupOpen() && !url) return;
+  if (!url) {
+    closePhoneRoomQrPopup();
+    return;
+  }
+  if (ui.phoneRoomQrCode) {
+    try {
+      ui.phoneRoomQrCode.innerHTML = createQrSvg(url);
+    } catch {
+      ui.phoneRoomQrCode.innerHTML = '<p class="phone-room-qr-error">Ссылка слишком длинная для QR-кода. Скопируй её кнопкой рядом.</p>';
+    }
+  }
+  if (ui.phoneRoomQrLink) {
+    ui.phoneRoomQrLink.value = url;
+  }
+}
+
+function createQrSvg(text) {
+  const qr = createPhoneRoomQrMatrix(text);
+  const quiet = 4;
+  const viewSize = qr.size + quiet * 2;
+  const darkModules = [];
+  for (let y = 0; y < qr.size; y += 1) {
+    for (let x = 0; x < qr.size; x += 1) {
+      if (qr.modules[y][x]) darkModules.push(`M${x + quiet},${y + quiet}h1v1h-1z`);
+    }
+  }
+  return `
+    <svg viewBox="0 0 ${viewSize} ${viewSize}" role="img" aria-label="QR-код комнаты" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect width="${viewSize}" height="${viewSize}" fill="#ffffff"/>
+      <path d="${darkModules.join("")}" fill="#111111"/>
+    </svg>
+  `;
+}
+
+function createPhoneRoomQrMatrix(text) {
+  const version = 5;
+  const size = version * 4 + 17;
+  const dataCodewords = 108;
+  const eccCodewords = 26;
+  const bytes = Array.from(new TextEncoder().encode(text));
+  const maxByteLength = dataCodewords - 2;
+  if (bytes.length > maxByteLength) {
+    throw new Error("phone-room-qr-url-too-long");
+  }
+
+  const data = encodeQrByteData(bytes, dataCodewords);
+  const ecc = reedSolomonRemainder(data, reedSolomonDivisor(eccCodewords));
+  const codewords = [...data, ...ecc];
+  const base = createQrBaseMatrix(size);
+  drawQrCodewords(base, codewords);
+
+  let best = null;
+  for (let mask = 0; mask < 8; mask += 1) {
+    const candidate = cloneQrMatrix(base);
+    applyQrMask(candidate, mask);
+    drawQrFormatBits(candidate, mask);
+    const penalty = qrPenaltyScore(candidate.modules);
+    if (!best || penalty < best.penalty) {
+      best = { matrix: candidate, penalty };
+    }
+  }
+
+  return {
+    modules: best.matrix.modules,
+    size,
+  };
+}
+
+function encodeQrByteData(bytes, dataCodewords) {
+  const bits = [];
+  appendQrBits(bits, 0b0100, 4);
+  appendQrBits(bits, bytes.length, 8);
+  for (const byte of bytes) appendQrBits(bits, byte, 8);
+
+  const capacity = dataCodewords * 8;
+  const terminator = Math.min(4, capacity - bits.length);
+  appendQrBits(bits, 0, terminator);
+  while (bits.length % 8) bits.push(0);
+
+  const data = [];
+  for (let i = 0; i < bits.length; i += 8) {
+    data.push(bits.slice(i, i + 8).reduce((value, bit) => (value << 1) | bit, 0));
+  }
+  for (let pad = 0xec; data.length < dataCodewords; pad ^= 0xfd) {
+    data.push(pad);
+  }
+  return data;
+}
+
+function appendQrBits(bits, value, length) {
+  for (let i = length - 1; i >= 0; i -= 1) {
+    bits.push((value >>> i) & 1);
+  }
+}
+
+function createQrBaseMatrix(size) {
+  const modules = Array.from({ length: size }, () => Array(size).fill(false));
+  const functional = Array.from({ length: size }, () => Array(size).fill(false));
+  const matrix = { functional, modules, size };
+
+  drawQrFinder(matrix, 3, 3);
+  drawQrFinder(matrix, size - 4, 3);
+  drawQrFinder(matrix, 3, size - 4);
+  drawQrAlignment(matrix, size - 7, size - 7);
+
+  for (let i = 8; i < size - 8; i += 1) {
+    setQrFunctionModule(matrix, i, 6, i % 2 === 0);
+    setQrFunctionModule(matrix, 6, i, i % 2 === 0);
+  }
+
+  setQrFunctionModule(matrix, 8, size - 8, true);
+  reserveQrFormatModules(matrix);
+  return matrix;
+}
+
+function drawQrFinder(matrix, cx, cy) {
+  for (let dy = -4; dy <= 4; dy += 1) {
+    for (let dx = -4; dx <= 4; dx += 1) {
+      const x = cx + dx;
+      const y = cy + dy;
+      if (x < 0 || y < 0 || x >= matrix.size || y >= matrix.size) continue;
+      const distance = Math.max(Math.abs(dx), Math.abs(dy));
+      setQrFunctionModule(matrix, x, y, distance !== 2 && distance !== 4);
+    }
+  }
+}
+
+function drawQrAlignment(matrix, cx, cy) {
+  for (let dy = -2; dy <= 2; dy += 1) {
+    for (let dx = -2; dx <= 2; dx += 1) {
+      const distance = Math.max(Math.abs(dx), Math.abs(dy));
+      setQrFunctionModule(matrix, cx + dx, cy + dy, distance === 0 || distance === 2);
+    }
+  }
+}
+
+function reserveQrFormatModules(matrix) {
+  for (let i = 0; i <= 5; i += 1) setQrFunctionModule(matrix, 8, i, false);
+  setQrFunctionModule(matrix, 8, 7, false);
+  setQrFunctionModule(matrix, 8, 8, false);
+  setQrFunctionModule(matrix, 7, 8, false);
+  for (let i = 9; i < 15; i += 1) setQrFunctionModule(matrix, 14 - i, 8, false);
+  for (let i = 0; i < 8; i += 1) setQrFunctionModule(matrix, matrix.size - 1 - i, 8, false);
+  for (let i = 8; i < 15; i += 1) setQrFunctionModule(matrix, 8, matrix.size - 15 + i, false);
+}
+
+function setQrFunctionModule(matrix, x, y, dark) {
+  matrix.modules[y][x] = Boolean(dark);
+  matrix.functional[y][x] = true;
+}
+
+function drawQrCodewords(matrix, codewords) {
+  const bits = [];
+  for (const codeword of codewords) appendQrBits(bits, codeword, 8);
+
+  let bitIndex = 0;
+  let upward = true;
+  for (let right = matrix.size - 1; right >= 1; right -= 2) {
+    if (right === 6) right -= 1;
+    for (let vert = 0; vert < matrix.size; vert += 1) {
+      const y = upward ? matrix.size - 1 - vert : vert;
+      for (let j = 0; j < 2; j += 1) {
+        const x = right - j;
+        if (matrix.functional[y][x]) continue;
+        matrix.modules[y][x] = bitIndex < bits.length ? Boolean(bits[bitIndex]) : false;
+        bitIndex += 1;
+      }
+    }
+    upward = !upward;
+  }
+}
+
+function cloneQrMatrix(matrix) {
+  return {
+    functional: matrix.functional.map((row) => row.slice()),
+    modules: matrix.modules.map((row) => row.slice()),
+    size: matrix.size,
+  };
+}
+
+function applyQrMask(matrix, mask) {
+  for (let y = 0; y < matrix.size; y += 1) {
+    for (let x = 0; x < matrix.size; x += 1) {
+      if (matrix.functional[y][x]) continue;
+      if (qrMaskBit(mask, x, y)) matrix.modules[y][x] = !matrix.modules[y][x];
+    }
+  }
+}
+
+function qrMaskBit(mask, x, y) {
+  switch (mask) {
+    case 0: return (x + y) % 2 === 0;
+    case 1: return y % 2 === 0;
+    case 2: return x % 3 === 0;
+    case 3: return (x + y) % 3 === 0;
+    case 4: return (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0;
+    case 5: return ((x * y) % 2) + ((x * y) % 3) === 0;
+    case 6: return (((x * y) % 2) + ((x * y) % 3)) % 2 === 0;
+    case 7: return (((x + y) % 2) + ((x * y) % 3)) % 2 === 0;
+    default: return false;
+  }
+}
+
+function drawQrFormatBits(matrix, mask) {
+  const bits = qrFormatBits(mask);
+  for (let i = 0; i <= 5; i += 1) setQrFunctionModule(matrix, 8, i, qrGetBit(bits, i));
+  setQrFunctionModule(matrix, 8, 7, qrGetBit(bits, 6));
+  setQrFunctionModule(matrix, 8, 8, qrGetBit(bits, 7));
+  setQrFunctionModule(matrix, 7, 8, qrGetBit(bits, 8));
+  for (let i = 9; i < 15; i += 1) setQrFunctionModule(matrix, 14 - i, 8, qrGetBit(bits, i));
+  for (let i = 0; i < 8; i += 1) setQrFunctionModule(matrix, matrix.size - 1 - i, 8, qrGetBit(bits, i));
+  for (let i = 8; i < 15; i += 1) setQrFunctionModule(matrix, 8, matrix.size - 15 + i, qrGetBit(bits, i));
+  setQrFunctionModule(matrix, 8, matrix.size - 8, true);
+}
+
+function qrFormatBits(mask) {
+  const errorCorrectionLevel = 1;
+  const data = (errorCorrectionLevel << 3) | mask;
+  let remainder = data;
+  for (let i = 0; i < 10; i += 1) {
+    remainder = (remainder << 1) ^ (((remainder >>> 9) & 1) ? 0x537 : 0);
+  }
+  return ((data << 10) | remainder) ^ 0x5412;
+}
+
+function qrGetBit(value, index) {
+  return Boolean((value >>> index) & 1);
+}
+
+function reedSolomonDivisor(degree) {
+  const result = Array(degree).fill(0);
+  result[degree - 1] = 1;
+  let root = 1;
+  for (let i = 0; i < degree; i += 1) {
+    for (let j = 0; j < degree; j += 1) {
+      result[j] = qrGaloisMultiply(result[j], root);
+      if (j + 1 < degree) result[j] ^= result[j + 1];
+    }
+    root = qrGaloisMultiply(root, 2);
+  }
+  return result;
+}
+
+function reedSolomonRemainder(data, divisor) {
+  const result = Array(divisor.length).fill(0);
+  for (const byte of data) {
+    const factor = byte ^ result.shift();
+    result.push(0);
+    for (let i = 0; i < divisor.length; i += 1) {
+      result[i] ^= qrGaloisMultiply(divisor[i], factor);
+    }
+  }
+  return result;
+}
+
+function qrGaloisMultiply(x, y) {
+  let product = 0;
+  for (let i = 7; i >= 0; i -= 1) {
+    product = (product << 1) ^ (((product >>> 7) & 1) * 0x11d);
+    product ^= (((y >>> i) & 1) * x);
+  }
+  return product & 0xff;
+}
+
+function qrPenaltyScore(modules) {
+  const size = modules.length;
+  let penalty = 0;
+
+  for (let y = 0; y < size; y += 1) penalty += qrRunPenalty(modules[y]);
+  for (let x = 0; x < size; x += 1) penalty += qrRunPenalty(modules.map((row) => row[x]));
+
+  for (let y = 0; y < size - 1; y += 1) {
+    for (let x = 0; x < size - 1; x += 1) {
+      const color = modules[y][x];
+      if (color === modules[y][x + 1] && color === modules[y + 1][x] && color === modules[y + 1][x + 1]) penalty += 3;
+    }
+  }
+
+  const patternA = "10111010000";
+  const patternB = "00001011101";
+  for (let y = 0; y < size; y += 1) {
+    const row = modules[y].map(Number).join("");
+    penalty += qrFinderLikePenalty(row, patternA) + qrFinderLikePenalty(row, patternB);
+  }
+  for (let x = 0; x < size; x += 1) {
+    const column = modules.map((row) => Number(row[x])).join("");
+    penalty += qrFinderLikePenalty(column, patternA) + qrFinderLikePenalty(column, patternB);
+  }
+
+  const dark = modules.flat().filter(Boolean).length;
+  const percent = (dark * 100) / (size * size);
+  penalty += Math.floor(Math.abs(percent - 50) / 5) * 10;
+  return penalty;
+}
+
+function qrRunPenalty(line) {
+  let penalty = 0;
+  let runColor = line[0];
+  let runLength = 1;
+  for (let i = 1; i <= line.length; i += 1) {
+    if (i < line.length && line[i] === runColor) {
+      runLength += 1;
+      continue;
+    }
+    if (runLength >= 5) penalty += 3 + runLength - 5;
+    runColor = line[i];
+    runLength = 1;
+  }
+  return penalty;
+}
+
+function qrFinderLikePenalty(line, pattern) {
+  let penalty = 0;
+  let index = line.indexOf(pattern);
+  while (index !== -1) {
+    penalty += 40;
+    index = line.indexOf(pattern, index + 1);
+  }
+  return penalty;
+}
+
 async function copyPhoneRoomUrl() {
   const url = ui.phoneRoomUrl?.value || phoneRoom.joinUrl || "";
   if (!url) return;
@@ -3581,9 +4046,13 @@ function selectPhoneRoomUrl() {
 function setPhoneRoomCopyFeedback(label) {
   if (!ui.copyPhoneRoomUrlBtn) return;
   window.clearTimeout(phoneRoomCopyTimer);
-  ui.copyPhoneRoomUrlBtn.textContent = label;
+  ui.copyPhoneRoomUrlBtn.title = label;
+  ui.copyPhoneRoomUrlBtn.setAttribute("aria-label", label);
   phoneRoomCopyTimer = window.setTimeout(() => {
-    if (ui.copyPhoneRoomUrlBtn) ui.copyPhoneRoomUrlBtn.textContent = "Скопировать ссылку";
+    if (ui.copyPhoneRoomUrlBtn) {
+      ui.copyPhoneRoomUrlBtn.title = "Скопировать ссылку";
+      ui.copyPhoneRoomUrlBtn.setAttribute("aria-label", "Скопировать ссылку");
+    }
   }, 1300);
 }
 
@@ -5406,6 +5875,7 @@ function cardChoicePreviewBoardPickActive() {
     state?.pendingCardChoice?.previewField &&
     (
       state.pendingCardChoice.kind === "event-free-step" ||
+      state.pendingCardChoice.kind === "good-free-step" ||
       state.pendingCardChoice.kind === "path-sign" ||
       state.pendingCardChoice.kind === "backward-reversal" ||
       state.pendingCardChoice.kind === "black-market"
@@ -5902,6 +6372,8 @@ async function chooseBlackMarketShopCards(player, count, rewardLabel) {
       .map((card, index) => ({ card, index }))
       .filter(({ index }) => !selected.includes(index))
       .map(({ card, index }) => ({
+        card,
+        deck: "Лавка Джо",
         className: "choice-button-card",
         id: String(index),
         label: shopCardTitleMarkup(card),
@@ -5976,7 +6448,7 @@ async function resolveEnemyBattle(player) {
   render();
   await showActionPrompt(
     `${playerName(player)} вступает в битву. Нужно набрать силу <strong>${monsterBattleStrengthText(door)}</strong>, чтобы ${door.isFinalBoss ? "стать боссом" : `открыть ${door.label}`}.`,
-    { autoFor: player },
+    { autoFor: player, buttonLabel: "В бой" },
   );
 
   const bribe = await resolveMonsterBribes(player, door, requiredStrength);
@@ -6332,6 +6804,7 @@ async function resolveChaosPortal(player) {
       participants: [playerChoiceBadge(player)],
       reason: "Кубик решает, куда портал отправит игрока.",
       result: `Выпало ${roll}: ${chaosPortalRollLabel(roll)} → <strong>${destination.label}</strong> (${cellTitleWithLabel(destination.cell)}).`,
+      resultHighlight: true,
       title: "Результат портала",
     },
   });
@@ -6576,6 +7049,7 @@ async function resolveDiceFortuneField(player) {
       participants: [playerChoiceBadge(player)],
       reason: "Шесть кубиков одновременно считают награды и откаты.",
       result: `${formatRoll(rolls)} → ${resultText}.`,
+      resultHighlight: true,
       title: "Результат удачи",
     },
   });
@@ -6661,6 +7135,7 @@ function normalizeRollContext(context) {
     participants,
     reason: context.reason || "",
     result: context.result || "",
+    resultHighlight: Boolean(context.resultHighlight),
     title: context.title || "Случайный бросок",
   };
 }
@@ -6687,7 +7162,8 @@ function rollContextPromptMarkup(message, contextInput) {
       </div>
     `
     : "";
-  const result = context.result ? `<p class="roll-context-result">${context.result}</p>` : "";
+  const resultClass = `roll-context-result ${context.resultHighlight ? "roll-result-highlight" : ""}`.trim();
+  const result = context.result ? `<p class="${resultClass}">${context.result}</p>` : "";
   const detail = [context.reason, context.criterion].filter(Boolean).join(" ");
   return `
     <section class="roll-context-card">
@@ -6775,7 +7251,7 @@ async function resolveVsField(player) {
       render();
       await showActionPrompt(`${playerName(contender)} бросает силу в VS-битве${round > 1 ? " (переигровка)" : ""}.`, {
         autoFor: contender,
-        buttonLabel: "Бросить кубик",
+        buttonLabel: "В бой",
       });
       const result = await rollPlayerBattlePower(contender, true, { label: `VS - ${contender.name}` });
       roundResults.push(result);
@@ -6790,7 +7266,7 @@ async function resolveVsField(player) {
         rollingPlayerId: null,
       };
       render();
-      log(`${playerName(contender)} в VS-битве: ${formatRoll(result.rolls)}${combatBonusFormulaText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus)}. Сила: <strong>${result.total}</strong>.`);
+      log(`${playerName(contender)} в VS-битве: ${formatRoll(result.rolls)}${combatBonusFormulaText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus, result.playerBattlePotionBonus)}. Сила: <strong>${result.total}</strong>.`);
     }
 
     const bestForce = Math.max(...roundResults.map((result) => result.total));
@@ -6876,7 +7352,7 @@ async function resolveFinalBattle(boss, animate = true) {
     if (animate) {
       await showActionPrompt(`${playerName(challenger)} готовится бросить кубики.`, {
         autoFor: challenger,
-        buttonLabel: "Бросить кубик",
+        buttonLabel: "В бой",
       });
     }
     const result = await rollFinalBattlePower(challenger, animate);
@@ -6885,7 +7361,7 @@ async function resolveFinalBattle(boss, animate = true) {
     setFinalBattleRoller(null);
     render();
     log(
-      `${playerName(challenger)} атакует босса: ${formatRoll(result.rolls)}${finalBonusText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus)}. Сила: <strong>${result.total}</strong>.`,
+      `${playerName(challenger)} атакует босса: ${formatRoll(result.rolls)}${finalBonusText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus, result.playerBattlePotionBonus)}. Сила: <strong>${result.total}</strong>.`,
     );
   }
 
@@ -6918,7 +7394,7 @@ async function resolveFinalBattle(boss, animate = true) {
     if (animate) {
       await showActionPrompt(`Босс - ${playerName(boss)} готовится бросить кубики ${index + 1}/${challengers.length}.`, {
         autoFor: boss,
-        buttonLabel: "Бросить кубик",
+        buttonLabel: "В бой",
       });
     }
     const result = await rollFinalBattlePower(boss, animate, { label: `Босс - ${boss.name}` });
@@ -6928,7 +7404,7 @@ async function resolveFinalBattle(boss, animate = true) {
     setFinalBattleRoller(null);
     render();
     log(
-      `${playerName(boss)} бросает как босс ${index + 1}/${challengers.length}: ${formatRoll(result.rolls)}${finalBonusText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus)}. Сила броска: <strong>${result.total}</strong>. Сила босса: <strong>${state.finalBattleProgress.bossForce}</strong>.`,
+      `${playerName(boss)} бросает как босс ${index + 1}/${challengers.length}: ${formatRoll(result.rolls)}${finalBonusText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus, result.playerBattlePotionBonus)}. Сила броска: <strong>${result.total}</strong>. Сила босса: <strong>${state.finalBattleProgress.bossForce}</strong>.`,
     );
   }
 
@@ -6936,6 +7412,7 @@ async function resolveFinalBattle(boss, animate = true) {
   const bossBonus = bossRollResults.reduce((sum, result) => sum + (result.baseBonus || 0), 0);
   const bossCursePenalty = bossRollResults.reduce((sum, result) => sum + (result.cursePenalty || 0), 0);
   const bossHeroSwordBonus = bossRollResults.reduce((sum, result) => sum + (result.heroSwordBonus || 0), 0);
+  const bossPlayerBattlePotionBonus = bossRollResults.reduce((sum, result) => sum + (result.playerBattlePotionBonus || 0), 0);
   const bossRollTotal = bossRollResults.reduce((sum, result) => sum + result.total, 0);
   const bossForce = bossOpponentBonus + bossRollTotal;
   state.finalBattleProgress.bossForce = bossForce;
@@ -6943,6 +7420,7 @@ async function resolveFinalBattle(boss, animate = true) {
     bossOpponentBonus ? `${bossOpponentBonusLabel} противники (+${bossOpponentBonusPerPlayer} каждый)` : "",
     bossRolled ? `${bossRolled} кубики` : "",
     bossBonus ? `${bossBonus} обычные бонусы` : "",
+    bossPlayerBattlePotionBonus ? `${bossPlayerBattlePotionBonus} Зелье дуэли` : "",
     bossHeroSwordBonus ? `${bossHeroSwordBonus} Меч Героя` : "",
     bossCursePenalty ? `Сглаз ${bossCursePenalty}` : "",
   ].filter(Boolean).join(" + ");
@@ -6965,6 +7443,7 @@ async function resolveFinalBattle(boss, animate = true) {
     bossHeroSwordBonus,
     bossOpponentBonus,
     bossOpponentBonusPerPlayer,
+    bossPlayerBattlePotionBonus,
     bossRollResults,
     bossWon,
     challengerResults,
@@ -7033,6 +7512,7 @@ function buildFinalBattleSummary({
   bossHeroSwordBonus = 0,
   bossOpponentBonus,
   bossOpponentBonusPerPlayer = 0,
+  bossPlayerBattlePotionBonus = 0,
   bossRollResults,
   bossWon,
   challengerResults,
@@ -7057,7 +7537,7 @@ function buildFinalBattleSummary({
         color: player.color,
         force: isBoss
           ? {
-              bonus: bossBonus + bossCursePenalty + bossHeroSwordBonus,
+              bonus: bossBonus + bossCursePenalty + bossHeroSwordBonus + bossPlayerBattlePotionBonus,
               opponentBonus: bossOpponentBonus,
               opponentBonusPerPlayer: bossOpponentBonusPerPlayer,
               rolled: bossRolled,
@@ -7106,9 +7586,10 @@ async function rollPlayerBattlePower(player, animate, { label = "", isFinalBattl
   recordDiceThrown(player, diceCount);
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const baseBonus = playerCombatBonus(player);
+  const playerBattlePotionBonus = await choosePlayerBattlePotion(player, isFinalBattle ? "финальной битве" : "битве с игроком");
   const curse = consumeNextBattlePenalty(player);
   const heroSwordBonus = heroSwordCombatBonus(player, rolls);
-  const bonus = baseBonus + curse.penalty + heroSwordBonus;
+  const bonus = baseBonus + playerBattlePotionBonus + curse.penalty + heroSwordBonus;
   if (curse.penalty < 0) {
     log(`${playerName(player)} сбрасывает <strong>Сглаз</strong> (${curse.cards.length}): <strong>${curse.penalty}</strong> к этой битве.`, {
       toast: true,
@@ -7122,7 +7603,7 @@ async function rollPlayerBattlePower(player, animate, { label = "", isFinalBattl
   const total = Math.max(0, rolled + bonus);
   state.dice = total;
   render();
-  return { baseBonus, bonus, cursePenalty: curse.penalty, heroSwordBonus, player, rolled, rolls, total };
+  return { baseBonus, bonus, cursePenalty: curse.penalty, heroSwordBonus, player, playerBattlePotionBonus, rolled, rolls, total };
 }
 
 async function rollPlayerMonsterBattlePower(player, animate, { label = "" } = {}) {
@@ -7159,8 +7640,8 @@ async function rollPlayerMonsterBattlePower(player, animate, { label = "" } = {}
   return { badPenalty, baseBonus, bonus, cursePenalty: curse.penalty, heroSwordBonus, player, rageBonus, rolled, rolls, strengthBonus, total };
 }
 
-function finalBonusText(baseBonus, cursePenalty, total, heroSwordBonus = 0) {
-  return combatBonusFormulaText(baseBonus, cursePenalty, total, heroSwordBonus);
+function finalBonusText(baseBonus, cursePenalty, total, heroSwordBonus = 0, playerBattlePotionBonus = 0) {
+  return combatBonusFormulaText(baseBonus, cursePenalty, total, heroSwordBonus, playerBattlePotionBonus);
 }
 
 function finalBattleScore(player, damageToBoss, position = 1) {
@@ -7433,21 +7914,19 @@ function chooseBotMoveDieReroll(player, rolls, cost = 3) {
 async function resolveDuplicateDiceRewards(player, rolls) {
   if (!hasDuplicateRoll(rolls)) return 0;
   let extraSteps = 0;
-  const cards = activeShopEffectItems(player, "duplicate-dice-reward");
-  for (const card of cards) {
+  const coinCards = activeShopEffectItems(player, "duplicate-dice-coins");
+  for (const card of coinCards) {
     const amount = Math.max(1, Number(card.effect?.amount) || 5);
+    addCoins(player, amount);
+    log(`${playerName(player)} получает <strong>${coinAmount(amount)}</strong> за одинаковые кубики по ${cardNameStrong(card.title)}.`, { toast: true });
+  }
+
+  const stepCards = activeShopEffectItems(player, "duplicate-dice-steps");
+  for (const card of stepCards) {
     const steps = Math.max(1, Number(card.effect?.steps) || 5);
-    const choice = isBot(player)
-      ? chooseBotDuplicateDiceReward(player)
-      : await chooseDuplicateDiceReward(player, card, amount, steps);
-    if (choice === "steps") {
-      extraSteps += steps;
-      showDiceFloat(player, steps);
-      log(`${playerName(player)} получает <strong>+${steps}</strong> шагов за одинаковые кубики по <strong>Лавке Джо</strong>.`, { toast: true });
-    } else if (choice === "coins") {
-      addCoins(player, amount);
-      log(`${playerName(player)} получает <strong>${coinAmount(amount)}</strong> за одинаковые кубики по <strong>Лавке Джо</strong>.`, { toast: true });
-    }
+    extraSteps += steps;
+    showDiceFloat(player, steps);
+    log(`${playerName(player)} получает <strong>+${steps}</strong> шагов за одинаковые кубики по ${cardNameStrong(card.title)}.`, { toast: true });
   }
   if (extraSteps > 0) render();
   return extraSteps;
@@ -7460,38 +7939,6 @@ function hasDuplicateRoll(rolls) {
     seen.add(value);
   }
   return false;
-}
-
-function chooseBotDuplicateDiceReward(player) {
-  if (player.coins < 8) return "coins";
-  const leader = leadingPlayer();
-  const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
-  return lag > 8 || finalDistance(player) <= 24 ? "steps" : "coins";
-}
-
-async function chooseDuplicateDiceReward(player, card, amount, steps) {
-  const choice = await chooseCardAction({
-    choices: [
-      {
-        id: "coins",
-        label: `Получить ${amount}`,
-        note: "монеты",
-        score: 10,
-      },
-      {
-        id: "steps",
-        label: `Пройти ${steps}`,
-        note: "вперед",
-        score: 12,
-      },
-    ],
-    kicker: "Лавка Джо",
-    kind: "duplicate-dice-reward",
-    playerId: player.id,
-    summary: `${playerChoiceBadge(player)} выбросил одинаковые значения на кубиках.`,
-    title: cardNameMarkup(card.title),
-  });
-  return choice === "steps" ? "steps" : "coins";
 }
 
 async function resolveMoveOneFarther(player, currentSteps, animate) {
@@ -7703,7 +8150,9 @@ function scoreGoodCashoutApply(player, card, amount) {
   if (effect.type === "coins") return Math.max(0, Number(effect.amount) || 0) + 8 * personality.economy;
   if (effect.type === "draw-free-shop") return 26 * personality.shop;
   if (isPendingGoodEffect(effect.type)) return 24 * personality.chaos;
-  if (effect.type === "move" || effect.type === "green-path" || effect.type === "choose-forward-or-back") return 18 * personality.progress;
+  if (effect.type === "good-luck-draw") return 22 * Math.max(personality.shop, personality.chaos);
+  if (effect.type === "good-race") return 18 * personality.economy;
+  if (effect.type === "move" || effect.type === "green-path" || effect.type === "choose-forward-or-back" || effect.type === "good-free-step") return 18 * personality.progress;
   if (effect.type === "optional-extra-turn") return player.coins >= (effect.cost || 0) ? 20 * personality.progress : 2;
   return 14 + Math.min(8, amount * 0.25);
 }
@@ -7802,7 +8251,7 @@ function cardFaceMarkupForDeck(deckId, card, { revealed }) {
 function goodCardMarkup(player, card, { revealed }) {
   const description = cardBodyText(card);
   const title = cardFaceTitleText(card, "Хорошо");
-  const textClass = `good-card-text ${cardFaceTextDensityClass(description, title)}`.trim();
+  const textClass = `good-card-text ${cardFaceTextDensityClass(description, title)} ${cardFaceDescriptionDensityClass(description)} ${cardFaceTitleDensityClass(title)}`.trim();
   const cardText = revealed
     ? `
       <span class="${textClass}">
@@ -7938,7 +8387,7 @@ async function revealBadCard(player, card) {
 function badCardMarkup(card, { revealed }) {
   const description = cardBodyText(card);
   const title = cardFaceTitleText(card, "Плохо");
-  const textClass = `bad-card-text ${cardFaceTextDensityClass(description, title)}`.trim();
+  const textClass = `bad-card-text ${cardFaceTextDensityClass(description, title)} ${cardFaceDescriptionDensityClass(description)} ${cardFaceTitleDensityClass(title)}`.trim();
   const cardText = revealed
     ? `
       <span class="${textClass}">
@@ -7981,7 +8430,7 @@ async function revealTadamCard(player, card) {
 function tadamCardMarkup(card, { revealed }) {
   const description = cardBodyText(card);
   const title = cardFaceTitleText(card, "ТАДАМ");
-  const textClass = `tadam-card-text ${cardFaceTextDensityClass(description, title)}`.trim();
+  const textClass = `tadam-card-text ${cardFaceTextDensityClass(description, title)} ${cardFaceDescriptionDensityClass(description)} ${cardFaceTitleDensityClass(title)}`.trim();
   const customFrontArtStyle = revealed ? cardFaceArtStyle(card.frontArt) : "";
   const cardText = revealed
     ? `
@@ -8036,7 +8485,7 @@ function eventCardMarkup(card, { revealed }) {
   const icon = card.icon ? `<img class="event-card-artifact-icon" src="${card.icon}" alt="" aria-hidden="true">` : "";
   const iconClass = icon ? "has-card-face-icon" : "";
   const iconSizeClass = eventCardLargeArtifactIconClass(card);
-  const textClass = `event-card-text ${eventCardTextDensityClass(textForDensity, title)} ${iconClass} ${iconSizeClass}`.trim();
+  const textClass = `event-card-text ${eventCardTextDensityClass(textForDensity, title)} ${cardFaceDescriptionDensityClass(textForDensity)} ${cardFaceTitleDensityClass(title)} ${iconClass} ${iconSizeClass}`.trim();
   const cardText = revealed
     ? `
       <span class="${textClass}">
@@ -8069,6 +8518,23 @@ function eventCardTextDensityClass(description, title = "") {
   const score = text.length + String(title || "").length * 1.1;
   if (score > 175 || lines >= 4) return "is-long";
   if (score > 120 || lines >= 3) return "is-dense";
+  return "";
+}
+
+function cardFaceTitleDensityClass(title = "") {
+  const words = String(title || "").trim().split(/\s+/).filter(Boolean);
+  const length = words.join(" ").length;
+  const longestWord = words.reduce((max, word) => Math.max(max, word.length), 0);
+  if (length > 30 || longestWord > 18) return "is-title-long";
+  if (length > 22 || longestWord > 14) return "is-title-dense";
+  return "";
+}
+
+function cardFaceDescriptionDensityClass(description = "") {
+  const text = String(description || "");
+  const lines = cardFaceDescriptionLines(text).length;
+  if (text.length > 160 || lines >= 5) return "is-description-long";
+  if (text.length > 130 || lines >= 4) return "is-description-dense";
   return "";
 }
 
@@ -8145,6 +8611,8 @@ function chooseShopCardFromFace(offer, player = null, { cost = 5 } = {}) {
   actionPromptAutoPlayerId = player?.id ?? null;
   actionPromptChoiceOptions = [
     ...offer.map((card) => ({
+      card,
+      deck: "Лавка Джо",
       displayKind: "shop-card",
       id: card.id,
       label: cardDisplayText(card),
@@ -8223,6 +8691,8 @@ function chooseRevealedShopCard(offer, player = null, { cost = 5 } = {}) {
   actionPromptAutoPlayerId = player?.id ?? null;
   actionPromptChoiceOptions = [
     ...offer.map((card) => ({
+      card,
+      deck: "Лавка Джо",
       displayKind: "shop-card",
       id: card.id,
       label: cardDisplayText(card),
@@ -8316,7 +8786,7 @@ function shopCardsMarkup(cards, { revealed, selectable = false, showDecline = fa
     .map((card) => {
       const description = cardBodyText(card);
       const title = cardFaceTitleText(card, "Лавка Джо");
-      const textClass = `shop-card-text ${cardFaceTextDensityClass(description, title)}`.trim();
+      const textClass = `shop-card-text ${cardFaceTextDensityClass(description, title)} ${cardFaceDescriptionDensityClass(description)} ${cardFaceTitleDensityClass(title)}`.trim();
       const cardText = revealed
         ? `
           <span class="${textClass}">
@@ -8416,6 +8886,12 @@ async function applyCardEffect(player, effect, source = {}) {
     await resolveGreenPath(player);
   } else if (effect.type === "coin-tribute") {
     resolveCoinTribute(player, effect.amount ?? 3, effect.twoPlayerAmount ?? 5);
+  } else if (effect.type === "good-race") {
+    await resolveRaceRoll(player, { kicker: "Хорошо", title: "Гонка", sourceLabel: "карте <strong>Гонка</strong>", mode: "good-race" });
+  } else if (effect.type === "good-free-step") {
+    await resolveFreeStepRoll(player, { kicker: "Хорошо", title: "Вольный шаг", sourceLabel: "карте <strong>Вольный шаг</strong>", kind: "good-free-step" });
+  } else if (effect.type === "good-luck-draw") {
+    await resolveGoodLuckDraw(player);
   } else if (effect.type === "event-race") {
     await resolveEventRace(player);
   } else if (effect.type === "event-generous-rain") {
@@ -8429,9 +8905,9 @@ async function applyCardEffect(player, effect, source = {}) {
   } else if (effect.type === "event-free-step") {
     await resolveEventFreeStep(player);
   } else if (effect.type === "event-unity") {
-    await resolveEventUnity(player);
+    await resolveEventUnity(player, effect);
   } else if (effect.type === "event-unity-start") {
-    await resolveEventUnityStart(player);
+    await resolveEventUnityStart(player, effect);
   } else if (effect.type === "event-shop-redistribution") {
     await resolveEventShopRedistribution(player);
   } else if (effect.type === "event-fate-draw") {
@@ -8543,6 +9019,8 @@ function leastValuableShopItemIndex(player) {
 
 async function chooseOwnedShopDiscard(player) {
   const choices = player.items.map((card, index) => ({
+    card,
+    deck: "Лавка Джо",
     className: "choice-button-card",
     id: String(index),
     label: shopCardTitleMarkup(card),
@@ -8567,7 +9045,7 @@ async function resolveBackToNearestPlayer(player, fallbackLoss = 5) {
 
   if (!behind.length) {
     addCoins(player, -fallbackLoss);
-    log(`${playerName(player)} последний по маршруту и теряет <strong>${coinAmount(fallbackLoss)}</strong>.`, { toast: true });
+    log(`${playerName(player)} последний игрок и теряет <strong>${coinAmount(fallbackLoss)}</strong>.`, { toast: true });
     return;
   }
 
@@ -8781,6 +9259,8 @@ function mostValuableShopItemIndex(player, items) {
 
 async function chooseShopCardToSteal(thief, victim) {
   const choices = victim.items.map((card, index) => ({
+    card,
+    deck: "Лавка Джо",
     className: "choice-button-card",
     id: String(index),
     label: shopCardTitleMarkup(card),
@@ -8850,6 +9330,7 @@ async function resolveBadDieChoice(player, { coinLoss = 8, backwardSteps = 8 } =
     rollContext: {
       ...rollContext,
       result: resultText,
+      resultHighlight: true,
     },
   });
   await applyBadDiePenalty(player, penalty, { coinLoss, backwardSteps });
@@ -8903,6 +9384,8 @@ async function chooseShopItemsToFlipDown(player, entries, limit) {
   while (remaining.length && selected.length < limit) {
     const choice = await chooseCardAction({
       choices: remaining.map(({ card, index }) => ({
+        card,
+        deck: "Лавка Джо",
         className: "choice-button-card",
         id: String(index),
         label: shopCardTitleMarkup(card),
@@ -9012,15 +9495,19 @@ function clearBadDieTargetPreview() {
 }
 
 async function resolveEventRace(player) {
+  await resolveRaceRoll(player, { kicker: "Событие", title: "Гонка", sourceLabel: "событию <strong>Гонка</strong>" });
+}
+
+async function resolveRaceRoll(player, { kicker = "Событие", title = "Гонка", sourceLabel = "событию <strong>Гонка</strong>", mode = "event-race" } = {}) {
   let rolls = rollDice(1);
   const bonus = playerStepBonus(player);
-  await animateDice(rolls, { bonus, label: "Гонка", player });
-  rolls = await maybeUseDiceControl(player, rolls, { mode: "event-race", title: "Контроль кубика: Гонка" });
+  await animateDice(rolls, { bonus, label: title, player });
+  rolls = await maybeUseDiceControl(player, rolls, { mode, title: `Контроль кубика: ${title}` });
   const total = rolls[0] + bonus;
   const reward = total >= 8 ? 20 : total >= 5 ? 10 : 5;
   addCoins(player, reward);
   log(
-    `${playerName(player)} проходит событие <strong>Гонка</strong>: ${rolls[0]}${bonus ? ` + ${bonus}` : ""} = <strong>${total}</strong>. Награда: <strong>${coinAmount(reward)}</strong>.`,
+    `${playerName(player)} проходит ${sourceLabel}: ${rolls[0]}${bonus ? ` + ${bonus}` : ""} = <strong>${total}</strong>. Награда: <strong>${coinAmount(reward)}</strong>.`,
     { toast: true },
   );
 }
@@ -9089,8 +9576,8 @@ async function resolveEventBalance(player, amount = 10) {
 }
 
 async function resolveEventJustice(player) {
-  const first = await routeExtremePlayer("first", { reason: "Справедливость: первый по маршруту", autoFor: player });
-  const last = await routeExtremePlayer("last", { reason: "Справедливость: последний по маршруту", autoFor: player, excludeIds: first ? [first.id] : [] });
+  const first = await routeExtremePlayer("first", { reason: "Справедливость: первый игрок", autoFor: player });
+  const last = await routeExtremePlayer("last", { reason: "Справедливость: последний игрок", autoFor: player, excludeIds: first ? [first.id] : [] });
   const movedIds = new Set([first?.id, last?.id].filter((id) => id !== undefined));
   if (first) {
     log(`<strong>Справедливость</strong>: ${playerName(first)} идет на 10 клеток назад.`, { toast: true });
@@ -9112,17 +9599,21 @@ async function resolveEventJustice(player) {
 }
 
 async function resolveEventFreeStep(player) {
+  await resolveFreeStepRoll(player, { kicker: "Событие", title: "Вольный шаг", sourceLabel: "событию <strong>Вольный шаг</strong>", kind: "event-free-step" });
+}
+
+async function resolveFreeStepRoll(player, { kicker = "Событие", title = "Вольный шаг", sourceLabel = "событию <strong>Вольный шаг</strong>", kind = "event-free-step" } = {}) {
   let rolls = rollDice(1);
   const bonus = playerStepBonus(player);
-  await animateDice(rolls, { bonus, label: "Вольный шаг", player });
-  rolls = await maybeUseDiceControl(player, rolls, { mode: "event-free-step", title: "Контроль кубика: Вольный шаг" });
+  await animateDice(rolls, { bonus, label: title, player });
+  rolls = await maybeUseDiceControl(player, rolls, { mode: kind, title: `Контроль кубика: ${title}` });
   const total = Math.max(0, rolls[0] + bonus);
-  const steps = await chooseEventFreeStepAmount(player, total);
-  log(`${playerName(player)} выбирает <strong>${steps}</strong> из ${total} шагов по событию <strong>Вольный шаг</strong>.`, { toast: true });
+  const steps = await chooseFreeStepAmount(player, total, { kicker, title, kind });
+  log(`${playerName(player)} выбирает <strong>${steps}</strong> из ${total} шагов по ${sourceLabel}.`, { toast: true });
   if (steps > 0) await movePlayerSteps(player, steps);
 }
 
-async function chooseEventFreeStepAmount(player, total) {
+async function chooseFreeStepAmount(player, total, { kicker = "Событие", title = "Вольный шаг", kind = "event-free-step" } = {}) {
   if (isBot(player)) return total;
   const choices = Array.from({ length: total + 1 }, (_, steps) => ({
     id: String(steps),
@@ -9132,18 +9623,26 @@ async function chooseEventFreeStepAmount(player, total) {
   }));
   const choice = await chooseCardAction({
     canPreviewField: true,
-    kind: "event-free-step",
-    kicker: "Событие",
+    kind,
+    kicker,
     playerId: player.id,
-    title: "Вольный шаг",
+    title,
     summary: `${playerChoiceBadge(player)} может пройти от 0 до ${total} клеток вперед.`,
     choices,
   });
   return clamp(Number(choice) || 0, 0, total);
 }
 
-async function resolveEventUnity(player) {
-  const monsterStrength = 6 * state.players.length;
+function teamBattleMonsterStrength(effect = {}) {
+  const strengthPerDie = Math.max(1, Number(effect.strengthPerDie ?? effect.dice) || 5);
+  const totalDice = state.players.reduce((sum, contender) => sum + totalDiceForPlayer(contender), 0);
+  return strengthPerDie * totalDice;
+}
+
+async function resolveEventUnity(player, effect = {}) {
+  const reward = Math.max(0, Number(effect.reward ?? effect.amount) || 10);
+  const penalty = Math.max(0, Number(effect.penalty ?? effect.cost) || 5);
+  const monsterStrength = teamBattleMonsterStrength(effect);
   const results = [];
   state.unityBattleProgress = {
     isRolling: false,
@@ -9166,7 +9665,7 @@ async function resolveEventUnity(player) {
     render();
     await showActionPrompt(`${playerName(contender)} бросает силу для команды в событии <strong>Сплочение</strong>.`, {
       autoFor: contender,
-      buttonLabel: "Бросить кубик",
+      buttonLabel: "В бой",
     });
     const result = await rollPlayerMonsterBattlePower(contender, true, { label: `Сплочение - ${contender.name}` });
     results.push(result);
@@ -9187,8 +9686,8 @@ async function resolveEventUnity(player) {
   }
   const teamTotal = results.reduce((sum, result) => sum + result.total, 0);
   if (teamTotal >= monsterStrength) {
-    for (const target of state.players) addCoins(target, 10);
-    const message = `<strong>Сплочение</strong>: команда побеждает ${teamTotal} против ${monsterStrength}. Все получают <strong>${coinAmount(10)}</strong>.`;
+    for (const target of state.players) addCoins(target, reward);
+    const message = `<strong>Сплочение</strong>: команда побеждает ${teamTotal} против ${monsterStrength}. Все получают <strong>${coinAmount(reward)}</strong>.`;
     state.unityBattleProgress = {
       ...state.unityBattleProgress,
       isRolling: false,
@@ -9201,8 +9700,8 @@ async function resolveEventUnity(player) {
     log(message, { toast: true });
     await showActionPrompt(message, { autoFor: player });
   } else {
-    for (const target of state.players) addCoins(target, -5);
-    const message = `<strong>Сплочение</strong>: команда проигрывает ${teamTotal} против ${monsterStrength}. Все теряют <strong>${coinAmount(5)}</strong>.`;
+    for (const target of state.players) addCoins(target, -penalty);
+    const message = `<strong>Сплочение</strong>: команда проигрывает ${teamTotal} против ${monsterStrength}. Все теряют <strong>${coinAmount(penalty)}</strong>.`;
     state.unityBattleProgress = {
       ...state.unityBattleProgress,
       isRolling: false,
@@ -9219,8 +9718,9 @@ async function resolveEventUnity(player) {
   render();
 }
 
-async function resolveEventUnityStart(player) {
-  const monsterStrength = 6 * state.players.length;
+async function resolveEventUnityStart(player, effect = {}) {
+  const reward = Math.max(0, Number(effect.reward ?? effect.amount) || 10);
+  const monsterStrength = teamBattleMonsterStrength(effect);
   const results = [];
   state.unityBattleProgress = {
     isRolling: false,
@@ -9243,7 +9743,7 @@ async function resolveEventUnityStart(player) {
     render();
     await showActionPrompt(`${playerName(contender)} бросает силу для команды в событии <strong>Бой за старт</strong>.`, {
       autoFor: contender,
-      buttonLabel: "Бросить кубик",
+      buttonLabel: "В бой",
     });
     const result = await rollPlayerMonsterBattlePower(contender, true, { label: `Бой за старт - ${contender.name}` });
     results.push(result);
@@ -9264,8 +9764,8 @@ async function resolveEventUnityStart(player) {
   }
   const teamTotal = results.reduce((sum, result) => sum + result.total, 0);
   if (teamTotal >= monsterStrength) {
-    for (const target of state.players) addCoins(target, 10);
-    const message = `<strong>Бой за старт</strong>: команда побеждает ${teamTotal} против ${monsterStrength}. Все получают <strong>${coinAmount(10)}</strong>.`;
+    for (const target of state.players) addCoins(target, reward);
+    const message = `<strong>Бой за старт</strong>: команда побеждает ${teamTotal} против ${monsterStrength}. Все получают <strong>${coinAmount(reward)}</strong>.`;
     state.unityBattleProgress = {
       ...state.unityBattleProgress,
       isRolling: false,
@@ -9351,6 +9851,8 @@ async function resolveEventShopRedistribution(player) {
 async function chooseShopRedistributionCard(player) {
   if (isBot(player)) return leastValuableShopItemIndex(player);
   const choices = (player.items || []).map((card, index) => ({
+    card,
+    deck: "Лавка Джо",
     className: "choice-button-card",
     id: String(index),
     label: shopCardTitleMarkup(card),
@@ -9388,6 +9890,27 @@ async function resolveEventFateDraw(player) {
   }
 }
 
+async function resolveGoodLuckDraw(player) {
+  const roll = await rollEventChoiceDie(player, {
+    criterion: "1-2 - Тадам, 3-4 - Хорошо, 5-6 - Лавка Джо.",
+    kicker: "Хорошо",
+    outcomes: ["1-2: карта Тадам", "3-4: карта Хорошо", "5-6: карта Лавка Джо"],
+    prompt: `${playerName(player)} бросает кубик по карте <strong>Бросок удачи</strong>.`,
+    reason: `${playerChoiceBadge(player)} бросает кубик удачи.`,
+    title: "Бросок удачи",
+  });
+  if (roll <= 2) {
+    log(`<strong>Бросок удачи</strong>: выпало ${roll}, ${playerName(player)} тянет карту <strong>Тадам</strong>.`, { toast: true });
+    await drawTadamCard(player);
+  } else if (roll <= 4) {
+    log(`<strong>Бросок удачи</strong>: выпало ${roll}, ${playerName(player)} тянет карту <strong>Хорошо</strong>.`, { toast: true });
+    await drawAndApplyCard(player, "good", "Хорошо");
+  } else {
+    log(`<strong>Бросок удачи</strong>: выпало ${roll}, ${playerName(player)} тянет карту <strong>Лавка Джо</strong>.`, { toast: true });
+    await drawFreeShopCard(player, "получает карту Лавка Джо по карте <strong>Бросок удачи</strong>");
+  }
+}
+
 async function resolveEventTripleTadam(player) {
   log(`${playerName(player)} разыгрывает <strong>Три ТАДАМ</strong>: тянет 3 карты ТАДАМ.`, { toast: true });
   for (let index = 0; index < 3; index += 1) {
@@ -9421,7 +9944,7 @@ async function rollEventChoiceDie(player, context) {
     reason: context.reason,
     title: context.title || "Бросок события",
   };
-  await showActionPrompt(`${playerName(player)} бросает кубик события.`, {
+  await showActionPrompt(context.prompt || `${playerName(player)} бросает кубик события.`, {
     autoFor: player,
     buttonLabel: "Бросить кубик",
     rollContext,
@@ -9444,6 +9967,7 @@ async function rollEventChoiceDie(player, context) {
       ...rollContext,
       participants: [`${playerChoiceBadge(player)} <strong>${roll}</strong>`],
       result: `${playerName(player)} выбрасывает <strong>${roll}</strong>.`,
+      resultHighlight: true,
       title: `${context.title || "Событие"}: результат`,
     },
   });
@@ -9454,7 +9978,7 @@ async function rollEventChoiceDie(player, context) {
 async function resolveEventMagicWallet(player) {
   const target = await routeExtremePlayer("last", {
     autoFor: player,
-    reason: "Волшебный кошель: последний по маршруту",
+    reason: "Волшебный кошель: последний игрок",
   });
   if (!target) return;
   transferMagicWallet(target, `${playerName(player)} разыгрывает событие`);
@@ -9464,7 +9988,7 @@ async function resolveEventHeroSword(player, card, effect = {}) {
   const targetStrength = Math.max(1, Number(effect.amount) || 6);
   await showActionPrompt(
     `${playerName(player)} вступает в испытание <strong>Меч Героя</strong>. Нужно набрать силу <strong>${targetStrength}</strong>.`,
-    { autoFor: player, buttonLabel: "Бросить кубик" },
+    { autoFor: player, buttonLabel: "В бой" },
   );
 
   const result = await rollHeroSwordArtifactBattle(player, targetStrength);
@@ -9554,6 +10078,8 @@ async function chooseAntiBadShopCards(player, count = 2) {
       .map((card, index) => ({ card, index }))
       .filter(({ index }) => !selected.includes(index))
       .map(({ card, index }) => ({
+        card,
+        deck: "Лавка Джо",
         className: "choice-button-card",
         id: String(index),
         label: shopCardTitleMarkup(card),
@@ -9834,6 +10360,7 @@ async function rollWinnerTakesAllPower(player, round, contenders) {
       ...rollContext,
       participants: [`${playerChoiceBadge(player)} <strong>${formula}</strong>`],
       result: `${playerName(player)} получает результат <strong>${total}</strong>.`,
+      resultHighlight: true,
       title: `${title}: результат`,
     },
   });
@@ -9910,6 +10437,8 @@ async function resolveBuyShopCardFromPlayer(player, cost) {
     .filter((target) => target.id !== player.id && target.items.length > 0)
     .flatMap((target) =>
       target.items.map((card) => ({
+        card,
+        deck: "Лавка Джо",
         className: "choice-button-card",
         displayKind: "shop-card-owner",
         id: `${target.id}:${card.id}`,
@@ -10146,6 +10675,7 @@ const pendingGoodEffectTypes = new Set([
   "field-shield",
   "second-chance",
   "strength-potion",
+  "player-battle-potion",
   "speed-potion",
   "dice-control",
   "backward-reversal",
@@ -10165,6 +10695,7 @@ function pendingGoodCardLabel(card) {
     "backward-reversal": "Разворот",
     "dice-control": "Кубик",
     "field-shield": "Щит поля",
+    "player-battle-potion": "Дуэль +3",
     "second-chance": "Второй шанс",
     "speed-potion": "Скорость",
     "strength-potion": "Сила +3",
@@ -10489,6 +11020,48 @@ async function chooseUseStrengthPotion(player, amount, contextLabel) {
     playerId: player.id,
     summary: `${playerChoiceBadge(player)} может сбросить Зелье силы в ${contextLabel}.`,
     title: "Зелье силы",
+  });
+  return choice === "use";
+}
+
+async function choosePlayerBattlePotion(player, contextLabel) {
+  const card = pendingGoodCardsOfType(player, "player-battle-potion")[0];
+  if (!card) return 0;
+  const amount = Number(card.effect?.amount) || 3;
+  const usePotion = isBot(player)
+    ? true
+    : await chooseUsePlayerBattlePotion(player, amount, contextLabel);
+  if (!usePotion) return 0;
+
+  const consumed = consumePendingGoodCard(player, "player-battle-potion");
+  render();
+  log(`${playerName(player)} сбрасывает ${cardNameStrong(pendingGoodCardLabel(consumed))} в ${contextLabel}: <strong>+${amount}</strong> к силе.`, {
+    toast: true,
+  });
+  return amount;
+}
+
+async function chooseUsePlayerBattlePotion(player, amount, contextLabel) {
+  const choice = await chooseCardAction({
+    choices: [
+      {
+        id: "use",
+        label: `+${amount} силы`,
+        note: "сбросить",
+        score: 18,
+      },
+      {
+        id: "keep",
+        label: "Оставить",
+        note: "на потом",
+        score: 8,
+      },
+    ],
+    kicker: "Хорошо",
+    kind: "player-battle-potion",
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} может сбросить Зелье дуэли в ${contextLabel}.`,
+    title: "Зелье дуэли",
   });
   return choice === "use";
 }
@@ -10850,6 +11423,8 @@ async function resolveFaceDownShopBuyback(player, cost = 5) {
     const choice = await chooseCardAction({
       choices: [
         ...entries.map(({ card, index }) => ({
+          card,
+          deck: "Лавка Джо",
           className: "choice-button-card",
           id: String(index),
           label: shopCardTitleMarkup(card),
@@ -11036,6 +11611,7 @@ async function resolveJoeAuctionTie(players, bid) {
         participants: rolls.map(({ player, roll }) => `${playerChoiceBadge(player)} <strong>${roll}</strong>`),
         reason: `Ставка ${coinAmount(bid)}.`,
         result: resultText,
+        resultHighlight: true,
         title: "Результат жребия",
       },
     });
@@ -11136,6 +11712,7 @@ async function resolveJoeGame(player) {
       rollContext: {
         ...rollContext,
         result: message,
+        resultHighlight: true,
         title: "Пустая цифра",
       },
     });
@@ -11149,12 +11726,13 @@ async function resolveJoeGame(player) {
   log(message, { toast: true });
   await showActionPrompt("", {
     autoFor: winner,
-    rollContext: {
-      ...rollContext,
-      result: message,
-      title: "Результат Игры Джо",
-    },
-  });
+      rollContext: {
+        ...rollContext,
+        result: message,
+        resultHighlight: true,
+        title: "Результат Игры Джо",
+      },
+    });
   render();
 }
 
@@ -11556,7 +12134,7 @@ async function resolveSameCellDuel(player, target, effect, effectIndex = 0, effe
       render();
       await showActionPrompt(`${playerName(contender)} бросает силу в битве на одной клетке${round > 1 ? " (переигровка)" : ""}.`, {
         autoFor: contender,
-        buttonLabel: "Бросить кубик",
+        buttonLabel: "В бой",
       });
       const result = await rollPlayerBattlePower(contender, true, { label: `ТАДАМ - ${contender.name}` });
       roundResults.push(result);
@@ -11571,7 +12149,7 @@ async function resolveSameCellDuel(player, target, effect, effectIndex = 0, effe
         rollingPlayerId: null,
       };
       render();
-      log(`${playerName(contender)} в битве на одной клетке: ${formatRoll(result.rolls)}${combatBonusFormulaText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus)}. Сила: <strong>${result.total}</strong>.`);
+      log(`${playerName(contender)} в битве на одной клетке: ${formatRoll(result.rolls)}${combatBonusFormulaText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus, result.playerBattlePotionBonus)}. Сила: <strong>${result.total}</strong>.`);
     }
 
     const bestForce = Math.max(...roundResults.map((result) => result.total));
@@ -11710,6 +12288,8 @@ async function takeSameCellDuelShopCard(winner, loser) {
 async function chooseSameCellDuelShopCard(winner, loser, entries) {
   const choice = await chooseCardAction({
     choices: entries.map(({ card, index }) => ({
+      card,
+      deck: "Лавка Джо",
       className: "choice-button-card",
       id: String(index),
       label: shopCardTitleMarkup(card),
@@ -12668,9 +13248,10 @@ function bonusFormulaText(bonus, total) {
   return ` ${bonus > 0 ? "+" : "-"} ${Math.abs(bonus)} бонус = <strong>${total}</strong>`;
 }
 
-function combatBonusFormulaText(baseBonus, cursePenalty, total, heroSwordBonus = 0) {
+function combatBonusFormulaText(baseBonus, cursePenalty, total, heroSwordBonus = 0, playerBattlePotionBonus = 0) {
   const parts = [];
   if (baseBonus) parts.push(`${baseBonus > 0 ? "+" : "-"} ${Math.abs(baseBonus)} бонус`);
+  if (playerBattlePotionBonus) parts.push(`+ ${playerBattlePotionBonus} Зелье дуэли`);
   if (heroSwordBonus) parts.push(`+ ${heroSwordBonus} Меч Героя`);
   if (cursePenalty) parts.push(`Сглаз ${cursePenalty}`);
   return parts.length ? ` ${parts.join(" ")} = <strong>${total}</strong>` : "";
@@ -13111,6 +13692,7 @@ async function resolveOnePlayerTieByDie(candidates, { reason = "спор за ц
           participants: results.map((result) => `${playerChoiceBadge(result.player)} <strong>${result.roll}</strong>`),
           reason,
           result: `${playerName(winners[0])} выбран по броску ${maxRoll}.`,
+          resultHighlight: true,
           title: "Результат жребия",
         },
       });
@@ -13127,6 +13709,7 @@ async function resolveOnePlayerTieByDie(candidates, { reason = "спор за ц
         participants: results.map((result) => `${playerChoiceBadge(result.player)} <strong>${result.roll}</strong>`),
         reason,
         result: `Ничья на ${maxRoll}: ${winners.map(playerName).join(", ")} перебрасывают.`,
+        resultHighlight: true,
         title: "Нужен переброс",
       },
     });
@@ -13390,7 +13973,7 @@ function showActionPrompt(message, { buttonLabel = "Далее", autoFor = null,
     render();
     const promptDelay = ["Открыть", "Применить"].includes(buttonLabel)
       ? "card"
-      : buttonLabel === "Бросить кубик"
+      : ["Бросить кубик", "В бой"].includes(buttonLabel)
         ? "roll"
         : buttonLabel === "Далее"
           ? "result"
@@ -13808,10 +14391,32 @@ ui.saveHistoryBtn?.addEventListener("click", () => {
 ui.createPhoneRoomBtn?.addEventListener("click", () => {
   void recreatePhoneRoomFromPanel();
 });
+ui.phoneRoomQrBtn?.addEventListener("click", () => {
+  openPhoneRoomQrPopup();
+});
+ui.phoneRoomQrCloseBtn?.addEventListener("click", () => {
+  closePhoneRoomQrPopup();
+  ui.phoneRoomQrBtn?.focus({ preventScroll: true });
+});
+ui.phoneRoomQrPopup?.addEventListener("click", (event) => {
+  const closeTarget = event.target instanceof Element ? event.target.closest("[data-phone-room-qr-close]") : null;
+  if (closeTarget) {
+    closePhoneRoomQrPopup();
+    ui.phoneRoomQrBtn?.focus({ preventScroll: true });
+  }
+});
 ui.phoneRoomDice?.addEventListener("change", () => {
   phoneRoom.diceVisible = phoneRoomDiceVisible();
   renderPhoneRoomPanel();
   schedulePhoneSnapshot();
+});
+ui.phoneRoomCardsText?.addEventListener("change", () => {
+  phoneRoom.cardsAsText = phoneRoomCardsAsText();
+  renderPhoneRoomPanel();
+  schedulePhoneSnapshot();
+});
+ui.hidePlayers?.addEventListener("change", () => {
+  renderTokens();
 });
 ui.copyPhoneRoomUrlBtn?.addEventListener("click", () => {
   void copyPhoneRoomUrl();
@@ -13853,6 +14458,12 @@ ui.eventToast?.addEventListener("keydown", (event) => {
   }
 });
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && phoneRoomQrPopupOpen()) {
+    event.preventDefault();
+    closePhoneRoomQrPopup();
+    ui.phoneRoomQrBtn?.focus({ preventScroll: true });
+    return;
+  }
   if (event.key === "Escape" && infoHistoryPopupOpen()) {
     event.preventDefault();
     closeInfoHistoryPopup();

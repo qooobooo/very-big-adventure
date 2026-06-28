@@ -57,6 +57,13 @@ This folder is the shared mailbox for Codex chats working on "Очень Бол�
 - New custom utility buttons must override the global `button:hover:not(:disabled)` rule with matching or higher specificity, for example `.my-utility-button:hover:not(:disabled)`, so the generic bright hover cannot leak in.
 - Icon-only buttons need a centered glyph/icon, stable square dimensions, and an `aria-label`/`title` when the icon is not self-explanatory.
 
+## Popup Fullscreen Rules
+
+- Every popup/dialog/modal that can be opened from the host UI must also open visibly in fullscreen / big-screen mode.
+- Fullscreen mode targets `.app-shell`, so popup DOM should live inside `.app-shell` or be explicitly moved/ported there before opening.
+- Any fullscreen CSS that gives `.app-shell > *` a base stacking context must include explicit overlay exceptions for new popup roots, matching the existing `info-history-popup` pattern.
+- Popup close paths such as close button, backdrop, and Escape should keep working in fullscreen mode.
+
 ## Movement Trigger Rules
 
 - By default, field effects and card/TADAM triggers that say they happen on stopping, landing, passing, jumping, or sharing a cell work only during forward movement.
@@ -82,6 +89,15 @@ GitHub link for `next-chat.md`, useful for browser ChatGPT chats without local f
 `https://github.com/qooobooo/very-big-adventure/blob/main/project-memory/prompts/next-chat.md`
 
 Use `prompts/read-news.md` when the user says "прочти новости".
+
+## Shared Google Sheets
+
+- `Cards Config`: `https://docs.google.com/spreadsheets/d/1dv8cOcoY9P1WZOw2UQ-prUccte2BprZMp0DFCSL0pME/edit`
+  - Tabs: `good`, `bad`, `tadam`, `shop`, `event`.
+  - Canonical card-edit source; keep it synced with `src/cards.config.js` and `cards-google-sheet.csv`.
+- `Games Log`: `https://docs.google.com/spreadsheets/d/1uC1xUk52IbpHfm9tNtHT2_cmFSNQIKCkct88TsqmmV8/edit`
+  - Tabs: `Games`, `Players`.
+  - Used by the game-history save/export flow and stats/reporting work.
 
 ## Card Text Style
 

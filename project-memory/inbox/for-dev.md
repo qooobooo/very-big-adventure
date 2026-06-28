@@ -4,6 +4,201 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- DONE BATTLE CTA TEXT 2026-06-26 12:10 - Use `В бой` before battle rolls:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-06-26 11:57; QA is not involved unless user asks.
+  - Requested by: user via `GD`.
+  - Summary:
+    - During battle, before the player confirms/starts a battle dice roll, the CTA button should say `В бой`, not `Далее`.
+    - The same label should appear on phone controllers.
+  - Required behavior:
+    - Host bottom action button:
+      - If the next action confirms a battle roll, show `В бой`.
+      - Screenshot example: monster battle intro HUD currently shows `Далее`; it should show `В бой`.
+    - Phone controller:
+      - In full-controller and big-button modes, the corresponding primary action should say `В бой`, not `Далее`, when the big screen is waiting for the battle roll confirmation.
+    - Scope includes all battle pre-roll confirmation prompts:
+      - ordinary monster battle;
+      - final monster / boss-related monster battle if it has the same pre-roll prompt;
+      - VS;
+      - team battles like `Сплочение` / `Бой за старт`;
+      - final PvP/boss battle;
+      - any card/event battle prompt that waits before rolling battle dice.
+  - Guardrails:
+    - Do not replace every `Далее` globally.
+    - Keep `Далее` for card reveal stages, ordinary non-battle confirmations, shop reveals, random-result continuation, etc.
+    - Do not change battle math, dice flow, animation, HUD layout, phone protocol, or controller mode behavior.
+    - Prefer setting the existing action prompt button label/source label for battle prompts, so host and phone snapshot stay consistent.
+    - Work with the current dirty tree and do not revert unrelated changes.
+  - Likely code areas:
+    - `src/game.js`: `actionPromptButtonLabel`, `showActionPrompt(...)`, battle flow calls before `animateDice(...)`.
+    - `src/game.js`: phone snapshot fields such as `turnLabel` / available actions should inherit the corrected label.
+    - `src/controller.js`: only touch if controller hardcodes `Далее` for this state.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source check:
+      - battle pre-roll prompts pass/use `В бой`;
+      - non-battle `Далее` prompts remain unchanged.
+    - Browser smoke if possible:
+      - ordinary monster battle: host button says `В бой`;
+      - phone controller action says `В бой`;
+      - at least one non-battle reveal/continue still says `Далее`;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result.
+  - Completed by Dev 3 at 2026-06-26 12:10:
+    - Changed battle pre-roll CTA labels to `В бой` for ordinary monster battles, final monster entry, VS rolls, final boss/challenger rolls, `Сплочение`, `Бой за старт`, `Меч Героя`, and same-cell duel battle rolls.
+    - Phone controllers inherit the same label through existing `actionPromptButtonLabel` / phone action snapshot flow; no `src/controller.js` behavior change was needed.
+    - Kept non-battle `Далее` and non-battle `Бросить кубик` prompts unchanged for card reveals, shop reveal/continue, random-result confirmations, chaos portal, dice fortune, Joe Game, auctions, tie-break rolls, etc.
+    - Added `В бой` to the same bot prompt delay bucket as `Бросить кубик`, preserving battle roll pacing.
+    - Bumped the host `src/game.js` cache key in `index.html`.
+    - Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+    - Browser smoke was not run in this sandbox.
+
+- DONE PHONE QR POPUP 2026-06-26 01:42 - Wire phone room QR button:
+  - Owner: `Dev`.
+  - Requested by: user via `Art / UI 2`.
+  - Context:
+    - Art/UI 2 added an inert QR button next to `Пересоздать комнату` / `Создать комнату`.
+    - Button id: `#phoneRoomQrBtn`.
+    - Icon: `assets/icons/qr_code.svg`.
+  - Goal:
+    - Clicking the QR button opens a popup with a QR code for the current phone controller join URL.
+    - The popup should use the current room URL from `#phoneRoomUrl` / phone room state.
+  - Guardrails:
+    - Do not change room creation, phone controller protocol, dice/controller behavior, or visual layout beyond what is needed for the popup.
+    - Keep the QR button disabled/hidden or show a clear unavailable state when no room URL exists, if needed.
+    - Work with the current dirty tree and do not revert unrelated changes.
+  - Suggested checks:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser smoke if possible: create room, click QR button, QR popup appears and can close; no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - QA only if user asks.
+  - Completed by Dev 3 at 2026-06-26 02:11:
+    - Wired `#phoneRoomQrBtn` to open a popup with a QR code for the current phone controller join URL.
+    - Added a local SVG QR generator in `src/game.js`; no external QR service or CDN is required.
+    - Added popup markup/styles with current URL readout, close button, backdrop close, Escape close, and disabled QR state when no room URL exists or room creation/recreation is in flight.
+    - Bumped the host `src/game.js` cache key in `index.html`.
+    - Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+    - Static QR smoke passed by generating a 37x37 SVG QR matrix for a typical LAN controller URL.
+    - Browser smoke was not run in this sandbox.
+
+- DONE TEXT CLEANUP 2026-06-26 01:19 - Remove `по маршруту` terminology:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-06-26 01:19; QA is not involved unless user asks.
+  - Requested by: user via `GD`.
+  - Summary:
+    - Remove the phrase `по маршруту` from all current player-facing game text.
+    - Use only the concepts `первый игрок` and `последний игрок`.
+  - Required text changes:
+    - Event `Справедливость` should read without `по маршруту`, for example:
+      - `Первый игрок идет на 10 клеток назад, последний игрок идет на 10 клеток вперед, остальные получают 5 монет`
+    - Event/artifact `Волшебный кошель` should refer to `последний игрок`, not `последний игрок по маршруту`.
+    - Runtime logs, choice/reason strings, popups, card faces, info/reference panels, phone text, and history text should not show `по маршруту`.
+  - Files/data to sync:
+    - `src/cards.config.js`.
+    - `cards-google-sheet.csv`.
+    - Google Sheet `Cards Config` for affected rows.
+    - `src/game.js` player-facing strings/reason labels.
+  - Guardrails:
+    - Do not change rules, card ids, counts, deck lifecycle, route order, or artifact behavior.
+    - Do not edit historical memory entries just because they contain old phrasing; only update current task handback notes if needed.
+    - Work with the current dirty tree and do not revert unrelated changes.
+  - Known current hits to check:
+    - `cards-google-sheet.csv`: `justice`, `magic-wallet`.
+    - `src/cards.config.js`: `justice` description.
+    - `src/game.js`: logs/reasons for `Назад к сопернику`, `Справедливость`, `Волшебный кошель`.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static search: no current player-facing source/config/CSV text contains `по маршруту` or `По маршруту`.
+    - Google Sheet readback confirms affected Event rows no longer contain `по маршруту`.
+    - Browser smoke if possible: reveal `Справедливость` / `Волшебный кошель` or inspect reference/card face, no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result.
+  - Completed by Dev 3 at 2026-06-26 01:35:
+    - Removed current player-facing `по маршруту` wording from `Справедливость`, `Волшебный кошель`, `Назад к сопернику` fallback log, and tie-break reason labels.
+    - Synced affected Event rows in `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config` / `event`.
+    - Preserved rules, ids, counts, route order, deck lifecycle, and artifact behavior.
+    - Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; `git diff --check`.
+    - Static search confirmed no `по маршруту` / `По маршруту` remains in current source/config/CSV text.
+    - Google Sheet readback confirmed `event!L3`, `event!N3`, and `event!L7` no longer contain the phrase.
+
+- DONE ROLL RESULT HIGHLIGHT 2026-06-24 13:10 - Highlight rolled-result text in all roll outcome dialogs:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-06-24 13:10; QA is not involved unless user asks.
+  - Requested by: user via `GD`.
+  - Ownership:
+    - `Art / UI 1`: style/polish for the result-highlight class.
+    - `Dev 3`: find and apply the pattern to all similar roll-outcome dialogs.
+  - Summary:
+    - In dialogs/windows that show a die roll outcome, the final rolled-result text should be pleasantly highlighted.
+    - User screenshot example: `Выпало 4: Пес теряет 8 монет`.
+    - This should apply to all similar windows, not just `Кубик неприятностей`.
+  - Required behavior:
+    - Add/use a reusable result-highlight UI pattern for roll result lines.
+    - Audit all card/field/event dialogs that show text like:
+      - `Выпало N: ...`;
+      - `Результат: ...`;
+      - a post-roll branch/outcome summary after a random-choice die roll.
+    - Apply highlight where it is the actual final result/outcome of a die/random roll.
+    - Do not highlight option rows like `1-2 ...`, `3-4 ...`, `5-6 ...`; only the resolved result line.
+  - Likely examples to check:
+    - Bad `Кубик неприятностей` / `bad-die-choice`.
+    - `Портал хаоса` result.
+    - `Кубик судьбы`.
+    - `Общий жребий`.
+    - `Игра Джо` die result.
+    - `Кубик удачи` / multi-roll result summary if it has a resolved outcome line.
+    - Any other random-choice card/field popup using the shared roll context/result UI.
+  - UI notes:
+    - Use Art/UI 1 styling if available; otherwise implement a clean reusable class in the existing dialog style and let Art/UI polish if needed.
+    - Highlight must be readable with player-colored names and coin/dice icons inside the line.
+  - Guardrails:
+    - Do not change dice math, probabilities, card effects, reward/penalty rules, text wording, or turn flow.
+    - Do not make result text clickable unless it already is.
+    - Work with current dirty tree and do not revert unrelated changes.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source smoke:
+      - all roll-result branches use the result-highlight class/pattern;
+      - option rows are not highlighted as final results.
+    - Browser smoke if possible:
+      - force or reach at least `Кубик неприятностей` result;
+      - check one additional random-choice result window;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result.
+  - Completed by Dev 3 at 2026-06-24 13:19:
+    - Added reusable `resultHighlight` support in roll-context rendering.
+    - Final resolved roll result lines render with `.roll-result-highlight`; option rows remain plain.
+    - Added baseline CSS for `.roll-context-result.roll-result-highlight` for readability; Art/UI 1 owns further polish.
+    - Applied to final result dialogs for `Портал хаоса`, `Кубик удачи`, `Кубик неприятностей`, shared Event choice rolls (`Кубик судьбы` / `Общий жребий`), `Большой приз`, Joe Auction tie rolls, `Игра Джо`, and shared player tie-break results.
+    - Did not highlight rolling-status lines such as `Кубик Джо катится` or option rows like `1-2` / `3-4` / `5-6`.
+    - Bumped host `styles.css` and `game.js` cache keys.
+    - Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+    - Browser smoke was not run because the local server cannot listen in this sandbox (`listen EPERM 0.0.0.0:5173`).
+
 - DONE INFO FULLSCREEN BUG 2026-06-24 01:46 - Info popup does not open in fullscreen mode:
   - Owner: `Dev 1`.
   - Dispatch status: sent directly to Dev 1 thread at 2026-06-24 01:46; completed by Dev 1 at 2026-06-24 01:50; include in QA 2 re-check after handback.

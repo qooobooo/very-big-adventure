@@ -4,6 +4,49 @@ For UI/UX and art-asset tasks related to "Очень Большая Бродил
 
 ## Open Items
 
+- DONE 2026-06-24 13:19 - Roll result highlight style:
+  - Owner: `Art / UI 1`.
+  - Status:
+    - Completed by `Art / UI 1` at 2026-06-24 13:19.
+    - QA is not involved.
+  - Dispatch status: sent directly to Art/UI 1 thread at 2026-06-24 13:10; QA is not involved unless user asks.
+  - Requested by: user via `GD`.
+  - Summary:
+    - Design/polish an accent style for roll-result lines in card/field/dialog windows.
+    - User screenshot points at a result line like `Выпало 4: Пес теряет 8 монет`.
+    - The result line should be visually highlighted pleasantly and consistently.
+  - Visual requirements:
+    - Highlight should be noticeable but not noisy.
+    - It should fit the current dark fantasy/tabletop dialog style.
+    - It should work for short and longer result lines.
+    - It should support coin/dice icons in the result text without layout breakage.
+    - It should not look like a clickable button unless it is actually clickable.
+  - Coordination:
+    - Dev 3 owns implementation/audit across all similar roll-outcome dialogs in `ACTIVE ROLL RESULT HIGHLIGHT 2026-06-24 13:10`.
+    - Prefer reusable CSS class/style, e.g. a dedicated result-highlight class, so Dev 3 can apply it broadly.
+  - Guardrails:
+    - Do not change gameplay, text content, dice logic, card effects, deck data, or modal flow.
+    - Work with current dirty tree and do not revert unrelated changes.
+  - Test/verification:
+    - `git diff --check`.
+    - If touching JS: `node --check src/game.js`.
+    - Visual smoke if possible on at least one roll-result dialog.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result.
+  - Completed:
+    - Polished the reusable `.roll-result-highlight` CSS class already wired by Dev 3.
+    - Result lines now use a dark fantasy panel with warm border, subtle gold side accent, restrained glow, readable line-height, and safe wrapping for longer text.
+    - Inline coin/dice icons get small spacing and glow without breaking the text line.
+    - The highlight has no hover/click treatment and keeps `cursor: default`, so it does not read as an actionable button.
+    - Bumped the `styles.css` cache key in `index.html`.
+  - Verification:
+    - `git diff --check`.
+    - JS was not touched by Art/UI 1; `node --check src/game.js` not required for this pass.
+    - Browser smoke was not run in this sandbox.
+
 - DONE 2026-06-24 01:44 - Mobile control strip overflow after info button:
   - Owner: `Art / UI 1`.
   - Status:

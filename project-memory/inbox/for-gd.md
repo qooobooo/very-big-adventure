@@ -4,6 +4,479 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-06-29 02:29 - Dev 1 context handback: Hide players setting
+  - Pipeline status:
+    - Context note only.
+    - QA was not involved.
+  - Context:
+    - User asked for a settings checkbox `Скрыть игроков`; when active, player tokens should be hidden from the board.
+  - Completed:
+    - Added `Скрыть игроков` checkbox to the settings panel.
+    - Wired `#hidePlayers` into host UI state and `collectGameSettings()`.
+    - `renderTokens()` now hides/clears only `.map-token` board pieces while the checkbox is enabled, preserving all player positions and gameplay state.
+    - Added `.token-layer[hidden]` CSS and bumped `index.html` cache keys for `styles.css` / `src/game.js`.
+  - Files changed by Dev 1:
+    - `index.html`
+    - `src/game.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `git diff --check`
+    - static readback for `hidePlayers` wiring and `.token-layer[hidden]`
+
+- 2026-06-29 02:23 - Dev 3 context handback: Add three `Хорошо` cards
+  - Pipeline status:
+    - Context note only.
+    - QA was not involved.
+  - Context:
+    - User asked to add the three `Хорошо` cards from the screenshot, each with `count: 2`.
+  - Completed:
+    - Added `good-race` / `Гонка`, `good-free-step` / `Вольный шаг`, and `good-luck-draw` / `Бросок удачи` to local config, CSV mirror, and live Google Sheet `Cards Config` / `good`.
+    - Implemented runtime handlers for all three new Good effects.
+    - Reused the existing board-click target selection path for Good `Вольный шаг`.
+    - Bumped host cache keys for `src/game.js` / `src/cards.config.js`.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - Google Sheet `Cards Config` / `good!A22:N24`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+  - Notes:
+    - `Бросок удачи` is separate from Event `Кубик судьбы`: Good card 1-2 draws TADAM, 3-4 draws Good, 5-6 draws Joe Shop.
+    - Google Sheet readback confirmed `good!A22:N24` has all three cards with `count = 2`.
+
+- 2026-06-29 02:12 - Dev 3 context handback: Update `Сплочение` and `Бой за старт`
+  - Pipeline status:
+    - Context note only.
+    - QA was not involved.
+  - Context:
+    - User asked to update the two Event cards shown in the screenshot: `Сплочение` and `Бой за старт`.
+  - Completed:
+    - Updated both player-facing descriptions in `src/cards.config.js`, `cards-google-sheet.csv`, and live Google Sheet `Cards Config` / `event`.
+    - Changed runtime team-monster strength formula for both events from `6 * playerCount` to `5 * total player dice count`.
+    - Added card effect metadata for reward/penalty/strength-per-die and passed card effects into both event resolvers.
+    - Bumped host cache keys for `src/game.js` / `src/cards.config.js`.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - Google Sheet `Cards Config` / `event!A2:N2`, `event!A9:N9`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+  - Notes:
+    - Rewards/losses stayed unchanged: `Сплочение` win all +10 / loss all -5; `Бой за старт` win all +10 / loss all to Start without field effect.
+    - Google Sheet readback confirmed `event!A2:N2` and `event!A9:N9` contain the new descriptions and `dice = 5`.
+
+- 2026-06-29 02:54 - Dev 3 context handback: Rename `Тариф Джо`
+  - Pipeline status:
+    - Context note only.
+    - QA was not involved.
+  - Context:
+    - User asked to rename Shop card `Тариф Джо` to `Скидка от Джо`.
+  - Completed:
+    - Renamed `shop-fixed-cost-3` title to `Скидка от Джо` in local config, CSV mirror, and live Google Sheet `Cards Config` / `shop!C6`.
+    - Bumped host cache keys for `src/game.js` / `src/cards.config.js`.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - Google Sheet `Cards Config` / `shop!C6`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+  - Notes:
+    - Only title changed. id `shop-fixed-cost-3`, shortTitle `Цена 3`, effect, cost, count, description, and behavior were not changed.
+    - Google Sheet readback confirmed `shop!A6:N6` title `Скидка от Джо`.
+
+- 2026-06-29 02:48 - Dev 3 context handback: Rename `Темная взятка`
+  - Pipeline status:
+    - Context note only.
+    - QA was not involved.
+  - Context:
+    - User asked to rename Shop card `Темная взятка` to `Еда монстру`.
+  - Completed:
+    - Renamed `monster-bribe-plus1` title to `Еда монстру` in local config, CSV mirror, and live Google Sheet `Cards Config` / `shop!C7`.
+    - Bumped host cache keys for `src/game.js` / `src/cards.config.js`.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - Google Sheet `Cards Config` / `shop!C7`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+  - Notes:
+    - Only title changed. id `monster-bribe-plus1`, shortTitle `Подкуп +1`, effect, cost, count, description, and behavior were not changed.
+    - Google Sheet readback confirmed `shop!A7:N7` title `Еда монстру`.
+
+- 2026-06-29 01:53 - Dev 1 context handback: Games Log final columns patch
+  - Pipeline status:
+    - Context note only.
+    - QA was not involved.
+  - Context:
+    - User pointed at the live `Games Log` Sheet final columns (`finalOutcome` through `finalSummaryJson`) and asked to make all of them work.
+  - Completed locally:
+    - Rechecked live Sheet headers:
+      - `Games!P:Y`: `finalOutcome`, `finalOutcomeText`, `finalWinnerName`, `finalWinnerRole`, `finalWinnerRoleId`, `finalWinnerScore`, `finalPlayersForce`, `finalBossForce`, `finalBossWon`, `finalSummaryJson`.
+      - `Players!V:AI`: `finalRole`, `finalRoleId`, `finalWinner`, `finalScoreTotal`, `finalScoreCoins`, `finalScoreShop`, `finalScoreDamage`, `finalScoreDamageToBoss`, `finalScorePosition`, `finalBattleForce`, `finalForceBreakdown`, `finalScoreBreakdown`, `finalScoreJson`, `finalForceJson`.
+    - Updated `project-memory/apps-script-games-log-final-fields-patch.js` to map append rows by live header names instead of stale fixed arrays.
+    - Patch now handles the current `ID` / `Дата` / `Время` / `Длительность` headers and removed `passThroughMode`, while still writing all final game/player fields.
+    - Verified locally with a fake Apps Script save that all final columns receive values, including `finalBossWon = false`.
+  - Files changed by Dev 1:
+    - `project-memory/apps-script-games-log-final-fields-patch.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check project-memory/apps-script-games-log-final-fields-patch.js`
+    - fake Apps Script mapping test for `Games` and `Players`
+    - live Sheet readback for `Games!P1:Y12` and `Players!V1:AI12`
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+  - Blocker:
+    - The deployed Apps Script project is not visible in connected Drive, and `clasp` is not installed/available, so the live Web App could not be redeployed from this chat.
+    - Existing Sheet rows still show blank final columns until someone with Apps Script access applies this patch and deploys a new Web App version.
+
+- 2026-06-29 02:44 - Dev 3 context handback: Live Sheets synced and links added
+  - Pipeline status:
+    - Context note only.
+    - QA was not involved.
+  - Context:
+    - User provided the `Cards Config` link and confirmed counts for `Зелье дуэли`, `Дубль на монеты`, and `Дубль на шаги`.
+    - User also provided the `Games Log` link and asked to add it to shared docs if missing.
+  - Completed:
+    - Synced live Google Sheet `Cards Config`:
+      - added `good/player-battle-potion` / `Зелье дуэли`, count `2`;
+      - replaced old `shop/duplicate-dice-reward` with `shop/duplicate-dice-coins` and `shop/duplicate-dice-steps`, count `3` each.
+    - Added shared Google Sheet links to `project-memory/README.md`.
+    - Added `Games Log` to `project-memory/handoff.md`.
+    - Updated `handoff.md` card Sheet/CSV column order to include `artifact_desr`.
+  - Files changed by Dev 3:
+    - Google Sheet `Cards Config`
+    - `project-memory/README.md`
+    - `project-memory/handoff.md`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks/readback:
+    - `good!A17:N19` readback includes `player-battle-potion`.
+    - `shop!A8:N9` readback includes both new duplicate-dice cards.
+    - `shop` count total readback is `56`.
+    - Searching `shop` for `duplicate-dice-reward` returns no rows.
+  - Notes:
+    - This supersedes the earlier note that live Google Sheet write access was unavailable in the first pass.
+
+- 2026-06-29 02:32 - Dev 3 context handback: Split `Дубль на удачу`
+  - Pipeline status:
+    - Context note only.
+    - QA was not involved.
+  - Context:
+    - User asked to split `Дубль на удачу` into two cards:
+      - `Дубль на монеты`: `Если во время хода хотя бы на двух кубиках выпало одно число, получи 5 монет`
+      - `Дубль на шаги`: `Если во время хода хотя бы на двух кубиках выпало одно число, сделай 5 шагов вперед`
+  - Completed:
+    - Replaced local Shop config row `duplicate-dice-reward` with `duplicate-dice-coins` and `duplicate-dice-steps`.
+    - Both new cards use `count: 3`, matching the old card's count per new card.
+    - Removed the old runtime choice prompt; duplicate movement dice now auto-applies each owned matching card.
+    - `Дубль на монеты` grants `5` coins; `Дубль на шаги` adds `5` extra movement steps.
+    - Updated bot valuation for economy vs progress versions.
+    - Synced local `cards-google-sheet.csv`.
+    - Bumped host cache keys for `src/game.js` / `src/cards.config.js`.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+  - Notes:
+    - Local static readback: old `duplicate-dice-reward` / `Дубль на удачу` is absent from playable config/CSV; new duplicate cards are present.
+    - Local Shop configured total is now `56`.
+    - Google Sheet native write tool was not exposed in this chat, so live Sheet was not updated here.
+
+- 2026-06-29 02:15 - Dev 3 context handback: Good card `Зелье дуэли`
+  - Pipeline status:
+    - Context note only.
+    - QA was not involved.
+  - Context:
+    - User directly requested a new `Хорошо` card: `В битве с игроками можешь сбросить эту карту и получить +3 к силе`.
+  - Completed:
+    - Added `player-battle-potion` / `Зелье дуэли` to local Good card config and CSV mirror, `count: 2`, effect `{ type: "player-battle-potion", amount: 3 }`.
+    - The card stays as a pending Good status until used, then discards to Good discard.
+    - Added an optional use prompt during player-vs-player battle rolls.
+    - Covered `rollPlayerBattlePower(...)` consumers: ordinary VS, same-cell duel, and final PvP boss battle.
+    - PvP/final battle log formula text now includes `+ 3 Зелье дуэли` when the card is used.
+    - Bumped host cache keys for `src/game.js` and `src/cards.config.js`.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `index.html`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+  - Notes:
+    - Google Sheet native write tool was not exposed in this chat, so the live Sheet was not updated here; `cards-google-sheet.csv` contains the synced row for later Sheet sync.
+    - Monster/team battle logic was not changed; `Зелье силы` remains scoped to monster/team monster paths.
+
+- 2026-06-26 17:29 - Dev 3 context handback: Larger phone card preview
+  - Pipeline status:
+    - Context note only.
+    - QA was not involved.
+  - Context:
+    - User reported that active card previews on the phone full-controller still looked too small and asked to use the available space.
+  - Completed:
+    - Enlarged active phone card preview sizing in `styles.css`.
+    - Added direct non-`:has(...)` sizing for `.controller-card-preview-face .controller-card-face-stage.is-preview`, so iPhone/WebView does not fall back to the old small `168px` preview limit.
+    - Added container-unit sizing based on the preview block, plus a larger viewport fallback.
+    - Kept player inventory card sizing, card text/data, phone protocol, and action buttons unchanged.
+  - Files changed by Dev 3:
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/controller.js`
+    - `node --check src/game.js`
+    - `git diff --check`
+  - Notes:
+    - Browser/screenshot smoke was attempted but blocked by the current sandbox:
+      - local server binding fails with `EPERM`;
+      - Playwright bundled Chromium is not installed;
+      - system Google Chrome exits with `EPERM/SIGABRT`;
+      - QuickLook preview fails sandbox initialization.
+    - Static CSS sizing estimate after the change: about `419x585` card on `473x1024`, about `336x469` on `390x844`.
+
+- 2026-06-26 17:01 - Dev 3 context handback: Full-controller action context text
+  - Pipeline status:
+    - Context note only.
+    - QA was not involved.
+  - Context:
+    - User asked that phone full-controller mode show the full text of the current action, matching the big-screen popup, instead of only terse option labels.
+    - Screenshot example: `Обратный ход` / `Кого отправить назад?` showed only player buttons on the phone.
+  - Completed:
+    - Full-controller now renders a compact non-button context panel above action buttons when available.
+    - The panel uses the existing host choice context: `contextKicker`, `contextTitle`, and `contextSummary`.
+    - Card choices, card-choice board preview returns, board/portal choices, portal preview returns, and roll-context prompt choices now carry context to the phone actions.
+    - Auction bidding keeps its existing dedicated context block and is not duplicated.
+    - `Текст вместо карт` still only controls card display mode; action context remains text.
+  - Files changed by Dev 3:
+    - `src/game.js`
+    - `src/controller.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+  - Notes:
+    - Browser smoke was not run in this sandbox.
+    - No game rules, card effects, phone protocol endpoints, or controller modes were changed.
+
+- 2026-06-26 12:10 - Dev 3 context handback: Battle CTA text `В бой`
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE BATTLE CTA TEXT 2026-06-26 11:57 - Use В бой before battle rolls`.
+  - Completed:
+    - Battle pre-roll prompts now use CTA `В бой` instead of `Далее` / generic roll wording where the next action starts a battle dice roll.
+    - Covered ordinary monster/final-monster entry, VS battle rolls, final PvP boss/challenger rolls, team battles `Сплочение` and `Бой за старт`, Event artifact battle `Меч Героя`, and same-cell duel rolls.
+    - Phone controllers inherit `В бой` through existing `actionPromptButtonLabel` / available-actions snapshot flow in full-controller and big-button modes.
+    - Non-battle `Далее` and non-battle `Бросить кубик` prompts were left unchanged.
+    - `В бой` uses the same bot delay category as `Бросить кубик`, so battle pacing stays aligned.
+    - Bumped the host `src/game.js` cache key in `index.html`.
+  - Files changed by Dev 3:
+    - `index.html`
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+  - Notes:
+    - Browser smoke was not run in this sandbox.
+
+- 2026-06-26 02:11 - Dev 3 context handback: Phone room QR popup wired
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE PHONE QR POPUP 2026-06-26 01:42 - Wire phone room QR button`.
+    - Art/UI 2 had added inert `#phoneRoomQrBtn` and `assets/icons/qr_code.svg`.
+  - Completed:
+    - Wired `#phoneRoomQrBtn` to open a popup with a QR code for the current phone controller join URL.
+    - QR uses the current room URL from `#phoneRoomUrl` / phone room state.
+    - Added a local SVG QR generator in `src/game.js`; no external QR service or CDN is required.
+    - Added popup markup and styling with current URL readout, close button, backdrop close, and Escape close.
+    - QR button is disabled when no room URL exists or the room is being created/recreated.
+    - Bumped the host `src/game.js` cache key in `index.html`.
+  - Files changed by Dev 3:
+    - `index.html`
+    - `src/game.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static QR smoke: generated a 37x37 SVG QR matrix for a typical LAN controller URL.
+  - Notes:
+    - Browser smoke was not run in this sandbox.
+    - Room creation, phone controller protocol, dice/controller behavior, and controller page logic were not changed.
+
+- 2026-06-26 01:42 - Art / UI 2 context handback: Phone room panel compact pass + QR button
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Context:
+    - User asked to reduce the open phone room block so it aligns better with the `Бросить` button, and to add a QR button next to `Пересоздать комнату`.
+  - Completed:
+    - Compactified `.phone-room-panel`, phone room header, details cards, copy button, and settings toggle spacing/heights.
+    - Added inert button `#phoneRoomQrBtn` next to `#createPhoneRoomBtn`.
+    - Added icon `assets/icons/qr_code.svg`.
+    - Wrote Dev task `ACTIVE PHONE QR POPUP 2026-06-26 01:42 - Wire phone room QR button` for QR popup functionality.
+    - Bumped `styles.css` cache key in `index.html`.
+  - Files changed by Art / UI 2:
+    - `index.html`
+    - `styles.css`
+    - `assets/icons/qr_code.svg`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/updates.md`
+  - Checks:
+    - `git diff --check`
+    - SVG XML parse for `assets/icons/qr_code.svg`
+    - CSS brace balance
+  - Notes:
+    - Visual/layout only; no room creation, phone controller protocol, QR popup behavior, gameplay, dice, or controller JS changed.
+
+- 2026-06-26 01:35 - Dev 3 context handback: Remove `по маршруту` terminology
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE TEXT CLEANUP 2026-06-26 01:19 - Remove по маршруту terminology`.
+  - Completed:
+    - Removed current player-facing `по маршруту` wording from Event `Справедливость`, artifact/Event `Волшебный кошель`, `Назад к сопернику` fallback log, and related tie-break reason labels.
+    - Updated local card config and CSV for affected Event rows.
+    - Synced Google Sheet `Cards Config` / `event`; readback confirmed `event!L3`, `event!N3`, and `event!L7` no longer contain the phrase.
+    - Historical project-memory entries were not edited only for old phrasing.
+  - Files changed by Dev 3:
+    - `src/cards.config.js`
+    - `cards-google-sheet.csv`
+    - `src/game.js`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/cards.config.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static search: no `по маршруту` / `По маршруту` in `src`, `cards-google-sheet.csv`, `index.html`, or `styles.css`.
+  - Notes:
+    - Rules, card ids/counts/effects, route order, deck lifecycle, and artifact behavior were not changed.
+
+- 2026-06-24 13:19 - Art/UI 1 context handback: Roll result highlight style polished
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE 2026-06-24 13:10 - Roll result highlight style`.
+    - Dev 3 had already wired `.roll-result-highlight` into resolved roll-result lines; Art/UI 1 polished the reusable visual style.
+  - Completed:
+    - Reworked `.roll-result-highlight` into a dark fantasy result panel with warm border, subtle gold side accent, restrained glow, readable line-height, and safe wrapping for long result text.
+    - Added inline coin/dice icon spacing and a soft icon glow inside highlighted result text.
+    - Kept the highlight non-clickable in feel: no hover treatment and `cursor: default`.
+    - Bumped the `styles.css` cache key in `index.html`.
+  - Files changed by Art/UI 1:
+    - `index.html`
+    - `styles.css`
+    - `project-memory/inbox/for-ui.md`
+    - `project-memory/inbox/for-gd.md`
+    - `project-memory/updates.md`
+  - Checks:
+    - `git diff --check`.
+    - JS was not touched by Art/UI 1; `node --check src/game.js` was not required for this pass.
+  - Notes:
+    - Browser smoke was not run in this sandbox.
+    - No gameplay, text content, dice logic, card effects, deck data, or modal flow changed.
+
+- 2026-06-24 13:19 - Dev 3 context handback: Roll result highlight pattern
+  - Pipeline status:
+    - Context note only under the current pipeline rule.
+    - QA was not involved.
+  - Context:
+    - Task was `ACTIVE ROLL RESULT HIGHLIGHT 2026-06-24 13:10 - Highlight rolled-result text in all roll outcome dialogs`.
+  - Completed:
+    - Added reusable `resultHighlight` support to roll-context rendering.
+    - Final resolved roll result lines receive `.roll-result-highlight`; option rows remain unhighlighted.
+    - Added baseline readable styling for `.roll-context-result.roll-result-highlight`; Art/UI 1 can polish further.
+    - Applied to final result dialogs for:
+      - `Портал хаоса`;
+      - `Кубик удачи`;
+      - `Кубик неприятностей`;
+      - shared Event choice rolls such as `Кубик судьбы` and `Общий жребий`;
+      - `Большой приз`;
+      - Joe Auction tie roll result;
+      - `Игра Джо`;
+      - shared player tie-break results.
+    - Did not highlight rolling status lines or option rows like `1-2`, `3-4`, `5-6`.
+    - Bumped host `styles.css` and `game.js` cache keys.
+  - Files changed by Dev 3:
+    - `index.html`
+    - `src/game.js`
+    - `styles.css`
+    - `project-memory/updates.md`
+    - `project-memory/inbox/for-dev.md`
+    - `project-memory/inbox/for-gd.md`
+  - Checks passed:
+    - `node --check src/game.js`
+    - `node --check src/controller.js`
+    - `git diff --check`
+    - Static/source smoke: `resultHighlight` is only on resolved result contexts, while rolling status lines and option rows are not highlighted.
+  - Notes:
+    - Browser smoke was not run because the local server cannot listen in this sandbox (`listen EPERM 0.0.0.0:5173`).
+    - Dice math, probabilities, card effects, reward/penalty rules, text wording, and turn flow were not changed.
+
 - 2026-06-24 02:43 - Dev 1 context handback: Info popup header label removed
   - Pipeline status:
     - Direct user UI polish completed.

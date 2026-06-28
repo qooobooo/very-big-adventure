@@ -47,11 +47,14 @@ Current important state:
 - Google Sheet `Cards Config` is the canonical card-edit source:
   `https://docs.google.com/spreadsheets/d/1dv8cOcoY9P1WZOw2UQ-prUccte2BprZMp0DFCSL0pME/edit`
 - Sheets/tabs: `good`, `bad`, `tadam`, `event`, `shop`. Card names use `title`; Good-card face text uses `description`.
-- Current sheet/local CSV order is `deck,id,title,shortTitle,effect_type,amount,steps,cost,dice,mode,target_deck,notes,count,description`.
+- Current sheet/local CSV order is `deck,id,title,shortTitle,effect_type,amount,steps,cost,dice,mode,target_deck,notes,count,description,artifact_desr`.
 - Card update workflow: update `title` and matching effect fields/logic directly, then sync `src/cards.config.js` and `cards-google-sheet.csv`.
 - If edited title/rules change numbers (for example coin cost), also update the matching effect fields/logic, not only text.
 - `cards-google-sheet.csv` is a local mirror of the Google Sheet column order, not the canonical source.
 - `src/cards.config.js` and `cards-google-sheet.csv` should stay aligned with Google Sheet when card balance or text changes.
+- Google Sheet `Games Log` is the game-history/statistics sheet:
+  `https://docs.google.com/spreadsheets/d/1uC1xUk52IbpHfm9tNtHT2_cmFSNQIKCkct88TsqmmV8/edit`
+- `Games Log` tabs: `Games`, `Players`.
 - Card text style rule: player-facing card text in `title`, `shortTitle`, and `description` must not end with a final period. Internal periods between sentences stay. Internal `notes` may keep punctuation unless displayed on a card.
 - Card face layout rule: keep top art compact, use the lower half for readable text, split long descriptions into clear lines/paragraphs, and avoid large empty lower areas.
 - `src/game.config.js` contains game-level config such as door/enemy strengths.
