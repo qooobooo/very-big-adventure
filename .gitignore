@@ -1,3 +1,8 @@
 .DS_Store
 node_modules
 node_modules/
+
+# Local/generated artifacts that should not be pushed to GitHub.
+output/
+outputs/
+tmp/
