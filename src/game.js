@@ -1,5 +1,5 @@
-import { cardConfig } from "./cards.config.js?v=20260629-0324";
-import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260622-2347";
+import { cardConfig } from "./cards.config.js?v=20260705-0400";
+import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260703-0118";
 
 const boardEl = document.querySelector("#board");
 const scoreStripEl = document.querySelector("#scoreStrip");
@@ -13,6 +13,19 @@ const wideLayoutQuery = window.matchMedia("(min-width: 1200px)");
 const phoneLayoutQuery = window.matchMedia("(max-width: 680px) and (hover: none) and (pointer: coarse)");
 const savedGamesStorageKey = "very-big-adventure.saved-games";
 const googleSheetsSaveUrl = "https://script.google.com/macros/s/AKfycbxNXmGjR9w3U0vmUd9xS5Rc2KHwR8Q7ViB5Pcl70qIOEhwIJp_M_1faO7RvpDtuPLqkdQ/exec";
+const googleSheetsProxySaveUrl = "/api/game-history";
+const autoPlaytestLocalSaveUrl = "/api/autoplay-runs";
+const autoPlaytestMaxTurns = 500;
+const autoPlaytestMaxActionsPerTurn = 100;
+const autoPlaytestMovementStallMs = 5000;
+const autoPlaytestSheetTarget = {
+  spreadsheetId: "1uC1xUk52IbpHfm9tNtHT2_cmFSNQIKCkct88TsqmmV8",
+  gameSheet: "Games Auto",
+  gameSheetId: 190000001,
+  playerSheet: "Players Auto",
+  playerSheetId: 190000002,
+  mode: "auto",
+};
 const defaultUiStyle = "classic";
 const uiStyleValues = new Set(["tabletop", "classic"]);
 const defaultFontStyle = "standard";
@@ -24,6 +37,7 @@ const ui = {
   activePlayerName: document.querySelector("#activePlayerName"),
   activePlayerRole: document.querySelector("#activePlayerRole"),
   autoRevealCards: document.querySelector("#autoRevealCards"),
+  autoPlaytestStatus: document.querySelector("#autoPlaytestStatus"),
   botCount: document.querySelector("#botCount"),
   botSpeed: document.querySelector("#botSpeed"),
   boardSelect: document.querySelector("#boardSelect"),
@@ -41,8 +55,14 @@ const ui = {
   fontStyle: document.querySelector("#fontStyle"),
   fullscreenBtn: document.querySelector("#fullscreenBtn"),
   hidePlayers: document.querySelector("#hidePlayers"),
+  historyHeaderBtn: document.querySelector("#historyHeaderBtn"),
+  historyPanel: document.querySelector("#historyPanel"),
   infoHistoryBtn: document.querySelector("#infoHistoryBtn"),
   infoHistoryCloseBtn: document.querySelector("#infoHistoryCloseBtn"),
+  infoHistoryCopyBtn: document.querySelector("#infoHistoryCopyBtn"),
+  infoHistoryCopyFeedback: document.querySelector("#infoHistoryCopyFeedback"),
+  infoHistoryFullBtn: document.querySelector("#infoHistoryFullBtn"),
+  infoHistoryListTitle: document.querySelector("#infoHistoryListTitle"),
   infoHistoryPopup: document.querySelector("#infoHistoryPopup"),
   modifierPlayerStatus: document.querySelector("#modifierPlayerStatus"),
   monsterStrengthMode: document.querySelector("#monsterStrengthMode"),
@@ -67,7 +87,13 @@ const ui = {
   phoneRoomShake: document.querySelector("#phoneRoomShake"),
   phoneRoomStatus: document.querySelector("#phoneRoomStatus"),
   phoneRoomUrl: document.querySelector("#phoneRoomUrl"),
+  playerShopBody: document.querySelector("#playerShopBody"),
+  playerShopCloseBtn: document.querySelector("#playerShopCloseBtn"),
+  playerShopPopup: document.querySelector("#playerShopPopup"),
+  playerShopSubtitle: document.querySelector("#playerShopSubtitle"),
+  playerShopTitle: document.querySelector("#playerShopTitle"),
   playerCount: document.querySelector("#playerCount"),
+  randomFirstPlayer: document.querySelector("#randomFirstPlayer"),
   referenceHeaderBtn: document.querySelector("#referenceHeaderBtn"),
   referenceOutput: document.querySelector("#referenceOutput"),
   referencePanel: document.querySelector("#referencePanel"),
@@ -322,6 +348,7 @@ let routeNext;
 let cellEvents;
 const visibleReferenceSections = new Set();
 let referencePanelOpen = false;
+let historyPanelOpen = false;
 
 const eventToastVisibleMs = 3000;
 const eventToastFadeMs = 800;
@@ -331,6 +358,7 @@ const coinDoubleBannerVisibleMs = 3400;
 const coinDoubleBannerFadeMs = 220;
 const tadamActivationFlashMs = 2800;
 const humanRollCooldownMs = 650;
+const infoHistoryDefaultLimit = 50;
 const blackMarketStrengthCards = 1;
 const blackMarketStrengthBonus = 2;
 const blackMarketCoinsCards = 2;
@@ -343,10 +371,17 @@ const diceFortuneCoinReward = 10;
 const diceFortuneBackwardStepPenalty = 10;
 const coinIconSrc = "./assets/icons/coin.png?v=20260524-0155";
 const diceIconSrc = "./assets/icons/dice.png?v=20260524-0305";
+const strengthIconSrc = "./assets/icons/strength_sword_512.png";
+const stepsIconSrc = "./assets/icons/steps_512.png";
 const enemyIconSrc = "./assets/icons/enemy_512.png";
 const magicWalletIconSrc = "./assets/icons/artifact_magic_wallet_512.png";
 const heroSwordIconSrc = "./assets/icons/artifact_hero_sword_512.png";
 const antiBadIconSrc = "./assets/icons/artifact_anti_bad_512.png";
+const joeCouponIconSrc = "./assets/icons/artifact_joe_coupon_512.png";
+const speedBootsIconSrc = "./assets/icons/artifact_speed_boots_512.png";
+const magicPickaxeIconSrc = "./assets/icons/artifact_magic_pickaxe_512.png?v=20260705-0400";
+const goldenHorseshoeIconSrc = "./assets/icons/artifact_golden_horseshoe_512.png";
+const joeCouponShopChoiceId = "__joe_coupon_all__";
 const finalEnemyIconSrc = "./assets/icons/final_enemy.png?v=20260525-0146";
 const blackMarketIconSrc = "./assets/icons/black_market_ultra_simple_512.png?v=20260619-0138";
 const chaosPortalIconSrc = "./assets/icons/chaos_portal_1254.png?v=20260601-0276";
@@ -431,7 +466,7 @@ const phoneRoom = {
   diceVisible: true,
   mode: defaultPhoneRoomMode,
   panelOpen: false,
-  cardsAsText: false,
+  cardsAsText: true,
   shakeEnabled: false,
   snapshotTimer: null,
 };
@@ -443,6 +478,7 @@ let actionPromptChoiceResolver = null;
 let actionPromptRollContext = null;
 let botActionTimer = null;
 const botShopOfferChoices = new WeakMap();
+let autoPlaytestRun = null;
 let eventToastFadeTimer = null;
 let eventToastHideTimer = null;
 let monsterDefeatBannerHideTimer = null;
@@ -457,6 +493,9 @@ let phoneRoomHeaderFeedbackTimer = null;
 const phoneRoomHeaderFeedbackText = "Комната скопирована";
 let phoneDiceRollClearTimer = null;
 let transientUiResetToken = 0;
+let gameLogEntries = [];
+let infoHistoryShowFull = false;
+let infoHistoryCopyFeedbackTimer = null;
 
 function applyBoardConfig(boardId) {
   const config = boardConfigs[boardId] || boardConfigs.field2;
@@ -652,7 +691,15 @@ function newGame() {
       antiBadOwnerId: null,
       heroSwordCard: null,
       heroSwordOwnerId: null,
+      joeCouponCard: null,
+      joeCouponOwnerId: null,
       magicWalletOwnerId: null,
+      magicPickaxeCard: null,
+      magicPickaxeOwnerId: null,
+      goldenHorseshoeCard: null,
+      goldenHorseshoeOwnerId: null,
+      speedBootsCard: null,
+      speedBootsOwnerId: null,
     },
     turns: 0,
     unityBattleProgress: null,
@@ -660,13 +707,40 @@ function newGame() {
     walkPath: [],
   };
   state.history = createGameHistory(state.players);
+  log("<strong>Игра началась!</strong>");
+  resolveRandomFirstPlayerStart();
 
   boardEl.dataset.ready = "false";
   boardEl.dataset.boardId = activeBoardConfig.id;
   boardEl.style.setProperty("--board-cols", String(boardCols));
   boardEl.style.setProperty("--board-rows", String(boardRows));
-  log("<strong>Игра началась.</strong> Побеждайте врагов, чтобы открывать двери.");
   render();
+}
+
+function resolveRandomFirstPlayerStart() {
+  if (!state?.gameSettings?.randomFirstPlayer || !state.players?.length) return;
+
+  let contenders = state.players.slice();
+  let round = 1;
+  const logLines = [];
+
+  while (contenders.length > 1) {
+    const rolls = contenders.map((player) => ({ player, value: d6() }));
+    const maxRoll = Math.max(...rolls.map((roll) => roll.value));
+    const leaders = rolls.filter((roll) => roll.value === maxRoll).map((roll) => roll.player);
+    const rollText = rolls.map((roll) => `${playerName(roll.player)}: <strong>${roll.value}</strong>`).join(", ");
+    logLines.push(`${round === 1 ? "Стартовый бросок" : "Переброс лидеров"}: ${rollText}`);
+    contenders = leaders;
+    round += 1;
+  }
+
+  const starter = contenders[0];
+  if (!starter) return;
+  const starterIndex = state.players.findIndex((player) => player.id === starter.id);
+  if (starterIndex < 0) return;
+  state.activePlayer = starterIndex;
+  logLines.forEach((line) => log(line));
+  log(`Первым ходит ${playerName(starter)}.`);
 }
 
 function resetTransientUi() {
@@ -679,8 +753,14 @@ function resetTransientUi() {
   hardHideCoinDoubleBanner();
   hardHideBattleHud();
   closeInfoHistoryPopup();
+  closePlayerShopPopup();
   clearDiceThrowLayers();
   clearBoardTransientOverlays();
+  gameLogEntries = [];
+  infoHistoryShowFull = false;
+  window.clearTimeout(infoHistoryCopyFeedbackTimer);
+  infoHistoryCopyFeedbackTimer = null;
+  if (ui.infoHistoryCopyFeedback) ui.infoHistoryCopyFeedback.hidden = true;
 
   if (ui.diceValue) {
     ui.diceValue.classList.remove("rolling");
@@ -818,8 +898,9 @@ function collectGameSettings() {
     fontStyle: selectedFontStyle(),
     monsterStrengthMode: monsterStrengthMode(),
     playerCount,
+    randomFirstPlayer: Boolean(ui.randomFirstPlayer?.checked),
     hidePlayers: Boolean(ui.hidePlayers?.checked),
-    showWalkPath: Boolean(ui.showWalkPath?.checked),
+    showWalkPath: !Boolean(ui.showWalkPath?.checked),
     startingCoins: selectedStartingCoins(),
     uiStyle: selectedUiStyle(),
   };
@@ -914,6 +995,7 @@ function recordTadamPlayed() {
 }
 
 async function rollAndMove({ animate = true } = {}) {
+  if (fastModeActive()) animate = false;
   if (
     movementActionInProgress ||
     state.finished ||
@@ -931,11 +1013,13 @@ async function rollAndMove({ animate = true } = {}) {
 
   movementActionInProgress = true;
   const player = currentPlayer();
+  setAutoPlaytestPhase("movement:start", { player });
   const botTurnPlayerId = isBot(player) ? player.id : null;
   state.botTurnPlayerId = botTurnPlayerId;
   recordTurnStarted(player);
 
   try {
+    setAutoPlaytestPhase("movement:turn-start-effects", { player });
     if (await resolveNextTurnPayOrSkip(player)) {
       completeMovementTurn(player);
       return;
@@ -943,8 +1027,10 @@ async function rollAndMove({ animate = true } = {}) {
 
     await resolveStartTurnTadamEffects(player);
     applyTurnStartArtifacts(player);
+    resolveGoldenCollectionStart(player);
     await resolveSpeedPotionStart(player);
     await resolveTurnShopBuys(player);
+    setAutoPlaytestPhase("movement:extra-die-choice", { player });
     const extraDice = await chooseExtraDie(player, animate);
     state.isAnimating = animate;
     state.movingPlayerId = animate ? player.id : null;
@@ -954,19 +1040,24 @@ async function rollAndMove({ animate = true } = {}) {
     let rolls = rollDice(totalDiceForPlayer(player, extraDice));
     recordDiceThrown(player, rolls.length);
     const bonus = playerStepBonus(player);
+    setAutoPlaytestPhase("movement:roll", { player, rolls });
     if (animate) await animateDice(rolls, { bonus, player });
+    setAutoPlaytestPhase("movement:dice-control", { player, rolls });
     rolls = await maybeUseDiceControl(player, rolls, { mode: "movement", title: "Контроль кубика: ход" });
     const rolled = rolls.reduce((sum, value) => sum + value, 0);
+    resolveGoldenHorseshoeMovementReward(player, rolls);
+    setAutoPlaytestPhase("movement:duplicate-rewards", { player, rolls });
     const duplicateSteps = await resolveDuplicateDiceRewards(player, rolls);
     const totalSteps = rolled + bonus + duplicateSteps;
     state.dice = totalSteps;
-    state.walkPath = animate && ui.showWalkPath?.checked ? buildWalkPath(player, totalSteps) : [];
+    state.walkPath = animate && !ui.showWalkPath?.checked ? buildWalkPath(player, totalSteps) : [];
     renderTileStates();
     if (animate && state.walkPath.length > 0) await sleep(160);
 
     let shouldResolveLanding = totalSteps > 0;
     let landingContext = { movement: "forward" };
     for (let step = 0; step < totalSteps && player.position !== finishCell; step += 1) {
+      setAutoPlaytestPhase("movement:step", { player, step: step + 1, totalSteps, cell: player.position });
       const currentPosition = player.position;
       const nextPosition = await chooseNextPosition(player, currentPosition, totalSteps - step, animate);
       if (!nextPosition) {
@@ -992,6 +1083,7 @@ async function rollAndMove({ animate = true } = {}) {
       recordPlayerMoved(player, nextPosition);
       resolveMagicWalletOvertake(player, beforeMoveCell, nextPosition);
       consumeWalkPathCell(nextPosition);
+      setAutoPlaytestPhase("movement:pass-through", { player, step: step + 1, totalSteps, cell: nextPosition });
       if (step < totalSteps - 1) await resolveJumpSteal(player);
       if (animate) {
         render();
@@ -1010,6 +1102,7 @@ async function rollAndMove({ animate = true } = {}) {
       }
     }
 
+    setAutoPlaytestPhase("movement:landing", { player, cell: player.position });
     state.isAnimating = false;
     state.movingPlayerId = null;
     state.pendingMoveDieReroll = null;
@@ -1023,6 +1116,7 @@ async function rollAndMove({ animate = true } = {}) {
     completeMovementTurn(player);
   } finally {
     movementActionInProgress = false;
+    clearAutoPlaytestPhase();
     if (botTurnPlayerId === null) startHumanRollCooldown();
     if (state.botTurnPlayerId === botTurnPlayerId) state.botTurnPlayerId = null;
     state.isAnimating = false;
@@ -1154,7 +1248,7 @@ function randomChoice(items) {
 }
 
 function botDelay(kind = "default") {
-  if (fastBotsEnabled()) return 0;
+  if (fastModeActive() || fastBotsEnabled()) return 0;
 
   const ranges = {
     choice: [1800, 2800],
@@ -1210,6 +1304,10 @@ function botChoiceDelay(kind = "choice") {
 
 function fastBotsEnabled() {
   return ui.botSpeed?.value === "fast";
+}
+
+function fastModeActive() {
+  return Boolean(autoPlaytestRun?.fastMode);
 }
 
 function clamp(value, min, max) {
@@ -1357,7 +1455,7 @@ function shopDuplicatePenalty(player, card) {
   if (["monster-strength-plus3", "turn-strength-buy", "turn-steps-buy"].includes(effectType)) {
     return [0, 5, 14, 26, 40][Math.min(copies, 4)] || 40;
   }
-  if (["monster-bribe-plus1", "shop-choice-3-cost-3", "shop-fixed-cost-3", "shop-unlimited-buy", "start-strength"].includes(effectType)) {
+  if (["shop-choice-3-cost-3", "shop-fixed-cost-3", "golden-collection", "start-strength"].includes(effectType)) {
     return [0, 4, 11, 20, 32][Math.min(copies, 4)] || 32;
   }
   return 5 * copies;
@@ -1707,9 +1805,6 @@ function scoreShopCard(player, card) {
       score += winChanceDeltaScore(gate.chance, afterChance, gate.weight) * 0.9 * personality.battle;
     }
     if (player.coins <= 7) score -= 10 * personality.economy;
-  } else if (effect.type === "monster-bribe-plus1") {
-    score = (state.players.length > 1 ? 13 : 2) * personality.chaos;
-    if (gate?.pressure > 0.65) score -= 8 / personality.risk;
   } else if (effect.type === "duplicate-dice-coins") {
     score = (totalDiceForPlayer(player) >= 2 ? 20 : 10) * personality.economy;
     if (playerDiceBonus(player) >= 1) score += 4;
@@ -1718,15 +1813,28 @@ function scoreShopCard(player, card) {
     if (playerDiceBonus(player) >= 1) score += 5;
   } else if (effect.type === "tadam-income") {
     score = (phase === "early" ? 24 : phase === "mid" ? 18 : 8) * personality.economy;
+  } else if (effect.type === "event-income") {
+    score = (phase === "early" ? 22 : phase === "mid" ? 17 : 8) * personality.economy;
+  } else if (effect.type === "monster-victory-strength") {
+    score = 18 * personality.battle;
+    if (gate) {
+      const afterChance = estimateWinChance(gate.dice, gate.bonus + (effect.amount || 1), gate.target);
+      score += winChanceDeltaScore(gate.chance, afterChance, gate.weight) * 0.5 * personality.battle;
+    }
+  } else if (effect.type === "monster-victory-steps") {
+    const leader = leadingPlayer();
+    const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+    score = (16 + Math.min(10, Math.max(0, lag * 0.18))) * personality.progress;
   } else if (effect.type === "shop-choice-3-cost-3") {
     score = (phase === "early" ? 26 : 20) * personality.shop;
     if (player.coins >= 6) score += 6 * personality.economy;
   } else if (effect.type === "shop-fixed-cost-3") {
     score = (phase === "early" ? 24 : 18) * personality.shop;
     if (player.coins >= 6) score += 8 * personality.economy;
-  } else if (effect.type === "shop-unlimited-buy") {
-    score = (player.coins >= 12 ? 22 : 10) * personality.shop;
-    if (phase === "early") score += 6;
+  } else if (effect.type === "golden-collection") {
+    const artifactCount = playerArtifacts(player).length;
+    score = (phase === "early" ? 26 : phase === "mid" ? 20 : 12) * personality.economy;
+    score += Math.min(18, artifactCount * 6) * personality.economy;
   } else if (effect.type === "turn-strength-buy") {
     score = 18 * personality.battle;
     if (gate) {
@@ -2710,7 +2818,6 @@ function highlightedPlayerId() {
 
 function renderScores() {
   scoreStripEl.innerHTML = "";
-  const compactBonusLabels = isPhoneLayout();
   for (const player of state.players) {
     const battleBonus = playerBattleBonus(player);
     const rageBonus = nextMonsterBattleBonus(player);
@@ -2731,8 +2838,6 @@ function renderScores() {
         </span>
         <span class="score-player-name">
           <strong>${player.name}</strong>
-          ${stepBonus ? `<span class="score-bonus score-step-bonus" title="Шаги">${stepBonusText(stepBonus, compactBonusLabels)}</span>` : ""}
-          ${battleBonus ? `<span class="score-battle-bonus" title="Сила">${battleForceText(battleBonus, compactBonusLabels)}</span>` : ""}
           ${rageBonus ? `<span class="score-rage-bonus" title="Зелье ярости: +${rageBonus} в следующей битве с монстром">Зелье +${rageBonus}</span>` : ""}
           ${curseStatus ? `<span class="score-curse-bonus" title="Сглаз сработает в следующем бою">${nextBattlePenaltyText(curseStatus, true)}</span>` : ""}
           ${badExtraStatus ? `<span class="score-curse-bonus" title="Следующая карта Плохо даст еще одну">${nextBadExtraDrawText(badExtraStatus, true)}</span>` : ""}
@@ -2744,16 +2849,122 @@ function renderScores() {
       </div>
       <span class="score-cell-ribbon">${iconizeHtml(tileTitle(player.position))}</span>
       <div class="score-stats">
-        <span>${coinAmount(player.coins)}</span>
-        <span>${diceAmount(totalDiceForPlayer(player))}</span>
+        <span title="Сила">${strengthAmount(battleBonus >= 0 ? `+${battleBonus}` : battleBonus)}</span>
+        <span title="Шаги">${stepsAmount(stepBonus >= 0 ? `+${stepBonus}` : stepBonus)}</span>
+        <span title="Монеты">${coinAmount(player.coins)}</span>
+        <span title="Кубики">${diceAmount(totalDiceForPlayer(player))}</span>
       </div>
       <div class="score-shop">
-        <span>Лавка Джо</span>
+        <div class="score-shop-head">
+          <span>Лавка Джо</span>
+          <button class="score-shop-view" type="button" data-player-shop-id="${player.id}" aria-label="Показать карты Лавка Джо игрока ${escapeHtml(player.name)}" title="Показать карты Лавка Джо">Карты</button>
+        </div>
         <div>${renderShopBadges(player)}</div>
       </div>
     `;
     scoreStripEl.append(card);
   }
+}
+
+function openPlayerShopPopup(playerId) {
+  if (!ui.playerShopPopup) return;
+  const player = state.players.find((item) => String(item.id) === String(playerId));
+  if (!player) return;
+
+  ui.playerShopPopup.hidden = false;
+  const heldCardsCount = playerOwnedNonShopCards(player).length;
+  if (ui.playerShopTitle) ui.playerShopTitle.textContent = `${player.name}: Карты`;
+  if (ui.playerShopSubtitle) {
+    ui.playerShopSubtitle.textContent = `${heldCardsCount} ${genericCardsWord(heldCardsCount)}, ${player.items.length} ${shopCardsWord(player.items.length)}`;
+  }
+  renderPlayerShopPopup(player);
+  ui.playerShopCloseBtn?.focus({ preventScroll: true });
+}
+
+function closePlayerShopPopup() {
+  if (!ui.playerShopPopup) return;
+  ui.playerShopPopup.hidden = true;
+  if (ui.playerShopBody) ui.playerShopBody.innerHTML = "";
+}
+
+function playerShopPopupOpen() {
+  return Boolean(ui.playerShopPopup && !ui.playerShopPopup.hidden);
+}
+
+function renderPlayerShopPopup(player) {
+  if (!ui.playerShopBody) return;
+  const ownedCardsMarkup = renderPlayerOwnedCardsSection(player);
+  const shopCardsMarkup = renderPlayerShopCardsSection(player);
+  ui.playerShopBody.innerHTML = `${ownedCardsMarkup}${shopCardsMarkup}`;
+}
+
+function playerOwnedNonShopCards(player) {
+  return [
+    ...pendingGoodCards(player).map((card) => ({ card, deckId: "good", label: "Хорошо" })),
+    ...pendingBadCards(player).map((card) => ({ card, deckId: "bad", label: "Плохо" })),
+    ...eventStatusCards(player).map((card) => ({ card, deckId: "event", label: "Событие" })),
+  ];
+}
+
+function renderPlayerOwnedCardsSection(player) {
+  const cards = playerOwnedNonShopCards(player);
+  const content = cards.length
+    ? `<div class="player-shop-grid player-shop-grid-owned">${cards.map(renderPlayerOwnedCardCell).join("")}</div>`
+    : `<div class="player-shop-empty player-shop-empty-compact">У ${escapeHtml(player.name)} пока нет карт Хорошо, Плохо или События</div>`;
+  return `
+    <section class="player-shop-section player-shop-owned-section" aria-label="Карты Хорошо, Плохо и События">
+      <h3>Карты игрока</h3>
+      ${content}
+    </section>
+  `;
+}
+
+function renderPlayerOwnedCardCell({ card, deckId, label }) {
+  const title = card.title || card.shortTitle || label;
+  return `
+    <div class="player-shop-card-cell player-shop-owned-card-cell" title="${escapeHtml(`${label}: ${title}`)}">
+      ${referenceCardMarkup(deckId, card, true)}
+      <span class="player-shop-card-label">${escapeHtml(label)}</span>
+    </div>
+  `;
+}
+
+function renderPlayerShopCardsSection(player) {
+  const items = player.items || [];
+  const content = items.length
+    ? `<div class="player-shop-grid">${renderGroupedPlayerShopCards(items)}</div>`
+    : `<div class="player-shop-empty player-shop-empty-compact">У ${escapeHtml(player.name)} пока нет карт Лавка Джо</div>`;
+  return `
+    <section class="player-shop-section player-shop-joe-section" aria-label="Карты Лавки Джо">
+      <h3>Лавка Джо</h3>
+      ${content}
+    </section>
+  `;
+}
+
+function renderGroupedPlayerShopCards(items) {
+  return groupedShopItems(items)
+    .map((group, index) => ({ ...group, firstIndex: index }))
+    .sort((a, b) => (b.count - a.count) || (a.firstIndex - b.firstIndex))
+    .map(({ count, item }) => {
+      const revealed = !isShopItemFaceDown(item);
+      const title = item.title || item.shortTitle || "Лавка Джо";
+      return `
+        <div class="player-shop-card-cell" title="${escapeHtml(count > 1 ? `${title} x${count}` : title)}">
+          ${shopCardsMarkup([item], { revealed })}
+          ${count > 1 ? `<span class="player-shop-card-count" aria-label="${escapeHtml(`${count} карт`)}">x${count}</span>` : ""}
+          ${revealed ? "" : '<span class="player-shop-face-down-label">Закрыта</span>'}
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function genericCardsWord(count) {
+  const abs = Math.abs(Number(count) || 0);
+  if (abs % 10 === 1 && abs % 100 !== 11) return "карта";
+  if ([2, 3, 4].includes(abs % 10) && ![12, 13, 14].includes(abs % 100)) return "карты";
+  return "карт";
 }
 
 function phoneControllersEnabled() {
@@ -4352,10 +4563,51 @@ function buildGameHistorySnapshot() {
     }),
     history: state.history,
     sheetExport,
-    chronicle: Array.from(gameLogEl?.children || [])
-      .filter((item) => !item.classList.contains("info-history-current-entry"))
-      .map((item) => item.textContent.trim()),
+    chronicle: gameLogEntries.map((entry) => entry.text),
   });
+}
+
+function buildAutoPlaytestSnapshot(meta = {}) {
+  const snapshot = buildGameHistorySnapshot();
+  const finishedAt = Date.now();
+  const startedAt = meta.startedAt || snapshot.history?.startedAt || finishedAt;
+  const elapsedMs = Math.max(0, finishedAt - startedAt);
+  const auto = {
+    abortReason: meta.abortReason || "",
+    aborted: Boolean(meta.abortReason),
+    elapsedMs,
+    fastMode: true,
+    finished: Boolean(state?.finished && !meta.abortReason),
+    readableDuration: formatDuration(elapsedMs),
+    runId: meta.runId || "",
+    runIndex: meta.runIndex ?? "",
+    seed: meta.seed || "",
+    sheetTarget: autoPlaytestSheetTarget,
+    status: meta.abortReason ? "aborted" : (state?.finished ? "finished" : "aborted"),
+  };
+
+  snapshot.autoRun = auto;
+  snapshot.sheetTarget = autoPlaytestSheetTarget;
+  snapshot.game = {
+    ...snapshot.game,
+    abortReason: auto.abortReason,
+    aborted: auto.aborted,
+    elapsedMs: auto.elapsedMs,
+    fastMode: auto.fastMode,
+    readableDuration: auto.readableDuration,
+    runId: auto.runId,
+    runIndex: auto.runIndex,
+    seed: auto.seed,
+    status: auto.status,
+  };
+  snapshot.players = snapshot.players.map((player) => ({
+    ...player,
+    autoRunId: auto.runId,
+    autoRunIndex: auto.runIndex,
+    autoSeed: auto.seed,
+    autoStatus: auto.status,
+  }));
+  return snapshot;
 }
 
 function cloneData(data) {
@@ -4390,21 +4642,37 @@ async function saveCurrentGameHistory({ autosave = false } = {}) {
 
   if (!autosave) flashSaveHistoryButton("Отправка");
   try {
-    await sendGameHistoryToGoogleSheets(snapshot);
-    if (autosave) {
-      showEventToast("История партии сохранена автоматически.");
+    const remoteResult = await sendGameHistoryToGoogleSheets(snapshot);
+    if (remoteResult.verified) {
+      if (autosave) {
+        showEventToast("История партии сохранена автоматически.");
+      } else {
+        flashSaveHistoryButton("Сохранено");
+        showEventToast("История партии сохранена локально и подтверждена Google Таблицей.");
+      }
     } else {
-      flashSaveHistoryButton("Сохранено");
-      showEventToast("История партии сохранена локально и отправлена в Google Таблицу.");
+      if (autosave) {
+        showEventToast(unverifiedHistorySaveMessage(remoteResult));
+      } else {
+        flashSaveHistoryButton("Отправлено");
+        showEventToast(unverifiedHistorySaveMessage(remoteResult));
+      }
     }
-    return { localSaved: true, remoteSaved: true, snapshot };
+    return {
+      localSaved: true,
+      remoteSaved: Boolean(remoteResult.verified),
+      remoteSent: Boolean(remoteResult.sent),
+      remoteVerified: Boolean(remoteResult.verified),
+      remoteResult,
+      snapshot,
+    };
   } catch (error) {
     if (autosave) {
       console.warn("History autosave remote export failed; local save is available.", error);
-      showEventToast("История автоматически сохранена локально. В Google Таблицу отправить не удалось.");
+      showEventToast(historySaveFailureMessage(error, true));
     } else {
       flashSaveHistoryButton("Локально");
-      showEventToast("История сохранена локально. В Google Таблицу отправить не удалось.");
+      showEventToast(historySaveFailureMessage(error, false));
     }
     return { localSaved: true, remoteSaved: false, snapshot, error };
   }
@@ -4441,7 +4709,52 @@ function scheduleFinishedGameHistoryAutosave() {
 }
 
 function sendGameHistoryToGoogleSheets(snapshot) {
-  return window.fetch(googleSheetsSaveUrl, {
+  return sendGameHistoryViaProxy(snapshot)
+    .catch((error) => {
+      if (!error?.fallbackToDirect) throw error;
+      return sendGameHistoryDirect(snapshot, { fallbackReason: error.message || String(error) });
+    });
+}
+
+async function sendGameHistoryViaProxy(snapshot) {
+  if (!window.location || !/^https?:$/.test(window.location.protocol)) {
+    const error = new Error("Local history proxy is unavailable outside HTTP(S).");
+    error.fallbackToDirect = true;
+    throw error;
+  }
+
+  const response = await window.fetch(googleSheetsProxySaveUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json;charset=utf-8",
+    },
+    body: JSON.stringify(snapshot),
+  });
+  if (response.status === 404) {
+    const error = new Error("Local history proxy endpoint is unavailable.");
+    error.fallbackToDirect = true;
+    throw error;
+  }
+  let data = null;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+  if (!response.ok || data?.ok === false) {
+    const message = data?.error || `Google Sheets proxy failed: HTTP ${response.status}`;
+    throw new Error(message);
+  }
+  return {
+    data,
+    sent: true,
+    transport: "proxy",
+    verified: Boolean(data?.verified || data?.result?.ok === true),
+  };
+}
+
+async function sendGameHistoryDirect(snapshot, { fallbackReason = "" } = {}) {
+  const response = await window.fetch(googleSheetsSaveUrl, {
     method: "POST",
     mode: "no-cors",
     headers: {
@@ -4449,6 +4762,82 @@ function sendGameHistoryToGoogleSheets(snapshot) {
     },
     body: JSON.stringify(snapshot),
   });
+  return {
+    fallbackReason,
+    responseType: response.type,
+    sent: true,
+    transport: "direct-no-cors",
+    verified: false,
+  };
+}
+
+function unverifiedHistorySaveMessage(remoteResult) {
+  if (remoteResult?.fallbackReason) {
+    return "История сохранена локально. Сервер сохранения устарел или недоступен; прямой запрос отправлен без подтверждения, проверь таблицу.";
+  }
+  return "История сохранена локально. Запрос в Google Таблицу отправлен, но запись не подтверждена.";
+}
+
+function historySaveFailureMessage(error, autosave = false) {
+  const message = error?.message || String(error || "");
+  const prefix = autosave
+    ? "История автоматически сохранена локально."
+    : "История сохранена локально.";
+  if (/did not return ok:true|Redeploy/i.test(message)) {
+    return `${prefix} Google Web App не обновлен: сделай Deploy -> Manage deployments -> Edit -> New version -> Deploy.`;
+  }
+  if (/Apps Script rejected|Apps Script HTTP|Google Sheets proxy failed/i.test(message)) {
+    return `${prefix} Google Таблица не приняла запись: ${message}`;
+  }
+  return `${prefix} В Google Таблицу отправить не удалось.`;
+}
+
+async function saveAutoPlaytestSnapshot(snapshot) {
+  const results = { localSaved: false, remoteSaved: false };
+  try {
+    const response = await window.fetch(autoPlaytestLocalSaveUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json;charset=utf-8",
+      },
+      body: JSON.stringify(snapshot),
+    });
+    if (!response.ok) {
+      throw new Error(`Local autorun export failed: HTTP ${response.status}`);
+    }
+    results.localSaved = true;
+    snapshot.autoRun = {
+      ...(snapshot.autoRun || {}),
+      localSaved: true,
+    };
+    snapshot.game = {
+      ...(snapshot.game || {}),
+      localSaved: true,
+    };
+  } catch (error) {
+    console.warn("Auto playtest local export failed.", error);
+    results.localError = error;
+    snapshot.autoRun = {
+      ...(snapshot.autoRun || {}),
+      localSaveError: error?.message || String(error),
+      localSaved: false,
+    };
+    snapshot.game = {
+      ...(snapshot.game || {}),
+      localSaveError: error?.message || String(error),
+    };
+  }
+
+  try {
+    const remoteResult = await sendGameHistoryToGoogleSheets(snapshot);
+    results.remoteResult = remoteResult;
+    results.remoteSaved = Boolean(remoteResult.verified);
+    results.remoteSent = Boolean(remoteResult.sent);
+  } catch (error) {
+    console.warn("Auto playtest Google export failed.", error);
+    results.remoteError = error;
+  }
+  return results;
 }
 
 function flashSaveHistoryButton(text) {
@@ -4508,7 +4897,7 @@ function playerArtifacts(player) {
       icon: magicWalletIconSrc,
       id: "magic-wallet",
       shortTitle: "+5/ход",
-      title: "Волшебный кошель",
+      title: "Волшебный Кошель",
     });
   }
   if (state.artifacts.heroSwordOwnerId === player.id) {
@@ -4527,6 +4916,42 @@ function playerArtifacts(player) {
       id: "anti-bad",
       shortTitle: "Плохо +5",
       title: "Анти-Плохо",
+    });
+  }
+  if (state.artifacts.joeCouponOwnerId === player.id) {
+    artifacts.push({
+      hint: "забери все открытые карты Лавки Джо за 10 монет",
+      icon: joeCouponIconSrc,
+      id: "joe-coupon",
+      shortTitle: "Купон",
+      title: "Купон Джо",
+    });
+  }
+  if (state.artifacts.speedBootsOwnerId === player.id) {
+    artifacts.push({
+      hint: "+5 к шагам",
+      icon: speedBootsIconSrc,
+      id: "speed-boots",
+      shortTitle: "+5 шагов",
+      title: "Сапоги Скорости",
+    });
+  }
+  if (state.artifacts.magicPickaxeOwnerId === player.id) {
+    artifacts.push({
+      hint: "+2 к получению монет",
+      icon: magicPickaxeIconSrc,
+      id: "magic-pickaxe",
+      shortTitle: "Монеты +2",
+      title: "Волшебная Кирка",
+    });
+  }
+  if (state.artifacts.goldenHorseshoeOwnerId === player.id) {
+    artifacts.push({
+      hint: "1 в броске движения дает 3 монеты",
+      icon: goldenHorseshoeIconSrc,
+      id: "golden-horseshoe",
+      shortTitle: "1:+3",
+      title: "Золотая Подкова",
     });
   }
   return artifacts;
@@ -4555,7 +4980,64 @@ function eventStatusText(player) {
 function applyTurnStartArtifacts(player) {
   if (!player || state?.artifacts?.magicWalletOwnerId !== player.id) return;
   addCoins(player, 5);
-  log(`${playerName(player)} получает <strong>${coinAmount(5)}</strong> от артефакта <strong>Волшебный кошель</strong>.`, { toast: true });
+  log(`${playerName(player)} получает <strong>${coinAmount(5)}</strong> от артефакта <strong>Волшебный Кошель</strong>.`, { toast: true });
+}
+
+function resolveGoldenCollectionStart(player) {
+  if (!player || state.finished) return;
+  const cards = activeShopEffectItems(player, "golden-collection");
+  if (!cards.length) return;
+
+  const artifactCount = playerArtifacts(player).length;
+  for (const card of cards) {
+    const baseAmount = Number(card.effect?.amount) || 1;
+    const artifactAmount = Number(card.effect?.artifactAmount) || 2;
+    const amount = Math.max(0, baseAmount + artifactCount * artifactAmount);
+    const gained = addCoins(player, amount);
+    if (gained <= 0) continue;
+
+    const bonusText = artifactCount
+      ? `: ${baseAmount} + ${artifactCount} артефакт${artifactCount === 1 ? "" : artifactCount < 5 ? "а" : "ов"} x ${artifactAmount}`
+      : "";
+    const actualText = gained !== amount ? `, с бонусами ${coinAmount(gained)}` : "";
+    log(`${playerName(player)} получает ${coinAmount(amount)}${actualText} по ${cardNameStrong(card.title)} в начале хода${bonusText}.`, {
+      toast: true,
+    });
+  }
+}
+
+function resolveGoldenHorseshoeMovementReward(player, rolls = []) {
+  if (!hasGoldenHorseshoeArtifact(player)) return;
+  if (!rolls.some((value) => value === 1)) return;
+
+  const amount = 3;
+  const gained = addCoins(player, amount);
+  const actualText = gained !== amount ? `, с бонусами ${coinAmount(gained)}` : "";
+  log(`${playerName(player)} использует <strong>Золотую Подкову</strong>: в броске движения есть 1, получает ${coinAmount(amount)}${actualText}.`, {
+    toast: true,
+  });
+}
+
+function resolveMonsterVictoryShopRewards(player) {
+  const strength = activeShopEffectAmount(player, "monster-victory-strength", "amount");
+  const steps = activeShopEffectAmount(player, "monster-victory-steps", "steps");
+  if (!strength && !steps) return "";
+
+  const parts = [];
+  if (strength) {
+    addBattleBonus(player, strength);
+    parts.push(battleForceText(strength));
+  }
+  if (steps) {
+    addStepBonus(player, steps);
+    parts.push(stepBonusText(steps));
+  }
+
+  const rewardText = parts.join(", ");
+  log(`${playerName(player)} получает <strong>${rewardText}</strong> по <strong>Лавке Джо</strong> за победу над монстром.`, {
+    toast: true,
+  });
+  return ` <strong>Лавка Джо</strong>: ${rewardText}.`;
 }
 
 function resolveMagicWalletOvertake(player, fromCell, toCell) {
@@ -4574,13 +5056,13 @@ function transferMagicWallet(target, reason = "") {
   if (!target || !state?.artifacts) return false;
   const previous = state.players.find((player) => player.id === state.artifacts.magicWalletOwnerId);
   if (previous?.id === target.id) {
-    log(`<strong>Волшебный кошель</strong> остается у ${playerName(target)}.`, { toast: true });
+    log(`<strong>Волшебный Кошель</strong> остается у ${playerName(target)}.`, { toast: true });
     return false;
   }
   state.artifacts.magicWalletOwnerId = target.id;
   const reasonText = reason ? `${reason}. ` : "";
   const previousText = previous ? ` от ${playerName(previous)}` : "";
-  log(`${reasonText}<strong>Волшебный кошель</strong> переходит${previousText} к ${playerName(target)}.`, { toast: true });
+  log(`${reasonText}<strong>Волшебный Кошель</strong> переходит${previousText} к ${playerName(target)}.`, { toast: true });
   render();
   return true;
 }
@@ -4603,12 +5085,64 @@ function grantAntiBadArtifact(target, card) {
   return true;
 }
 
+function grantJoeCouponArtifact(target, card) {
+  if (!target || !state?.artifacts) return false;
+  state.artifacts.joeCouponOwnerId = target.id;
+  state.artifacts.joeCouponCard = card || state.artifacts.joeCouponCard || null;
+  log(`${playerName(target)} получает артефакт <strong>Купон Джо</strong>.`, { toast: true });
+  render();
+  return true;
+}
+
+function grantSpeedBootsArtifact(target, card) {
+  if (!target || !state?.artifacts) return false;
+  state.artifacts.speedBootsOwnerId = target.id;
+  state.artifacts.speedBootsCard = card || state.artifacts.speedBootsCard || null;
+  log(`${playerName(target)} получает артефакт <strong>Сапоги Скорости</strong>.`, { toast: true });
+  render();
+  return true;
+}
+
+function grantMagicPickaxeArtifact(target, card) {
+  if (!target || !state?.artifacts) return false;
+  state.artifacts.magicPickaxeOwnerId = target.id;
+  state.artifacts.magicPickaxeCard = card || state.artifacts.magicPickaxeCard || null;
+  log(`${playerName(target)} получает артефакт <strong>Волшебная Кирка</strong>.`, { toast: true });
+  render();
+  return true;
+}
+
+function grantGoldenHorseshoeArtifact(target, card) {
+  if (!target || !state?.artifacts) return false;
+  state.artifacts.goldenHorseshoeOwnerId = target.id;
+  state.artifacts.goldenHorseshoeCard = card || state.artifacts.goldenHorseshoeCard || null;
+  log(`${playerName(target)} получает артефакт <strong>Золотая Подкова</strong>.`, { toast: true });
+  render();
+  return true;
+}
+
 function hasHeroSwordArtifact(player) {
   return Boolean(player && state?.artifacts?.heroSwordOwnerId === player.id);
 }
 
 function hasAntiBadArtifact(player) {
   return Boolean(player && state?.artifacts?.antiBadOwnerId === player.id);
+}
+
+function hasJoeCouponArtifact(player) {
+  return Boolean(player && state?.artifacts?.joeCouponOwnerId === player.id);
+}
+
+function hasSpeedBootsArtifact(player) {
+  return Boolean(player && state?.artifacts?.speedBootsOwnerId === player.id);
+}
+
+function hasMagicPickaxeArtifact(player) {
+  return Boolean(player && state?.artifacts?.magicPickaxeOwnerId === player.id);
+}
+
+function hasGoldenHorseshoeArtifact(player) {
+  return Boolean(player && state?.artifacts?.goldenHorseshoeOwnerId === player.id);
 }
 
 function heroSwordCombatBonus(player, rolls) {
@@ -4736,7 +5270,9 @@ function renderTurn() {
 
 function openInfoHistoryPopup() {
   if (!ui.infoHistoryPopup) return;
+  infoHistoryShowFull = false;
   ui.infoHistoryPopup.hidden = false;
+  renderInfoHistoryLogEntries();
   renderInfoHistoryCurrentActionEntry();
   ui.infoHistoryBtn?.classList.add("active");
   ui.infoHistoryBtn?.setAttribute("aria-expanded", "true");
@@ -4761,6 +5297,57 @@ function toggleInfoHistoryPopup() {
   } else {
     openInfoHistoryPopup();
   }
+}
+
+function renderInfoHistoryLogEntries() {
+  if (!gameLogEl) return;
+  removeInfoHistoryCurrentActionEntry();
+  const entries = infoHistoryShowFull
+    ? gameLogEntries.slice().reverse()
+    : gameLogEntries.slice(-infoHistoryDefaultLimit).reverse();
+  gameLogEl.innerHTML = entries.map((entry) => `<li>${entry.html}</li>`).join("");
+  if (ui.infoHistoryListTitle) {
+    ui.infoHistoryListTitle.textContent = infoHistoryShowFull ? "Вся хроника" : "Последние действия";
+  }
+  ui.infoHistoryFullBtn?.classList.toggle("active", infoHistoryShowFull);
+  ui.infoHistoryFullBtn?.setAttribute("aria-pressed", String(infoHistoryShowFull));
+  renderInfoHistoryCurrentActionEntry();
+}
+
+function toggleFullInfoHistoryLog() {
+  infoHistoryShowFull = !infoHistoryShowFull;
+  renderInfoHistoryLogEntries();
+}
+
+function fullChroniclePlainText() {
+  if (gameLogEntries.length === 0) return "Хроника пока пуста.";
+  return gameLogEntries
+    .map((entry, index) => `${index + 1}. ${entry.text}`)
+    .join("\n");
+}
+
+async function copyFullInfoHistoryLog() {
+  const text = fullChroniclePlainText();
+  try {
+    if (!navigator.clipboard?.writeText) throw new Error("clipboard-unavailable");
+    await navigator.clipboard.writeText(text);
+    setInfoHistoryCopyFeedback("Хроника скопирована");
+  } catch {
+    setInfoHistoryCopyFeedback("Не удалось скопировать");
+  }
+}
+
+function setInfoHistoryCopyFeedback(message) {
+  if (!ui.infoHistoryCopyFeedback) return;
+  window.clearTimeout(infoHistoryCopyFeedbackTimer);
+  infoHistoryCopyFeedbackTimer = null;
+  ui.infoHistoryCopyFeedback.textContent = message;
+  ui.infoHistoryCopyFeedback.hidden = false;
+  infoHistoryCopyFeedbackTimer = window.setTimeout(() => {
+    if (!ui.infoHistoryCopyFeedback) return;
+    ui.infoHistoryCopyFeedback.hidden = true;
+    infoHistoryCopyFeedbackTimer = null;
+  }, 2000);
 }
 
 function renderInfoHistoryCurrentActionEntry() {
@@ -4841,6 +5428,19 @@ function renderMonsterRageIndicator() {
   const rage = monsterRageBonus();
   ui.monsterRageIndicator.hidden = rage <= 0;
   ui.monsterRageIndicator.textContent = rage > 0 ? `Ярость монстров +${rage}` : "";
+}
+
+function syncHistoryPanel() {
+  if (ui.historyPanel) ui.historyPanel.hidden = !historyPanelOpen;
+  if (ui.historyHeaderBtn) {
+    ui.historyHeaderBtn.classList.toggle("active", historyPanelOpen);
+    ui.historyHeaderBtn.setAttribute("aria-pressed", String(historyPanelOpen));
+  }
+}
+
+function toggleHistoryPanel() {
+  historyPanelOpen = !historyPanelOpen;
+  syncHistoryPanel();
 }
 
 function renderReferencePanel() {
@@ -5756,7 +6356,7 @@ function renderChoiceDialog({ bodyHtml = "", buttonsClass = "", kind, kicker, ti
   kickerEl.textContent = kicker;
 
   const titleEl = document.createElement("h3");
-  titleEl.innerHTML = iconizeHtml(title);
+  titleEl.textContent = plainTextFromHtml(title);
 
   const summaryEl = document.createElement("p");
   summaryEl.className = "choice-summary";
@@ -5823,7 +6423,9 @@ function appendAuctionBidInput(buttons, pending) {
 
 function appendChoiceButton(buttons, { className = "", disabled = false, label, note, noteClass = "", onClick }) {
   const button = document.createElement("button");
-  button.className = `choice-button ${className}`.trim();
+  const noteText = note ? plainText(note) : "";
+  const longNoteClass = noteText.length > 28 ? "has-long-note" : "";
+  button.className = `choice-button ${className} ${longNoteClass}`.trim();
   button.disabled = Boolean(disabled);
   button.type = "button";
 
@@ -6526,10 +7128,11 @@ async function resolveEnemyBattle(player) {
     if (door.isFinalBoss) {
       const monsterHuntReward = awardMonsterHuntReward(player);
       const monsterHuntText = monsterHuntRewardText(monsterHuntReward);
-      log(`${playerName(player)} побеждает финального монстра: ${formatRoll(rolls)}${bonusText}. Игрок становится <strong>боссом</strong>.${monsterHuntText}`);
+      const shopVictoryText = resolveMonsterVictoryShopRewards(player);
+      log(`${playerName(player)} побеждает финального монстра: ${formatRoll(rolls)}${bonusText}. Игрок становится <strong>боссом</strong>.${monsterHuntText}${shopVictoryText}`);
       render();
       await showActionPrompt(
-        `${playerName(player)} побеждает финального монстра: ${formatRoll(rolls)}${bonusText}. Игрок становится <strong>боссом</strong>.${monsterHuntText}`,
+        `${playerName(player)} побеждает финального монстра: ${formatRoll(rolls)}${bonusText}. Игрок становится <strong>боссом</strong>.${monsterHuntText}${shopVictoryText}`,
         { autoFor: player },
       );
       clearEnemyBattleHud();
@@ -6541,12 +7144,13 @@ async function resolveEnemyBattle(player) {
     addDiceBonus(player, 1);
     const monsterHuntReward = awardMonsterHuntReward(player);
     const monsterHuntText = monsterHuntRewardText(monsterHuntReward);
+    const shopVictoryText = resolveMonsterVictoryShopRewards(player);
     log(
-      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта для игрока. Награда: <strong>+1 кубик</strong>.${monsterHuntText}`,
+      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта для игрока. Награда: <strong>+1 кубик</strong>.${monsterHuntText}${shopVictoryText}`,
     );
     render();
     await showActionPrompt(
-      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта. Награда: <strong>+1 кубик</strong>.${monsterHuntText}`,
+      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта. Награда: <strong>+1 кубик</strong>.${monsterHuntText}${shopVictoryText}`,
       { autoFor: player },
     );
     clearEnemyBattleHud();
@@ -6636,46 +7240,41 @@ async function resolveMonsterBribes(player, door, baseStrength) {
     }
   }
 
-  const shopBribeCards = state.players
+  const feedMonsterCards = state.players
     .filter((participant) => participant.id !== player.id && !isBot(participant))
-    .flatMap((participant) => activeShopEffectItems(participant, "monster-bribe-plus1")
+    .flatMap((participant) => pendingGoodCardsOfType(participant, "feed-monster-plus3")
       .map((card) => ({ card, participant })));
-  const promptedParticipants = new Set();
-  for (const { card, participant } of shopBribeCards) {
-    if (promptedParticipants.has(participant.id)) continue;
-    promptedParticipants.add(participant.id);
-    const effect = card.effect || {};
-    const cost = Math.max(0, Number(effect.cost) || 3);
-    const increase = Math.max(1, Number(effect.amount) || 1);
-    while (participant.coins >= cost) {
-      const choice = await chooseCardAction({
-        choices: [
-          {
-            id: "pay",
-            label: `Заплатить ${cost}`,
-            note: `монстр +${increase}`,
-            score: 3,
-          },
-          {
-            id: "skip",
-            label: "Хватит",
-            note: "не платить больше",
-            score: 8,
-          },
-        ],
-        kicker: "Лавка Джо",
-        kind: "shop-monster-bribe",
-        playerId: participant.id,
-        summary: `${playerChoiceBadge(participant)} может усилить монстра в битве ${playerChoiceBadge(player)}. Сейчас цель: ${baseStrength + strengthBonus}.`,
-        title: cardNameMarkup(card.title),
-      });
-      if (choice !== "pay" || participant.coins < cost) break;
-      addCoins(participant, -cost);
-      strengthBonus += increase;
-      payments.push({ cost, increase, player: participant, source: "shop" });
-      log(`${playerName(participant)} платит <strong>${coinAmount(cost)}</strong> по <strong>Лавке Джо</strong>: монстр получает <strong>+${increase}</strong> к силе на этот бой.`);
-      render();
-    }
+  for (const { card, participant } of feedMonsterCards) {
+    if (!pendingGoodCardsOfType(participant, "feed-monster-plus3").some((item) => item === card || item._copyId === card._copyId)) continue;
+    const amount = Math.max(1, Number(card.effect?.amount) || 3);
+    const choice = await chooseCardAction({
+      choices: [
+        {
+          id: "use",
+          label: "Сбросить",
+          note: `монстр +${amount}`,
+          score: 4,
+        },
+        {
+          id: "keep",
+          label: "Оставить",
+          note: "на потом",
+          score: 8,
+        },
+      ],
+      kicker: "Хорошо",
+      kind: "feed-monster",
+      playerId: participant.id,
+      summary: `${playerChoiceBadge(participant)} может сбросить Еду монстру и усилить монстра в битве ${playerChoiceBadge(player)}. Сейчас цель: ${baseStrength + strengthBonus}.`,
+      title: "Еда монстру",
+    });
+    if (choice !== "use") continue;
+    const consumed = consumePendingGoodCard(participant, "feed-monster-plus3");
+    if (!consumed) continue;
+    strengthBonus += amount;
+    payments.push({ card: consumed, increase: amount, player: participant, source: "good" });
+    log(`${playerName(participant)} сбрасывает ${cardNameStrong(pendingGoodCardLabel(consumed))}: монстр получает <strong>+${amount}</strong> к силе на этот бой.`);
+    render();
   }
 
   return { payments, strengthBonus };
@@ -7168,7 +7767,7 @@ function rollContextPromptMarkup(message, contextInput) {
   return `
     <section class="roll-context-card">
       <p class="roll-context-kicker">${context.kicker}</p>
-      <h3>${context.title}</h3>
+      <h3 class="no-iconize">${context.title}</h3>
       ${detail ? `<p class="roll-context-detail">${detail}</p>` : ""}
       ${participants}
       ${outcomes}
@@ -8091,6 +8690,7 @@ async function drawAndApplyCard(player, deckId, deckName = deckLabel(deckId), { 
   } else if (deckName === "Событие") {
     log(`${playerName(player)} тянет карту <strong>${deckName}</strong>: ${cardNameMarkup(card.title)}`);
     await revealEventCard(player, card);
+    resolveEventIncomeRewards(card);
   } else {
     log(`${playerName(player)} тянет карту <strong>${deckName}</strong>: ${cardNameMarkup(card.title)}`, { toast: true });
   }
@@ -8344,9 +8944,14 @@ function cardFaceDescriptionMarkup(description, lineClass = "") {
 }
 
 function cardFaceDescriptionLines(description) {
-  return mergeLeadingPunctuationLines((String(description || "").match(/[^.!?]+[.!?]?/g) || [])
+  const forcedLines = String(description || "")
+    .split(/\r?\n+/)
     .map((line) => line.trim())
-    .filter(Boolean));
+    .filter(Boolean);
+  if (forcedLines.length > 1) return forcedLines;
+  return mergeLeadingPunctuationLines((forcedLines[0] || "").match(/[^.!?]+[.!?]?/g) || [])
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 function mergeLeadingPunctuationLines(lines) {
@@ -8482,10 +9087,15 @@ function eventCardMarkup(card, { revealed }) {
   const title = cardFaceTitleText(card, "Событие");
   const artifactEffect = cardFaceArtifactEffectText(card);
   const textForDensity = artifactEffect ? `${description}. ${artifactEffect}` : description;
-  const icon = card.icon ? `<img class="event-card-artifact-icon" src="${card.icon}" alt="" aria-hidden="true">` : "";
+  const isArtifact = eventCardIsArtifact(card);
+  const icon = !isArtifact && card.icon ? `<img class="event-card-artifact-icon" src="${card.icon}" alt="" aria-hidden="true">` : "";
   const iconClass = icon ? "has-card-face-icon" : "";
-  const iconSizeClass = eventCardLargeArtifactIconClass(card);
-  const textClass = `event-card-text ${eventCardTextDensityClass(textForDensity, title)} ${cardFaceDescriptionDensityClass(textForDensity)} ${cardFaceTitleDensityClass(title)} ${iconClass} ${iconSizeClass}`.trim();
+  const artifactClass = isArtifact ? `is-event-artifact-card is-artifact-${card.id}` : "";
+  const textClass = `event-card-text ${eventCardTextDensityClass(textForDensity, title)} ${cardFaceDescriptionDensityClass(textForDensity)} ${cardFaceTitleDensityClass(title)} ${iconClass} ${artifactClass}`.trim();
+  const previewClass = `event-card-preview ${revealed && isArtifact ? "is-event-artifact-card" : ""}`.trim();
+  const artifactArtStyle = revealed && isArtifact && card.icon
+    ? ` style="--event-artifact-art: url('${escapeHtml(card.icon)}')"`
+    : "";
   const cardText = revealed
     ? `
       <span class="${textClass}">
@@ -8499,17 +9109,16 @@ function eventCardMarkup(card, { revealed }) {
     : "";
   return `
     <article class="event-card-reveal ${revealed ? "is-revealed" : "is-hidden"}">
-      <button class="event-card-preview" type="button" aria-label="${revealed ? "Применить карту Событие" : "Открыть карту Событие"}">
+      <button class="${previewClass}" type="button" aria-label="${revealed ? "Применить карту Событие" : "Открыть карту Событие"}"${artifactArtStyle}>
         ${cardText}
       </button>
     </article>
   `;
 }
 
-function eventCardLargeArtifactIconClass(card) {
+function eventCardIsArtifact(card) {
   const isArtifact = card?.artifact === true || ["magic-wallet", "hero-sword", "anti-bad"].includes(card?.id);
-  if (!isArtifact) return "";
-  return `has-large-artifact-icon is-artifact-${card.id}`;
+  return Boolean(isArtifact);
 }
 
 function eventCardTextDensityClass(description, title = "") {
@@ -8533,8 +9142,11 @@ function cardFaceTitleDensityClass(title = "") {
 function cardFaceDescriptionDensityClass(description = "") {
   const text = String(description || "");
   const lines = cardFaceDescriptionLines(text).length;
+  const longestSegment = text
+    .split(/[.!?,:;]+|\s+-\s+/)
+    .reduce((max, segment) => Math.max(max, segment.trim().length), 0);
   if (text.length > 160 || lines >= 5) return "is-description-long";
-  if (text.length > 130 || lines >= 4) return "is-description-dense";
+  if (text.length > 108 || longestSegment > 42 || lines >= 4) return "is-description-dense";
   return "";
 }
 
@@ -8602,6 +9214,7 @@ function chooseShopCardFromFace(offer, player = null, { cost = 5 } = {}) {
   ui.eventToast.innerHTML = `<div class="event-toast-copy">${cardFaceStageMarkup(shopCardsMarkup(offer, {
     revealed: true,
     selectable: true,
+    showCoupon: canUseJoeCouponInShop(player, offer),
   }))}</div>`;
   ui.eventToast.classList.remove("fading", "quick-fading", "visible");
   ui.eventToast.classList.add("action-prompt");
@@ -8618,6 +9231,7 @@ function chooseShopCardFromFace(offer, player = null, { cost = 5 } = {}) {
       label: cardDisplayText(card),
       note: `купить за ${cost} монет`,
     })),
+    ...joeCouponShopActionOptions(player, offer),
     {
       id: "decline",
       label: "Далее",
@@ -8661,6 +9275,9 @@ function chooseShopCardFromFace(offer, player = null, { cost = 5 } = {}) {
     ui.eventToast.querySelectorAll("[data-shop-card-id]").forEach((button) => {
       button.addEventListener("click", () => finish(button.dataset.shopCardId, { selectedButton: button }));
     });
+    ui.eventToast.querySelector("[data-shop-coupon]")?.addEventListener("click", (event) => {
+      finish(joeCouponShopChoiceId, { selectedButton: event.currentTarget });
+    });
     render();
     if (isBot(player)) {
       window.setTimeout(() => finishBotShopCardChoice(player, offer, finish), botChoiceDelay("card"));
@@ -8681,6 +9298,7 @@ function chooseRevealedShopCard(offer, player = null, { cost = 5 } = {}) {
   ui.eventToast.innerHTML = `<div class="event-toast-copy">${cardFaceStageMarkup(shopCardsMarkup(offer, {
     revealed: true,
     selectable: true,
+    showCoupon: canUseJoeCouponInShop(player, offer),
     showDecline: true,
   }))}</div>`;
   ui.eventToast.classList.remove("fading", "quick-fading", "visible");
@@ -8698,6 +9316,7 @@ function chooseRevealedShopCard(offer, player = null, { cost = 5 } = {}) {
       label: cardDisplayText(card),
       note: `купить за ${cost} монет`,
     })),
+    ...joeCouponShopActionOptions(player, offer),
     {
       id: "decline",
       label: "Отказаться",
@@ -8741,6 +9360,9 @@ function chooseRevealedShopCard(offer, player = null, { cost = 5 } = {}) {
     ui.eventToast.querySelectorAll("[data-shop-card-id]").forEach((button) => {
       button.addEventListener("click", () => finish(button.dataset.shopCardId, { selectedButton: button }));
     });
+    ui.eventToast.querySelector("[data-shop-coupon]")?.addEventListener("click", (event) => {
+      finish(joeCouponShopChoiceId, { selectedButton: event.currentTarget });
+    });
     ui.eventToast.querySelector("[data-shop-decline]")?.addEventListener("click", () => finish(null));
     render();
     if (isBot(player)) {
@@ -8752,6 +9374,10 @@ function chooseRevealedShopCard(offer, player = null, { cost = 5 } = {}) {
 }
 
 function finishBotShopCardChoice(player, offer, finish) {
+  if (canUseJoeCouponInShop(player, offer)) {
+    finish(joeCouponShopChoiceId, { selectedButton: ui.eventToast?.querySelector("[data-shop-coupon]") || null });
+    return;
+  }
   let offerChoices = botShopOfferChoices.get(offer);
   if (!offerChoices) {
     offerChoices = new Map();
@@ -8773,14 +9399,14 @@ function shopCardButton(cardId) {
 function markSelectedShopCard(selectedButton) {
   const reveal = selectedButton.closest(".shop-card-reveal");
   reveal?.classList.add("is-choice-locked");
-  reveal?.querySelectorAll("[data-shop-card-id], [data-shop-decline]").forEach((control) => {
+  reveal?.querySelectorAll("[data-shop-card-id], [data-shop-coupon], [data-shop-decline]").forEach((control) => {
     if (control !== selectedButton) control.disabled = true;
   });
   selectedButton.classList.add("is-selected");
   selectedButton.setAttribute("aria-pressed", "true");
 }
 
-function shopCardsMarkup(cards, { revealed, selectable = false, showDecline = false } = {}) {
+function shopCardsMarkup(cards, { revealed, selectable = false, showCoupon = false, showDecline = false } = {}) {
   const className = `shop-card-reveal ${revealed ? "is-revealed" : "is-hidden"} ${selectable ? "is-selectable" : ""}`.trim();
   const cardsMarkup = cards
     .map((card) => {
@@ -8806,6 +9432,11 @@ function shopCardsMarkup(cards, { revealed, selectable = false, showDecline = fa
   return `
     <article class="${className}">
       <div class="shop-card-row">${cardsMarkup}</div>
+      ${
+        showCoupon
+          ? `<button class="shop-card-decline shop-card-coupon" type="button" data-shop-coupon="true">Купон Джо: забрать все за ${coinAmount(10)}</button>`
+          : ""
+      }
       ${
         showDecline
           ? `<button class="shop-card-decline" type="button" data-shop-decline="true">Отказаться</button>`
@@ -8922,6 +9553,14 @@ async function applyCardEffect(player, effect, source = {}) {
     return resolveEventHeroSword(player, source.card, effect);
   } else if (effect.type === "event-anti-bad") {
     return resolveEventAntiBad(player, source.card, effect);
+  } else if (effect.type === "event-joe-coupon") {
+    return resolveEventJoeCoupon(player, source.card, effect);
+  } else if (effect.type === "event-speed-boots") {
+    return resolveEventSpeedBoots(player, source.card, effect);
+  } else if (effect.type === "event-magic-pickaxe") {
+    return resolveEventMagicPickaxe(player, source.card, effect);
+  } else if (effect.type === "event-golden-horseshoe") {
+    return resolveEventGoldenHorseshoe(player, source.card, effect);
   } else if (effect.type === "event-monster-rage") {
     resolveEventMonsterRage(effect.amount ?? 1);
   } else if (effect.type === "event-golden-markers") {
@@ -9057,7 +9696,7 @@ async function resolveBackToNearestPlayer(player, fallbackLoss = 5) {
     { toast: true },
   );
   try {
-    setNearestPlayerTargetPreview(route[nearestProgress], nearestPlayers);
+    setNearestPlayerTargetPreview(routePath[nearestProgress], nearestPlayers);
     if (state.nearestPlayerTargetPreview) await sleep(360);
     await movePlayerSteps(player, steps);
   } finally {
@@ -9978,7 +10617,7 @@ async function rollEventChoiceDie(player, context) {
 async function resolveEventMagicWallet(player) {
   const target = await routeExtremePlayer("last", {
     autoFor: player,
-    reason: "Волшебный кошель: последний игрок",
+    reason: "Волшебный Кошель: последний игрок",
   });
   if (!target) return;
   transferMagicWallet(target, `${playerName(player)} разыгрывает событие`);
@@ -10059,6 +10698,82 @@ async function resolveEventAntiBad(player, card, effect = {}) {
     { autoFor: target },
   );
   return { discard: false };
+}
+
+async function resolveEventJoeCoupon(player, card, effect = {}) {
+  const cost = Math.max(1, Number(effect.cost) || 10);
+  const target = await poorestPlayerByShopCards({
+    autoFor: player,
+    reason: "Купон Джо: меньше всего Лавок Джо",
+  });
+  if (!target) return { discard: true };
+
+  if (target.coins < cost) {
+    log(`${playerName(target)} не получает <strong>Купон Джо</strong>: нужно ${coinAmount(cost)}, а есть ${coinAmount(target.coins)}.`, { toast: true });
+    await showActionPrompt(
+      `${playerName(target)} не может заплатить ${coinAmount(cost)} за <strong>Купон Джо</strong>. Карта события уходит в сброс.`,
+      { autoFor: target },
+    );
+    return { discard: true };
+  }
+
+  const accepts = await chooseJoeCouponPayment(target, cost);
+  if (!accepts) {
+    log(`${playerName(target)} отказывается покупать артефакт <strong>Купон Джо</strong>.`, { toast: true });
+    await showActionPrompt(
+      `${playerName(target)} не получает <strong>Купон Джо</strong>. Карта события уходит в сброс.`,
+      { autoFor: target },
+    );
+    return { discard: true };
+  }
+
+  addCoins(target, -cost);
+  log(`${playerName(target)} платит ${coinAmount(cost)} и получает артефакт <strong>Купон Джо</strong>.`, { toast: true });
+  grantJoeCouponArtifact(target, card);
+  await showActionPrompt(
+    `${playerName(target)} получает артефакт <strong>Купон Джо</strong>. Во время покупок Лавки Джо можно забрать все открытые карты за ${coinAmount(10)}.`,
+    { autoFor: target },
+  );
+  return { discard: false };
+}
+
+async function poorestPlayerByShopCards({ reason = "меньше всего Лавок Джо", autoFor = null } = {}) {
+  const minCards = Math.min(...state.players.map((target) => ownedShopCardCount(target)));
+  const candidates = state.players.filter((target) => ownedShopCardCount(target) === minCards);
+  return resolveOnePlayerTieByDie(candidates, {
+    autoFor,
+    reason: `${reason} (${minCards} ${shopCardsWord(minCards)})`,
+  });
+}
+
+function ownedShopCardCount(player) {
+  return (player?.items || []).length;
+}
+
+async function chooseJoeCouponPayment(player, cost = 10) {
+  if (isBot(player)) return player.coins >= cost;
+  const choice = await chooseCardAction({
+    choices: [
+      {
+        id: "pay",
+        label: "Заплатить",
+        note: `${coinAmount(cost)} за артефакт`,
+        score: 24,
+      },
+      {
+        id: "decline",
+        label: "Отказаться",
+        note: "карта уйдет в сброс",
+        score: 2,
+      },
+    ],
+    kicker: "Событие",
+    kind: "joe-coupon-payment",
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} может заплатить ${coinAmount(cost)} и получить артефакт <strong>Купон Джо</strong>.`,
+    title: "Купон Джо",
+  });
+  return choice === "pay";
 }
 
 async function chooseAntiBadShopPayment(player, count = 2) {
@@ -10319,6 +11034,308 @@ async function resolveEventWinnerTakesAll(player) {
   await drawFreeShopCard(winner, "получает бесплатную карту Лавка Джо по событию <strong>Большой приз</strong>");
   if (state.finished) return;
   await drawTadamCard(winner);
+}
+
+async function resolveEventSpeedBoots(player, card, effect = {}) {
+  const amount = Math.max(1, Number(effect.amount) || 5);
+  const winner = await resolveStepContestArtifact({
+    activePlayer: player,
+    artifactTitle: "Сапоги Скорости",
+    card,
+    criterion: "1 кубик + бонусы шагов. Лучший результат получает артефакт",
+    grant: grantSpeedBootsArtifact,
+    mode: "event-speed-boots",
+    resultText: `Артефакт дает ${stepBonusText(amount)}`,
+  });
+  if (!winner) return { discard: true };
+  return { discard: false };
+}
+
+async function resolveEventMagicPickaxe(player, card, effect = {}) {
+  const amount = Math.max(1, Number(effect.amount) || 2);
+  const winner = await resolveCoinContestArtifact({
+    activePlayer: player,
+    artifactTitle: "Волшебная Кирка",
+    card,
+    criterion: "1 кубик +1 за каждые 5 монет. Лучший результат получает артефакт",
+    grant: grantMagicPickaxeArtifact,
+    mode: "event-magic-pickaxe",
+    resultText: `Артефакт дает +${amount} к получению монет`,
+  });
+  if (!winner) return { discard: true };
+  return { discard: false };
+}
+
+async function resolveEventGoldenHorseshoe(player, card, effect = {}) {
+  const amount = Math.max(1, Number(effect.amount) || 3);
+  const winner = await resolveMovementDiceLowContestArtifact({
+    activePlayer: player,
+    artifactTitle: "Золотая Подкова",
+    card,
+    criterion: "Свои кубики движения. Самый низкий результат получает артефакт",
+    grant: grantGoldenHorseshoeArtifact,
+    mode: "event-golden-horseshoe",
+    resultText: `Артефакт дает ${coinAmount(amount)}, если в броске движения выпала 1`,
+  });
+  if (!winner) return { discard: true };
+  return { discard: false };
+}
+
+async function resolveStepContestArtifact({ activePlayer, artifactTitle, card, criterion, grant, mode, resultText }) {
+  let contenders = [...state.players];
+  let round = 1;
+  let winner = contenders[0] || activePlayer;
+
+  while (contenders.length > 1) {
+    const results = [];
+    for (const contender of contenders) {
+      const result = await rollStepContestPower(contender, {
+        artifactTitle,
+        contenders,
+        criterion,
+        mode,
+        round,
+      });
+      results.push(result);
+      if (state.finished) return null;
+    }
+
+    const best = Math.max(...results.map((result) => result.total));
+    const leaders = results.filter((result) => result.total === best).map((result) => result.player);
+    if (leaders.length === 1) {
+      winner = leaders[0];
+      break;
+    }
+
+    const message = `<strong>${artifactTitle}</strong>: ничья за первое место (${leaders.map(playerName).join(", ")}), лидеры перебрасывают.`;
+    log(message, { toast: true });
+    await showActionPrompt(message, { autoFor: activePlayer });
+    contenders = leaders;
+    round += 1;
+  }
+
+  grant(winner, card);
+  const rewardMessage = `<strong>${artifactTitle}</strong>: ${playerName(winner)} побеждает и получает артефакт. ${resultText}.`;
+  log(rewardMessage, { toast: true });
+  await showActionPrompt(rewardMessage, { autoFor: winner });
+  return winner;
+}
+
+async function rollStepContestPower(player, { artifactTitle, contenders, criterion, mode, round }) {
+  const bonus = playerStepBonus(player);
+  const title = round > 1 ? `${artifactTitle}: переброс ${round}` : artifactTitle;
+  const rollContext = {
+    criterion,
+    kicker: "Событие",
+    outcomes: ["Победитель получает артефакт", "Ничья за первое место: переброс"],
+    participants: contenders.map(playerChoiceBadge),
+    reason: `${playerChoiceBadge(player)} бросает кубик за артефакт.`,
+    title,
+  };
+  await showActionPrompt(`${playerName(player)} бросает кубик за артефакт <strong>${artifactTitle}</strong>.`, {
+    autoFor: player,
+    buttonLabel: "Бросить кубик",
+    rollContext,
+  });
+
+  let rolls = rollDice(1);
+  recordDiceThrown(player, 1);
+  state.dice = null;
+  render();
+  showRollContextStatus({
+    ...rollContext,
+    result: `${playerName(player)} бросает кубик за артефакт.`,
+  });
+  await animateDice(rolls, { bonus, label: artifactTitle, player });
+  rolls = await maybeUseDiceControl(player, rolls, { mode: mode || "event-artifact-contest", title: `Контроль кубика: ${artifactTitle}` });
+  const rolled = rolls[0] || 1;
+  const total = Math.max(0, rolled + bonus);
+  state.dice = total;
+  render();
+  const formula = bonus ? `${rolled} ${bonus > 0 ? "+" : "-"} ${Math.abs(bonus)} = ${total}` : String(total);
+  log(`${playerName(player)} в событии <strong>${artifactTitle}</strong>: <strong>${formula}</strong>.`);
+  await showActionPrompt("", {
+    autoFor: player,
+    rollContext: {
+      ...rollContext,
+      participants: [`${playerChoiceBadge(player)} <strong>${formula}</strong>`],
+      result: `${playerName(player)} получает результат <strong>${total}</strong>.`,
+      resultHighlight: true,
+      title: `${title}: результат`,
+    },
+  });
+  return { bonus, player, rolled, rolls, total };
+}
+
+async function resolveMovementDiceLowContestArtifact({ activePlayer, artifactTitle, card, criterion, grant, mode, resultText }) {
+  let contenders = [...state.players];
+  let round = 1;
+  let winner = contenders[0] || activePlayer;
+
+  while (contenders.length > 1) {
+    const results = [];
+    for (const contender of contenders) {
+      const result = await rollMovementDiceContestPower(contender, {
+        artifactTitle,
+        contenders,
+        criterion,
+        mode,
+        round,
+      });
+      results.push(result);
+      if (state.finished) return null;
+    }
+
+    const lowest = Math.min(...results.map((result) => result.total));
+    const leaders = results.filter((result) => result.total === lowest).map((result) => result.player);
+    if (leaders.length === 1) {
+      winner = leaders[0];
+      break;
+    }
+
+    const message = `<strong>${artifactTitle}</strong>: ничья за самый низкий результат (${leaders.map(playerName).join(", ")}), игроки перебрасывают.`;
+    log(message, { toast: true });
+    await showActionPrompt(message, { autoFor: activePlayer });
+    contenders = leaders;
+    round += 1;
+  }
+
+  grant(winner, card);
+  const rewardMessage = `<strong>${artifactTitle}</strong>: ${playerName(winner)} получает артефакт. ${resultText}.`;
+  log(rewardMessage, { toast: true });
+  await showActionPrompt(rewardMessage, { autoFor: winner });
+  return winner;
+}
+
+async function rollMovementDiceContestPower(player, { artifactTitle, contenders, criterion, mode, round }) {
+  const diceCount = Math.max(1, totalDiceForPlayer(player));
+  const title = round > 1 ? `${artifactTitle}: переброс ${round}` : artifactTitle;
+  const rollContext = {
+    criterion,
+    kicker: "Событие",
+    outcomes: ["Самый низкий результат получает артефакт", "Ничья за минимум: переброс"],
+    participants: contenders.map(playerChoiceBadge),
+    reason: `${playerChoiceBadge(player)} бросает свои кубики за артефакт.`,
+    title,
+  };
+  await showActionPrompt(`${playerName(player)} бросает свои кубики за артефакт <strong>${artifactTitle}</strong>.`, {
+    autoFor: player,
+    buttonLabel: diceCount > 1 ? "Бросить кубики" : "Бросить кубик",
+    rollContext,
+  });
+
+  let rolls = rollDice(diceCount);
+  recordDiceThrown(player, diceCount);
+  state.dice = null;
+  render();
+  showRollContextStatus({
+    ...rollContext,
+    result: `${playerName(player)} бросает свои кубики за артефакт.`,
+  });
+  await animateDice(rolls, { label: artifactTitle, player });
+  rolls = await maybeUseDiceControl(player, rolls, { mode: mode || "event-artifact-low-contest", title: `Контроль кубика: ${artifactTitle}` });
+  const total = rolls.reduce((sum, value) => sum + value, 0);
+  state.dice = total;
+  render();
+  const formula = rolls.length > 1 ? `${rolls.join(" + ")} = ${total}` : String(total);
+  log(`${playerName(player)} в событии <strong>${artifactTitle}</strong>: <strong>${formula}</strong>.`);
+  await showActionPrompt("", {
+    autoFor: player,
+    rollContext: {
+      ...rollContext,
+      participants: [`${playerChoiceBadge(player)} <strong>${formula}</strong>`],
+      result: `${playerName(player)} получает результат <strong>${total}</strong>.`,
+      resultHighlight: true,
+      title: `${title}: результат`,
+    },
+  });
+  return { diceCount, player, rolls, total };
+}
+
+async function resolveCoinContestArtifact({ activePlayer, artifactTitle, card, criterion, grant, mode, resultText }) {
+  let contenders = [...state.players];
+  let round = 1;
+  let winner = contenders[0] || activePlayer;
+
+  while (contenders.length > 1) {
+    const results = [];
+    for (const contender of contenders) {
+      const result = await rollCoinContestPower(contender, {
+        artifactTitle,
+        contenders,
+        criterion,
+        mode,
+        round,
+      });
+      results.push(result);
+      if (state.finished) return null;
+    }
+
+    const best = Math.max(...results.map((result) => result.total));
+    const leaders = results.filter((result) => result.total === best).map((result) => result.player);
+    if (leaders.length === 1) {
+      winner = leaders[0];
+      break;
+    }
+
+    const message = `<strong>${artifactTitle}</strong>: ничья за первое место (${leaders.map(playerName).join(", ")}), лидеры перебрасывают.`;
+    log(message, { toast: true });
+    await showActionPrompt(message, { autoFor: activePlayer });
+    contenders = leaders;
+    round += 1;
+  }
+
+  grant(winner, card);
+  const rewardMessage = `<strong>${artifactTitle}</strong>: ${playerName(winner)} побеждает и получает артефакт. ${resultText}.`;
+  log(rewardMessage, { toast: true });
+  await showActionPrompt(rewardMessage, { autoFor: winner });
+  return winner;
+}
+
+async function rollCoinContestPower(player, { artifactTitle, contenders, criterion, mode, round }) {
+  const bonus = Math.floor(Math.max(0, Number(player?.coins) || 0) / 5);
+  const title = round > 1 ? `${artifactTitle}: переброс ${round}` : artifactTitle;
+  const rollContext = {
+    criterion,
+    kicker: "Событие",
+    outcomes: ["Победитель получает артефакт", "Ничья за первое место: переброс"],
+    participants: contenders.map(playerChoiceBadge),
+    reason: `${playerChoiceBadge(player)} бросает кубик за артефакт.`,
+    title,
+  };
+  await showActionPrompt(`${playerName(player)} бросает кубик за артефакт <strong>${artifactTitle}</strong>.`, {
+    autoFor: player,
+    buttonLabel: "Бросить кубик",
+    rollContext,
+  });
+
+  let rolls = rollDice(1);
+  recordDiceThrown(player, 1);
+  state.dice = null;
+  render();
+  showRollContextStatus({
+    ...rollContext,
+    result: `${playerName(player)} бросает кубик за артефакт.`,
+  });
+  await animateDice(rolls, { bonus, label: artifactTitle, player });
+  rolls = await maybeUseDiceControl(player, rolls, { mode: mode || "event-artifact-contest", title: `Контроль кубика: ${artifactTitle}` });
+  const rolled = rolls[0] || 1;
+  const total = Math.max(0, rolled + bonus);
+  state.dice = total;
+  render();
+  const formula = bonus ? `${rolled} + ${bonus} = ${total}` : String(total);
+  log(`${playerName(player)} в событии <strong>${artifactTitle}</strong>: <strong>${formula}</strong> (${coinAmount(player.coins)}).`);
+  await showActionPrompt("", {
+    autoFor: player,
+    rollContext: {
+      ...rollContext,
+      participants: [`${playerChoiceBadge(player)} <strong>${formula}</strong>`],
+      result: `${playerName(player)} получает результат <strong>${total}</strong>.`,
+      resultHighlight: true,
+      title: `${title}: результат`,
+    },
+  });
+  return { bonus, player, rolled, rolls, total };
 }
 
 async function rollWinnerTakesAllPower(player, round, contenders) {
@@ -10673,6 +11690,7 @@ function resolveCoinsIfPoorest(player, amount = 8, poorestAmount = 15) {
 
 const pendingGoodEffectTypes = new Set([
   "field-shield",
+  "feed-monster-plus3",
   "second-chance",
   "strength-potion",
   "player-battle-potion",
@@ -10694,6 +11712,7 @@ function pendingGoodCardLabel(card) {
   const labels = {
     "backward-reversal": "Разворот",
     "dice-control": "Кубик",
+    "feed-monster-plus3": "Еда +3",
     "field-shield": "Щит поля",
     "player-battle-potion": "Дуэль +3",
     "second-chance": "Второй шанс",
@@ -11319,6 +12338,17 @@ function resolveTadamIncomeRewards(card) {
   }
 }
 
+function resolveEventIncomeRewards(card) {
+  for (const owner of state.players) {
+    const amount = activeShopEffectAmount(owner, "event-income", "amount");
+    if (!amount) continue;
+    addCoins(owner, amount);
+    log(`${playerName(owner)} получает <strong>${coinAmount(amount)}</strong> по <strong>Лавке Джо</strong> за карту <strong>Событие</strong>: ${cardNameMarkup(card.title)}.`, {
+      toast: true,
+    });
+  }
+}
+
 async function resolveShop(player) {
   await resolveFaceDownShopBuyback(player);
 
@@ -11334,8 +12364,9 @@ async function resolveShop(player) {
 
   while (offer.length) {
     const cost = joeShopCardCost(player);
-    if (player.coins < cost) {
-    log(`Лавка Джо предлагает: ${offer.map((card) => cardNameMarkup(card.title)).join(" / ")}. У ${playerName(player)} не хватает монет.`, {
+    const couponAvailable = canUseJoeCouponInShop(player, offer);
+    if (player.coins < cost && !couponAvailable) {
+      log(`Лавка Джо предлагает: ${offer.map((card) => cardNameMarkup(card.title)).join(" / ")}. У ${playerName(player)} не хватает монет.`, {
         toast: true,
       });
       discardCardsToDeck("shop", offer);
@@ -11349,6 +12380,10 @@ async function resolveShop(player) {
       const directChoice = await revealSelectableShopCards(offer, player, { cost });
       offerRevealed = true;
       bought = directChoice || (await chooseRevealedShopCard(offer, player, { cost }));
+    }
+    if (bought === joeCouponShopChoiceId) {
+      immediateStepBonus += takeJoeCouponShopOffer(player, offer);
+      return immediateStepBonus;
     }
     if (!bought) {
       discardCardsToDeck("shop", offer);
@@ -11369,25 +12404,42 @@ async function resolveShop(player) {
     log(`${playerName(player)} покупает в Лавке Джо за ${coinAmount(cost)}: <strong>${bought.title}</strong>`, { toast: true });
     render();
 
-    if (!hasActiveShopEffect(player, "shop-unlimited-buy") || state.finished) {
-      discardCardsToDeck("shop", offer);
-      return immediateStepBonus;
-    }
-    if (!offer.length) {
-      log(`${playerName(player)} выкупает все открытые карты Лавки Джо.`, { toast: true });
-      return immediateStepBonus;
-    }
-    if (player.coins < joeShopCardCost(player)) {
-      log(`${playerName(player)} не может купить еще одну карту Лавки Джо: не хватает монет.`, { toast: true });
-      discardCardsToDeck("shop", offer);
-      return immediateStepBonus;
-    }
-    if (boughtCount > 36) {
-      discardCardsToDeck("shop", offer);
-      return immediateStepBonus;
-    }
+    discardCardsToDeck("shop", offer);
+    return immediateStepBonus;
   }
 
+  return immediateStepBonus;
+}
+
+function canUseJoeCouponInShop(player, offer) {
+  return Boolean(hasJoeCouponArtifact(player) && (offer || []).length > 0 && player.coins >= 10);
+}
+
+function joeCouponShopActionOptions(player, offer) {
+  if (!canUseJoeCouponInShop(player, offer)) return [];
+  return [
+    {
+      id: joeCouponShopChoiceId,
+      label: "Купон Джо",
+      note: `забрать все за ${coinAmount(10)}`,
+    },
+  ];
+}
+
+function takeJoeCouponShopOffer(player, offer) {
+  if (!canUseJoeCouponInShop(player, offer)) return 0;
+  const cards = offer.splice(0);
+  addCoins(player, -10);
+  player.items.push(...cards.map(ownedShopItem).filter(Boolean));
+  recordShopCards(player);
+  const immediateStepBonus = cards
+    .filter((card) => card.effect?.type === "passive-step-bonus")
+    .reduce((sum, card) => sum + Math.max(0, Number(card.effect.steps) || 0), 0);
+  log(
+    `${playerName(player)} использует артефакт <strong>Купон Джо</strong>, платит ${coinAmount(10)} и забирает все открытые карты Лавки Джо: ${cards.map((card) => cardNameStrong(card.title)).join(" / ")}.`,
+    { toast: true },
+  );
+  render();
   return immediateStepBonus;
 }
 
@@ -12941,13 +13993,13 @@ function tadamEffectSteps(type) {
 }
 
 function joeShopCardCost(player = null) {
+  const modifier = tadamEffectAmount("shop-discount") + tadamEffectAmount("shop-surcharge");
   if (player && hasActiveShopEffect(player, "shop-fixed-cost-3")) {
     const fixedCost = activeShopEffectItems(player, "shop-fixed-cost-3")
       .reduce((lowest, card) => Math.min(lowest, Number(card.effect?.cost) || 3), 3);
-    return Math.max(0, fixedCost);
+    return Math.max(0, fixedCost + modifier);
   }
   const baseCost = 5;
-  const modifier = tadamEffectAmount("shop-discount") + tadamEffectAmount("shop-surcharge");
   return Math.max(0, baseCost + modifier);
 }
 
@@ -12965,7 +14017,8 @@ function activeFieldEffect(type) {
 }
 
 function playerStepBonus(player) {
-  return playerManualStepBonus(player) + (Number(player?.turnStepBonus) || 0) + activeShopItems(player)
+  const artifactBonus = hasSpeedBootsArtifact(player) ? 5 : 0;
+  return playerManualStepBonus(player) + (Number(player?.turnStepBonus) || 0) + artifactBonus + activeShopItems(player)
     .filter((item) => item.effect?.type === "passive-step-bonus")
     .reduce((sum, item) => sum + item.effect.steps, 0);
 }
@@ -13392,7 +14445,7 @@ function totalDiceForPlayer(player, extraDice = 0) {
 }
 
 function playerCoinBonus(player) {
-  return 0;
+  return hasMagicPickaxeArtifact(player) ? 2 : 0;
 }
 
 function optionalExtraDieCards(player) {
@@ -13559,9 +14612,17 @@ function isPersistentEventArtifact(card) {
   const copyId = card?._copyId || card?.id;
   const heroSwordCopyId = state?.artifacts?.heroSwordCard?._copyId || state?.artifacts?.heroSwordCard?.id;
   const antiBadCopyId = state?.artifacts?.antiBadCard?._copyId || state?.artifacts?.antiBadCard?.id;
+  const joeCouponCopyId = state?.artifacts?.joeCouponCard?._copyId || state?.artifacts?.joeCouponCard?.id;
+  const speedBootsCopyId = state?.artifacts?.speedBootsCard?._copyId || state?.artifacts?.speedBootsCard?.id;
+  const magicPickaxeCopyId = state?.artifacts?.magicPickaxeCard?._copyId || state?.artifacts?.magicPickaxeCard?.id;
+  const goldenHorseshoeCopyId = state?.artifacts?.goldenHorseshoeCard?._copyId || state?.artifacts?.goldenHorseshoeCard?.id;
   return Boolean(
     (type === "event-hero-sword" && copyId && copyId === heroSwordCopyId) ||
-    (type === "event-anti-bad" && copyId && copyId === antiBadCopyId)
+    (type === "event-anti-bad" && copyId && copyId === antiBadCopyId) ||
+    (type === "event-joe-coupon" && copyId && copyId === joeCouponCopyId) ||
+    (type === "event-speed-boots" && copyId && copyId === speedBootsCopyId) ||
+    (type === "event-magic-pickaxe" && copyId && copyId === magicPickaxeCopyId) ||
+    (type === "event-golden-horseshoe" && copyId && copyId === goldenHorseshoeCopyId)
   );
 }
 
@@ -13749,6 +14810,22 @@ function diceAmount(amount) {
   return `<span class="dice-amount"><b>${amount}</b>${diceIcon()}</span>`;
 }
 
+function strengthIcon() {
+  return `<img class="strength-icon" src="${strengthIconSrc}" alt="" aria-hidden="true">`;
+}
+
+function strengthAmount(amount) {
+  return `<span class="strength-amount"><b>${amount}</b>${strengthIcon()}</span>`;
+}
+
+function stepsIcon() {
+  return `<img class="steps-icon" src="${stepsIconSrc}" alt="" aria-hidden="true">`;
+}
+
+function stepsAmount(amount) {
+  return `<span class="steps-amount"><b>${amount}</b>${stepsIcon()}</span>`;
+}
+
 function coinizeHtml(value) {
   return String(value)
     .replace(/([+-]?\d+)\s*монет(?:ами|ам|ах|а|ы|у)?/gi, (_, amount) => coinAmount(amount))
@@ -13761,27 +14838,44 @@ function diceizeHtml(value) {
     .replace(/куб(?:иков|иках|икам|иками|ика|ики|ик|ов|а|ы|у|\.)?/giu, diceIcon());
 }
 
+function strengthizeHtml(value) {
+  return String(value)
+    .replace(/(?:сила|силы|силе|силу)\s*([+-]\d+)/giu, (_, amount) => strengthAmount(amount))
+    .replace(/([+-]?\d+)\s*(?:к\s*)?сил(?:ами|ой|ах|ам|а|ы|е|у)?/giu, (_, amount) => strengthAmount(amount))
+    .replace(/сил(?:ами|ой|ах|ам|а|ы|е|у)?/giu, strengthIcon());
+}
+
+function stepsizeHtml(value) {
+  return String(value)
+    .replace(/(?:шаги|шагов|шагам)\s*([+-]\d+)/giu, (_, amount) => stepsAmount(amount))
+    .replace(/([+-]?\d+)\s*(?:к\s*)?шаг(?:ами|ов|ах|ам|а|и|у)?/giu, (_, amount) => stepsAmount(amount))
+    .replace(/шаг(?:ами|ов|ах|ам|а|и|у)?/giu, stepsIcon());
+}
+
 function iconizeHtml(value) {
   const protectedNames = [];
-  const html = String(value).replace(
+  const protect = (match) => {
+    const index = protectedNames.push(match) - 1;
+    return `__NO_ICONIZE_${index}__`;
+  };
+  const html = String(value)
+    .replace(
     /<([a-z][\w:-]*)\b(?=[^>]*\b(?:card-face-title|card-name|no-iconize)\b)[^>]*>[\s\S]*?<\/\1>/gi,
-    (match) => {
-      const index = protectedNames.push(match) - 1;
-      return `__NO_ICONIZE_${index}__`;
-    },
-  );
-  const iconized = keepIconizedPunctuationTogether(diceizeHtml(coinizeHtml(html)));
+      protect,
+    )
+    .replace(/(Зелье силы|Вольный шаг)/giu, protect);
+  const iconized = keepIconizedPunctuationTogether(stepsizeHtml(strengthizeHtml(diceizeHtml(coinizeHtml(html)))));
   return iconized.replace(/__NO_ICONIZE_(\d+)__/g, (_, index) => protectedNames[Number(index)] || "");
 }
 
 function keepIconizedPunctuationTogether(value) {
   return String(value)
     .replace(
-      /(\s*)(<img\b(?=[^>]*\b(?:coin-icon|dice-icon)\b)[^>]*>)\s*([,.;:!?])/g,
+      /(\s*)(<img\b(?=[^>]*\b(?:coin-icon|dice-icon|strength-icon|steps-icon)\b)[^>]*>)\s*([,.;:!?])/g,
       (_, space, icon, punctuation) => `<span class="card-text-nowrap">${space ? "&nbsp;" : ""}${icon}${punctuation}</span>`,
     )
     .replace(
-      /(<span\b(?=[^>]*\b(?:coin-amount|dice-amount)\b)[^>]*>.*?<\/span>)\s*([,.;:!?])/g,
+      /(<span\b(?=[^>]*\b(?:coin-amount|dice-amount|strength-amount|steps-amount)\b)[^>]*>(?:(?!<span\b)[\s\S])*?<\/span>)\s*([,.;:!?])/g,
       '<span class="card-text-nowrap">$1$2</span>',
     );
 }
@@ -13815,12 +14909,11 @@ function showDiceFloat(player, amount) {
 
 function log(message, { toast = false } = {}) {
   const renderedMessage = iconizeHtml(message);
-  const item = document.createElement("li");
-  item.innerHTML = renderedMessage;
-  removeInfoHistoryCurrentActionEntry();
-  gameLogEl.prepend(item);
-  while (gameLogEl.children.length > 50) gameLogEl.lastElementChild.remove();
-  renderInfoHistoryCurrentActionEntry();
+  gameLogEntries.push({
+    html: renderedMessage,
+    text: plainTextFromHtml(renderedMessage),
+  });
+  renderInfoHistoryLogEntries();
 
   if (toast) showEventToast(trimToastTrailingDot(renderedMessage));
 }
@@ -13917,6 +15010,16 @@ function showRollContextStatus(contextInput) {
 
 function showActionPrompt(message, { buttonLabel = "Далее", autoFor = null, rollContext = null } = {}) {
   if (!ui.eventToast) return Promise.resolve();
+  if (fastModeActive()) {
+    actionPromptButtonLabel = buttonLabel;
+    actionPromptAutoPlayerId = autoFor?.id ?? null;
+    actionPromptRollContext = normalizeRollContext(rollContext);
+    render();
+    actionPromptButtonLabel = "Далее";
+    actionPromptAutoPlayerId = null;
+    actionPromptRollContext = null;
+    return Promise.resolve();
+  }
 
   const resetToken = transientUiResetToken;
   window.clearTimeout(eventToastFadeTimer);
@@ -14033,6 +15136,12 @@ async function animateDice(
   const formula = showBattleFormula ? battleRollFormulaText(rolls, bonus) : "";
   const caption = showBattleFormula ? "" : diceResultCaption(rolls, bonus);
   const playerLabel = dicePlayerLabel(player, label);
+  if (fastModeActive()) {
+    ui.diceValue?.classList.remove("rolling");
+    if (ui.diceValue) ui.diceValue.textContent = result;
+    setPhoneDiceRoll({ bonus, formula, label, player, rolling: false, rolls, total: result + bonus });
+    return;
+  }
   setPhoneDiceRoll({ bonus, formula, label, player, rolling: true, rolls });
   const throwPromise = animateDiceOnBoard(rolls, { caption, formula, playerLabel, isEnemyBattle, isFinalBattle });
   ui.diceValue.classList.add("rolling");
@@ -14191,6 +15300,7 @@ function diceFace(value) {
 }
 
 function sleep(ms) {
+  if (fastModeActive()) return Promise.resolve();
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
@@ -14250,7 +15360,268 @@ function triggerRollButtonAction({ fromBot = false } = {}) {
   }
   if (!fromBot && ui.rollBtn.disabled) return;
   hidePassiveEventToast();
-  rollAndMove();
+  const movement = rollAndMove();
+  if (fastModeActive()) {
+    movement.catch((error) => {
+      if (autoPlaytestRun) autoPlaytestRun.lastError = error;
+      console.warn("Auto playtest runtime error captured.", error);
+    });
+  }
+  return movement;
+}
+
+function autoPlaytestStatus(text) {
+  if (ui.autoPlaytestStatus) ui.autoPlaytestStatus.textContent = text || "";
+}
+
+function snapshotAutoPlaytestControls() {
+  return {
+    autoRevealCards: ui.autoRevealCards ? ui.autoRevealCards.checked : false,
+    botCount: ui.botCount?.value || "0",
+    botSpeed: ui.botSpeed?.value || "standard",
+    hidePlayers: ui.hidePlayers ? ui.hidePlayers.checked : false,
+    playerCount: ui.playerCount?.value || "2",
+    randomFirstPlayer: ui.randomFirstPlayer ? ui.randomFirstPlayer.checked : false,
+    showWalkPath: ui.showWalkPath ? ui.showWalkPath.checked : false,
+  };
+}
+
+function restoreAutoPlaytestControls(snapshot) {
+  if (!snapshot) return;
+  if (ui.playerCount) ui.playerCount.value = snapshot.playerCount;
+  syncBotCountOptions();
+  if (ui.botCount) ui.botCount.value = snapshot.botCount;
+  if (ui.botSpeed) ui.botSpeed.value = snapshot.botSpeed;
+  if (ui.autoRevealCards) ui.autoRevealCards.checked = snapshot.autoRevealCards;
+  if (ui.hidePlayers) ui.hidePlayers.checked = snapshot.hidePlayers;
+  if (ui.randomFirstPlayer) ui.randomFirstPlayer.checked = snapshot.randomFirstPlayer;
+  if (ui.showWalkPath) ui.showWalkPath.checked = snapshot.showWalkPath;
+}
+
+function configureAutoPlaytestControls() {
+  const playerCount = Number(ui.playerCount?.value) || 4;
+  syncBotCountOptions();
+  if (ui.botCount) ui.botCount.value = String(playerCount);
+  if (ui.botSpeed) ui.botSpeed.value = "fast";
+  if (ui.autoRevealCards) ui.autoRevealCards.checked = true;
+  if (ui.hidePlayers) ui.hidePlayers.checked = true;
+  if (ui.randomFirstPlayer) ui.randomFirstPlayer.checked = false;
+  if (ui.showWalkPath) ui.showWalkPath.checked = true;
+}
+
+function autoPlaytestSeed(runId, runIndex) {
+  return `${runId}-${runIndex}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function autoPlaytestWaitFrame() {
+  return new Promise((resolve) => window.setTimeout(resolve, 0));
+}
+
+function setAutoPlaytestPhase(phase, details = {}) {
+  if (!autoPlaytestRun) return;
+  autoPlaytestRun.phase = phase;
+  autoPlaytestRun.phaseUpdatedAt = Date.now();
+  autoPlaytestRun.phaseDetails = {
+    cell: details.cell ?? details.player?.position ?? currentPlayer()?.position ?? "",
+    playerId: details.player?.id ?? currentPlayer()?.id ?? "",
+    playerName: details.player?.name ?? currentPlayer()?.name ?? "",
+    rolls: Array.isArray(details.rolls) ? details.rolls.join("+") : "",
+    step: details.step ?? "",
+    totalSteps: details.totalSteps ?? "",
+    turn: state ? `${state.round}.${state.turns}.${state.activePlayer}` : "",
+  };
+}
+
+function clearAutoPlaytestPhase() {
+  if (!autoPlaytestRun) return;
+  autoPlaytestRun.phase = "";
+  autoPlaytestRun.phaseDetails = null;
+  autoPlaytestRun.phaseUpdatedAt = Date.now();
+}
+
+function autoPlaytestRecentActionText() {
+  const last = gameLogEntries.at(-1);
+  if (!last?.text) return "none";
+  return plainText(last.text).slice(0, 180);
+}
+
+function autoPlaytestPhaseContext() {
+  const details = autoPlaytestRun?.phaseDetails || {};
+  const parts = [
+    `phase=${autoPlaytestRun?.phase || "unknown"}`,
+    details.playerName ? `player=${details.playerName}` : "",
+    details.playerId !== "" ? `playerId=${details.playerId}` : "",
+    details.cell ? `cell=${cellLabel(details.cell)}` : "",
+    details.step ? `step=${details.step}/${details.totalSteps}` : "",
+    details.rolls ? `rolls=${details.rolls}` : "",
+    details.turn ? `turn=${details.turn}` : "",
+    `recent=${autoPlaytestRecentActionText()}`,
+  ].filter(Boolean);
+  return parts.join("; ");
+}
+
+function autoPlaytestPendingContext() {
+  if (!state) return "no-state";
+  if (actionPromptResolver) return `actionPrompt:${actionPromptButtonLabel}`;
+  if (state.pendingPreRoll) return `pendingPreRoll:${state.pendingPreRoll.playerId}`;
+  if (state.pendingDiceControl) return `pendingDiceControl:${state.pendingDiceControl.playerId}`;
+  if (state.pendingMoveDieReroll) return `pendingMoveDieReroll:${state.pendingMoveDieReroll.playerId}`;
+  if (state.pendingMoveOneFarther) return `pendingMoveOneFarther:${state.pendingMoveOneFarther.playerId}`;
+  if (state.pendingShop) return `pendingShop:${state.pendingShop.playerId}`;
+  if (state.pendingCardChoice) return `pendingCardChoice:${state.pendingCardChoice.kind || "card"}:${state.pendingCardChoice.playerId}`;
+  if (state.pendingChoice) return `pendingChoice:${state.pendingChoice.kind || "choice"}:${state.pendingChoice.playerId ?? "current"}`;
+  if (movementActionInProgress) return `movementAction; ${autoPlaytestPhaseContext()}`;
+  return "idle";
+}
+
+function autoPlaytestWaitingForMovementOnly() {
+  return Boolean(
+    movementActionInProgress &&
+    !actionPromptResolver &&
+    !state?.pendingPreRoll &&
+    !state?.pendingDiceControl &&
+    !state?.pendingMoveDieReroll &&
+    !state?.pendingMoveOneFarther &&
+    !state?.pendingShop &&
+    !state?.pendingCardChoice &&
+    !state?.pendingChoice
+  );
+}
+
+function normalizeAutoBlockerReason(error) {
+  const message = error?.message || String(error || "unknown");
+  return message.replace(/^AUTO BLOCKED:\s*/i, "");
+}
+
+function autoPlaytestCanBotResolvePending() {
+  if (!state) return false;
+  if (actionPromptResolver) return shouldAutoResolvePrompt();
+  if (state.pendingPreRoll) return isBotPlayerId(state.pendingPreRoll.playerId);
+  if (state.pendingDiceControl) return isBotPlayerId(state.pendingDiceControl.playerId);
+  if (state.pendingMoveDieReroll) return isBotPlayerId(state.pendingMoveDieReroll.playerId);
+  if (state.pendingMoveOneFarther) return isBotPlayerId(state.pendingMoveOneFarther.playerId);
+  if (state.pendingShop) return isBotPlayerId(state.pendingShop.playerId);
+  if (state.pendingCardChoice) return isBotPlayerId(state.pendingCardChoice.playerId);
+  if (state.pendingChoice) return isBotPlayerId(state.pendingChoice.playerId ?? currentPlayer()?.id);
+  return isBot(currentPlayer());
+}
+
+async function waitForAutoPlaytestGame(meta) {
+  let lastTurnKey = `${state.round}:${state.turns}:${state.activePlayer}`;
+  let actionsThisTurn = 0;
+  let idleTicks = 0;
+  let movementIdleStartedAt = 0;
+
+  while (!state.finished) {
+    const turnKey = `${state.round}:${state.turns}:${state.activePlayer}`;
+    if (turnKey !== lastTurnKey) {
+      lastTurnKey = turnKey;
+      actionsThisTurn = 0;
+      idleTicks = 0;
+    }
+    if (!autoPlaytestWaitingForMovementOnly()) actionsThisTurn += 1;
+
+    if (state.turns > autoPlaytestMaxTurns) {
+      throw new Error(`AUTO BLOCKED: max turns ${autoPlaytestMaxTurns}`);
+    }
+    if (autoPlaytestRun?.lastError) {
+      const error = autoPlaytestRun.lastError;
+      autoPlaytestRun.lastError = null;
+      throw new Error(`AUTO BLOCKED: runtime error: ${error?.message || error}`);
+    }
+    if (actionsThisTurn > autoPlaytestMaxActionsPerTurn) {
+      throw new Error(`AUTO BLOCKED: max actions per turn ${autoPlaytestMaxActionsPerTurn}; ${autoPlaytestPendingContext()}`);
+    }
+    if (!autoPlaytestCanBotResolvePending()) {
+      throw new Error(`AUTO BLOCKED: no bot decision for ${autoPlaytestPendingContext()}`);
+    }
+
+    const before = `${state.round}:${state.turns}:${state.activePlayer}:${gameLogEntries.length}:${autoPlaytestPendingContext()}`;
+    runBotAction();
+    await autoPlaytestWaitFrame();
+    if (autoPlaytestRun?.lastError) {
+      const error = autoPlaytestRun.lastError;
+      autoPlaytestRun.lastError = null;
+      throw new Error(`AUTO BLOCKED: runtime error: ${error?.message || error}`);
+    }
+    const after = `${state.round}:${state.turns}:${state.activePlayer}:${gameLogEntries.length}:${autoPlaytestPendingContext()}`;
+    idleTicks = before === after ? idleTicks + 1 : 0;
+    if (!movementActionInProgress) {
+      movementIdleStartedAt = 0;
+    } else if (before === after) {
+      movementIdleStartedAt ||= Date.now();
+    } else {
+      movementIdleStartedAt = 0;
+    }
+    if (idleTicks > 40) {
+      if (movementActionInProgress) {
+        const elapsed = movementIdleStartedAt ? Date.now() - movementIdleStartedAt : 0;
+        if (elapsed <= autoPlaytestMovementStallMs) {
+          continue;
+        }
+      }
+      throw new Error(`AUTO BLOCKED: no progress at ${autoPlaytestPendingContext()}`);
+    }
+  }
+
+  return buildAutoPlaytestSnapshot(meta);
+}
+
+async function runAutoPlaytestGames(countInput) {
+  const count = Math.max(1, Math.min(1000, Number(countInput) || 1));
+  if (autoPlaytestRun?.running) {
+    autoPlaytestStatus("Автопрогон уже идет");
+    return;
+  }
+
+  const previousControls = snapshotAutoPlaytestControls();
+  const runId = `auto-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+  const results = [];
+  autoPlaytestRun = { fastMode: true, runId, running: true };
+  autoPlaytestStatus(`Авто 0/${count}`);
+
+  try {
+    for (let index = 1; index <= count; index += 1) {
+      const startedAt = Date.now();
+      const seed = autoPlaytestSeed(runId, index);
+      autoPlaytestRun.runIndex = index;
+      autoPlaytestRun.seed = seed;
+      configureAutoPlaytestControls();
+      newGame();
+      state.autoRun = { fastMode: true, runId, runIndex: index, seed };
+      state.gameSettings = { ...state.gameSettings, autoRun: true, fastMode: true, seed };
+      autoPlaytestStatus(`Авто ${index}/${count}: идет`);
+
+      let snapshot = null;
+      try {
+        snapshot = await waitForAutoPlaytestGame({ runId, runIndex: index, seed, startedAt });
+      } catch (error) {
+        const abortReason = normalizeAutoBlockerReason(error);
+        if (state) {
+          state.finished = true;
+          if (state.history) state.history.finishedAt = Date.now();
+        }
+        log(`<strong>AUTO BLOCKED</strong>: ${escapeHtml(abortReason)}`);
+        snapshot = buildAutoPlaytestSnapshot({ abortReason, runId, runIndex: index, seed, startedAt });
+      }
+
+      const saveResult = await saveAutoPlaytestSnapshot(snapshot);
+      results.push({ saveResult, snapshot });
+      autoPlaytestStatus(`Авто ${index}/${count}: ${snapshot.autoRun.status}`);
+      await autoPlaytestWaitFrame();
+    }
+
+    const finished = results.filter((item) => item.snapshot.autoRun.status === "finished").length;
+    const aborted = results.length - finished;
+    const localFailed = results.filter((item) => !item.saveResult?.localSaved).length;
+    const localText = localFailed ? `, local fail ${localFailed}` : "";
+    autoPlaytestStatus(`Готово: ${finished} завершено, ${aborted} abort${localText}`);
+    showEventToast(`Автопрогон готов: ${finished}/${results.length} партий завершено${localText}.`);
+  } finally {
+    autoPlaytestRun = null;
+    restoreAutoPlaytestControls(previousControls);
+    render();
+  }
 }
 
 function hidePassiveEventToast() {
@@ -14296,6 +15667,14 @@ ui.fontStyle?.addEventListener("change", () => {
 });
 ui.playerCount?.addEventListener("change", syncBotCountOptions);
 ui.settingsPanel?.addEventListener("click", (event) => {
+  const autoPlaytestButton = event.target instanceof Element
+    ? event.target.closest("[data-auto-playtest-runs]")
+    : null;
+  if (autoPlaytestButton) {
+    void runAutoPlaytestGames(autoPlaytestButton.dataset.autoPlaytestRuns);
+    return;
+  }
+
   const button = event.target instanceof Element
     ? event.target.closest("[data-step-bonus-preset], [data-battle-bonus-preset]")
     : null;
@@ -14343,6 +15722,9 @@ boardEl?.addEventListener("keydown", (event) => {
 ui.referenceHeaderBtn?.addEventListener("click", () => {
   toggleReferencePanel();
 });
+ui.historyHeaderBtn?.addEventListener("click", () => {
+  toggleHistoryPanel();
+});
 ui.referencePanel?.addEventListener("click", (event) => {
   const button = event.target instanceof Element ? event.target.closest("[data-reference-toggle]") : null;
   if (!button) return;
@@ -14373,8 +15755,24 @@ ui.phoneRoomHeaderBtn?.addEventListener("click", () => {
 ui.infoHistoryBtn?.addEventListener("click", () => {
   toggleInfoHistoryPopup();
 });
+ui.infoHistoryFullBtn?.addEventListener("click", () => {
+  toggleFullInfoHistoryLog();
+});
+ui.infoHistoryCopyBtn?.addEventListener("click", () => {
+  void copyFullInfoHistoryLog();
+});
 ui.infoHistoryCloseBtn?.addEventListener("click", () => {
   closeInfoHistoryPopup();
+});
+ui.playerShopCloseBtn?.addEventListener("click", () => {
+  closePlayerShopPopup();
+});
+ui.playerShopPopup?.addEventListener("click", (event) => {
+  const closeTarget = event.target instanceof Element ? event.target.closest("[data-player-shop-close]") : null;
+  if (closeTarget) closePlayerShopPopup();
+});
+ui.playerShopPopup?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") event.stopPropagation();
 });
 ui.infoHistoryPopup?.addEventListener("click", (event) => {
   const closeTarget = event.target instanceof Element ? event.target.closest("[data-info-history-close]") : null;
@@ -14417,6 +15815,11 @@ ui.phoneRoomCardsText?.addEventListener("change", () => {
 });
 ui.hidePlayers?.addEventListener("change", () => {
   renderTokens();
+});
+scoreStripEl?.addEventListener("click", (event) => {
+  const button = event.target instanceof Element ? event.target.closest("[data-player-shop-id]") : null;
+  if (!button) return;
+  openPlayerShopPopup(button.dataset.playerShopId);
 });
 ui.copyPhoneRoomUrlBtn?.addEventListener("click", () => {
   void copyPhoneRoomUrl();
@@ -14470,6 +15873,15 @@ document.addEventListener("keydown", (event) => {
     ui.infoHistoryBtn?.focus({ preventScroll: true });
     return;
   }
+  if (event.key === "Escape" && playerShopPopupOpen()) {
+    event.preventDefault();
+    closePlayerShopPopup();
+    return;
+  }
+  if (event.key === "Enter" && playerShopPopupOpen()) {
+    event.preventDefault();
+    return;
+  }
   if (event.key === "Enter" && infoHistoryPopupOpen()) {
     event.preventDefault();
     return;
@@ -14486,6 +15898,7 @@ syncWideScoreStripPlacement();
 wideLayoutQuery.addEventListener("change", syncWideScoreStripPlacement);
 phoneLayoutQuery.addEventListener("change", syncSettingsToggleLabel);
 syncSettingsToggleLabel();
+syncHistoryPanel();
 window.setInterval(renderHistory, 1000);
 
 newGame();

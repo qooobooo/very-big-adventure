@@ -12,8 +12,49 @@ This folder is the shared mailbox for Codex chats working on "Очень Бол�
    - `prompts/read-news.md`
 2. During work, keep edits inside your assigned project folder.
 3. After meaningful work, append a short update to `updates.md`.
-4. If Dev 1, Dev 2, Dev 3, Important, GD, Art / UI 1, Art / UI 2, QA 1, or QA 2 needs to act, write a note in the matching inbox file.
+4. If Dev 1, Dev 2, Dev 3, Important, GD, Art / UI 1, Art / UI 2, Art / UI 3, QA 1, or QA 2 needs to act, write a note in the matching inbox file.
 5. If a task is handed back to a specific active role/chat, or the next step requires that role to react, also send a direct message to that role's active Codex thread. Do not rely only on the inbox file for urgent or expected handbacks.
+
+## Reasoning Depth
+
+Before every user task, internally estimate the required reasoning depth: low, medium, high, or very high.
+
+Use these criteria:
+
+- Low:
+  - simple questions;
+  - translation, rephrasing, short answers;
+  - no complex logic, risks, or large context.
+- Medium:
+  - comparing options;
+  - planning;
+  - text analysis;
+  - simple calculations;
+  - tasks that require care, but where the cost of error is low.
+- High:
+  - strategic decisions;
+  - complex analysis;
+  - code, architecture, and debugging;
+  - financial, legal, product, or operational conclusions;
+  - work with several constraints at the same time.
+- Very high:
+  - critical decisions;
+  - long documents;
+  - ambiguous tasks;
+  - hidden-risk discovery;
+  - complex system-level conclusions;
+  - tasks where an error can cost money, time, reputation, or lead to the wrong strategy.
+
+Behavior rules:
+
+1. Do not reveal long chain-of-thought.
+2. If the task is simple, answer directly.
+3. If the task requires elevated depth, first write: `Оценка сложности: высокая` or `Оценка сложности: очень высокая`.
+4. If the current ChatGPT/Codex mode may be insufficient, say directly: `Лучше переключить чат на High/Extra High`.
+5. Do not choose the maximum level without a reason.
+6. When in doubt, choose the higher level.
+7. For important tasks, first clarify the goal, constraints, and success criteria if the risk of error is high without them.
+8. At the end of complex answers, add a `Проверка рисков и допущений` block.
 
 ## Task Lifecycle
 
@@ -80,6 +121,7 @@ This folder is the shared mailbox for Codex chats working on "Очень Бол�
 - `GD`: game design for "Очень Большая Бродилка"; owns rules, contracts, balance, core loop, and implementation-ready design notes for Dev roles.
 - `Art / UI 1`: visual assets and UI direction for the prototype.
 - `Art / UI 2`: additional visual assets and UI direction chat for the prototype.
+- `Art / UI 3`: additional visual assets and UI direction chat for the prototype.
 - `QA 1`: testing, smoke checks, regression checks, and bug reports for Dev roles.
 - `QA 2`: additional testing chat for smoke checks, regression checks, and bug reports.
 

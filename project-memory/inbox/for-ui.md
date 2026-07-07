@@ -1,8 +1,352 @@
-# Inbox For Art / UI 1 / Art / UI 2
+# Inbox For Art / UI 1 / Art / UI 2 / Art / UI 3
 
 For UI/UX and art-asset tasks related to "Очень Большая Бродилка" in `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure`.
 
 ## Open Items
+
+- DONE PNP BAD CARDS 2026-07-06 01:22 - Print-ready `Плохо` cards with readable text:
+  - Owner: `Art / UI 1`.
+  - Dispatch status: send directly to Art/UI 1 thread at 2026-07-06 00:50.
+  - Requested by: user via GD.
+  - Summary:
+    - Make all current `Плохо` cards print-ready.
+    - Print exactly one copy of each unique `Плохо` card, not physical deck counts.
+    - Use the existing game/PnP card style, art, frame, and icon rules.
+  - Reference:
+    - Good formatting direction example:
+      - `output/pnp/bad_cards_format_example/bad_flip_shop_down_format_example.png`.
+    - Current previous PnP bad-card output can be replaced/updated:
+      - `output/pnp/bad_cards/`.
+  - Typography requirements:
+    - Text must be easy to read at printed size.
+    - Do not make rules text tiny just to fit.
+    - Text must not jump visually between lines; use clean, deliberate line breaks.
+    - Keep title, art, and rules in stable zones.
+    - Rules text must not overlap the card edges, frame, title, art, icons, or lower border.
+    - Prefer semantic manual line breaks and paragraph spacing for long cards.
+    - Coin/dice/strength/steps icons must stay inline cleanly and not cause leftover letters or awkward spacing.
+    - No icons in card titles.
+  - Output:
+    - Put all generated PnP files under ignored `output/pnp/`, so they do not enter git.
+    - Produce print-ready A4 color PDF(s) for all `Плохо` cards, one visible card copy per unique card.
+    - Produce preview PNG(s) or contact sheet(s) so GD/user can inspect text quality quickly.
+    - It is okay to replace old generated PnP bad-card files in `output/pnp/bad_cards/`.
+  - Constraints:
+    - Visual/PnP output only.
+    - Do not change gameplay rules, card configs, CSV, Google Sheet, deck lifecycle, or unrelated assets.
+    - Do not add generated PnP files to git.
+  - Verification:
+    - Check every rendered `Плохо` card visually for readable text, stable line breaks, and no overlaps.
+    - Spot-check especially long cards such as `Закрытая лавка`.
+    - Confirm generated files are under ignored `output/`.
+    - `git diff --check`.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with output paths and any cards that required special typography handling.
+    - QA is not involved unless the user explicitly asks.
+  - Completed:
+    - Rebuilt print-ready PnP output for all 20 current unique `Плохо` cards, one copy per unique card.
+    - Output stayed under ignored `output/pnp/bad_cards/`.
+    - Used a wider/larger print text layout than the previous reference, with stable art/title/rules zones and manual semantic line breaks.
+    - Generated `output/pnp/bad_cards/bad_cards_one_each_a4.pdf`.
+    - Generated `output/pnp/bad_cards/bad_cards_one_each_contact_sheet.png` and updated legacy preview `output/pnp/bad_cards/bad_cards_one_each_preview.png`.
+    - Generated individual card PNGs under `output/pnp/bad_cards/cards/`.
+  - Cards with special typography handling:
+    - `Кубик неприятностей`, `Закрытая лавка`, `Тяжелый выбор`, `Проклятые шестерки`, `Пустые карманы`, `Реванш монстра`, `Бедняцкий налет`, `Чужая распродажа`.
+  - Checks passed:
+    - Visual review of contact sheet, rendered A4 pages, and long-card PNGs including `Закрытая лавка`.
+    - Static PNG check: 20 individual card PNGs are `744x1039` RGBA.
+    - PDF check: A4, 3 pages.
+    - Generated files confirmed under ignored `output/`.
+    - `git diff --check`.
+
+- DONE ARTIFACT ICON 2026-07-05 13:43 - `Золотая Подкова` artifact icon:
+  - Owner: `Art / UI 1`.
+  - Dispatch status: sent directly to Art/UI 1 thread at 2026-07-05 04:12.
+  - Requested by: user via GD.
+  - Summary:
+    - Draw a separate artifact icon for the new Event artifact `Золотая Подкова`.
+    - Expected file: `assets/icons/artifact_golden_horseshoe_512.png`.
+  - Visual direction:
+    - The artifact represents lucky movement rolls and rewards rolls containing `1`.
+    - Match current fantasy board-game artifact icon style and existing artifact icons:
+      - `assets/icons/artifact_magic_wallet_512.png`;
+      - `assets/icons/artifact_hero_sword_512.png`;
+      - `assets/icons/artifact_anti_bad_512.png`;
+      - `assets/icons/artifact_joe_coupon_512.png`;
+      - `assets/icons/artifact_speed_boots_512.png`;
+      - `assets/icons/artifact_magic_pickaxe_512.png`.
+    - Suggested motifs: golden horseshoe, small dice face with `1`, coin spark, warm artifact glow, purple/gem accent.
+    - Must read clearly as an artifact chip and Event-card icon.
+  - Constraints:
+    - Visual asset only unless a tiny cache-key/reference update is needed.
+    - Do not change game rules, card configs, CSV, Google Sheet, deck lifecycle, or unrelated assets.
+    - Export transparent PNG, 512x512, RGBA.
+  - Verification:
+    - PNG is `512x512 RGBA` with transparent corners/background.
+    - Visual check at small artifact-chip size and card icon size.
+    - `git diff --check`.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result so GD can release/confirm the dependent Dev task.
+    - QA is not involved unless the user explicitly asks.
+  - Completed:
+    - Created `assets/icons/artifact_golden_horseshoe_512.png`.
+    - Composition: large golden horseshoe, dice face with exactly one pip, coin sparks, warm artifact glow, purple gem accent, and small magic sparkles.
+    - Visual asset only; no gameplay, card config, CSV, Google Sheet, deck lifecycle, or unrelated asset changes.
+  - Checks passed:
+    - PNG is `512x512 RGBA` with transparent corners.
+    - Visual checked at full size and small artifact-chip sizes.
+    - `git diff --check`.
+
+- DONE ICON SIZE 2026-07-05 03:01 - Increase strength and steps inline icons:
+  - Owner: `Art / UI 1`.
+  - Dispatch status: sent directly to Art/UI 1 thread at 2026-07-05 01:34.
+  - Requested by: user via GD.
+  - Summary:
+    - Make the newly added strength and steps inline icons visually larger.
+    - Icons:
+      - strength: `./assets/icons/strength_sword_512.png`, CSS classes around `.strength-icon` / `.strength-amount`.
+      - steps: `./assets/icons/steps_512.png`, CSS classes around `.steps-icon` / `.steps-amount`.
+  - Requirements:
+    - Increase visual size enough to be clearly readable in card text, logs, popups, chips, battle HUD, and phone/controller text.
+    - Keep them aligned with surrounding text and avoid disrupting line-height.
+    - Preserve existing coin/dice icon sizing unless a tiny contextual adjustment is strictly needed for harmony.
+    - Do not use these icons in titles; Dev 3 already added title guards, do not weaken them.
+    - Do not change gameplay, texts, card data, CSV, Google Sheet, JS logic, or assets.
+  - Test plan:
+    - `git diff --check`.
+    - Browser/visual smoke if possible:
+      - card descriptions with `+к силе` and `+к шагам`;
+      - logs/history/info popup;
+      - current-cell/action strip;
+      - phone/controller text;
+      - small active TADAM/card previews.
+    - Confirm no text overlap or card overflow.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly.
+    - QA is not involved unless the user explicitly asks.
+  - Completed:
+    - Increased `.strength-icon` and `.steps-icon` visual size in `styles.css` while preserving existing coin/dice sizing.
+    - Added context-specific strength/steps sizes for score/player stats, roll-result highlights, event toast/TADAM items, card faces, and Event card description lines.
+    - Bumped `styles.css` cache key in `index.html` and `controller.html` to `20260705-0140`.
+    - Did not change title guards, JS rendering logic, gameplay, text content, card data, CSV, Google Sheet, or image assets.
+  - Checks passed:
+    - `git diff --check`.
+  - Verification limitation:
+    - Browser visual smoke was attempted through Playwright, but the local Chromium executable is not installed in this sandbox.
+
+- DONE ARTIFACT ICON 2026-07-05 00:40 - `Волшебная кирка` artifact icon:
+  - Owner: `Art / UI 1`.
+  - Dispatch status: sent directly to Art/UI 1 thread at 2026-07-05 00:26.
+  - Requested by: user via GD.
+  - Summary:
+    - Draw a separate artifact icon for the new Event artifact `Волшебная кирка`.
+    - Expected file: `assets/icons/artifact_magic_pickaxe_512.png`.
+  - Visual direction:
+    - The artifact represents a magic pickaxe that improves coin gains.
+    - Match current fantasy board-game artifact icon style and existing artifact icons:
+      - `assets/icons/artifact_magic_wallet_512.png`;
+      - `assets/icons/artifact_hero_sword_512.png`;
+      - `assets/icons/artifact_anti_bad_512.png`;
+      - `assets/icons/artifact_joe_coupon_512.png`;
+      - `assets/icons/artifact_speed_boots_512.png` if already present.
+    - Suggested motifs: enchanted golden pickaxe, small coin/ore sparkle, warm artifact glow, magical mining cue.
+    - Must read clearly as an artifact chip and Event-card icon.
+  - Constraints:
+    - Visual asset only unless a tiny cache-key/reference update is needed.
+    - Do not change game rules, card configs, CSV, Google Sheet, deck lifecycle, or unrelated assets.
+    - Export transparent PNG, 512x512, RGBA.
+  - Verification:
+    - PNG is `512x512 RGBA` with transparent corners/background.
+    - Visual check at small artifact-chip size and card icon size.
+    - `git diff --check`.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result so GD can release the dependent Dev task.
+    - QA is not involved unless the user explicitly asks.
+  - Completed:
+    - Created `assets/icons/artifact_magic_pickaxe_512.png`.
+    - Composition: enchanted gold/steel pickaxe, coin sparks, purple ore crystals, warm artifact glow, and small magic sparkles.
+    - Visual asset only; no gameplay, card config, CSV, Google Sheet, deck lifecycle, or unrelated asset changes.
+  - Checks passed:
+    - PNG is `512x512 RGBA` with transparent corners.
+    - Visual checked at full size and small artifact-chip sizes.
+    - `git diff --check`.
+
+- DONE ARTIFACT ICON 2026-07-05 00:31 - `Сапоги скорости` artifact icon:
+  - Owner: `Art / UI 1`.
+  - Dispatch status: sent directly to Art/UI 1 thread at 2026-07-05 00:15.
+  - Requested by: user via GD.
+  - Summary:
+    - Draw a separate artifact icon for the new Event artifact `Сапоги скорости`.
+    - Expected file: `assets/icons/artifact_speed_boots_512.png`.
+  - Visual direction:
+    - The artifact represents magic speed boots that give `+5` steps.
+    - Match current fantasy board-game artifact icon style and existing artifact icons:
+      - `assets/icons/artifact_magic_wallet_512.png`;
+      - `assets/icons/artifact_hero_sword_512.png`;
+      - `assets/icons/artifact_anti_bad_512.png`;
+      - `assets/icons/artifact_joe_coupon_512.png`.
+    - Suggested motifs: golden/leather boots, wing/speed streak accents, small `+5` movement/arrow cue if it stays readable, warm artifact glow.
+    - Must read clearly as an artifact chip and Event-card icon.
+  - Constraints:
+    - Visual asset only unless a tiny cache-key/reference update is needed.
+    - Do not change game rules, card configs, CSV, Google Sheet, deck lifecycle, or unrelated assets.
+    - Export transparent PNG, 512x512, RGBA.
+  - Verification:
+    - PNG is `512x512 RGBA` with transparent corners/background.
+    - Visual check at small artifact-chip size and card icon size.
+    - `git diff --check`.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result so GD can release the dependent Dev task.
+    - QA is not involved unless the user explicitly asks.
+  - Completed:
+    - Created `assets/icons/artifact_speed_boots_512.png`.
+    - Composition: golden/leather speed boots with wing accents, speed streaks, small `+5` badge, purple gem accents, and warm artifact glow.
+    - Visual asset only; no gameplay, card config, CSV, Google Sheet, deck lifecycle, or unrelated asset changes.
+  - Checks passed:
+    - PNG is `512x512 RGBA` with transparent corners.
+    - Visual checked at full size and small artifact-chip sizes.
+    - `git diff --check`.
+
+- DONE ARTIFACT ICON 2026-07-05 00:02 - `Купон Джо` artifact icon:
+  - Owner: `Art / UI 1`.
+  - Dispatch status: sent directly to Art/UI 1 thread at 2026-07-04 23:44.
+  - Requested by: user via GD.
+  - Summary:
+    - Draw a separate artifact icon for the new Event artifact `Купон Джо`.
+    - Expected file: `assets/icons/artifact_joe_coupon_512.png`.
+  - Visual direction:
+    - The artifact represents a Joe Shop coupon.
+    - Use the current fantasy board-game artifact icon style, matching existing artifact icons such as:
+      - `assets/icons/artifact_magic_wallet_512.png`;
+      - `assets/icons/artifact_hero_sword_512.png`;
+      - `assets/icons/artifact_anti_bad_512.png`.
+    - Suggested motifs are a golden/parchment coupon ticket, Joe Shop colors, coin seal, shop-stall accent, or another clear "Joe coupon" read.
+    - The icon must read clearly as an artifact chip next to player cards and as an Event card icon.
+  - Constraints:
+    - Visual asset only unless a tiny cache-key/reference update is needed.
+    - Do not change game rules, card configs, CSV, Google Sheet, deck lifecycle, or unrelated assets.
+    - Keep transparent PNG export, 512x512.
+  - Verification:
+    - PNG is `512x512 RGBA` with transparent corners/background.
+    - Visual check at small artifact-chip size and card icon size.
+    - `git diff --check`.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result so GD can release the dependent Dev task.
+  - Completed:
+    - Created `assets/icons/artifact_joe_coupon_512.png`.
+    - Composition: parchment/gold coupon, Joe Shop stall accent, coin seal, purple artifact accent, and warm glow/sparkles.
+    - Visual asset only; no gameplay, card config, CSV, Google Sheet, deck lifecycle, or unrelated asset changes.
+  - Checks passed:
+    - PNG is `512x512 RGBA` with transparent corners.
+    - Visual checked at full size and small artifact-chip sizes.
+    - `git diff --check`.
+    - QA is not involved unless the user explicitly asks.
+
+- DONE 2026-07-03 13:04 - Rework autorun controls visibility after QA fail:
+  - Owner: `Art / UI 1`.
+  - Dispatch status: sent directly to Art/UI 1 thread at 2026-07-03 13:04; QA 2 re-check should happen after Dev 3 autorun blocker fix.
+  - Source: QA 2 re-check `QA RECHECK AUTO PLAYTEST MVP 2026-07-03 02:34`.
+  - Problem:
+    - Previous visibility fix did not hold on QA's fresh `1280x720` tab.
+    - QA repro:
+      - Fresh-load game.
+      - Open settings via `#settingsToggle`.
+      - Inspect `Автопрогон` immediately.
+    - Actual:
+      - `Автопрогон` below viewport: `y≈1029.75`, bottom `≈1113.47` while viewport height `720`.
+      - Buttons `1/10/100` around `y≈1061.47`, bottom `≈1095.47`.
+    - Expected:
+      - `Автопрогон` and buttons `1` / `10` / `100` visible immediately on settings open at ~`1280x720`.
+  - Required fix:
+    - Rework settings layout so `Автопрогон` is visible immediately without scroll discovery at common desktop height.
+    - Keep the UI compact and consistent with the existing settings style.
+    - If needed, move `Автопрогон` higher than less-used settings or make the opened settings panel itself start at a position where the block is visible.
+    - Avoid horizontal overflow and keep narrow-screen fallback intact.
+  - Guardrails:
+    - Visual/layout only.
+    - Do not change autorun logic, game rules, cards, save/export, or Dev 3's autorun state.
+    - Do not revert unrelated changes.
+  - Test/verification:
+    - `git diff --check`.
+    - Browser visual smoke if possible:
+      - viewport `1280x720`;
+      - fresh load, open settings;
+      - `Автопрогон` title and buttons are visible immediately;
+      - no overlap with player/bot controls or top buttons.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result.
+  - Completed:
+    - Moved `Автопрогон` back to the first item inside `#settingsPanel`.
+    - Added CSS `order: -10` to `.auto-playtest-controls` so it stays first even if the DOM order is changed later.
+    - When settings are open, `.game-settings` now temporarily rises above `.tadam-card` in the desktop side panel, preventing settings from starting below the TADAM block.
+    - Restored compact desktop autorun layout and kept the narrow-screen wrapping fallback.
+    - Bumped the host `styles.css` cache key.
+  - Verification:
+    - `git diff --check`.
+    - Browser smoke at explicit `1280x720`, fresh load, open settings:
+      - `Автопрогон` block: `y≈257`, bottom `≈303`, viewport height `720`.
+      - Buttons `1` / `10` / `100`: `y≈264`, bottom `≈296`.
+      - `firstChildClass` is `settings-action-pair auto-playtest-controls`.
+      - No overlap with top controls; stylesheet `styles.css?v=20260703-1304` loaded.
+
+- DONE 2026-07-03 02:16 - Make autorun controls visible in settings:
+  - Owner: `Art / UI 1`.
+  - Dispatch status: sent directly to Art/UI 1 thread at 2026-07-03 02:16; QA re-check can happen with autorun QA after Dev blocker fix.
+  - Source: QA 2 report for `QA AUTO PLAYTEST MVP 2026-07-03 02:04`.
+  - Summary:
+    - Improve settings layout so the `Автопрогон` controls are visible/obvious when settings opens at common desktop viewport sizes.
+  - QA finding:
+    - At default browser viewport around `1280x720`, opening settings initially placed autorun buttons below the visible viewport (`y≈780` with viewport height `720`).
+    - After scroll/panel position changed, they became visible around `y≈393`.
+    - Playwright could click them, but first visible UX is easy to miss.
+  - Desired behavior:
+    - On a 1280x720-ish viewport, `Автопрогон` should be visible without requiring the user to discover hidden scroll.
+    - If the settings panel must scroll, make the scroll affordance obvious and keep important dev/test controls easy to find.
+    - Preserve the current visual style and compactness of the top control row.
+  - Guardrails:
+    - Visual/layout change only.
+    - Do not change autorun behavior, game rules, cards, save/export logic, or Dev 3's autorun state.
+    - Work with current dirty tree and do not revert unrelated changes.
+  - Test/verification:
+    - `git diff --check`.
+    - Browser visual smoke if possible at ~1280x720:
+      - open settings;
+      - `Автопрогон` buttons are visible or clearly reachable;
+      - no overlap with player/bot controls, history/cards/phone/settings/fullscreen buttons.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-ui.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly.
+  - Completed:
+    - Moved the `Автопрогон` controls to the top of the opened settings panel so they are visible immediately.
+    - Made the autorun block a compact desktop row: title, `1` / `10` / `100` buttons, and status fit in one line.
+    - Added a narrow-screen fallback so the status wraps below the buttons instead of causing horizontal overflow.
+    - Bumped the host `styles.css` cache key.
+  - Verification:
+    - `git diff --check`.
+    - Browser smoke at explicit `1280x720`: after opening settings, `.auto-playtest-controls` is visible at `y≈587`, `bottom≈633` with viewport height `720`; buttons `1`, `10`, `100` are fully visible and no overlap with top controls.
 
 - DONE 2026-06-24 13:19 - Roll result highlight style:
   - Owner: `Art / UI 1`.

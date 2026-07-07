@@ -15,6 +15,7 @@ Active chats:
 - `GD`: game design, contracts, rules, balance, and implementation-ready specs for Dev roles.
 - `Art / UI 1`: visual assets and UI direction.
 - `Art / UI 2`: additional visual assets and UI direction.
+- `Art / UI 3`: additional visual assets and UI direction.
 - `QA 1`: testing, smoke checks, regression checks, and bug reports for Dev roles.
 - `QA 2`: additional testing chat for smoke checks, regression checks, and bug reports.
 
@@ -32,6 +33,12 @@ Key files:
 
 Current important state:
 
+- Shared reasoning-depth rule:
+  - Before every user task, internally estimate required depth as low, medium, high, or very high.
+  - Simple tasks can be answered directly.
+  - For high/very-high tasks, first write `Оценка сложности: высокая` or `Оценка сложности: очень высокая`.
+  - If the current mode may be insufficient, say `Лучше переключить чат на High/Extra High`.
+  - Do not reveal long chain-of-thought; for complex answers, add `Проверка рисков и допущений`.
 - Required task lifecycle for implementation/design tasks:
   1. For planning/executing multi-role work, GD routes tasks through specialists by default: Dev for implementation, Art / UI for visual assets/UI polish, and QA only when the user explicitly asks.
   2. GD should not directly implement cross-role plans unless the user explicitly asks GD to do the implementation personally or the change is an urgent tiny documentation/memory edit.
@@ -73,6 +80,7 @@ Only these chats are active in this project memory right now:
 - `Important`
 - `Art / UI 1`
 - `Art / UI 2`
+- `Art / UI 3`
 - `QA 1`
 - `QA 2`
 

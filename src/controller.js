@@ -5,6 +5,8 @@ const defaultControllerMode = "full";
 const controllerModes = new Set([defaultControllerMode, "big-button"]);
 const controllerCoinIconSrc = "./assets/icons/coin.png?v=20260524-0155";
 const controllerDiceIconSrc = "./assets/icons/dice.png?v=20260524-0305";
+const controllerStrengthIconSrc = "./assets/icons/strength_sword_512.png";
+const controllerStepsIconSrc = "./assets/icons/steps_512.png";
 const bigChoiceActionKinds = new Set([
   "board-choice",
   "card-choice",
@@ -519,7 +521,7 @@ function controllerCardPreviewMarkup(preview, playerId) {
     <article class="controller-card-preview controller-card-preview-${deckClass} ${preview.revealed ? "is-revealed" : "is-hidden"}">
       <span>${escapeHtml(preview.deck || "Карта")}</span>
       <strong>${escapeHtml(title || "Карта")}</strong>
-      <p>${escapeHtml(body)}</p>
+      <p>${controllerIconizeHtml(body)}</p>
     </article>
   `;
 }
@@ -641,8 +643,11 @@ function controllerCardFaceTitleDensityClass(title = "") {
 function controllerCardFaceDescriptionDensityClass(description = "") {
   const text = String(description || "");
   const lines = controllerCardFaceDescriptionLines(text).length;
+  const longestSegment = text
+    .split(/[.!?,:;]+|\s+-\s+/)
+    .reduce((max, segment) => Math.max(max, segment.trim().length), 0);
   if (text.length > 160 || lines >= 5) return "is-description-long";
-  if (text.length > 130 || lines >= 4) return "is-description-dense";
+  if (text.length > 108 || longestSegment > 42 || lines >= 4) return "is-description-dense";
   return "";
 }
 
@@ -654,9 +659,14 @@ function controllerCardFaceDescriptionMarkup(description) {
 }
 
 function controllerCardFaceDescriptionLines(description) {
-  return controllerMergeLeadingPunctuationLines((String(description || "").match(/[^.!?]+[.!?]?/g) || [])
+  const forcedLines = String(description || "")
+    .split(/\r?\n+/)
     .map((line) => line.trim())
-    .filter(Boolean));
+    .filter(Boolean);
+  if (forcedLines.length > 1) return forcedLines;
+  return controllerMergeLeadingPunctuationLines((forcedLines[0] || "").match(/[^.!?]+[.!?]?/g) || [])
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 function controllerMergeLeadingPunctuationLines(lines) {
@@ -686,24 +696,56 @@ function controllerDiceAmount(amount) {
   return `<span class="dice-amount"><b>${escapeHtml(amount)}</b>${controllerDiceIcon()}</span>`;
 }
 
+function controllerStrengthIcon() {
+  return `<img class="strength-icon" src="${controllerStrengthIconSrc}" alt="" aria-hidden="true">`;
+}
+
+function controllerStrengthAmount(amount) {
+  return `<span class="strength-amount"><b>${escapeHtml(amount)}</b>${controllerStrengthIcon()}</span>`;
+}
+
+function controllerStepsIcon() {
+  return `<img class="steps-icon" src="${controllerStepsIconSrc}" alt="" aria-hidden="true">`;
+}
+
+function controllerStepsAmount(amount) {
+  return `<span class="steps-amount"><b>${escapeHtml(amount)}</b>${controllerStepsIcon()}</span>`;
+}
+
 function controllerIconizeHtml(value) {
-  const coinized = escapeHtml(value)
+  const protectedNames = [];
+  const escaped = escapeHtml(value).replace(/(Зелье силы|Вольный шаг)/giu, (match) => {
+    const index = protectedNames.push(match) - 1;
+    return `__NO_ICONIZE_${index}__`;
+  });
+  const coinized = escaped
     .replace(/([+-]?\d+)\s*монет(?:ами|ам|ах|а|ы|у)?/gi, (_, amount) => controllerCoinAmount(amount))
     .replace(/монет(?:ами|ам|ах|а|ы|у)?/gi, controllerCoinIcon());
   const diceized = coinized
     .replace(/([+-]?\d+)\s*куб(?:иков|иках|икам|иками|ика|ики|ик|ов|а|ы|у|\.)?/giu, (_, amount) => controllerDiceAmount(amount))
     .replace(/куб(?:иков|иках|икам|иками|ика|ики|ик|ов|а|ы|у|\.)?/giu, controllerDiceIcon());
-  return controllerKeepIconizedPunctuationTogether(diceized);
+  const strengthized = diceized
+    .replace(/(?:сила|силы|силе|силу)\s*([+-]\d+)/giu, (_, amount) => controllerStrengthAmount(amount))
+    .replace(/([+-]?\d+)\s*(?:к\s*)?сил(?:ами|ой|ах|ам|а|ы|е|у)?/giu, (_, amount) => controllerStrengthAmount(amount))
+    .replace(/сил(?:ами|ой|ах|ам|а|ы|е|у)?/giu, controllerStrengthIcon());
+  const stepsized = strengthized
+    .replace(/(?:шаги|шагов|шагам)\s*([+-]\d+)/giu, (_, amount) => controllerStepsAmount(amount))
+    .replace(/([+-]?\d+)\s*(?:к\s*)?шаг(?:ами|ов|ах|ам|а|и|у)?/giu, (_, amount) => controllerStepsAmount(amount))
+    .replace(/шаг(?:ами|ов|ах|ам|а|и|у)?/giu, controllerStepsIcon());
+  return controllerKeepIconizedPunctuationTogether(stepsized).replace(
+    /__NO_ICONIZE_(\d+)__/g,
+    (_, index) => protectedNames[Number(index)] || "",
+  );
 }
 
 function controllerKeepIconizedPunctuationTogether(value) {
   return String(value)
     .replace(
-      /(\s*)(<img\b(?=[^>]*\b(?:coin-icon|dice-icon)\b)[^>]*>)\s*([,.;:!?])/g,
+      /(\s*)(<img\b(?=[^>]*\b(?:coin-icon|dice-icon|strength-icon|steps-icon)\b)[^>]*>)\s*([,.;:!?])/g,
       (_, space, icon, punctuation) => `<span class="card-text-nowrap">${space ? "&nbsp;" : ""}${icon}${punctuation}</span>`,
     )
     .replace(
-      /(<span\b(?=[^>]*\b(?:coin-amount|dice-amount)\b)[^>]*>.*?<\/span>)\s*([,.;:!?])/g,
+      /(<span\b(?=[^>]*\b(?:coin-amount|dice-amount|strength-amount|steps-amount)\b)[^>]*>(?:(?!<span\b)[\s\S])*?<\/span>)\s*([,.;:!?])/g,
       '<span class="card-text-nowrap">$1$2</span>',
     );
 }
@@ -712,12 +754,12 @@ function controllerActionContentMarkup(action, fallbackLabel = "Действие
   if (!phoneCardsAsText() && action.card) {
     return `
       ${controllerPhoneCardFaceMarkup(action.card, { size: "action" })}
-      ${action.note ? `<small>${escapeHtml(action.note)}</small>` : ""}
+      ${action.note ? `<small>${controllerIconizeHtml(action.note)}</small>` : ""}
     `;
   }
   return `
-    <b>${escapeHtml(action.label || fallbackLabel)}</b>
-    ${action.note ? `<small>${escapeHtml(action.note)}</small>` : ""}
+    <b>${controllerIconizeHtml(action.label || fallbackLabel)}</b>
+    ${action.note ? `<small>${controllerIconizeHtml(action.note)}</small>` : ""}
   `;
 }
 
@@ -771,7 +813,7 @@ function createPhoneDiceRollStage(roll, { big = false, compact = false, full = f
     <div class="controller-dice-roll-copy">
       ${roll.label ? `<span>${escapeHtml(roll.label)}</span>` : ""}
       <b>${escapeHtml(title)}</b>
-      <small>${escapeHtml(note)}</small>
+      <small>${controllerIconizeHtml(note)}</small>
     </div>
   `;
   return stage;
@@ -928,7 +970,7 @@ function createControllerActionContext(actions) {
   block.innerHTML = `
     ${context.kicker ? `<span>${escapeHtml(context.kicker)}</span>` : ""}
     ${context.title ? `<b>${escapeHtml(context.title)}</b>` : ""}
-    ${context.summary ? `<small>${escapeHtml(context.summary)}</small>` : ""}
+    ${context.summary ? `<small>${controllerIconizeHtml(context.summary)}</small>` : ""}
   `;
   return block;
 }
@@ -1029,7 +1071,7 @@ function createBigCompactStatusCard(label, note) {
     <span class="controller-wait-sigil" aria-hidden="true"></span>
     <p class="controller-wait-copy">
       <b>${escapeHtml(label)}</b>
-      <small>${escapeHtml(note)}</small>
+      <small>${controllerIconizeHtml(note)}</small>
     </p>
   `;
   return card;
@@ -1048,7 +1090,7 @@ function renderControllerAuctionBid(actions, bidAction) {
     <div class="controller-detail-copy">
       ${context.kicker ? `<span>${escapeHtml(context.kicker)}</span>` : ""}
       <b>${escapeHtml(context.title || "Аукцион Джо")}</b>
-      ${context.summary ? `<small>${escapeHtml(context.summary)}</small>` : ""}
+      ${context.summary ? `<small>${controllerIconizeHtml(context.summary)}</small>` : ""}
     </div>
     <label class="controller-auction-bid-input">
       <span>Ставка</span>
@@ -1104,8 +1146,8 @@ function renderBigSplitChoice(player, model) {
       ? controllerActionContentMarkup(action, bigZoneLabel(action, index))
       : `
         ${badge ? `<span>${escapeHtml(badge)}</span>` : ""}
-        <b>${escapeHtml(bigZoneLabel(action, index))}</b>
-        ${bigZoneNote(action) ? `<small>${escapeHtml(bigZoneNote(action))}</small>` : ""}
+        <b>${controllerIconizeHtml(bigZoneLabel(action, index))}</b>
+        ${bigZoneNote(action) ? `<small>${controllerIconizeHtml(bigZoneNote(action))}</small>` : ""}
       `;
     if (!button.disabled) button.addEventListener("click", () => sendControllerAction(action, player));
     zones.append(button);
@@ -1125,7 +1167,7 @@ function renderBigDetailChoice(player, model) {
     copy.innerHTML = `
       ${context.kicker ? `<span>${escapeHtml(context.kicker)}</span>` : ""}
       ${context.title ? `<b>${escapeHtml(context.title)}</b>` : ""}
-      ${context.summary ? `<small>${escapeHtml(context.summary)}</small>` : ""}
+      ${context.summary ? `<small>${controllerIconizeHtml(context.summary)}</small>` : ""}
     `;
     wrapper.append(copy);
   }
@@ -1140,7 +1182,7 @@ function renderBigDetailChoice(player, model) {
     button.innerHTML = action.card && !phoneCardsAsText()
       ? `${controllerActionContentMarkup(action, "Выбрать")}${detailOwnerMarkup(action)}`
       : `
-        <b>${escapeHtml(action.label || "Выбрать")}</b>
+        <b>${controllerIconizeHtml(action.label || "Выбрать")}</b>
         ${detailOwnerMarkup(action)}
       `;
     if (!button.disabled) button.addEventListener("click", () => sendControllerAction(action, player));
@@ -1163,7 +1205,7 @@ function renderBigRestChoice(player, model) {
     button.disabled = Boolean(action.disabled);
     button.innerHTML = `
       <b>${escapeHtml(restChoiceLabel(action))}</b>
-      ${action.note ? `<small>${escapeHtml(action.note)}</small>` : ""}
+      ${action.note ? `<small>${controllerIconizeHtml(action.note)}</small>` : ""}
     `;
     if (!button.disabled) button.addEventListener("click", () => sendControllerAction(action, player));
     wrapper.append(button);
@@ -1177,8 +1219,8 @@ function createBigCancelButton(action, player) {
   button.className = "controller-big-cancel";
   button.type = "button";
   button.innerHTML = `
-    <b>${escapeHtml(action.label || "Пропустить")}</b>
-    ${action.note ? `<small>${escapeHtml(action.note)}</small>` : ""}
+    <b>${controllerIconizeHtml(action.label || "Пропустить")}</b>
+    ${action.note ? `<small>${controllerIconizeHtml(action.note)}</small>` : ""}
   `;
   button.addEventListener("click", () => sendControllerAction(action, player));
   return button;
@@ -1223,7 +1265,7 @@ function bigChoiceContext(actions) {
 function detailOwnerMarkup(action) {
   const ownerName = action.ownerName || (action.noteClass === "choice-player-note" ? action.note : "");
   if (!ownerName) {
-    return action.note ? `<small>${escapeHtml(action.note)}</small>` : "";
+    return action.note ? `<small>${controllerIconizeHtml(action.note)}</small>` : "";
   }
   const ownerColor = action.ownerColor || "#d8b15d";
   const ownerToken = action.ownerToken || "";
@@ -1379,7 +1421,7 @@ function createShakeStage(action, { big = false, compact = false, disabled = fal
     button.type = "button";
     button.disabled = disabled;
     button.innerHTML = action
-      ? `<b>${escapeHtml(action.label || "Бросить")}</b><small>${shakeHintText({ canShake, permissionNeeded, permissionDenied, secureContextMissing, sensorUnavailable })}</small>`
+      ? `<b>${controllerIconizeHtml(action.label || "Бросить")}</b><small>${shakeHintText({ canShake, permissionNeeded, permissionDenied, secureContextMissing, sensorUnavailable })}</small>`
       : "<b>Ждите хода</b><small>Большой экран подскажет действие.</small>";
     stage.append(button);
   } else if (canShake || permissionDenied || sensorUnavailable) {

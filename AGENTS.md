@@ -29,6 +29,28 @@ If you are joining as a new chat or agent, also read:
 
 - `project-memory/prompts/new-chat.md`
 
+## Reasoning Depth
+
+Before every user task, internally estimate the required reasoning depth: low, medium, high, or very high.
+
+Criteria:
+
+- Low: simple questions, translation/rephrasing, short answers, no complex logic, risks, or large context.
+- Medium: comparing options, planning, text analysis, simple calculations, or careful but low-risk work.
+- High: strategic decisions, complex analysis, code, architecture, debugging, financial/legal/product/operational conclusions, or several constraints at once.
+- Very high: critical decisions, long documents, ambiguous tasks, hidden-risk discovery, complex system-level conclusions, or tasks where an error can cost money, time, reputation, or strategy.
+
+Behavior:
+
+- Do not reveal long chain-of-thought.
+- If the task is simple, answer directly.
+- If the task requires high or very high depth, first write `Оценка сложности: высокая` or `Оценка сложности: очень высокая`.
+- If the current ChatGPT/Codex mode may be insufficient, say `Лучше переключить чат на High/Extra High`.
+- Do not choose the maximum level without a reason.
+- When in doubt, choose the higher level.
+- For important tasks, first clarify the goal, constraints, and success criteria if the risk of error is high without them.
+- At the end of complex answers, add a `Проверка рисков и допущений` block.
+
 ## Shared Memory
 
 `project-memory/` is the source of truth for coordination.
@@ -57,6 +79,7 @@ Current active roles:
 - `GD`: game design, rules, balance, core loop, implementation-ready specs.
 - `Art / UI 1`: visual assets and UI direction.
 - `Art / UI 2`: additional visual assets and UI direction.
+- `Art / UI 3`: additional visual assets and UI direction.
 - `QA 1`: testing, smoke checks, regressions, bug reports.
 - `QA 2`: additional testing, smoke checks, regressions, bug reports.
 

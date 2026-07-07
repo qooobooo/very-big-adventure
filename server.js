@@ -1,4 +1,5 @@
 const http = require("http");
+const https = require("https");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -9,10 +10,12 @@ const root = __dirname;
 const rooms = new Map();
 const closedRooms = new Map();
 const roomCodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-const maxBodyBytes = 1024 * 1024;
+const maxBodyBytes = 1024 * 1024 * 8;
 const roomTtlMs = 1000 * 60 * 60 * 6;
 const defaultRoomMode = "full";
 const roomModes = new Set(["full", "big-button"]);
+const autoPlaytestOutputDir = path.join(root, "outputs", "autoplay-runs");
+const googleSheetsSaveUrl = "https://script.google.com/macros/s/AKfycbxNXmGjR9w3U0vmUd9xS5Rc2KHwR8Q7ViB5Pcl70qIOEhwIJp_M_1faO7RvpDtuPLqkdQ/exec";
 
 const types = {
   ".css": "text/css;charset=utf-8",
@@ -112,6 +115,106 @@ function serializeRoom(room, request = null) {
   };
 }
 
+function safeFileSegment(value, fallback = "run") {
+  return String(value || fallback).replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 120) || fallback;
+}
+
+function saveAutoPlaytestRun(payload) {
+  fs.mkdirSync(autoPlaytestOutputDir, { recursive: true });
+  const auto = payload?.autoRun || {};
+  const runId = safeFileSegment(auto.runId || payload?.game?.runId || "auto-run");
+  const runIndex = safeFileSegment(auto.runIndex || payload?.game?.runIndex || Date.now(), "0");
+  const record = {
+    savedAt: new Date().toISOString(),
+    payload,
+  };
+  const jsonLine = `${JSON.stringify(record)}\n`;
+  fs.appendFileSync(path.join(autoPlaytestOutputDir, `${runId}.jsonl`), jsonLine);
+  fs.writeFileSync(path.join(autoPlaytestOutputDir, `${runId}-${runIndex}.json`), JSON.stringify(record, null, 2));
+  return { runId, runIndex };
+}
+
+function postJson(urlString, payload, redirects = 0) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(urlString);
+    const transport = url.protocol === "http:" ? http : https;
+    const body = JSON.stringify(payload || {});
+    const request = transport.request({
+      hostname: url.hostname,
+      method: "POST",
+      path: `${url.pathname}${url.search}`,
+      port: url.port || (url.protocol === "http:" ? 80 : 443),
+      protocol: url.protocol,
+      headers: {
+        "Content-Length": Buffer.byteLength(body),
+        "Content-Type": "text/plain;charset=utf-8",
+      },
+    }, (response) => {
+      const location = response.headers.location;
+      if ([301, 302, 303, 307, 308].includes(response.statusCode) && location && redirects < 5) {
+        response.resume();
+        resolve(postJson(new URL(location, url).toString(), payload, redirects + 1));
+        return;
+      }
+
+      let responseBody = "";
+      response.setEncoding("utf8");
+      response.on("data", (chunk) => {
+        responseBody += chunk;
+      });
+      response.on("end", () => {
+        resolve({
+          body: responseBody,
+          headers: response.headers,
+          statusCode: response.statusCode,
+        });
+      });
+    });
+    request.on("error", reject);
+    request.write(body);
+    request.end();
+  });
+}
+
+async function forwardGameHistoryToGoogleSheets(payload) {
+  const response = await postJson(googleSheetsSaveUrl, payload);
+  let parsed = null;
+  try {
+    parsed = JSON.parse(response.body);
+  } catch {
+    parsed = null;
+  }
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    return {
+      ok: false,
+      error: `Apps Script HTTP ${response.statusCode}`,
+      statusCode: response.statusCode,
+    };
+  }
+  if (parsed && parsed.ok === false) {
+    return {
+      ok: false,
+      error: parsed.error || "Apps Script rejected game history payload",
+      result: parsed,
+      statusCode: response.statusCode,
+    };
+  }
+  if (!parsed || parsed.ok !== true) {
+    return {
+      ok: false,
+      error: "Apps Script web app did not return ok:true. Redeploy the Games Log web app with the latest patch.",
+      responsePreview: response.body.slice(0, 500),
+      statusCode: response.statusCode,
+    };
+  }
+  return {
+    ok: true,
+    result: parsed,
+    statusCode: response.statusCode,
+    verified: true,
+  };
+}
+
 function normalizeRoomMode(mode) {
   return roomModes.has(mode) ? mode : defaultRoomMode;
 }
@@ -197,6 +300,20 @@ function roomFromPath(pathname) {
 
 async function handleApi(request, response, url) {
   cleanupRooms();
+
+  if (request.method === "POST" && url.pathname === "/api/autoplay-runs") {
+    const body = await readJsonBody(request);
+    const saved = saveAutoPlaytestRun(body);
+    sendJson(response, 201, { ok: true, ...saved });
+    return true;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/game-history") {
+    const body = await readJsonBody(request);
+    const result = await forwardGameHistoryToGoogleSheets(body);
+    sendJson(response, result.ok ? 200 : 502, result);
+    return true;
+  }
 
   if (request.method === "POST" && url.pathname === "/api/rooms") {
     const body = await readJsonBody(request);

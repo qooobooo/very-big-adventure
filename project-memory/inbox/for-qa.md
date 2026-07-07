@@ -4,6 +4,153 @@ For testing tasks related to "Очень Большая Бродилка" in `/U
 
 ## Open Items
 
+- QA RECHECK AUTORUN 2026-07-03 13:18 - Re-check autorun after Dev 3 and Art/UI fixes:
+  - Owner: `QA 2`.
+  - Dispatch status: sent directly to QA 2 thread at 2026-07-03 13:18.
+  - Requested by: `GD` after Dev 3 and Art/UI 1 handbacks.
+  - Summary:
+    - Re-check the autorun MVP after the remaining `movementAction` blocker fix and settings visibility fix.
+  - Dev 3 fix summary:
+    - Reworked autorun movement watchdog to avoid false `no progress at movementAction` while a movement promise is still alive.
+    - Added movement phase tracking: phase, player, cell, step/total, rolls, turn key, recent action.
+    - `autoPlaytestPendingContext()` now returns detailed movement context instead of generic `movementAction`.
+    - Movement-only polling no longer counts as action-chain depth.
+    - Movement-only idle waits up to `5000ms` real time before clean abort.
+    - Abort reason no longer doubles `AUTO BLOCKED`.
+    - Autorun payload includes live Auto sheet names and sheetIds:
+      - `Games Auto`, `190000001`;
+      - `Players Auto`, `190000002`.
+    - Apps Script patch updated: `project-memory/apps-script-auto-playtest-sheets-patch.js`.
+  - Art/UI 1 fix summary:
+    - `Автопрогон` is first inside `#settingsPanel`.
+    - Added `.auto-playtest-controls { order: -10; }` safety.
+    - When settings are open on desktop, `.game-settings` is lifted above `.tadam-card`, so settings no longer starts below TADAM.
+    - Browser smoke at `1280x720`: `Автопрогон` block `y≈257`, buttons `y≈264`, visible immediately.
+  - Sheet context:
+    - GD created live tabs in `Games Log`:
+      - `Games Auto`, sheetId `190000001`;
+      - `Players Auto`, sheetId `190000002`.
+  - Required checks:
+    - Static:
+      - `node --check src/game.js`.
+      - `node --check src/controller.js`.
+      - `node --check server.js`.
+      - `git diff --check`.
+    - Browser/local smoke:
+      - Fresh server/process if possible.
+      - Fresh browser load with latest cache keys.
+      - Open settings at ~`1280x720`; confirm `Автопрогон` title and buttons `1` / `10` / `100` visible immediately without scroll.
+      - Run autorun `1`.
+      - Run autorun `10`.
+      - If stable, run autorun `100`.
+      - Confirm no generic `AUTO BLOCKED: no progress at movementAction`.
+      - If movement abort occurs, confirm it has detailed context and no double `AUTO BLOCKED`.
+      - Confirm no console errors.
+      - Confirm series continues after clean aborts and restores settings.
+      - Confirm local fallback output:
+        - if current server has `/api/autoplay-runs`, `outputs/autoplay-runs/` appears with JSONL/per-run JSON;
+        - if server is stale/unavailable, UI/status honestly reports `local fail` / `localSaveError`.
+    - Google Sheet verification if possible:
+      - autorun rows target `Games Auto` / `Players Auto`, not regular `Games` / `Players`;
+      - if live Apps Script is not deployed, note that verification is blocked by missing deployment.
+  - Report format:
+    - Report directly to GD with pass/fail for `1`, `10`, `100`.
+    - Include console errors, local output status, Auto sheet status, remaining blockers, and missing bot decisions if any.
+    - Update `project-memory/updates.md` and add context note to `project-memory/inbox/for-gd.md`.
+  - Important:
+    - Do not change game code.
+    - Do not create Dev/Art tasks directly; GD will distribute fixes if needed.
+
+- QA RECHECK AUTO PLAYTEST MVP 2026-07-03 02:34 - Re-check autorun blockers after Dev 3 fix:
+  - Owner: `QA 2`.
+  - Dispatch status: sent directly to QA 2 thread at 2026-07-03 02:34.
+  - Requested by: `GD` after Dev 3 handback for `ACTIVE AUTORUN QA BLOCKERS 2026-07-03 02:16`.
+  - Summary:
+    - Re-check the autorun MVP blockers found in `QA AUTO PLAYTEST MVP 2026-07-03 02:04`.
+    - Confirm the `route is not defined` runtime error is gone and local fallback output behavior is correct.
+    - Also re-check Art/UI 1's settings layout fix that moves `Автопрогон` into the visible opened settings area.
+  - Dev 3 fix summary:
+    - Replaced stale `route[nearestProgress]` with `routePath[nearestProgress]` in `resolveBackToNearestPlayer(...)`.
+    - Autorun fast mode now captures async movement/runtime errors as clean `AUTO BLOCKED: runtime error: ...`.
+    - `saveAutoPlaytestSnapshot(...)` now checks `response.ok`; 404/500/old-server responses no longer set `localSaved = true`.
+    - Auto snapshots include `localSaved` or `localSaveError`.
+    - Final status shows `local fail N` if `/api/autoplay-runs` did not write files.
+  - Required checks:
+    - Static:
+      - `node --check src/game.js`.
+      - `node --check src/controller.js`.
+      - `node --check server.js`.
+      - `git diff --check`.
+    - Browser/local smoke:
+      - Reload fresh game scripts.
+      - At ~1280x720, open settings and confirm `Автопрогон` buttons `1` / `10` / `100` are visible immediately without needing to discover hidden scroll.
+      - Run autorun `1`.
+      - Run autorun `10`.
+      - If stable, run autorun `100`.
+      - Confirm no console `ReferenceError: route is not defined`.
+      - Confirm aborts, if any, are clean `AUTO BLOCKED` with useful context.
+      - Confirm series continues after clean aborts and restores settings.
+      - Confirm local fallback:
+        - if current server has updated `/api/autoplay-runs`, `outputs/autoplay-runs/` is created and contains JSONL/per-run JSON;
+        - if current server is stale/unavailable, UI/status/snapshot reports `local fail` / `localSaveError`, not false success.
+    - If feasible, inspect a saved output row for `status`, `elapsedMs`, `readableDuration`, `runIndex`, `seed`/`runId`, `final outcome` or `abortReason`, `fastMode`, and `sheetTarget`.
+  - Report format:
+    - Report directly to GD with pass/fail for 1/10/100.
+    - Include console errors, local output status, and any remaining blockers/missing bot decisions.
+    - Update `project-memory/updates.md` and add a note to `project-memory/inbox/for-gd.md`.
+  - Important:
+    - Do not change game code.
+    - Do not create Dev tasks directly; GD will distribute fixes if needed.
+
+- QA AUTO PLAYTEST MVP 2026-07-03 02:04 - Smoke fast bot-only autorun:
+  - Owner: `QA 2`.
+  - Dispatch status: sent directly to QA 2 thread at 2026-07-03 02:04.
+  - Requested by: `GD` after Dev 3 handback for `ACTIVE AUTO PLAYTEST MVP 2026-07-03 01:26`.
+  - Summary:
+    - Verify the new fast bot-only autorun MVP and collect blockers/missing bot decisions.
+    - Report findings directly to GD; GD will split fixes across Dev roles.
+  - Dev 3 handback context:
+    - Added settings block `Автопрогон` with buttons `1`, `10`, `100`.
+    - Autorun temporarily switches to all-bots + fast mode and restores settings after the series.
+    - Fast mode skips bot delays, generic sleeps, dice animation and informational action prompts.
+    - Added abort guards: max 500 turns, max 100 actions per turn, no bot decision, no progress.
+    - Auto snapshot includes `sheetTarget: { mode: "auto", gameSheet: "Games Auto", playerSheet: "Players Auto" }`, `runId`, `runIndex`, `seed`, `elapsedMs`, `readableDuration`, `fastMode`, `status`, `abortReason`.
+    - Added local fallback endpoint `/api/autoplay-runs`, writing JSONL + per-run JSON into ignored `outputs/autoplay-runs/`.
+    - Added Apps Script patch `project-memory/apps-script-auto-playtest-sheets-patch.js` for `Games Auto` / `Players Auto`.
+  - Required checks:
+    - Static:
+      - `node --check src/game.js`.
+      - `node --check src/controller.js`.
+      - `node --check server.js`.
+      - `git diff --check`.
+      - Confirm normal save path still targets regular `Games` / `Players`.
+      - Confirm autorun payload/save target uses `Games Auto` / `Players Auto`.
+    - Browser/local smoke if possible:
+      - Start game and verify `Автопрогон` controls are visible.
+      - Run `1` auto game.
+      - Run `10` auto games.
+      - If stable, try `100` auto games.
+      - Confirm the UI does not hang and settings are restored after the series.
+      - Confirm local fallback files appear under `outputs/autoplay-runs/`.
+      - Confirm each run records status, elapsedMs/readableDuration, runIndex, seed/runId, final outcome or abortReason.
+      - Confirm aborted runs are clean, visible, and do not block the remaining series.
+      - Watch console for errors.
+    - If Google Sheet / Apps Script can be exercised:
+      - Confirm autorun rows go to `Games Auto` and `Players Auto`.
+      - Confirm ordinary manual saves still go to `Games` and `Players`.
+  - Report format:
+    - Report directly to GD with:
+      - pass/fail summary for 1/10/100;
+      - exact blockers, including `AUTO BLOCKED` context;
+      - missing bot decision locations;
+      - console errors;
+      - whether local fallback output was written;
+      - whether Apps Script / Google Sheet verification was possible.
+    - Also update `project-memory/updates.md` and add a note to `project-memory/inbox/for-gd.md`.
+  - Important:
+    - Do not change game code.
+    - Do not create Dev tasks yourself unless GD asks; GD will distribute fixes.
+
 - QA RECHECK REQUEST 2026-06-24 01:44 - Mobile control strip overflow after Art/UI fix:
   - Owner: `QA 2`.
   - Requested by: `Art / UI 1` handback after GD-dispatched rework.

@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260629-0330" />
+    <link rel="stylesheet" href="./styles.css?v=20260705-0152" />
   </head>
   <body data-ui-style="classic" data-font-style="standard">
     <main class="app-shell">
@@ -29,7 +29,17 @@
             <div class="dice-panel">
               <span id="diceValue">-</span>
               <button id="infoHistoryBtn" class="info-history-button" type="button" aria-label="Показать хронику" title="Хроника" aria-haspopup="dialog" aria-expanded="false">
-                <span class="info-history-glyph" aria-hidden="true">i</span>
+                <span class="info-history-glyph" aria-hidden="true">
+                  <svg class="info-history-icon" viewBox="0 0 48 48" focusable="false">
+                    <path class="info-history-scroll-paper" d="M12.9 7.8h22.4c5 0 8.2 3.2 8.2 8.2v19.8" />
+                    <path class="info-history-scroll-roll" d="M12.9 7.8c-4 0-6.7 2.6-7.9 7.8h13.2c-.5-5.1-2.3-7.8-5.3-7.8Z" />
+                    <path class="info-history-scroll-side" d="M18.2 15.6v20.2c0 4.4-2 6.6-5.6 6.6" />
+                    <path class="info-history-scroll-bottom" d="M18.2 35.8h20.4c3.8 0 6.2 2.4 6.2 6.6H12.6c3.7 0 5.6-2.3 5.6-6.6Z" />
+                    <path class="info-history-scroll-line" d="M24.3 17.2h11.2" />
+                    <path class="info-history-scroll-line" d="M24.3 23.2h11.2" />
+                    <path class="info-history-scroll-line" d="M24.3 29.2h11.2" />
+                  </svg>
+                </span>
               </button>
               <div id="fieldEffect" class="field-effect"></div>
               <div id="turnActions" class="turn-actions" aria-label="Доступные действия"></div>
@@ -62,6 +72,23 @@
               <div class="header-icon-actions" aria-label="Быстрые действия">
                 <button id="referenceHeaderBtn" class="secondary header-icon-button reference-header-toggle" type="button" title="Показать карты и поля" aria-label="Показать карты и поля" aria-pressed="false">
                   <img class="reference-header-icon" src="./assets/icons/reference_cards.svg" alt="" aria-hidden="true">
+                </button>
+                <button id="historyHeaderBtn" class="secondary header-icon-button history-header-toggle" type="button" title="История" aria-label="История" aria-pressed="false">
+                  <svg class="history-header-icon" viewBox="0 0 512 512" aria-hidden="true">
+                    <defs>
+                      <linearGradient id="historyGold" x1="132" x2="384" y1="102" y2="410" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#f0d58d"/>
+                        <stop offset="0.54" stop-color="#cf9439"/>
+                        <stop offset="1" stop-color="#80531f"/>
+                      </linearGradient>
+                    </defs>
+                    <g fill="none" stroke="url(#historyGold)" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M146 158v252h210" stroke-width="20" opacity="0.58"/>
+                      <path d="M178 108h150l58 58v238H178z" stroke-width="24"/>
+                      <path d="M328 112v58h56" stroke-width="22"/>
+                      <path d="M220 226h112M220 278h112M220 330h78" stroke-width="24"/>
+                    </g>
+                  </svg>
                 </button>
                 <button id="phoneRoomHeaderBtn" class="secondary header-icon-button phone-room-toggle" type="button" title="Играть с телефонами" aria-label="Играть с телефонами" aria-pressed="false">
                   <svg class="phone-header-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -123,7 +150,7 @@
                       <span>Не отображать кубики</span>
                     </label>
                     <label class="cheat-toggle phone-card-text-toggle">
-                      <input id="phoneRoomCardsText" type="checkbox" />
+                      <input id="phoneRoomCardsText" type="checkbox" checked />
                       <span>Текст вместо карт</span>
                     </label>
                   </div>
@@ -132,6 +159,13 @@
               </section>
             </section>
             <div id="settingsPanel" class="settings-panel" hidden>
+              <div class="settings-action-pair auto-playtest-controls" aria-label="Автопрогон бот-партий">
+                <span class="auto-playtest-title">Автопрогон</span>
+                <button class="secondary" type="button" data-auto-playtest-runs="1">1</button>
+                <button class="secondary" type="button" data-auto-playtest-runs="10">10</button>
+                <button class="secondary" type="button" data-auto-playtest-runs="100">100</button>
+                <span id="autoPlaytestStatus" class="auto-playtest-status" aria-live="polite"></span>
+              </div>
               <div class="exact-move-row" aria-label="Чит точного движения активного игрока">
                 <label class="settings-select exact-move-setting">
                   <span>Пройти</span>
@@ -173,29 +207,8 @@
               <label class="settings-select">
                 <span>UI</span>
                 <select id="uiStyle">
-                  <option value="tabletop">Настольный</option>
                   <option value="classic" selected>Классический</option>
-                </select>
-              </label>
-              <label class="settings-select">
-                <span>Шрифт</span>
-                <select id="fontStyle">
-                  <option value="standard" selected>Стандартный</option>
-                  <option value="adventure">Приключение</option>
-                </select>
-              </label>
-              <label class="settings-select">
-                <span>Сила монстров</span>
-                <select id="monsterStrengthMode">
-                  <option value="standard" selected>Стандартные</option>
-                  <option value="strong">Сильные</option>
-                </select>
-              </label>
-              <label class="settings-select">
-                <span>Монет на старте</span>
-                <select id="startingCoins">
-                  <option value="10" selected>10</option>
-                  <option value="20">20</option>
+                  <option value="tabletop">Настольный</option>
                 </select>
               </label>
               <label class="settings-select">
@@ -210,8 +223,12 @@
                 <span>Сразу открывать карты</span>
               </label>
               <label class="cheat-toggle">
+                <input id="randomFirstPlayer" type="checkbox" />
+                <span>Случайный первый игрок</span>
+              </label>
+              <label class="cheat-toggle">
                 <input id="showWalkPath" type="checkbox" />
-                <span>Показывать контур хода</span>
+                <span>Не показывать контур хода</span>
               </label>
               <label class="cheat-toggle">
                 <input id="hidePlayers" type="checkbox" />
@@ -262,7 +279,7 @@
           </section>
           <div id="referenceOutput" class="reference-output" hidden></div>
         </article>
-        <article class="history-panel">
+        <article id="historyPanel" class="history-panel" hidden>
           <div class="section-title">
             <h2>История</h2>
             <button id="saveHistoryBtn" class="history-save" type="button">Сохранить</button>
@@ -278,12 +295,31 @@
             <div>
               <h2 id="infoHistoryTitle">Хроника</h2>
             </div>
-            <button id="infoHistoryCloseBtn" class="info-history-close" type="button" aria-label="Закрыть хронику">×</button>
+            <div class="info-history-head-actions">
+              <button id="infoHistoryFullBtn" class="info-history-action" type="button">Вся хроника</button>
+              <button id="infoHistoryCopyBtn" class="info-history-action" type="button">Копировать</button>
+              <span id="infoHistoryCopyFeedback" class="info-history-copy-feedback" role="status" aria-live="polite" hidden>Хроника скопирована</span>
+              <button id="infoHistoryCloseBtn" class="info-history-close" type="button" aria-label="Закрыть хронику">×</button>
+            </div>
           </div>
           <div class="info-history-list-wrap">
-            <div class="info-history-list-title">Последние действия</div>
+            <div id="infoHistoryListTitle" class="info-history-list-title">Последние действия</div>
             <ol id="gameLog" class="game-log info-history-log"></ol>
           </div>
+        </section>
+      </div>
+
+      <div id="playerShopPopup" class="player-shop-popup" role="dialog" aria-modal="true" aria-labelledby="playerShopTitle" hidden>
+        <button class="player-shop-backdrop" type="button" data-player-shop-close aria-label="Закрыть карты игрока"></button>
+        <section class="player-shop-card">
+          <div class="player-shop-head">
+            <div>
+              <span id="playerShopSubtitle" class="player-shop-kicker">Карты игрока</span>
+              <h2 id="playerShopTitle">Карты игрока</h2>
+            </div>
+            <button id="playerShopCloseBtn" class="player-shop-close" type="button" aria-label="Закрыть карты игрока">×</button>
+          </div>
+          <div id="playerShopBody" class="player-shop-body"></div>
         </section>
       </div>
 
@@ -296,6 +332,6 @@
 
     </main>
 
-    <script type="module" src="./src/game.js?v=20260629-0330"></script>
+    <script type="module" src="./src/game.js?v=20260707-0001"></script>
   </body>
 </html>

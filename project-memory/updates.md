@@ -20,6 +20,2314 @@ Open questions:
 - ...
 ```
 
+## 2026-07-07 17:00 - Dev 3
+
+Changed:
+- Reverted the previous `field2` cell tweak by user request.
+- Restored `boardConfigs.field2.events["4-14"]` from `event` back to `good`.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- The route/path order remains unchanged.
+- No cards, CSV, Google Sheet, PnP, rules, or other cells were changed.
+- The existing fresh host `src/game.js` cache key remains in `index.html`, so browsers should pick up the restored field type.
+
+Open questions:
+- None.
+
+## 2026-07-07 16:56 - Dev 3
+
+Changed:
+- Completed GD/user field tweak for `field2`.
+- Confirmed the marked lower-row cell maps to `field2` / `4-14`.
+- Changed `boardConfigs.field2.events["4-14"]` from `good` to `event`.
+- Bumped the host `src/game.js` cache key in `index.html` to `20260707-0001`.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Route/path order was not changed.
+- No card data, CSV, Google Sheet, PnP, rules, or other cells were changed.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-06 02:48 - Art / UI 1
+
+Changed:
+- Created a one-page print-ready A4 sheet with one copy of every current card back: `Хорошо`, `Плохо`, `Лавка Джо`, `Событие`, `ТАДАМ`.
+- Normalized the larger `good_back.png` source to the same `744x1039` PNG format used by the other backs for consistent print sizing.
+
+Files:
+- `output/pnp/card_backs/card_backs_one_each_a4.pdf`
+- `output/pnp/card_backs/card_backs_one_each_contact_sheet.png`
+- `output/pnp/card_backs/card_backs_one_each_preview.png`
+- `output/pnp/card_backs/cards/`
+- `output/pnp/card_backs/rendered/`
+- `output/pnp/card_backs/README.txt`
+- `output/pnp/card_backs/build_card_backs_pnp.py`
+- `project-memory/updates.md`
+
+Notes for others:
+- Output is under ignored `output/`; no gameplay rules, card configs, CSV, Google Sheet, deck lifecycle, or source card-back assets changed.
+- Checks passed: visual review of contact sheet/rendered A4 page; 5 normalized back PNGs are `744x1039` RGBA; PDF is A4 with 1 page; generated files confirmed under ignored `output/`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-06 02:37 - Art / UI 1
+
+Changed:
+- Created print-ready output for all 16 current unique `Лавка Джо` cards, one visible copy per unique card.
+- Matched the updated PnP readability direction from `Плохо`/`Хорошо`/`Событие`: stable art/title/rules zones, large readable rules text, manual semantic line breaks, and clean inline coin/dice/strength/steps icons.
+
+Files:
+- `output/pnp/shop_cards/shop_cards_one_each_a4.pdf`
+- `output/pnp/shop_cards/shop_cards_one_each_contact_sheet.png`
+- `output/pnp/shop_cards/shop_cards_one_each_preview.png`
+- `output/pnp/shop_cards/cards/`
+- `output/pnp/shop_cards/rendered/`
+- `output/pnp/shop_cards/README.txt`
+- `output/pnp/shop_cards/build_shop_pnp.py`
+- `project-memory/updates.md`
+
+Notes for others:
+- Output is under ignored `output/`; no gameplay rules, card configs, CSV, Google Sheet, deck lifecycle, or unrelated assets changed.
+- Special typography handling: `Боевой эликсир`, `Золотая коллекция`, `Дубль на монеты`, `Дубль на шаги`, `Эхо ТАДАМ!`, `Эхо События`, `Платная тренировка`, `Платный марш`, `Домашний старт`.
+- Checks passed: visual review of contact sheet/rendered A4 pages/long-card PNGs; 16 card PNGs are `744x1039` RGBA; PDF is A4 with 2 pages; generated files confirmed under ignored `output/`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-06 02:22 - Art / UI 1
+
+Changed:
+- Created print-ready output for all 21 current unique `Событие` cards, one visible copy per unique card.
+- Matched the updated PnP readability direction from `Плохо`/`Хорошо`: stable art/title/rules zones, larger rules text, manual semantic line breaks, and clean inline coin/dice/strength/steps icons.
+- Added compact printed artifact-effect blocks for Event artifact cards so the main event text and artifact effect remain readable.
+
+Files:
+- `output/pnp/event_cards/event_cards_one_each_a4.pdf`
+- `output/pnp/event_cards/event_cards_one_each_contact_sheet.png`
+- `output/pnp/event_cards/event_cards_one_each_preview.png`
+- `output/pnp/event_cards/cards/`
+- `output/pnp/event_cards/rendered/`
+- `output/pnp/event_cards/README.txt`
+- `output/pnp/event_cards/build_event_pnp.py`
+- `project-memory/updates.md`
+
+Notes for others:
+- Output is under ignored `output/`; no gameplay rules, card configs, CSV, Google Sheet, deck lifecycle, or unrelated assets changed.
+- Special typography handling: `Сплочение`, `Бой за старт`, `Перетасовка Лавки`, `Золотые метки`, `Знамя монстров`, `Большой приз`, and artifact cards `Волшебный Кошель`, `Меч Героя`, `Анти-Плохо`, `Купон Джо`, `Сапоги Скорости`, `Волшебная Кирка`, `Золотая Подкова`.
+- Checks passed: visual review of contact sheet/rendered A4 pages/long-card PNGs; 21 card PNGs are `744x1039` RGBA; PDF is A4 with 3 pages; generated files confirmed under ignored `output/`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-06 01:44 - Art / UI 1
+
+Changed:
+- Created print-ready output for all 24 current unique `Хорошо` cards, one visible copy per unique card.
+- Matched the updated PnP readability direction from `Плохо`: wide/larger rules text, stable art/title/rules zones, manual semantic line breaks, and clean inline coin/dice/strength/steps icons.
+
+Files:
+- `output/pnp/good_cards/good_cards_one_each_a4.pdf`
+- `output/pnp/good_cards/good_cards_one_each_contact_sheet.png`
+- `output/pnp/good_cards/good_cards_one_each_preview.png`
+- `output/pnp/good_cards/cards/`
+- `output/pnp/good_cards/rendered/`
+- `output/pnp/good_cards/README.txt`
+- `project-memory/updates.md`
+
+Notes for others:
+- Output is under ignored `output/`; no gameplay rules, card configs, CSV, Google Sheet, deck lifecycle, or unrelated assets changed.
+- Special typography handling: `Торговый перехват`, `Обратный ход`, `Двойное Плохо`, `Защитный знак`, `Еда монстру`, `Разворот`, `Гонка`, `Вольный шаг`, `Бросок удачи`.
+- Checks passed: visual review of contact sheet/rendered A4 pages/long-card PNGs; 24 card PNGs are `744x1039` RGBA; PDF is A4 with 3 pages; generated files confirmed under ignored `output/`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-06 01:22 - Art / UI 1
+
+Changed:
+- Completed `ACTIVE PNP BAD CARDS 2026-07-06 00:50 - Print-ready Плохо cards with readable text`.
+- Rebuilt print-ready output for all 20 current unique `Плохо` cards, one visible copy per unique card.
+- Improved the PnP card layout beyond the old `Закрытая лавка` example: wider/larger rules text, stable art/title/rules zones, and manual semantic line breaks for long effects.
+
+Files:
+- `output/pnp/bad_cards/bad_cards_one_each_a4.pdf`
+- `output/pnp/bad_cards/bad_cards_one_each_contact_sheet.png`
+- `output/pnp/bad_cards/bad_cards_one_each_preview.png`
+- `output/pnp/bad_cards/cards/`
+- `output/pnp/bad_cards/rendered/`
+- `output/pnp/bad_cards/README.txt`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Output is under ignored `output/`; no gameplay rules, card configs, CSV, Google Sheet, deck lifecycle, or unrelated assets changed.
+- Special typography handling: `Кубик неприятностей`, `Закрытая лавка`, `Тяжелый выбор`, `Проклятые шестерки`, `Пустые карманы`, `Реванш монстра`, `Бедняцкий налет`, `Чужая распродажа`.
+- Checks passed: visual review of contact sheet/rendered A4 pages/long-card PNGs; 20 card PNGs are `744x1039` RGBA; PDF is A4 with 3 pages; generated files confirmed under ignored `output/`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-06 00:50 - GD
+
+Changed:
+- Created and dispatched Art/UI 1 task `ACTIVE PNP BAD CARDS 2026-07-06 00:50 - Print-ready Плохо cards with readable text`.
+- Task asks Art/UI 1 to render all current `Плохо` cards for print, one unique copy each, under ignored `output/pnp/`.
+- Explicit typography requirements: readable print size, no tiny text, no jumping line breaks, no overlaps with art/frame/title/edges, clean inline icons, and no icons in titles.
+- Reference example provided: `output/pnp/bad_cards_format_example/bad_flip_shop_down_format_example.png`.
+- Direct handback to GD is required after completion.
+
+Files:
+- `project-memory/inbox/for-ui.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA is not involved unless the user explicitly asks.
+- PnP generated files must stay under ignored `output/` and should not enter git.
+
+Open questions:
+- None.
+
+## 2026-07-06 00:36 - Dev 3
+
+Changed:
+- Added two new Joe Shop cards:
+  - `monster-victory-strength` / `Развитие силы`, `count: 3`: `При победе над монстром, получи +1 к силе`.
+  - `monster-victory-steps` / `Развитие скорости`, `count: 3`: `При победе над монстром, получи +2 к шагам`.
+- Synced local config, CSV, and live Google Sheet `Cards Config` / `shop`.
+- Implemented monster-victory rewards in `resolveEnemyBattle(...)`: owned copies stack and apply only after a resolved ordinary/final monster-gate victory.
+- Added bot valuation support for both cards.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Live Sheet readback confirmed `shop` rows 12-13 contain `monster-victory-strength` and `monster-victory-steps`.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check src/cards.config.js`, `git diff --check`.
+- Browser smoke was not run in this sandbox.
+
+Open questions:
+- None.
+
+## 2026-07-06 00:22 - Dev 3
+
+Changed:
+- Added new Joe Shop card `event-income` / `Эхо События`, `count: 3`.
+- Card text: `Каждый раз, когда кто-то разыгрывает карту Событие, получи 3 монеты`.
+- Synced local config, CSV, and live Google Sheet `Cards Config` / `shop`.
+- Implemented runtime reward: after a physical Event card is revealed/played, every owner of `Эхо События` gains 3 coins through the normal `addCoins(...)` reward path.
+- Added bot valuation support for the new passive Shop card.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Live Sheet readback confirmed `shop` row 11 contains `event-income`.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check src/cards.config.js`, `git diff --check`.
+- Browser smoke was not run in this sandbox.
+
+Open questions:
+- None.
+
+## 2026-07-05 18:41 - Art / UI 1
+
+Changed:
+- Redrew `assets/icons/artifact_golden_horseshoe_512.png` to better match the current artifact icon family: painterly golden horseshoe, purple gems, one-pip dice, coin accent, warm sparkles/glow.
+
+Files:
+- `assets/icons/artifact_golden_horseshoe_512.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual asset only; no gameplay/config/CSV/Google Sheet/deck lifecycle changes.
+- Checks passed: PNG is `512x512` RGBA with transparent corners; full-size and small-chip previews reviewed; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-05 13:53 - Dev 3
+
+Changed:
+- Completed `ACTIVE GOLDEN HORSESHOE ARTIFACT 2026-07-05 04:12`.
+- Added Event artifact `golden-horseshoe` / `Золотая Подкова`, `count: 1`, icon `./assets/icons/artifact_golden_horseshoe_512.png`, to local config, CSV, and live Google Sheet `Cards Config` / `event`.
+- Implemented all-player lowest-roll contest: each player rolls current movement dice, tied lowest players reroll, final lowest result receives the persistent artifact.
+- Added artifact passive: owner gains 3 coins once when their own movement roll contains at least one `1`; non-movement rolls do not call this hook.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Live Sheet readback confirmed `event!A22:O22` contains `golden-horseshoe`.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check src/cards.config.js`, `git diff --check`.
+- Browser smoke was not run in this sandbox.
+
+Open questions:
+- None.
+
+## 2026-07-05 13:53 - Dev 3
+
+Changed:
+- Completed `ACTIVE STEPS ICON GRAMMAR 2026-07-05 04:18`.
+- Fixed display-layer strength/steps icon replacement in host and phone renderers so Russian endings are consumed fully.
+- Verified examples such as `+2 к шагам`, `+5 шагов`, `30 шагов вперед`, `Шаги +2`, `на 5 шагов вперед`, and `делают 5 шагов назад` render without leftover suffix text like trailing `м`.
+
+Files:
+- `src/game.js`
+- `src/controller.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- This was display-layer only; canonical card text, CSV, and Google Sheet text were not changed for this bugfix.
+- Title guards remain in place for card names like `Сапоги Скорости`.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check src/cards.config.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-05 13:53 - Dev 3
+
+Changed:
+- Completed `ACTIVE SHOP CARD 2026-07-05 01:58 - Add Joe Shop card Золотая коллекция`.
+- Added Shop card `golden-collection` / `Золотая коллекция`, `count: 3`, to local config, CSV, and live Google Sheet `Cards Config` / `shop`.
+- Implemented start-of-turn income: each copy gives base `+1` coin plus `+2` per currently owned artifact using the shared `playerArtifacts(...)` source.
+- Added bot valuation and duplicate-card scoring support.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Coin gain uses the normal reward path, so eligible receive-coin bonuses still apply.
+- Live Sheet readback confirmed `shop` contains `golden-collection`.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check src/cards.config.js`, `git diff --check`.
+- Browser smoke was not run in this sandbox.
+
+Open questions:
+- None.
+
+## 2026-07-05 13:53 - Dev 3
+
+Changed:
+- Completed `ACTIVE ARTIFACT TITLE CASE 2026-07-05 01:52`.
+- Updated artifact names/references to title-case where needed: `Волшебный Кошель`, `Сапоги Скорости`, `Волшебная Кирка`.
+- Synced local config, CSV, runtime references, and live Google Sheet `Cards Config`.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Ordinary non-artifact card titles were not mass-renamed.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check src/cards.config.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-05 13:43 - Art / UI 1
+
+Changed:
+- Created standalone artifact icon for Event artifact `Золотая Подкова`: `assets/icons/artifact_golden_horseshoe_512.png`.
+- Icon uses a large golden horseshoe, dice face with exactly one pip, coin sparks, warm artifact glow, purple gem accent, and small magic sparkles.
+
+Files:
+- `assets/icons/artifact_golden_horseshoe_512.png`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual asset only; no gameplay rules, card configs, CSV, Google Sheet, deck lifecycle, or unrelated assets changed.
+- Checks: PNG `512x512 RGBA` with transparent corners; full-size and small-size visual previews checked; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-05 04:18 - GD
+
+Changed:
+- Added and dispatched Dev 3 task `ACTIVE STEPS ICON GRAMMAR 2026-07-05 04:18 - Remove leftover step word endings after icon render`.
+- Scope: fix display-layer step icon replacement so endings like trailing `м` do not remain after the steps icon.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Do not rewrite canonical card text/CSV/Google Sheet; fix the renderer/parser.
+- Also check strength icon replacement for similar leftover endings.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-07-05 01:58 - Art / UI 2
+
+Changed:
+- Redrew the `Сапоги скорости` artifact icon to match the other artifact PNGs: golden/leather boots, purple gems, stronger item silhouette, warm magical speed streaks.
+- Replaced `assets/icons/artifact_speed_boots_512.png` with a clean 512x512 RGBA transparent PNG.
+
+Files:
+- `assets/icons/artifact_speed_boots_512.png`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only asset replacement; Event artifact config/rules were not changed.
+- Source generation file remains under Codex generated images; project asset is the normalized transparent PNG.
+
+Open questions:
+- None.
+
+## 2026-07-05 04:12 - GD
+
+Changed:
+- Added and dispatched Art/UI 1 task `ACTIVE ARTIFACT ICON 2026-07-05 04:12 - Золотая Подкова artifact icon`.
+- Added and dispatched Dev 3 task `ACTIVE GOLDEN HORSESHOE ARTIFACT 2026-07-05 04:12 - Add Event artifact Золотая Подкова`.
+
+Files:
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Dev 3 task depends on icon `assets/icons/artifact_golden_horseshoe_512.png`.
+- Assumption: “свои кубики” means each player rolls their current own movement dice and compares total; tied lowest reroll until one winner.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-07-05 04:06 - Art / UI 1
+
+Changed:
+- Redrew the bottom control strip history/info icon from scratch in `index.html`.
+- Replaced the previous scroll glyph paths with a wider reference-like scroll shape: top curl, rounded page body, side fold, bottom roll, and inner document lines.
+- Kept the existing gold stroke style, line clarity, and button styling consistent with the other header/control icons.
+
+Files:
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual inline-SVG-only change; no gameplay, JS logic, data, CSS sizing, or image assets changed.
+- Check passed: `git diff --check`.
+- Local SVG preview render was not available because `cairosvg` is not installed in this sandbox.
+
+Open questions:
+- None.
+
+## 2026-07-05 04:03 - Art / UI 3
+
+Changed:
+- Redrew `Волшебная кирка` artifact icon using the existing artifact icon family as reference.
+- Replaced `assets/icons/artifact_magic_pickaxe_512.png` with a larger, stronger fantasy artifact silhouette: gold/bronze pickaxe, purple gems, coin/ore sparks, warm glow, and transparent cutout.
+- Added cache keys for the magic-pickaxe icon in `src/cards.config.js` and `src/game.js`, and bumped the host `game.js` cache key.
+
+Files:
+- `assets/icons/artifact_magic_pickaxe_512.png`
+- `src/cards.config.js`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual asset/cache-key only; no card rules, text, counts, CSV, Google Sheet, gameplay, or deck lifecycle changed.
+- Generated with built-in imagegen using existing artifact icons as style reference, then chroma-key background was removed locally.
+
+Open questions:
+- None.
+
+## 2026-07-05 01:58 - GD
+
+Changed:
+- Added and dispatched Dev 3 task `ACTIVE SHOP CARD 2026-07-05 01:58 - Add Joe Shop card Золотая коллекция`.
+- Scope: add new Shop card `Золотая коллекция`, count `3`, with start-of-turn bank income `+1` plus `+2` per owned artifact.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Use the common artifact ownership source so future artifacts count automatically.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-07-05 01:52 - GD
+
+Changed:
+- Added and dispatched Dev 3 task `ACTIVE ARTIFACT TITLE CASE 2026-07-05 01:52 - Capitalize every word in artifact names`.
+- Scope: artifact card names and named/quoted artifact references should use capitalized words, e.g. `Сапоги Скорости`, `Волшебная Кирка`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is artifact-name-only; do not title-case ordinary card descriptions or non-artifact titles globally.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-07-05 01:52 - Art / UI 2
+
+Changed:
+- Made Event artifact top-art backing fully opaque so the baked generic Event symbol cannot show through.
+- Kept the compact backing size and artifact art scale from the previous pass.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only CSS change; card data and rules were not changed.
+
+Open questions:
+- None.
+
+## 2026-07-05 03:38 - Art / UI 3
+
+Changed:
+- Removed `_candidate` from the steps inline icon asset name; the current path is `steps_512.png`.
+- Reworked the steps boot icon to feel sunlit rather than faded: warmer highlights, stronger contrast, and richer leather shadows, while preserving its transparent 512x512 RGBA format.
+- Updated host/controller icon references and current project-memory mentions to the new asset name.
+- Bumped host and controller script cache keys to `20260705-0338`.
+
+Files:
+- `assets/icons/steps_512.png`
+- old candidate-named steps icon asset removed
+- `index.html`
+- `controller.html`
+- `src/game.js`
+- `src/controller.js`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual asset/path rename only; no gameplay rules or card data changed.
+- Follow-up user feedback was applied after the first lightened pass: the current asset should read as sunlight, not desaturation.
+
+Open questions:
+- None.
+
+## 2026-07-05 03:18 - Art / UI 1
+
+Changed:
+- Reworked the bottom control strip history/info icon shape in `index.html`.
+- Kept the existing gold button style, line treatment, and clarity, but changed the glyph to a wider scroll shape with top curl, bottom roll, and inner text lines closer to the provided reference.
+
+Files:
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual SVG-only change; no gameplay, JS logic, data, CSS sizing, or assets changed.
+- Check passed: `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-05 01:50 - Art / UI 2
+
+Changed:
+- Tightened Event artifact card top art masking so the baked generic Event symbol no longer shows behind artifact icons.
+- Kept the backing inset from the card border and slightly reduced the artifact art footprint.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only CSS tuning; card data and Event artifact rules were not changed.
+
+Open questions:
+- None.
+
+## 2026-07-05 03:14 - Important
+
+Changed:
+- Added `Art / UI 3` as an active additional visual/UI chat.
+- Updated shared onboarding, read-news, next-chat, handoff, `AGENTS.md`, and UI inbox wording for `Art / UI 3`.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/prompts/read-news.md`
+- `project-memory/prompts/next-chat.md`
+- `project-memory/inbox/for-ui.md`
+- `AGENTS.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Art / UI 1`, `Art / UI 2`, and `Art / UI 3` share `project-memory/inbox/for-ui.md`.
+
+Open questions:
+- None.
+
+## 2026-07-05 03:13 - Art / UI 1
+
+Changed:
+- Made the strength and steps inline icons a little larger again across the existing CSS contexts.
+- Bumped `styles.css` cache keys in `index.html` and `controller.html` to `20260705-0145`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual CSS/cache-key only; coin/dice icon sizing, JS rendering logic, gameplay, text content, card data, CSV, Google Sheet, and image assets were not changed.
+- Check passed: `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-05 03:01 - Art / UI 1
+
+Changed:
+- Increased strength and steps inline icon sizes in `styles.css` while preserving existing coin/dice icon sizing.
+- Added context-specific strength/steps sizing for score/player stats, roll-result highlights, event toast/TADAM text, card faces, and Event card description lines.
+- Bumped `styles.css` cache keys in `index.html` and `controller.html` to `20260705-0140`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual CSS/cache-key only; no title guards, JS rendering logic, gameplay, text content, card data, CSV, Google Sheet, or image assets changed.
+- Check passed: `git diff --check`.
+- Browser visual smoke was attempted through Playwright, but local Chromium is not installed in this sandbox.
+
+Open questions:
+- None.
+
+## 2026-07-05 01:36 - Art / UI 2
+
+Changed:
+- Restored a compact soft backing behind Event artifact top art.
+- Reduced the backing and artifact art sizes so the backing stays inside the card face and does not touch the card border.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only card-face tuning; Event artifact rules/config were not changed.
+
+Open questions:
+- None.
+
+## 2026-07-05 01:34 - GD
+
+Changed:
+- Added and dispatched Art/UI 1 task `ACTIVE ICON SIZE 2026-07-05 01:34 - Increase strength and steps inline icons`.
+- Scope: make the new strength/steps inline icons visually larger without changing gameplay or title icon guards.
+
+Files:
+- `project-memory/inbox/for-ui.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- CSS/visual pass only; preserve coin/dice behavior and keep strength/steps out of titles.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-07-05 01:47 - Dev 3
+
+Changed:
+- Moved base `Шаги` and `Сила` display in player score cards into the shared stat row with coins and dice.
+- Replaced those visible score-card labels with inline steps/strength icons.
+- The score stat row now consistently shows: coins, dice, steps, strength.
+- Kept temporary/status chips near the player name for effects like rage, curse, pending statuses, and artifacts.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check src/cards.config.js`, `git diff --check`.
+- Browser screenshot smoke could not be run in this sandbox: local port bind is blocked and Playwright/browser launch is unavailable under current permissions.
+
+Open questions:
+- None.
+
+## 2026-07-05 01:31 - Art / UI 2
+
+Changed:
+- Removed the extra parchment/backplate overlay from revealed Event artifact card art.
+- Event artifact cards now keep only the artifact PNG in the top art area, without the added rectangular/rounded background layer.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Normal Event card faces and Event artifact gameplay/config were not changed.
+
+Open questions:
+- None.
+
+## 2026-07-05 01:27 - Dev 3
+
+Changed:
+- Completed `ACTIVE ICON TEXT RENDER 2026-07-05 01:22 - Replace strength/steps mentions with icons outside titles`.
+- Added display-layer strength/steps icon rendering to host and phone/controller text.
+- Strength values now render with `./assets/icons/strength_sword_512.png`; steps values now render with `./assets/icons/steps_512.png`.
+- Kept titles plain text by protecting card face titles, card-name/no-iconize nodes, popup/roll titles, and common inline card names like `Зелье силы` / `Вольный шаг`.
+- Data/CSV/Google Sheet text and gameplay rules were not changed.
+
+Files:
+- `src/game.js`
+- `src/controller.js`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check src/cards.config.js`, `git diff --check`.
+- Browser smoke not run in this sandbox.
+
+Open questions:
+- None.
+
+## 2026-07-05 01:12 - Dev 3
+
+Changed:
+- Completed `ACTIVE MAGIC PICKAXE ARTIFACT 2026-07-05 00:26 - Add Event artifact Волшебная кирка`.
+- Added Event artifact `magic-pickaxe` / `Волшебная кирка`, count `1`, with icon `./assets/icons/artifact_magic_pickaxe_512.png`, effect text, artifact rules text, and live Google Sheet sync.
+- Implemented all-player `1d6 + floor(coins / 5)` contest with tied-leader rerolls until one winner remains.
+- Winner receives a persistent visible artifact; Event card stays out of discard while owned.
+- `playerCoinBonus(...)` now gives the artifact owner `+2` on eligible coin gains; existing `skipReceiveBonus` transfer paths still bypass this bonus.
+
+Files:
+- `src/game.js`
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+- Google Sheet `Cards Config` / `event`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Live Sheet readback confirmed row `event,magic-pickaxe`.
+- Browser smoke was not run in this sandbox.
+
+Open questions:
+- None.
+
+## 2026-07-05 01:22 - GD
+
+Changed:
+- Added and dispatched Dev 3 task `ACTIVE ICON TEXT RENDER 2026-07-05 01:22 - Replace strength/steps mentions with icons outside titles`.
+- Scope: render strength mentions with `assets/icons/strength_sword_512.png` and steps mentions with `assets/icons/steps_512.png`, using the same display-layer icon rules as coin/dice icons.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Icons must not appear in card/action titles.
+- Prefer display-layer rendering; do not rewrite canonical game/card data unless an existing display-only convention requires it.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-07-05 01:05 - Dev 3
+
+Changed:
+- Completed `ACTIVE GOOD CARD 2026-07-05 00:42 - Add held Good card Еда монстру`.
+- Added Good card `feed-monster` / `Еда монстру`, count `2`, effect `feed-monster-plus3`, amount `3`, no final period, to local config, CSV, and live Google Sheet `Cards Config` / `good`.
+- Added it to held Good lifecycle/status via the existing pending Good card path.
+- Added individual monster/final monster gate pre-roll hook: non-fighting human owners may discard held `Еда монстру` to increase monster strength by `+3` for that battle.
+- Preserved TADAM `monster-bribe` / `Подкуп монстра`; old Shop `monster-bribe-plus1` was not reintroduced.
+
+Files:
+- `src/game.js`
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+- Google Sheet `Cards Config` / `good`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Live Sheet readback confirmed `good` contains `feed-monster`.
+- Bot owners currently auto-decline by omission; browser smoke was not run in this sandbox.
+
+Open questions:
+- None.
+
+## 2026-07-05 00:57 - Dev 3
+
+Changed:
+- Completed `ACTIVE SHOP CARD REMOVAL 2026-07-05 00:31 - Remove Joe Shop card Еда монстру`.
+- Removed Shop card `monster-bribe-plus1` / `Еда монстру` from local config, CSV, and live Google Sheet `Cards Config` / `shop`.
+- Removed retired Joe Shop runtime hooks for this effect from bot scoring/duplicate logic and monster-bribe prompt flow.
+- Preserved TADAM `monster-bribe` / `Подкуп монстра` in local config, CSV, live Google Sheet `Cards Config` / `tadam`, and runtime battle hook.
+
+Files:
+- `src/game.js`
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+- Google Sheet `Cards Config` / `shop`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Live Sheet readback confirmed `shop` no longer contains `monster-bribe-plus1`; `tadam` still contains `monster-bribe`.
+- Browser smoke was not run in this sandbox.
+
+Open questions:
+- None.
+
+## 2026-07-05 01:18 - Art / UI 2
+
+Changed:
+- Reworked revealed Event artifact card faces so persistent artifact cards show their artifact PNG in the upper art area instead of the generic Event symbol.
+- Removed the separate mid-card artifact medallion only for Event artifact cards, freeing the text block for title, acquisition text, and artifact effect text.
+- Added shared CSS rules for all `artifact: true` Event cards, so future Event artifacts inherit the same layout without per-card tuning.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Normal Event cards still use the existing Event face art and layout.
+- The generic Event symbol is not removed from the global `event_front.png`; artifact cards overlay the upper art area with the artifact icon.
+
+Open questions:
+- None.
+
+## 2026-07-05 00:42 - GD
+
+Changed:
+- Added and dispatched Dev 3 task `ACTIVE GOOD CARD 2026-07-05 00:42 - Add held Good card Еда монстру`.
+- Scope: add a held `good` card that can be discarded before another player's individual monster battle to give the monster `+3` strength for that battle.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a Good card, not the removed Joe Shop `Еда монстру`.
+- Default count specified as `2`, matching normal Good-card convention unless user says otherwise.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-07-05 00:51 - Dev 3
+
+Changed:
+- Completed `ACTIVE SPEED BOOTS ARTIFACT 2026-07-05 00:15 - Add Event artifact Сапоги скорости`.
+- Added Event artifact `speed-boots` / `Сапоги скорости`, count `1`, with icon `./assets/icons/artifact_speed_boots_512.png`, effect text, artifact rules text, and live Google Sheet sync.
+- Implemented all-player `1d6 + step bonuses` contest with tied-leader rerolls until one winner remains.
+- Winner receives a persistent visible artifact; Event card stays out of discard while owned.
+- `playerStepBonus(...)` now includes `+5` for the `Сапоги скорости` owner, so movement rolls and effects that use current step bonuses pick it up automatically.
+
+Files:
+- `src/game.js`
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+- Google Sheet `Cards Config` / `event`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Live Sheet readback confirmed row `event,speed-boots`.
+- Browser smoke was not run in this sandbox.
+
+Open questions:
+- None.
+
+## 2026-07-05 00:43 - GD
+
+Changed:
+- Released Dev 3 dependency for `Волшебная кирка` after Art/UI 1 completed `assets/icons/artifact_magic_pickaxe_512.png`.
+- Added and dispatched Dev 3 task `ACTIVE SHOP CARD REMOVAL 2026-07-05 00:31 - Remove Joe Shop card Еда монстру`.
+- Identified current Shop card id as `monster-bribe-plus1`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Only remove the Joe Shop card `Еда монстру`; preserve TADAM `monster-bribe` / `Подкуп монстра`.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-07-05 00:40 - Art / UI 1
+
+Changed:
+- Created standalone artifact icon for Event artifact `Волшебная кирка`: `assets/icons/artifact_magic_pickaxe_512.png`.
+- Icon uses an enchanted gold/steel pickaxe, coin sparks, purple ore crystals, warm artifact glow, and magic sparkles.
+
+Files:
+- `assets/icons/artifact_magic_pickaxe_512.png`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual asset only; no gameplay rules, card configs, CSV, Google Sheet, deck lifecycle, or unrelated assets changed.
+- Checks: PNG `512x512 RGBA` with transparent corners; full-size and small-size visual previews checked; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-05 00:37 - Dev 3
+
+Changed:
+- Completed `ACTIVE JOE COUPON ARTIFACT 2026-07-04 23:44 - Remove Безлимит Джо, add Event artifact Купон Джо`.
+- Removed playable Shop card `shop-unlimited-buy` / `Безлимит Джо` from local config, CSV, and live Google Sheet `Cards Config` / `shop`.
+- Added Event artifact `joe-coupon` / `Купон Джо`, count `1`, with icon `./assets/icons/artifact_joe_coupon_512.png`, effect text, artifact rules text, and live Google Sheet sync.
+- Implemented acquisition: player with the fewest owned Shop cards may pay 10 coins; ties use existing 1d6 tie-break; decline/unaffordable discards the Event card.
+- Implemented persistent artifact ownership/status, phone snapshot visibility through existing artifact chips, and Event discard guard while owned.
+- Implemented ordinary Shop coupon action: pay exactly 10 coins to take all currently open Shop offer cards; not used for Auction, Black Market, free rewards, or non-Shop-cell draws.
+- Retired runtime repeat-buy behavior tied to `Безлимит Джо`; old saved items are compatibility-only and no longer appear in current playable/reference data.
+
+Files:
+- `src/game.js`
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+- Google Sheet `Cards Config` / `event`
+- Google Sheet `Cards Config` / `shop`
+
+Notes for others:
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Browser smoke was not run in this sandbox.
+- Art/UI dependency icon `assets/icons/artifact_joe_coupon_512.png` is present.
+
+Open questions:
+- None.
+
+## 2026-07-05 00:31 - Art / UI 1
+
+Changed:
+- Created standalone artifact icon for Event artifact `Сапоги скорости`: `assets/icons/artifact_speed_boots_512.png`.
+- Icon uses golden/leather speed boots, wing accents, speed streaks, a small `+5` badge, purple gem accents, warm glow, and sparkles.
+
+Files:
+- `assets/icons/artifact_speed_boots_512.png`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual asset only; no gameplay rules, card configs, CSV, Google Sheet, deck lifecycle, or unrelated assets changed.
+- Checks: PNG `512x512 RGBA` with transparent corners; full-size and small-size visual previews checked; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-05 00:26 - GD
+
+Changed:
+- Added and dispatched Art/UI 1 task `ACTIVE ARTIFACT ICON 2026-07-05 00:26 - Волшебная кирка artifact icon`.
+- Added and dispatched Dev 3 task `ACTIVE MAGIC PICKAXE ARTIFACT 2026-07-05 00:26 - Add Event artifact Волшебная кирка`.
+- Scope: add a one-copy Event artifact where all players roll `1d6 + floor(coins / 5)`, and the winner receives persistent `+2` extra on eligible coin gains.
+
+Files:
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Dev task waits for Art/UI icon `assets/icons/artifact_magic_pickaxe_512.png`.
+- `Волшебная кирка` must not add extra coins to player-to-player transfers, steals, payments, tribute, auctions, or exchange flows.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-07-05 00:15 - GD
+
+Changed:
+- Added and dispatched Art/UI 1 task `ACTIVE ARTIFACT ICON 2026-07-05 00:15 - Сапоги скорости artifact icon`.
+- Added and dispatched Dev 3 task `ACTIVE SPEED BOOTS ARTIFACT 2026-07-05 00:15 - Add Event artifact Сапоги скорости`.
+- Scope: add a one-copy Event artifact where all players roll `1d6 + step bonuses`, the winner receives persistent `+5` steps.
+
+Files:
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Dev task waits for Art/UI icon `assets/icons/artifact_speed_boots_512.png`.
+- Treat `Сапоги скорости` as a persistent artifact, not a one-use card.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-07-05 00:09 - Dev 3
+
+Changed:
+- Completed `ACTIVE HERO SWORD BALANCE 2026-07-05 00:00 - Change Меч Героя event monster strength to 10`.
+- Updated `hero-sword` / `Меч Героя` setup battle target from `6` to `10` in local card config and CSV.
+- Synced live Google Sheet `Cards Config` / `event` row `17`: `amount = 10`, description says `с силой 10`.
+- Confirmed runtime uses `effect.amount` for the `Меч Героя` target strength; no separate hardcoded runtime `6` needed changing.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- A first attempted Sheet write targeted the wrong blank row; it was immediately cleaned. Final readback confirms `event!17` is correct and the mistaken `event!F20/N20` cells are empty.
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Browser smoke was not run.
+
+Open questions:
+- None.
+
+## 2026-07-05 00:02 - Art / UI 1
+
+Changed:
+- Created standalone artifact icon for Event artifact `Купон Джо`: `assets/icons/artifact_joe_coupon_512.png`.
+- Icon uses a parchment/gold coupon, Joe Shop stall accent, coin seal, purple artifact accent, warm glow, and sparkles to match the current artifact icon family.
+
+Files:
+- `assets/icons/artifact_joe_coupon_512.png`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual asset only; no gameplay rules, card configs, CSV, Google Sheet, deck lifecycle, or unrelated assets changed.
+- Checks: PNG `512x512 RGBA` with transparent corners; full-size and small-size visual previews checked; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-05 00:00 - GD
+
+Changed:
+- Added and dispatched Dev 3 task `ACTIVE HERO SWORD BALANCE 2026-07-05 00:00 - Change Меч Героя event monster strength to 10`.
+- Scope: update `hero-sword` / `Меч Героя` setup battle monster strength from `6` to `10` in config, CSV, Google Sheet, and any runtime/player-facing strings.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Preserve `Меч Героя` artifact reward behavior and bonus-per-six rule; only the setup battle target strength changes.
+- QA is not involved unless the user explicitly asks.
+
+Open questions:
+- None.
+
+## 2026-07-04 23:44 - GD
+
+Changed:
+- Added and dispatched Art/UI 1 task `ACTIVE ARTIFACT ICON 2026-07-04 23:44 - Купон Джо artifact icon`.
+- Added and dispatched Dev 3 task `ACTIVE JOE COUPON ARTIFACT 2026-07-04 23:44 - Remove Безлимит Джо, add Event artifact Купон Джо`.
+- Split ownership so Art/UI creates `assets/icons/artifact_joe_coupon_512.png`, then Dev removes `shop-unlimited-buy` from the Shop deck and implements Event artifact `joe-coupon`.
+
+Files:
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Купон Джо` is specified as a persistent Event artifact with `count: 1`.
+- Coupon action is scoped to ordinary `Лавка Джо` shop-cell purchases and buys all currently open offer cards for a flat 10 coins.
+- `Безлимит Джо` / `shop-unlimited-buy` should disappear from the playable Shop deck/reference lists.
+
+Open questions:
+- None.
+
+## 2026-07-04 23:24 - Dev 3
+
+Changed:
+- Completed `ACTIVE START ORDER SETTING 2026-07-04 23:17 - Optional random first player roll`.
+- Added off-by-default settings checkbox `Случайный первый игрок`.
+- When enabled, new game start rolls 1d6 for all players, rerolls tied leaders until one starter remains, and sets only `state.activePlayer` without reordering players.
+- Added start-order roll logs with player results, tie rerolls, and selected first player.
+- Added `randomFirstPlayer` to game settings/history snapshot.
+- Autorun snapshots/restores the setting and forces it off during auto playtests to keep default deterministic start behavior for bot statistics.
+- Bumped host `src/game.js` cache key to `20260704-2317`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Phone/controller should inherit the selected active player through the existing `state.activePlayer` snapshot after `newGame()`.
+- Browser smoke was not run here; static/syntax checks passed.
+
+Open questions:
+- None.
+
+## 2026-07-04 23:17 - GD
+
+Changed:
+- Added and dispatched Dev 3 task `ACTIVE START ORDER SETTING 2026-07-04 23:17 - Optional random first player roll`.
+- Scope: add an off-by-default settings checkbox `Случайный первый игрок`; when enabled, new game start rolls dice for all players, highest roll starts, then normal clockwise turn order continues.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Tie for highest roll should reroll among tied players until one starter remains.
+- Preserve normal player/table order after choosing the starting active player.
+- Do not touch save/export routing or the current Apps Script blocker work.
+
+Open questions:
+- None.
+
+## 2026-07-04 22:49 - Dev 3
+
+Changed:
+- Follow-up for in-game history save still showing unverified status after Apps Script editor smoke succeeded.
+- Tightened `/api/game-history` proxy validation in `server.js`: Apps Script HTTP 200 is no longer enough; proxy now requires JSON with `ok: true`.
+- If the web app returns old/non-JSON output, proxy returns an explicit error: `Apps Script web app did not return ok:true. Redeploy the Games Log web app with the latest patch.`
+- Updated `src/game.js` save failure toast to show an actionable deployment message when the web app is stale.
+- Bumped host game script cache key to `src/game.js?v=20260704-2245`.
+
+Files:
+- `server.js`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- The user’s successful `smokeRegularGameHistorySave()` proves the Apps Script editor code can append to regular tabs, but does not prove the deployed `/exec` web app is updated.
+- Current likely root cause: Apps Script web app deployment still points to an older version. Required action in Apps Script: `Deploy` -> `Manage deployments` -> edit current web app -> `Version: New version` -> `Deploy`.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-04 22:38 - Dev 3
+
+Changed:
+- Completed local fix for `ACTIVE GAME SAVE PROXY BLOCKER 2026-07-04 22:24 - Apps Script smoke works, in-game save still does not send`.
+- Identified stale browser cache key as a concrete blocker: `index.html` still loaded `src/game.js?v=20260703-0239`, while the save proxy client code was added later.
+- Bumped host game script cache key to `src/game.js?v=20260704-2224`.
+- Improved unverified save diagnostics: if `/api/game-history` is missing/stale and the client falls back to direct Apps Script `no-cors`, the toast now says the save server is stale/unavailable and the Google write is unconfirmed.
+- Verified current source has `POST /api/game-history` in `server.js` and proxy-first save selection in `src/game.js`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Apps Script regular route is proven live by user smoke (`smokeRegularGameHistorySave()` wrote `smoke-board` to `Games`).
+- Root cause for in-game save is stale client/server path, not Apps Script regular append itself.
+- Required user action: fully stop the currently running game server, start fresh `node server.js` from the project folder, then hard refresh/open `http://localhost:5173/?v=20260704-2224`.
+- Browser/server smoke could not be completed here because starting a fresh server is blocked by sandbox `listen EPERM`, and shell cannot connect to the user’s existing `127.0.0.1:5173`.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-04 22:24 - GD
+
+Changed:
+- Added and dispatched Dev 3 task `ACTIVE GAME SAVE PROXY BLOCKER 2026-07-04 22:24 - Apps Script smoke works, in-game save still does not send`.
+- Source: user ran `smokeRegularGameHistorySave()` successfully; a smoke row appeared in `Games`, but saving from the game still does not write to Google Sheets.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Apps Script regular append route is proven alive enough to write a smoke row.
+- The remaining blocker is now between the game client/server and Apps Script: stale server, missing `/api/game-history`, stale `game.js`, wrong URL, proxy failure, or hidden fallback failure.
+- Dev 3 should preserve regular/Auto routing and make failed in-game saves visible/actionable.
+
+Open questions:
+- Whether the active game server process is stale and needs restart after the `server.js` proxy route was added.
+
+## 2026-07-04 22:12 - Dev 3
+
+Changed:
+- Completed `ACTIVE APPS SCRIPT MANUAL TEST HELPER 2026-07-04 22:02 - Add editor-runnable save smoke functions`.
+- Added Apps Script editor-runnable helpers to `project-memory/apps-script-auto-playtest-sheets-patch.js`:
+  - `smokeRegularGameHistorySave()` writes a tiny marked payload through `appendGameHistoryPayload(...)` to `Games` / `Players`;
+  - `smokeAutoGameHistorySave()` writes a tiny marked payload through `appendGameHistoryPayload(...)` to `Games Auto` / `Players Auto`;
+  - `cleanupSmokeGameHistoryRows()` removes rows marked with `__VBA_SMOKE_HISTORY_SAVE__` from regular and Auto targets.
+- Smoke rows are marked in outcome text, final JSON, player force/score fields, and smoke card item data for safe identification.
+- No validation was weakened for real payloads, and game client behavior was not changed.
+
+Files:
+- `project-memory/apps-script-auto-playtest-sheets-patch.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Apps Script editor dropdown order for user: run `smokeRegularGameHistorySave`, then `smokeAutoGameHistorySave`, then verify rows in the four target tabs, then optionally run `cleanupSmokeGameHistoryRows`.
+- Checks passed: `node --check project-memory/apps-script-auto-playtest-sheets-patch.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-04 22:02 - GD
+
+Changed:
+- Added and dispatched Dev 3 task `ACTIVE APPS SCRIPT MANUAL TEST HELPER 2026-07-04 22:02 - Add editor-runnable save smoke functions`.
+- Source: user ran `appendGameHistoryPayload` directly in Apps Script editor and got `Empty or invalid game history payload`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Directly running `appendGameHistoryPayload()` without payload is expected to fail.
+- Dev 3 should add editor-runnable smoke helpers for regular `Games` / `Players` and auto `Games Auto` / `Players Auto`, so the user can verify the Apps Script patch from the function dropdown.
+
+Open questions:
+- None.
+
+## 2026-07-04 21:43 - Dev 3
+
+Changed:
+- Completed local fix for `ACTIVE HISTORY SAVE BLOCKER 2026-07-04 21:15 - Manual/autosave finished games not appearing in Google Sheets`.
+- Added a verifiable same-origin history save proxy at `POST /api/game-history` in `server.js`; it forwards to the Apps Script URL and returns JSON to the browser.
+- Updated `saveCurrentGameHistory(...)` so direct Apps Script `no-cors` fallback is treated as send-only/unverified, not confirmed Google Sheets success.
+- Updated autosave/manual save UI text:
+  - confirmed proxy/App Script JSON response -> confirmed Google save;
+  - direct `no-cors` fallback -> local save + “request sent, check the sheet”;
+  - proxy/App Script error -> local save + Google failure warning.
+- Updated autorun remote result handling so `remoteSaved` is true only for verified remote success; opaque/direct sends are `remoteSent` only.
+- Added a `doPost(e)` JSON response wrapper to `project-memory/apps-script-auto-playtest-sheets-patch.js` so deployed Apps Script can return `{ ok: true }` / `{ ok: false, error }`.
+- Live Sheets readback: no rows containing `2026-07-04` were found in `Games`, `Players`, or `Games Auto`; regular `Games` currently shows latest visible rows from `2026-07-02`, while `Games Auto` shows rows from `2026-07-03`.
+
+Files:
+- `src/game.js`
+- `server.js`
+- `project-memory/apps-script-auto-playtest-sheets-patch.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Root cause confirmed locally: previous `no-cors` path could show “sent to Google Table” without any readable success/failure response.
+- Root cause not fully confirmable from this environment: live Apps Script logs/deployment state are not accessible here. Given live readback has no 2026-07-04 manual rows, the user’s save did not land in `Games` / `Players`.
+- Manual deploy is still required for full verification: deploy the updated Apps Script patch so the proxy can receive `{ ok: true }` after real appends.
+- After deploy, smoke a regular finished save and verify one new `Games` row plus matching `Players` rows; regular saves must not appear in Auto tabs.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, `node --check project-memory/apps-script-auto-playtest-sheets-patch.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-04 21:15 - GD
+
+Changed:
+- Added and dispatched urgent Dev 3 task `ACTIVE HISTORY SAVE BLOCKER 2026-07-04 21:15 - Manual/autosave finished games not appearing in Google Sheets`.
+- Scope: user saved a finished game, but the result did not appear in Google Sheets. This is separate from the autorun gameplay stability work and must preserve regular `Games` / `Players` saves while keeping Auto saves in Auto tabs.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Dev 3 should inspect `saveCurrentGameHistory(...)`, winner-popup autosave, current Apps Script deployment/URL, no-cors response handling, and the regular route in `project-memory/apps-script-auto-playtest-sheets-patch.js`.
+- Required outcome: normal saves write to `Games` / `Players`, Auto saves write to `Games Auto` / `Players Auto`, and UI/status no longer implies confirmed success when the remote Sheet did not accept the payload.
+
+Open questions:
+- Whether the live Apps Script deployment was updated after the latest patch, and whether regular save now fails because of stale deployment, schema mismatch, or hidden no-cors failure.
+
+## 2026-07-03 14:46 - Dev 3
+
+Changed:
+- Completed `ACTIVE SHEET AUTORUN ROUTING 2026-07-03 14:18 - Auto saves must write to Auto tabs and preserve formulas` locally.
+- Replaced the old deploy patch with a header-mapped Apps Script patch that routes `sheetTarget.mode === "auto"` to `Games Auto` / `Players Auto` and normal saves to `Games` / `Players`.
+- Added formula protection for `Длительность` and `Minutes`: append writes skip formula-owned cells, and `Minutes` is written as a row formula only.
+- Added `previewMisroutedAutorunRows()` and `repairMisroutedAutorunRows()` helpers for safe live cleanup after deploying the patch.
+- Added the Games Log spreadsheet ID to the autorun sheet target payload in `src/game.js`.
+
+Files:
+- `src/game.js`
+- `project-memory/apps-script-auto-playtest-sheets-patch.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Live Apps Script was not deployed from this environment.
+- Live Sheet rows were inspected earlier and misrouted autorun rows were found in regular tabs, but I did not manually delete/move them through the connector; use the patch cleanup functions after deploy to avoid damaging legitimate regular rows.
+- Required manual sequence: deploy the patch in the Games Log Apps Script, run `previewMisroutedAutorunRows()`, then run `repairMisroutedAutorunRows()` once if the preview matches the known bad rows.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, `node --check project-memory/apps-script-auto-playtest-sheets-patch.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-03 14:18 - GD
+
+Changed:
+- Added and dispatched urgent Dev 3 task `ACTIVE SHEET AUTORUN ROUTING 2026-07-03 14:18 - Auto saves must write to Auto tabs and preserve formulas`.
+- Scope: autorun saves currently append into regular `Games` / `Players` again, shift schema/formula columns, and must be routed to `Games Auto` / `Players Auto` with formula-safe writes.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Live `Games Auto` / `Players Auto` tabs already exist with sheetIds `190000001` / `190000002`.
+- Dev 3 should fix routing/schema/formula preservation and repair/migration if live Sheet access is available; otherwise provide exact manual cleanup/deploy steps.
+- Google Drive connector was unavailable in GD context earlier, so GD did not safely edit live rows in this pass.
+
+Open questions:
+- Whether Dev 3 can deploy the live Apps Script or only update the patch file/manual instructions.
+
+## 2026-07-03 14:09 - QA 2
+
+Changed:
+- Completed QA 2 re-check for `QA RECHECK AUTORUN 2026-07-03 13:18 - Re-check autorun after Dev 3 and Art/UI fixes`.
+- Reported results to GD in `project-memory/inbox/for-gd.md`; no Dev/Art tasks were created by QA 2.
+- Ran static checks and browser smoke against fresh loaded scripts at `http://localhost:5173/?qa2-recheck=20260703-1318`.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Static checks passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check server.js`; `git diff --check`.
+- Fresh server from sandbox was not possible: `HOST=127.0.0.1 PORT=5174 node server.js` failed with `listen EPERM`.
+- Browser fresh load used `src/game.js?v=20260703-0239` and `styles.css?v=20260703-1304`, viewport `1280x720`.
+- Art/UI visibility re-check passed: `Автопрогон` block was visible immediately (`y≈257`, bottom `≈303`), buttons `1` / `10` / `100` visible (`y≈264`, bottom `≈296`).
+- Autorun gameplay re-check passed:
+  - `1`: `Готово: 1 завершено, 0 abort, local fail 1`.
+  - `10`: `Готово: 10 завершено, 0 abort, local fail 10`.
+  - `100`: `Готово: 100 завершено, 0 abort, local fail 100`.
+- No console errors, no generic `AUTO BLOCKED: no progress at movementAction`, no double `AUTO BLOCKED`, no missing bot-decision blocker observed.
+- Local output is blocked by the current server process: browser reports `Local autorun export failed: HTTP 404`, UI honestly shows `local fail`, and `outputs/autoplay-runs/` did not appear.
+- Static check confirms Auto sheet target includes `Games Auto` / `Players Auto` plus sheetIds `190000001` / `190000002`; live Google Sheet rows were not verified because the live Apps Script deployment/export endpoint was not available in this QA pass.
+
+Open questions:
+- Need fresh server process with updated `server.js` and deployed Apps Script to verify actual JSONL/per-run JSON files and live `Games Auto` / `Players Auto` rows.
+
+## 2026-07-03 13:18 - GD
+
+Changed:
+- Sent QA 2 re-check `QA RECHECK AUTORUN 2026-07-03 13:18` after Dev 3 and Art/UI 1 handbacks.
+- Re-check covers autorun `1 / 10 / 100`, settings visibility, local fallback output, and Auto sheet routing.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-qa.md`
+
+Notes for others:
+- QA 2 should verify no generic `no progress at movementAction` remains.
+- QA 2 should verify `Автопрогон` is visible immediately at ~`1280x720`.
+- `Games Auto` and `Players Auto` live tabs already exist.
+
+Open questions:
+- None.
+
+## 2026-07-03 13:31 - Art / UI 1
+
+Changed:
+- Completed GD task `ACTIVE 2026-07-03 13:04 - Rework autorun controls visibility after QA fail`.
+- Moved `Автопрогон` to the first item inside `#settingsPanel` and added CSS `order: -10` so it remains first even if DOM order drifts.
+- When settings are open on desktop, `.game-settings` temporarily moves above `.tadam-card`, preventing the settings panel from starting below TADAM.
+- Restored compact desktop autorun row and kept the narrow-screen wrapping fallback.
+- Bumped host `styles.css` cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout only; autorun behavior/state, save/export, game rules, and cards were not changed.
+- Checks passed: `git diff --check`.
+- Browser smoke at explicit `1280x720`, fresh load, open settings: `Автопрогон` block `y≈257`, bottom `≈303`; buttons `1` / `10` / `100` `y≈264`, bottom `≈296`; viewport height `720`; no overlap with top controls; `styles.css?v=20260703-1304` loaded.
+- Direct GD handback sent to thread `019e9f0c-3576-7862-a4b6-7e0116e27081`.
+
+Open questions:
+- None.
+
+## 2026-07-03 13:28 - Dev 3
+
+Changed:
+- Reworked autorun movement watchdog to avoid false `no progress at movementAction` aborts while a live movement promise is still running.
+- Added autorun movement phase tracking for blocker context: phase, player, cell, step/total, rolls, turn key, and recent action.
+- Added a real movement stall timeout (`5000ms`) before aborting a movement-only wait.
+- Stopped counting movement-only polling as action-chain depth, preserving the `100` action limit for actual pending decisions/effects.
+- Normalized autorun abort text to avoid doubled `AUTO BLOCKED: AUTO BLOCKED`.
+- Confirmed Auto payload target with sheet names and live sheetIds: `Games Auto` `190000001`, `Players Auto` `190000002`.
+- Updated Apps Script patch constants with the same Auto sheetIds.
+
+Files:
+- `src/game.js`
+- `project-memory/apps-script-auto-playtest-sheets-patch.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Normal gameplay rules, manual save target (`Games` / `Players`), card configs, board layout, and unrelated UI were not changed.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check server.js`; `git diff --check`.
+- Sandbox endpoint smoke could not reach `127.0.0.1:5173` (`curl` HTTP code `000`), so QA 2 should verify `/api/autoplay-runs` on the fresh active server process.
+- Live Apps Script routing still needs manual deployment of `project-memory/apps-script-auto-playtest-sheets-patch.js` if it has not already been applied.
+
+Open questions:
+- QA 2 should re-run autorun `1`, `10`, and if stable `100`, then verify `outputs/autoplay-runs/` appears and settings restore.
+
+## 2026-07-03 13:04 - GD
+
+Changed:
+- Distributed remaining autorun blockers after QA 2 re-check.
+- Sent `ACTIVE AUTORUN BLOCKERS 2026-07-03 13:04` directly to Dev 3.
+- Sent `ACTIVE 2026-07-03 13:04 - Rework autorun controls visibility after QA fail` directly to Art/UI 1.
+- Recorded both tasks in role inboxes.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-ui.md`
+
+Notes for others:
+- Dev 3 owns the remaining `no progress at movementAction` blocker and local `/api/autoplay-runs` export.
+- Art/UI 1 owns the failed `Автопрогон` visibility requirement at `1280x720`.
+- GD already created `Games Auto` and `Players Auto` live tabs; Dev 3 should verify payload/routing against them.
+- After both handbacks, send QA 2 a new re-check for autorun `1 / 10 / 100`.
+
+Open questions:
+- None.
+
+## 2026-07-03 03:36 - GD
+
+Changed:
+- Created live Google Sheet tabs `Games Auto` and `Players Auto` in `Games Log`.
+- Duplicated the structure/header formatting from `Games` and `Players`.
+- Left Auto tabs empty except for header rows so autorun exports have dedicated destinations.
+
+Files:
+- Google Sheet `Games Log`
+
+Notes for others:
+- `Games Auto` sheetId: `190000001`.
+- `Players Auto` sheetId: `190000002`.
+- Apps Script/export routing still needs to be deployed/verified separately if not already updated.
+
+Open questions:
+- None.
+
+## 2026-07-03 03:23 - GD
+
+Changed:
+- Repaired live Google Sheet `Games Log` after old-schema rows shifted `Games` and `Players` columns.
+- Restored `Games` rows for IDs `21-59` to numeric IDs with separate `Дата` and `Время` columns.
+- Restored `Players` rows for game IDs `21-59` to numeric `ID партии` with separate `Дата` and `Время` columns.
+- Verified `Games!A1:C120` and `Players!A1:C180` now show numeric IDs and separated date/time, with no visible `game-...` IDs in those ranges.
+
+Files:
+- Google Sheet `Games Log`
+
+Notes for others:
+- The visible data is repaired, but the live save/export mapping should still be checked so future saves do not append old-schema rows again.
+
+Open questions:
+- None.
+
+## 2026-07-03 02:46 - QA 2
+
+Changed:
+- Completed QA 2 re-check for `QA RECHECK AUTO PLAYTEST MVP 2026-07-03 02:34 - Re-check autorun blockers after Dev 3 fix`.
+- Reported results to GD in `project-memory/inbox/for-gd.md`; no Dev/Art tasks were created by QA 2.
+- Ran static checks and browser smoke against fresh loaded scripts at `http://localhost:5173/?qa2-recheck=20260703-0234`.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Static checks passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check server.js`; `git diff --check`.
+- Fresh browser load used `src/game.js?v=20260703-0229` and `styles.css?v=20260703-0232`, viewport `1280x720`.
+- Re-check summary:
+  - `route is not defined` is no longer observed in console.
+  - Stale/unavailable local endpoint is now reported honestly: UI/status shows `local fail`, and console warns `Local autorun export failed: HTTP 404`; no false local success observed.
+  - `1` run: failed/unstable in checked run with `Готово: 0 завершено, 1 abort, local fail 1`; clean blocker shown as `AUTO BLOCKED: AUTO BLOCKED: no progress at movementAction`.
+  - `10` run: failed/unstable with `Готово: 5 завершено, 5 abort, local fail 10`; series continued through `10/10` and restored settings.
+  - `100` was not run because the `10` series was not stable.
+  - Art/UI settings visibility re-check failed: at `1280x720`, after opening settings the `Автопрогон` block was still below the viewport (`y≈1030`, buttons `y≈1061`) and not visible immediately.
+- `outputs/autoplay-runs/` did not appear; local output JSON/JSONL could not be inspected.
+- No missing bot-decision blocker was observed; remaining autorun blocker observed was `no progress at movementAction`.
+- Live Apps Script / Google Sheet verification was not possible from this QA environment.
+
+Open questions:
+- Waiting for GD to distribute remaining fixes; QA 2 did not create Dev/Art tasks directly per instruction.
+
+## 2026-07-03 02:34 - GD
+
+Changed:
+- Assigned QA 2 re-check `QA RECHECK AUTO PLAYTEST MVP 2026-07-03 02:34`.
+- Included both Dev 3 autorun blocker fixes and Art/UI 1 autorun settings visibility fix in the re-check scope.
+
+Files:
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA 2 should verify autorun `1` / `10` / `100` if stable, no `route is not defined`, local fallback behavior, and immediate visibility of `Автопрогон` controls at ~1280x720.
+
+Open questions:
+- Whether the current server process has the updated `/api/autoplay-runs` endpoint; stale server should now show `local fail` instead of false success.
+
+## 2026-07-03 02:38 - Dev 1
+
+Changed:
+- Completed `DONE INFO HISTORY FULL LOG TOGGLE 2026-07-03 02:29`.
+- Made the info popup `Вся хроника` button toggle between full chronicle and latest-50 mode.
+- Changed full chronicle display to use the same newest-first order/numbering style as latest-50 mode.
+- Kept `Копировать` copying the full chronicle independently of the visible mode.
+- Bumped host JS cache key in `index.html`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- No gameplay log semantics, permanent chronicle block, info popup open/close behavior, current action highlight, gameplay rules, or save/export behavior were changed.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-03 02:36 - Art / UI 2
+
+Changed:
+- Changed the settings panel layout back to 3 blocks per row.
+- Moved `Автопрогон` into the normal settings block flow and restyled it as a compact card with three small action buttons.
+- Bumped the host stylesheet cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only change; autorun behavior and game logic were not changed.
+- Browser smoke at `http://192.168.31.41:5173/` confirmed `styles.css?v=20260703-0232` loaded, settings grid columns are `170px 170px 170px`, and `Автопрогон` fits the shared settings-card style.
+- Checks passed: `node --check src/game.js`; `git diff --check -- index.html styles.css project-memory/updates.md`.
+
+Open questions:
+- None.
+
+## 2026-07-03 02:24 - Art / UI 1
+
+Changed:
+- Completed GD task `ACTIVE 2026-07-03 02:16 - Make autorun controls visible in settings`.
+- Moved `Автопрогон` to the top of the opened settings panel so it is visible immediately at 1280x720-ish viewport sizes.
+- Made the autorun controls a compact desktop row with title, `1` / `10` / `100` buttons, and status.
+- Added a narrow-screen wrapping fallback and bumped the host stylesheet cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout only; autorun behavior, run state, save/export logic, gameplay rules, and cards were not changed.
+- Checks passed: `git diff --check`.
+- Browser smoke at explicit `1280x720`: settings open with `Автопрогон` visible immediately (`bottom≈633` inside viewport `720`), buttons fully visible, no overlap with top controls.
+- Direct GD handback sent to thread `019e9f0c-3576-7862-a4b6-7e0116e27081`.
+
+Open questions:
+- None.
+
+## 2026-07-03 02:29 - GD
+
+Changed:
+- Assigned Dev 1 task `ACTIVE INFO HISTORY FULL LOG TOGGLE 2026-07-03 02:29`.
+- Scope: make `Вся хроника` toggle back to latest-50 mode and keep full chronicle order/numbering consistent with latest-50 display.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- `Копировать` should still copy the full chronicle regardless of visible mode.
+- Do not change gameplay log semantics or restore the old permanent chronicle block.
+
+Open questions:
+- None.
+
+## 2026-07-03 02:33 - Dev 3
+
+Changed:
+- Fixed QA 2 autorun blocker `ReferenceError: route is not defined` in `resolveBackToNearestPlayer(...)`.
+- Replaced the stale `route[...]` lookup with current `routePath[...]` for `Назад к сопернику` target preview.
+- Made autorun movement/runtime errors captured as clean `AUTO BLOCKED: runtime error: ...` abort context instead of uncaught async errors.
+- Fixed autorun local fallback save to require `response.ok`; HTTP 404/500 or unavailable endpoint now reports local save failure instead of false success.
+- Added `localSaved` / `localSaveError` metadata to autorun snapshots and final status suffix `local fail N` when fallback output cannot be written.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Normal game rules, manual save path, regular `Games` / `Players` target, card configs, and board layout were not changed.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check server.js`; `git diff --check`.
+- Local endpoint smoke from this sandbox could not reach `127.0.0.1:5173` (`curl` HTTP code `000`), so browser/file-output re-check should be done by QA 2 on the running app/server.
+
+Open questions:
+- QA 2 should re-run autorun `1` and `10` on the active server and verify `outputs/autoplay-runs/` appears when the updated `server.js` process is running.
+
+## 2026-07-03 02:27 - Art / UI 2
+
+Changed:
+- Redrew the top header `История` icon as a calmer outline-only chronicle/page mark.
+- Matched it closer to the neighboring `Настройки` and fullscreen icons: muted gold gradient, straight linework, no bright paper fill, and cleaner geometry.
+- Browser-smoked the header row in the running game.
+
+Files:
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only header icon change; history panel behavior and logging were not changed.
+- In-app browser smoke at `http://192.168.31.41:5173/` confirmed the icon is centered in the 40px button and renders at about 28px, matching settings/fullscreen sizing.
+
+Open questions:
+- None.
+
+## 2026-07-03 02:20 - Art / UI 1
+
+Changed:
+- Refined the bottom chronicle button scroll icon to match the existing header icon language: single gold outline, cleaner geometry, no fill, lighter shadow, and sharper linework.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only change; button behavior unchanged.
+- Browser smoke confirmed the icon renders at 30px with gold outline strokes and no fill.
+
+Open questions:
+- None.
+
+## 2026-07-03 02:16 - GD
+
+Changed:
+- Split QA 2 autorun findings into follow-up tasks.
+- Assigned Dev 3 task `ACTIVE AUTORUN QA BLOCKERS 2026-07-03 02:16` for `route is not defined` and missing local fallback output.
+- Assigned Art/UI 1 task `ACTIVE 2026-07-03 02:16 - Make autorun controls visible in settings`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Dev 3 fix should be re-checked by QA 2 after handback.
+- Art/UI layout fix can be re-checked together with the autorun QA follow-up.
+
+Open questions:
+- Whether live Apps Script can be tested remains unresolved; current blockers are local/runtime first.
+
+## 2026-07-03 02:11 - Art / UI 1
+
+Changed:
+- Replaced the bottom control strip chronicle/info button glyph from a text `i` to an inline scroll/history SVG in the project button style.
+- Bumped the host stylesheet cache key.
+
+Files:
+- `index.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only change; popup behavior and history data are unchanged.
+- Browser smoke confirmed `#infoHistoryBtn` renders the new 32px SVG icon inside the existing compact button.
+
+Open questions:
+- None.
+
+## 2026-07-03 02:17 - Dev 1
+
+Changed:
+- Completed `DONE HISTORY TOGGLE BUTTON 2026-07-03 02:10`.
+- Added a compact header `История` icon button between the cards/reference button and phone button.
+- Made the full `История` panel hidden by default and toggled by the new header button.
+- Added active/pressed state syncing for the History button.
+- Reduced the top `Игроков` / `Ботов` control footprint and expanded the header icon row to fit five square buttons.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- History content, save button behavior, autosave/history rendering, sheet/export payloads, gameplay, phones, and autorun logic were not changed.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-03 02:13 - QA 2
+
+Changed:
+- Completed QA 2 smoke for `QA AUTO PLAYTEST MVP 2026-07-03 02:04 - Smoke fast bot-only autorun`.
+- Reported findings to GD in `project-memory/inbox/for-gd.md`; no Dev tasks were created by QA 2.
+- Ran static checks and browser smoke against `http://localhost:5173/`.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Static checks passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check server.js`; `git diff --check`.
+- Static save-target check passed: regular history save still uses the existing Google Sheets path without `sheetTarget`, while autorun snapshots set `sheetTarget` to `Games Auto` / `Players Auto`; Apps Script patch also routes `mode: auto` to those sheets and normal payloads to `Games` / `Players`.
+- Browser smoke:
+  - `Автопрогон` controls exist in settings with `1`, `10`, `100`.
+  - `1` run is mixed across attempts: first observed `Готово: 0 завершено, 1 abort`; later observed `Готово: 1 завершено, 0 abort`.
+  - `10` run completed the series without freezing and restored settings, but was unstable: `Готово: 5 завершено, 5 abort`.
+  - `100` was not run because the `10` series was not stable.
+- Findings reported to GD:
+  - High / Dev: autorun can abort on `ReferenceError: route is not defined` in `resolveBackToNearestPlayer()` when resolving `back-to-nearest-player` / `Назад к сопернику`.
+  - High / Dev/Infra: local fallback output was not written; `outputs/autoplay-runs/` did not appear after completed autorun attempts.
+  - Medium / Art/UI: with the 1280x720 viewport, freshly opened settings placed the autorun buttons below the visible viewport until page/panel scroll changed.
+- No missing bot-decision guard was observed in this pass; observed aborts were tied to the `route` runtime error.
+- Live Apps Script / Google Sheet verification was not possible from this QA environment; only static patch/target routing was checked.
+
+Open questions:
+- GD to distribute fixes; QA 2 did not create Dev/Art tasks directly per instruction.
+
+## 2026-07-03 02:10 - GD
+
+Changed:
+- Assigned Dev 1 task `ACTIVE HISTORY TOGGLE BUTTON 2026-07-03 02:10`.
+- Scope: make the large `История` block open by a new header button placed between cards/reference and phones, and shrink `Игроков` / `Ботов` controls so the row fits.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is the large history/stats panel, not the small info/chronicle popup.
+- Save/autosave/history data and sheet export behavior must remain unchanged.
+
+Open questions:
+- None.
+
+## 2026-07-03 02:10 - Art / UI 1
+
+Changed:
+- Synced Google Sheet `Cards Config` / `good!N22` for `good-race` / `Гонка` with the in-game description and explicit line breaks.
+
+Files:
+- Google Sheet `Cards Config`, sheet `good`, cell `N22`
+- `project-memory/updates.md`
+
+Notes for others:
+- Sheet text now matches `src/cards.config.js`: reward variants are on separate lines.
+- No local gameplay/code changes in this pass.
+
+Open questions:
+- None.
+
+## 2026-07-03 02:04 - Art / UI 2
+
+Changed:
+- Fixed revealed TADAM cards inside the right-side TADAM UI slots so long titles/descriptions scale as mini-cards instead of using large revealed-card typography.
+- Added slot-only compact card-face metrics for `.tadam-slot.has-card-face`, including fixed mini title/body sizes and clipped description flow inside the card text area.
+- Bumped the host stylesheet cache key.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only change; TADAM card configs, effects, deck order, gameplay, and normal revealed-card/reference-card rendering were not changed.
+- Browser smoke used the running game at `http://192.168.31.41:5173/`, confirmed `styles.css?v=20260703-0148` loaded, and drew real TADAM cards into the right-side TADAM panel. Checked slot metrics: title/description stay inside card bounds and no line exits the card.
+- The exact `Дуэль на клетке` card did not appear during the final random-deck smoke before the run entered a battle state, but the fix applies to the same `.tadam-card-text.is-long` / `.is-description-long` slot path.
+- Checks passed: `node --check src/game.js`; `git diff --check -- index.html styles.css project-memory/updates.md`.
+
+Open questions:
+- None.
+
+## 2026-07-03 02:04 - GD
+
+Changed:
+- Assigned QA 2 task `QA AUTO PLAYTEST MVP 2026-07-03 02:04`.
+- Scope: smoke the new fast bot-only autorun MVP for 1/10/100 runs, collect blockers, verify local fallback output, and check that autorun targets `Games Auto` / `Players Auto`.
+
+Files:
+- `project-memory/inbox/for-qa.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- QA 2 should report findings directly to GD; GD will split fixes across Dev roles.
+- QA should not change game code or create Dev tasks directly for this pass.
+
+Open questions:
+- Whether QA can exercise the live Apps Script / Google Sheet path or only local fallback output.
+
+## 2026-07-03 01:47 - Dev 1
+
+Changed:
+- Extended the player cards popup: it now shows the player's owned `Хорошо`, `Плохо`, and `События` cards in a top section.
+- Kept Joe Shop cards below in their own `Лавка Джо` section, preserving existing grouping/count badges and face-down display.
+- Updated popup title/labels from Joe-only wording to general player-card wording.
+- Bumped host CSS/JS cache keys in `index.html`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- View-only UI; card clicks in this popup do not apply effects or change card state/decks.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-03 02:02 - Art / UI 1
+
+Changed:
+- Updated Good card `good-race` / `Гонка` description to use explicit line breaks for the reward variants.
+- Made host and controller card-face description rendering respect explicit newline-separated lines.
+- Synced the local CSV mirror with escaped `\n` line breaks and bumped host/controller cache keys.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `src/controller.js`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Text/rendering-only change; runtime effect/thresholds unchanged.
+- Browser checked in the running game: `Гонка` in the `Хорошо` reference deck rendered as 4 direct description lines with no horizontal overflow.
+
+Open questions:
+- None.
+
+## 2026-07-03 01:52 - Dev 3
+
+Changed:
+- Implemented MVP bot-only auto playtest runner from settings with `1`, `10`, and `100` run buttons.
+- Added autorun fast mode: all players become bots for the run, bot delays/sleeps/dice animations/action prompts are skipped, and existing bot decisions drive choices.
+- Added safety aborts for max 500 turns, max 100 actions per turn, no bot decision, or no progress; aborted runs save `AUTO BLOCKED` context.
+- Added auto history payload metadata with `Games Auto` / `Players Auto` target, runIndex, seed, abortReason, elapsedMs, readable duration, and fastMode.
+- Added local fallback endpoint writing ignored files to `outputs/autoplay-runs/`.
+- Added concrete Apps Script patch file for routing autorun payloads to `Games Auto` and `Players Auto`.
+
+Files:
+- `index.html`
+- `styles.css`
+- `src/game.js`
+- `server.js`
+- `project-memory/apps-script-auto-playtest-sheets-patch.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Normal manual/autosave history still uses the existing `saveCurrentGameHistory()` path and does not set the Auto sheet target.
+- `outputs/` is already ignored; local autorun JSON/JSONL results should stay untracked.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `node --check server.js`; `git diff --check`.
+- Browser smoke was attempted, but the environment cannot launch Playwright Chromium and cannot bind a new local port; running app on `5173` could not be reliably used to verify fresh code.
+
+Open questions:
+- Live Apps Script still needs the patch from `project-memory/apps-script-auto-playtest-sheets-patch.js` applied before Google Sheet rows can actually split into `Games Auto` / `Players Auto`.
+
+## 2026-07-03 01:39 - Dev 1
+
+Changed:
+- Made phone room setting `Текст вместо карт` enabled by default.
+- Fresh phone-room setup now creates/sends snapshots with `cardsAsText: true` unless the user manually unchecks it.
+- Bumped host JS cache key in `index.html`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Phone controller rendering logic was already compatible with text-card mode by default; no controller protocol or gameplay behavior changed.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-03 01:26 - GD
+
+Changed:
+- Assigned Dev 3 task `ACTIVE AUTO PLAYTEST MVP 2026-07-03 01:26`.
+- Added requirement that automatic bot-only runs save to separate Google Sheet tabs: `Games Auto` and `Players Auto`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- MVP goal is a fast bot-only autorun loop with animations/delays skipped, safety abort limits, and stats output.
+- Normal playable game and regular `Games` / `Players` saving must remain unchanged.
+- QA is not involved unless the user asks.
+
+Open questions:
+- Whether the live Apps Script can be edited from the current environment; if not, Dev 3 should provide a concrete patch and local export fallback.
+
+## 2026-07-03 01:24 - Dev 3
+
+Changed:
+- Grouped duplicate Joe Shop cards in the player Shop-card popup.
+- Added a top-right `xN` badge on grouped cards when a player owns multiple identical visible/face-down copies.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Grouping uses existing `groupedShopItems(...)`, so face-up and face-down copies stay in separate groups.
+- This only changes popup display; physical owned cards and all card effects remain unchanged.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-03 01:18 - Art / UI 1
+
+Changed:
+- Updated Good card `good-race` / `Гонка` description wording per user request.
+- Synced the local CSV mirror for the same card.
+- Bumped the host card config import and `src/game.js` cache key.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Text-only card update; runtime thresholds/effect were not changed.
+- Verified in the running game at `http://192.168.31.41:5173/`: `Гонка` loaded via `src/game.js?v=20260703-0115`, displayed the new wording, and measured `descScrollWidth === descClientWidth`, `overflow === false`.
+
+Open questions:
+- None.
+
+## 2026-07-03 01:15 - Dev 1
+
+Changed:
+- Completed `DONE INFO HISTORY FULL LOG 2026-07-03 01:12`.
+- Added `Вся хроника` and `Копировать` buttons to the info/history popup header.
+- Kept the default popup view as latest 50 actions, while `Вся хроника` switches the visible list to the full current-game chronicle.
+- Added a full in-memory chronicle source so copy/save snapshot can use the whole game log instead of the truncated DOM list.
+- `Копировать` writes the full chronicle as plain text with action numbers and shows a single `Хроника скопирована` feedback message for about 2 seconds.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- No gameplay log semantics, rules, old permanent chronicle block, or info popup open/close behavior were intentionally changed.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+- Browser smoke was attempted but blocked because local Playwright has no Chromium executable installed in its cache.
+
+Open questions:
+- None.
+
+## 2026-07-03 01:15 - Dev 1
+
+Changed:
+- Completed `DONE PLAYER SHOP POPUP 2026-07-03 00:59`.
+- Added a compact `Карты` button in each player card's `Лавка Джо` area.
+- Added a modal popup that shows the selected player's owned Joe Shop cards using the existing in-game Shop card renderer; face-down cards remain face-down and empty inventory gets a clean empty state.
+- Popup closes via close button, backdrop, Escape, and is reset on new game/transient cleanup.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- View-only UI; no Shop rules, inventory, deck/discard, prices, face-down mechanics, or score calculations were changed.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+- Browser smoke on the running local app verified player-card button, popup open/close, empty state, and no console errors; card rendering path uses `shopCardsMarkup(...)` with face-down detection.
+
+Open questions:
+- None.
+
+## 2026-07-03 01:12 - GD
+
+Changed:
+- Assigned Dev 1 task `ACTIVE INFO HISTORY FULL LOG 2026-07-03 01:12`.
+- Scope: add two buttons to the info/history popup: show the full chronicle from the start of the game and copy the full chronicle as plain text for ChatGPT analysis.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Default popup can still show the latest 50 entries; the copy action must use the full current-game chronicle.
+- Work on top of current dirty tree and preserve fresh Art/UI card wrapping changes.
+
+Open questions:
+- None.
+
+## 2026-07-03 01:04 - Art / UI 1
+
+Changed:
+- Fixed card text wrapping for `Гонка` and similar card descriptions with inline coin/dice icons.
+- Tightened the icon punctuation wrapper so it only keeps the amount/icon with nearby punctuation, instead of accidentally wrapping a whole phrase from dice icon to a later comma.
+- Made long one-sentence descriptions enter the dense description mode in both host game and phone controller previews.
+- Switched card description line text wrapping from `balance` to `pretty` for safer wrapping with inline icons.
+- Bumped host/controller CSS and JS cache keys.
+
+Files:
+- `index.html`
+- `controller.html`
+- `styles.css`
+- `src/game.js`
+- `src/controller.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout fix only; card text, rules, counts, and gameplay behavior were not changed.
+- Verified in the running game at `http://192.168.31.41:5173/`: `Гонка` in the `Хорошо` reference deck loaded `styles.css?v=20260703-0061` and `src/game.js?v=20260703-0061`; measured `descScrollWidth === descClientWidth` and `overflow === false`.
+
+Open questions:
+- None.
+
+## 2026-07-03 00:59 - GD
+
+Changed:
+- Assigned Dev 1 task `ACTIVE PLAYER SHOP POPUP 2026-07-03 00:59`.
+- Scope: add a compact button on each player card near `Лавка Джо`; open an info-style popup with that player's owned Joe Shop cards rendered as full in-game card faces.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- This is a viewing popup only: do not change Shop rules, inventory, deck lifecycle, prices, face-down mechanics, or score calculations.
+- Dev 1 must ping GD directly after handback, not only update docs.
+
+Open questions:
+- None.
+
+## 2026-07-03 00:55 - Dev 1
+
+Changed:
+- Adjusted the settings panel grid so the four main settings blocks fit on one row.
+- Bumped the host CSS cache key.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Desktop settings grid now uses four columns; existing mobile override still stacks settings into one column on narrow screens.
+- Checks passed: `git diff --check`; static readback confirmed `.settings-panel` uses `repeat(4, minmax(0, 1fr))`.
+
+Open questions:
+- None.
+
+## 2026-07-03 00:54 - Dev 3
+
+Changed:
+- Updated board monster base strengths to `6 / 12 / 20 / 30`.
+- Applied the new values to both `field1` door configs and `field2` monster configs.
+- Bumped the `game.config.js` import cache key in `src/game.js`.
+
+Files:
+- `src/game.config.js`
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- `field2` readback is `6/12/20/30`.
+- `field1` array order is still historical (`дверь 2`, `дверь 1`, `центральная дверь`, `финальный монстр`), but the door strengths are now `12/6/20/30`, i.e. door 1 is 6, door 2 is 12, third is 20, final is 30.
+- Checks passed: `node --check src/game.js`; `node --check src/game.config.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-03 00:48 - Dev 1
+
+Changed:
+- Removed the `Шрифт`, `Сила монстров`, and `Монет на старте` controls from the settings panel.
+
+Files:
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Runtime fallbacks remain unchanged: standard font, standard monster strength, and 10 starting coins when the removed controls are absent.
+- Checks passed: `node --check src/game.js`; `git diff --check`; static search confirmed the three labels are gone from `index.html`.
+
+Open questions:
+- None.
+
+## 2026-07-03 00:40 - GD
+
+Changed:
+- Changed ordinary Joe Shop price calculation so `Скидка от Джо` sets the owner's base Shop price to `3`, then active TADAM price modifiers still apply.
+- With `Скидка от Джо` and active `Скидки у Джо`, the final ordinary Shop price is now `1` coin.
+- Updated the local CSV note for `shop-fixed-cost-3` to remove the old "overrides Shop price modifiers" contract.
+
+Files:
+- `src/game.js`
+- `cards-google-sheet.csv`
+- `project-memory/updates.md`
+
+Notes for others:
+- Card player-facing text was not changed.
+- Live Google Sheet `Cards Config` was not updated in this pass because the available URL in context points to `Games Log`, not the card config sheet.
+- Checks passed: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; `git diff --check -- src/game.js cards-google-sheet.csv`.
+
+Open questions:
+- Provide the current `Cards Config` URL if the Google Sheet note should be synced too.
+
+## 2026-07-03 00:38 - Dev 1
+
+Changed:
+- Renamed the walk path setting label to `Не показывать контур хода`.
+- Inverted the setting behavior: unchecked/default now shows the walk outline; checked hides it.
+- Saved settings snapshot now records `showWalkPath: true` when the checkbox is unchecked/default.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- The checkbox id remains `showWalkPath` for compatibility with existing wiring, but the UI label is now negative.
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-03 00:35 - Art / UI 1
+
+Changed:
+- Polished shared choice/action dialogs so buttons with long explanatory notes no longer squeeze the main label into a vertical column.
+- Added automatic `has-long-note` styling for choice buttons with long notes: title stays readable, note becomes normal wrapped secondary text.
+- Kept short notes such as coin prices as compact right-side pills.
+- Bumped host CSS/game JS cache keys and controller CSS cache key.
+
+Files:
+- `index.html`
+- `controller.html`
+- `styles.css`
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout-only change for choice dialogs; choice logic, card effects, texts, and gameplay behavior were not changed.
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-03 00:24 - Art / UI 1
+
+Changed:
+- Fixed card-face text wrapping after the readability polish so long descriptions like `Гонка` stay inside the card text bounds.
+- Added explicit min-width/width constraints to card title/description text rows and bumped host/controller CSS cache keys.
+
+Files:
+- `index.html`
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only layout fix; no card text, deck data, or gameplay behavior changed.
+- Kept the fresh Dev 1 `Гонка` wording intact.
+
+Open questions:
+- None.
+
+## 2026-07-03 00:19 - Dev 1
+
+Changed:
+- Updated Good card `good-race` / `Гонка` player-facing description to the user-provided wording.
+- Synced local card config, CSV mirror, and live Google Sheet `Cards Config` / `good!N22`.
+- Bumped the host `src/cards.config.js` import cache key in `src/game.js`.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- Google Sheet `Cards Config` / `good!N22`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Runtime effect and reward thresholds were not changed; this was a text-only card update.
+- Live Sheet readback confirmed `good!A22:N22` contains the new description.
+- Checks passed: `node --check src/cards.config.js`; `node --check src/game.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-03 00:02 - Art / UI 1
+
+Changed:
+- Refined the shared card-face typography style for better readability without changing card text bounds or base font sizes.
+- Added a subtle warm text shadow to card titles/descriptions so black text separates more cleanly from the parchment texture.
+- Increased description line-height slightly for normal, dense, long, icon, and controller-preview card faces while keeping the existing sizing logic.
+- Bumped host/controller CSS cache keys.
+
+Files:
+- `index.html`
+- `controller.html`
+- `styles.css`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only card typography polish; card texts, rules, counts, deck data, and gameplay behavior were not changed.
+- The intent is to keep the current card text size and placement, but make longer descriptions less cramped and easier to read.
+- Check passed: `git diff --check`.
+- Local server smoke was not possible in this sandbox: Node could not listen on a localhost port due `EPERM`.
+
+Open questions:
+- None.
+
+## 2026-07-02 23:52 - GD
+
+Changed:
+- Split generated/local PnP artifacts from the Git-tracked game project.
+- Added `output/`, `outputs/`, and `tmp/` to `.gitignore`.
+- Removed already tracked PnP print files from the Git index while keeping them locally on disk.
+
+Files:
+- `.gitignore`
+- `project-memory/updates.md`
+
+Notes for others:
+- PnP files should live locally in ignored folders and not be pushed to GitHub by default.
+- This does not rewrite existing GitHub history; the previous large PDF commit remains in history unless a separate force-cleanup is explicitly requested.
+
+Open questions:
+- None.
+
+## 2026-07-02 23:39 - Important
+
+Changed:
+- Added a shared reasoning-depth rule for all chats/agents.
+- Documented low/medium/high/very-high criteria and required behavior for high/very-high tasks.
+- Updated onboarding, read-news, next-chat, handoff, and `AGENTS.md` so replacement chats and Hermes-style agents inherit the rule.
+
+Files:
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/prompts/read-news.md`
+- `project-memory/prompts/next-chat.md`
+- `AGENTS.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- For high/very-high tasks, state `Оценка сложности: высокая` or `Оценка сложности: очень высокая`.
+- Do not reveal long chain-of-thought.
+- For important/ambiguous tasks, clarify goal, constraints, and success criteria when needed.
+- Add `Проверка рисков и допущений` at the end of complex answers.
+
+Open questions:
+- None.
+
 ## 2026-06-29 02:29 - Dev 1
 
 Changed:
@@ -8546,14 +10854,14 @@ Changed:
 - Sent GD a context handback only under the current pipeline; QA was not involved.
 
 Files:
-- `assets/icons/steps_candidate_512.png`
+- `assets/icons/steps_512.png`
 - `outputs/steps-icon-candidate-preview.png`
 - `project-memory/inbox/for-gd.md`
 - `project-memory/updates.md`
 
 Notes for others:
 - Asset status: preview-only / not wired.
-- Final candidate: `assets/icons/steps_candidate_512.png`, PNG, 512x512, RGBA with transparent corners.
+- Final icon: `assets/icons/steps_512.png`, PNG, 512x512, RGBA with transparent corners.
 - Preview: `outputs/steps-icon-candidate-preview.png`.
 - Checks passed: PNG dimension/alpha validation; `git diff --check`.
 

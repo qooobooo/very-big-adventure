@@ -21,6 +21,7 @@ Meaning of that request: refresh yourself from project memory, summarize what ch
   - `QA 2`: `project-memory/inbox/for-qa.md`
   - `Art / UI 1`: `project-memory/inbox/for-ui.md`
   - `Art / UI 2`: `project-memory/inbox/for-ui.md`
+  - `Art / UI 3`: `project-memory/inbox/for-ui.md`
   - `UI`: `project-memory/inbox/for-ui.md`, если файл есть
 - `project-memory/prompts/new-chat.md`
 - `project-memory/prompts/next-chat.md`
@@ -48,6 +49,7 @@ Meaning of that request: refresh yourself from project memory, summarize what ch
 - Не редактируй игровой код только из-за команды "прочти новости".
 - Не редактируй локальные Codex `.jsonl`.
 - Не делай `git reset --hard`.
+- Следуй shared reasoning-depth rule из `project-memory/README.md`: для high/very-high задач называй оценку сложности, не раскрывай длинную цепочку рассуждений, а в сложных ответах добавляй `Проверка рисков и допущений`.
 - Если во время чтения новостей понял важное изменение статуса, которое должно попасть в память, предложи или добавь краткую запись в `project-memory/updates.md` согласно роли и ситуации.
 - Если не уверен, какие новости считать последними, скажи это явно и используй верхние записи `updates.md`.
 ```

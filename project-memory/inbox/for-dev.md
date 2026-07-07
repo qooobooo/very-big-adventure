@@ -4,6 +4,1394 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- DONE STEPS ICON GRAMMAR 2026-07-05 04:18 - Remove leftover step word endings after icon render:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-07-05 04:18.
+  - Dev 3 handback 2026-07-05 13:53:
+    - Fixed display-layer strength/steps icon parsing in `src/game.js` and `src/controller.js`.
+    - Steps endings now match longest suffixes first, so `+2 к шагам`, `+5 шагов`, `30 шагов вперед`, `Шаги +2`, `на 5 шагов вперед`, and `делают 5 шагов назад` render without leftover text such as trailing `м`.
+    - Strength endings were aligned in the phone renderer as well.
+    - Card titles remain protected from icon rendering.
+    - Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check src/cards.config.js`, `git diff --check`.
+    - Manual static render examples passed; browser smoke was not run in this sandbox.
+  - Requested by: user via GD.
+  - Summary:
+    - Fix display-layer steps icon rendering so leftover Russian endings do not remain after the icon.
+    - User screenshot shows bad output: `+5 [steps icon] м` in artifact text.
+  - Required:
+    - Update the steps icon replacement/parser to consume full step words and endings:
+      - `шаг`, `шага`, `шагов`, `шагам`, `шагами`, `шагах`, `шаги`, `шагов вперед`, etc.
+      - Short suffix leftovers like `м` must not remain after the icon.
+    - Preserve readable output for phrases such as:
+      - `+2 к шагам`;
+      - `+5 шагов`;
+      - `30 шагов вперед`;
+      - `Шаги +2`;
+      - `на 5 шагов вперед`;
+      - `делают 5 шагов назад`.
+    - Apply this as display-layer icon rendering, not by rewriting canonical card text/CSV/Google Sheet.
+    - Check whether strength icon replacement has similar leftover endings and fix if needed.
+  - Title guard:
+    - Do not render icons in titles.
+    - Do not alter title guards for card names like `Сапоги Скорости`.
+  - Guardrails:
+    - Do not change gameplay rules, cards, CSV, Google Sheet, assets, Apps Script, autorun, or save/export.
+    - Do not change coin/dice icon behavior unless required to keep the shared helper correct.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `node --check src/cards.config.js` if touched.
+    - `git diff --check`.
+    - Static/manual render checks for the examples above.
+    - Browser smoke if possible:
+      - Event artifact `Сапоги Скорости` text should show `+5 [steps icon]` with no trailing `м`;
+      - cards/reference/logs/phone with step text show no leftover endings;
+      - titles remain plain text.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with files/checks.
+    - QA is not involved unless the user explicitly asks.
+
+- DONE GOLDEN HORSESHOE ARTIFACT 2026-07-05 04:12 - Add Event artifact `Золотая Подкова`:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-07-05 04:12.
+  - Dev 3 handback 2026-07-05 13:53:
+    - Added Event artifact `golden-horseshoe` / `Золотая Подкова`, `count: 1`, icon `./assets/icons/artifact_golden_horseshoe_512.png`, effect text, and artifact rules text to `src/cards.config.js`, `cards-google-sheet.csv`, and live Google Sheet `Cards Config` / `event`.
+    - Implemented all-player contest: each player rolls their current movement dice; the lowest total wins; tied lowest players reroll until one winner remains.
+    - Winner receives a persistent visible artifact; Event card stays out of discard while owned.
+    - Movement-roll passive added: owner gains `3` coins once if their own movement roll contains at least one `1`; battle/Event/Joe/tie-break rolls do not call this hook.
+    - Phone/controller artifact visibility is covered through the shared `playerArtifacts(...)` snapshot.
+    - Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check src/cards.config.js`, `git diff --check`.
+    - Live Sheet readback: `event!A22:O22` contains `golden-horseshoe`.
+    - Browser smoke was not run in this sandbox.
+  - Dependency:
+    - Start after Art/UI 1 handback for `assets/icons/artifact_golden_horseshoe_512.png`, or use that exact path if the icon is already present.
+    - Coordinate with active `Золотая коллекция` and artifact title-case work before editing shared card/config files.
+  - Requested by: user via GD.
+  - Summary:
+    - Add a new Event artifact card `Золотая Подкова`, `count: 1`.
+    - Sync `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config`.
+  - New Event card:
+    - id suggestion: `golden-horseshoe`.
+    - title: `Золотая Подкова`.
+    - deck: `event`.
+    - count: `1`.
+    - artifact: yes.
+    - icon: `./assets/icons/artifact_golden_horseshoe_512.png`.
+    - effect text, no final period:
+      - `Все игроки бросают свои кубики. Игрок с наименьшим результатом получает артефакт Золотая Подкова`
+    - artifact rules text, no final period:
+      - `Если в броске движения выпала хотя бы одна 1, получи 3 монеты`
+  - Event flow:
+    - When the Event card is revealed, all players roll their current own movement dice and compare total result.
+    - The player with the lowest total receives the artifact.
+    - If tied for lowest total, reroll only tied lowest players until one winner remains.
+    - Use existing all-player roll / tie-reroll patterns where possible.
+    - Human/phone roll flow should use existing manual action/roll context paths if supported; bots auto-roll.
+    - Log each roll round clearly: dice rolled, total, tied rerolls, final artifact winner.
+  - Artifact gameplay:
+    - Winner keeps `Золотая Подкова` as a visible persistent player artifact.
+    - While owned, whenever the owner makes a movement roll and at least one die shows `1`, the owner gains `3` coins from bank/game.
+    - This triggers only on the owner's own movement roll, not on contest rolls, monster/VS/boss battle rolls, Joe game/auction/tie-break rolls, or event random-choice rolls.
+    - If a movement roll has multiple `1`s, the reward still triggers once for that roll.
+    - Coin gain is normal bank/game gain, so existing receive-coin bonuses may apply unless current economy helpers explicitly mark movement-roll bonuses otherwise.
+    - Artifact is persistent and is not discarded on use.
+  - UI:
+    - Show `Золотая Подкова` as a player artifact chip with the new icon.
+    - Event card face should show the artifact icon.
+    - Phone/controller snapshot should include the artifact with other player artifacts.
+  - Guardrails:
+    - Do not change dice math, movement distance, dice-control behavior, battle rolls, Joe Game, auction, tie-breaks, or unrelated Event artifacts.
+    - Do not change Shop card `Золотая коллекция` except if a shared artifact-count helper naturally includes this new artifact after implementation.
+    - Do not change save/export, autorun, Apps Script, board layout, routes, or unrelated cards.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - `golden-horseshoe` exists in Event config/CSV/Google Sheet with `count: 1`, artifact metadata, icon path, and no final periods.
+      - movement-roll hook checks for at least one die value `1`.
+      - non-movement roll contexts do not trigger the reward.
+    - Browser smoke if possible:
+      - reveal `Золотая Подкова`;
+      - all-player lowest-roll contest chooses winner;
+      - tied lowest reroll branch if forceable;
+      - winner receives visible artifact;
+      - later movement roll with at least one `1` gives `3` coins once;
+      - movement roll without `1` gives no artifact coins;
+      - battle/event/Joe rolls do not trigger artifact coins;
+      - phone shows artifact;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with files/checks and any assumptions.
+    - QA is not involved unless the user explicitly asks.
+
+- DONE SHOP CARD 2026-07-05 01:58 - Add Joe Shop card `Золотая коллекция`:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-07-05 01:58.
+  - Dev 3 handback 2026-07-05 13:53:
+    - Added Shop card `golden-collection` / `Золотая коллекция`, `count: 3`, to `src/cards.config.js`, `cards-google-sheet.csv`, and live Google Sheet `Cards Config` / `shop`.
+    - Implemented start-of-turn income before ordinary pre-roll actions: each copy gives `+1` coin plus `+2` per currently owned artifact through the shared `playerArtifacts(...)` source.
+    - Multiple copies trigger separately; gain uses the normal `addCoins(...)` reward path, so eligible receive-coin bonuses can still apply.
+    - Added bot valuation and duplicate-card scoring support.
+    - Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check src/cards.config.js`, `git diff --check`.
+    - Live Sheet readback confirmed `shop` row for `golden-collection`.
+    - Browser smoke was not run in this sandbox.
+  - Requested by: user via GD.
+  - Summary:
+    - Add a new `Лавка Джо` card `Золотая коллекция`.
+    - Sync local config, CSV, and Google Sheet `Cards Config`.
+  - New Shop card:
+    - id suggestion: `golden-collection`.
+    - title: `Золотая коллекция`.
+    - deck: `shop`.
+    - count: `3`.
+    - player-facing text, no final period:
+      - `Получи 1 монету в начале хода. Получи ещё 2 за каждый артефакт`
+  - Gameplay:
+    - At the start of the owner's turn, before ordinary pre-roll actions, owner gains coins from bank/game:
+      - base `+1`;
+      - additional `+2` for each artifact currently owned by that player.
+    - Count all persistent player artifacts currently visible/owned, including Event artifacts such as `Меч Героя`, `Анти-Плохо`, `Купон Джо`, `Сапоги Скорости`, `Волшебная Кирка`, and future artifacts through the common artifact inventory/status source.
+    - If owner has multiple copies of `Золотая коллекция`, each copy triggers separately unless there is an existing Shop-card stacking rule that says otherwise.
+    - Coin gain should be normal bank/game gain, so existing receive-coin bonuses may apply unless current economy helpers explicitly mark start-of-turn Shop income otherwise.
+    - Do not trigger from player-to-player transfers, payments, steals, auctions, or exchanges.
+  - UI/logging:
+    - Show as normal owned Shop card/chip.
+    - Log start-of-turn income clearly, including artifact count if useful.
+    - Phone/controller snapshot should show the card with other Shop cards.
+  - Guardrails:
+    - Do not change existing artifacts, artifact acquisition flows, Shop prices, TADAM effects, Good/Event cards, autorun, save/export, or Apps Script.
+    - Do not reintroduce removed Shop cards.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - `golden-collection` exists in local config, CSV, and Google Sheet `shop` with count `3`, no final period.
+      - start-of-turn hook uses common artifact count/source.
+    - Browser smoke if possible:
+      - owner with 0 artifacts gets `+1` at start of turn;
+      - owner with 2 artifacts gets `+5`;
+      - duplicate copies stack if implemented as intended;
+      - no transfer/payment paths trigger this;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with files/checks and assumptions.
+    - QA is not involved unless the user explicitly asks.
+
+- DONE ARTIFACT TITLE CASE 2026-07-05 01:52 - Capitalize every word in artifact names:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-07-05 01:52.
+  - Dev 3 handback 2026-07-05 13:53:
+    - Audited artifact names and updated local config, CSV, runtime references, and live Google Sheet `Cards Config`.
+    - Changed artifact naming to title case where needed: `Волшебный Кошель`, `Сапоги Скорости`, `Волшебная Кирка`.
+    - Updated named artifact references in descriptions/artifact rules for `Сапоги Скорости` and `Волшебная Кирка`.
+    - Did not mass-rename ordinary non-artifact cards.
+    - Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check src/cards.config.js`, `git diff --check`.
+    - Live Sheet readback confirmed affected Event rows.
+  - Requested by: user via GD.
+  - Summary:
+    - For all artifact card names, write every word with a capital first letter.
+    - Example user highlighted:
+      - `Сапоги скорости` -> `Сапоги Скорости`.
+      - `Волшебная кирка` -> `Волшебная Кирка`.
+  - Scope:
+    - Audit all current artifact cards/names, not just the two screenshot rows.
+    - Update artifact card titles in `src/cards.config.js`, `cards-google-sheet.csv`, and live Google Sheet `Cards Config`.
+    - Update player-facing references to artifact names in descriptions/artifact rules text where the artifact name is quoted or named.
+    - Include existing artifacts if needed, for example `Меч Героя`, `Анти-Плохо`, `Купон Джо`, `Сапоги Скорости`, `Волшебная Кирка`, and any other artifact-like item currently present.
+  - Rules:
+    - This is about artifact names only. Do not title-case ordinary card descriptions or non-artifact card titles globally.
+    - Keep Russian grammar in surrounding sentences readable.
+    - Do not change card ids, counts, effects, gameplay rules, deck placement, icon paths, or artifact ownership lifecycle.
+    - Do not edit artifact PNGs/icons.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - all artifact card titles have each word capitalized;
+      - quoted/named artifact references in descriptions match the updated title;
+      - no ordinary non-artifact card titles were unintentionally mass-renamed.
+    - Google Sheet readback for affected rows.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with changed titles/files/checks.
+    - QA is not involved unless the user explicitly asks.
+
+- DONE ICON TEXT RENDER 2026-07-05 01:27 - Replace strength/steps mentions with icons outside titles:
+  - Owner: `Dev 3`.
+  - Dispatch status: sent directly to Dev 3 thread at 2026-07-05 01:22.
+  - Dev 3 handback 2026-07-05 01:27:
+    - Added display-layer strength and steps icon rendering alongside the existing coin/dice icon renderer.
+    - Host and phone/controller text now render strength values with `./assets/icons/strength_sword_512.png` and steps values with `./assets/icons/steps_512.png`.
+    - Protected title-like surfaces from iconization: card face titles, card-name spans, popup/roll titles marked `no-iconize`, plus common inline card names `Зелье силы` and `Вольный шаг`.
+    - Extended CSS sizing/nowrap rules for `.strength-icon`, `.steps-icon`, `.strength-amount`, and `.steps-amount`.
+    - Data/CSV/Google Sheet text unchanged; this is display-only.
+    - Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check src/cards.config.js`, `git diff --check`.
+    - Browser smoke not run in this sandbox.
+  - Requested by: user via GD.
+  - Summary:
+    - In player-facing rendered text, replace mentions of strength with the strength sword icon and mentions of steps with the steps icon.
+    - Use the same rendering rules as existing coin/dice icons.
+    - Never use these icons in card/field/action titles.
+  - Assets:
+    - Strength icon: `./assets/icons/strength_sword_512.png`.
+    - Steps icon: `./assets/icons/steps_512.png`.
+  - Required behavior:
+    - Apply to descriptions/effects/statuses/logs/prompts/buttons/chips/reference cards where text mentions strength or steps as gameplay values.
+    - Examples:
+      - `+1 к силе`, `+3 силы`, `Сила +2`, `-2 к силе` should render with the strength sword icon instead of the word `сила/силы/силе`.
+      - `+2 к шагам`, `+5 шагов`, `30 шагов вперед`, `Шаги +2` should render with the steps icon instead of the word `шаг/шага/шагов/шагам/шаги`.
+    - Keep Russian grammar readable around the icon; do not create doubled words like `+3 [icon] силы`.
+    - Icons should be inline, same visual style/size rules as existing coin/dice icons, and should not disrupt line height or card layout.
+    - Card titles must remain plain text. Do not render coin/dice/strength/steps icons in titles anywhere:
+      - card face titles;
+      - reference card titles;
+      - popup titles;
+      - log/card title segments like `Хорошо: Название`.
+  - Data policy:
+    - Prefer display-layer rendering helpers over rewriting canonical card text, CSV, or Google Sheet text unless there is an existing icon-markup convention for display text only.
+    - Do not alter card ids, counts, rules, formulas, or Google Sheet card data semantics.
+  - Scope to inspect:
+    - Card renderers for main card popup, TADAM active cards, reference/cards viewer, player statuses/artifacts, held cards.
+    - Field/reference info and current-cell block.
+    - Logs/history/info popup.
+    - Choice/action prompts, roll-context dialogs, battle HUD formula/result text, phone/controller snapshots.
+    - Settings/reference cards if they render card descriptions.
+  - Guardrails:
+    - Do not replace words in titles.
+    - Do not replace unrelated uses where `сила` or `шаги` are part of a non-value title/name and would read worse.
+    - Preserve existing coin/dice icon behavior.
+    - Do not change gameplay math, deck data, Google Sheets history export, Apps Script, autorun, or Art/UI assets.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js` if touched.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source checks:
+      - strength icon and steps icon are referenced by the display renderer.
+      - titles still render plain text and do not include icon markup/images.
+      - existing coin/dice icon replacements still work.
+    - Browser smoke if possible:
+      - open cards/reference with `+к силе`, `+к шагам`, penalties, movement descriptions;
+      - verify icons fit on small/full card layouts;
+      - verify logs/history/info popup and phone controller render readable icons;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with files/checks and any assumptions.
+    - QA is not involved unless the user explicitly asks.
+
+- DONE GOOD CARD 2026-07-05 00:42 - Add held Good card `Еда монстру`:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-07-05 01:05; context handback sent to GD.
+  - Completion:
+    - Added Good card `feed-monster` / `Еда монстру`, count `2`, effect `feed-monster-plus3`, amount `3`, text without final period to `src/cards.config.js`, `cards-google-sheet.csv`, and live Google Sheet `Cards Config` / `good`.
+    - Added it to held Good lifecycle/status via existing pending Good card path.
+    - Added individual monster/final monster gate pre-roll hook: non-fighting human owners may discard held `Еда монстру` to increase monster strength by `+3` for that battle.
+    - Multiple held copies can stack one by one; used cards go to finite Good discard through `consumePendingGoodCard`.
+    - Preserved TADAM `monster-bribe` / `Подкуп монстра`; did not reintroduce old Shop `monster-bribe-plus1`.
+    - Bot owners currently auto-decline by omission, matching the conservative no-heuristic path.
+    - Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+    - Live Sheet readback confirmed `good` contains `feed-monster`; browser smoke not run in this sandbox.
+  - Requested by: user via GD.
+  - Summary:
+    - Add a new `good` card `Еда монстру`.
+    - This is a held Good card: keep it until used, then discard to Good discard.
+    - Sync `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config`.
+  - New Good card:
+    - id suggestion: `feed-monster`.
+    - title: `Еда монстру`.
+    - deck: `good`.
+    - count: `2` unless user later says otherwise.
+    - effect type suggestion: `feed-monster-plus3`.
+    - effect amount: `3`.
+    - player-facing text, no final period:
+      - `Оставь эту карту себе. Когда кто-то бьется с монстром, до его бросков кубиков, можешь сбросить эту карту и увеличить силу монстра на 3 на этот бой`
+  - Gameplay:
+    - On reveal, the active player keeps this Good card as a visible held status/card.
+    - Before another player's individual monster battle dice roll, the owner may discard this held Good card to increase the monster strength by `+3` for that battle.
+    - Use the same timing window as monster-bribe style effects: before the fighter's dice are rolled.
+    - Do not offer/use this against the holder's own monster battle unless existing UI architecture makes that unavoidable; default intent is not to use effects against yourself.
+    - Applies to individual ordinary monster and final monster gate battles.
+    - Does not apply to VS, final PvP boss battle, or team Event battles unless the user later asks.
+    - The card is discarded to the finite Good discard only when used.
+    - Multiple held copies from different players may stack if multiple players use them in the same battle.
+  - UI:
+    - Show as held Good status/card like other `Оставь эту карту себе` Good cards.
+    - Choice prompt should clearly say which monster battle is being affected and show `монстр +3`.
+    - Phone/controller should offer the same action to the owning player if phone mode is active.
+  - Guardrails:
+    - This is a `good` card, not a Shop card; do not re-add Shop `monster-bribe-plus1` / old Joe Shop `Еда монстру`.
+    - Preserve TADAM `monster-bribe` / `Подкуп монстра`.
+    - Do not change ordinary monster strengths, other Good cards, Shop deck, Event artifacts in progress, board, save/export, autorun, or Apps Script.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - `feed-monster` exists in local config, CSV, and Google Sheet `good` with `count: 2`, no final period.
+      - Good held/discard lifecycle exists.
+      - old Shop `monster-bribe-plus1` is not reintroduced.
+      - TADAM `monster-bribe` remains unchanged.
+    - Browser smoke if possible:
+      - reveal `Еда монстру`;
+      - holder keeps card;
+      - before another player's monster battle, holder can discard it for `монстр +3`;
+      - battle formula/log shows increased monster strength;
+      - used card goes to Good discard;
+      - no action offered for VS/team/final PvP;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with files/checks and any assumptions.
+    - QA is not involved unless the user explicitly asks.
+
+- DONE SHOP CARD REMOVAL 2026-07-05 00:31 - Remove Joe Shop card `Еда монстру`:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-07-05 00:57; context handback sent to GD.
+  - Completion:
+    - Removed Shop card `monster-bribe-plus1` / `Еда монстру` from `src/cards.config.js`, `cards-google-sheet.csv`, and live Google Sheet `Cards Config` / `shop`.
+    - Removed Joe Shop runtime hooks for this retired effect from bot duplicate/scoring logic and monster-bribe prompt flow.
+    - Preserved TADAM `monster-bribe` / `Подкуп монстра` locally, in CSV, in live Google Sheet `Cards Config` / `tadam`, and in runtime battle hook.
+    - Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+    - Live Sheet readback confirmed `shop` no longer contains `monster-bribe-plus1`; `tadam` still contains `monster-bribe`.
+    - Browser smoke not run in this sandbox.
+  - Requested by: user via GD.
+  - Summary:
+    - Remove Joe Shop card `Еда монстру` from the playable `shop` deck.
+    - Current id: `monster-bribe-plus1`.
+  - Required changes:
+    - Remove `monster-bribe-plus1` / `Еда монстру` from playable local Shop config.
+    - Remove/sync the row from `cards-google-sheet.csv`.
+    - Remove/sync the row from Google Sheet `Cards Config` / `shop`.
+    - Ensure reference/card viewer no longer shows this Shop card.
+    - Remove or safely retire related Shop-card UI chips, bot scoring, and active effect hooks for this card if they are no longer reachable.
+  - Preserve:
+    - Do not change TADAM `monster-bribe` / `Подкуп монстра`.
+    - Do not change general monster battle rules, other Shop cards, Event artifacts in progress, TADAM cards, board, save/export, autorun, or Apps Script.
+    - If a legacy runtime branch is kept for old saves, document it as compatibility-only and ensure the current deck/reference lists cannot produce/show `Еда монстру`.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - `monster-bribe-plus1` / `Еда монстру` absent from playable Shop config, CSV, and Google Sheet.
+      - TADAM `monster-bribe` remains present and unchanged.
+      - Shop deck count/reference list no longer includes `Еда монстру`.
+    - Browser smoke if possible:
+      - ordinary Joe Shop cannot reveal `Еда монстру`;
+      - existing TADAM `Подкуп монстра` still works;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with files/checks.
+    - QA is not involved unless the user explicitly asks.
+
+- DONE MAGIC PICKAXE ARTIFACT 2026-07-05 00:26 - Add Event artifact `Волшебная кирка`:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-07-05 01:12; context handback sent to GD.
+  - Completion:
+    - Added Event artifact `magic-pickaxe` / `Волшебная кирка`, count `1`, icon `./assets/icons/artifact_magic_pickaxe_512.png`, effect text, and artifact rules text to `src/cards.config.js`, `cards-google-sheet.csv`, and live Google Sheet `Cards Config` / `event`.
+    - Implemented all-player contest: players roll `1d6 + floor(coins / 5)`; tied leaders reroll until one winner remains, with coin bonus recalculated each roll.
+    - Winner receives persistent visible artifact; Event card stays out of discard while owned.
+    - `playerCoinBonus(...)` now returns `+2` for the artifact owner; existing `addCoins(..., { skipReceiveBonus: true })` transfer paths still bypass this bonus.
+    - Preserved transfer/steal/payment semantics through existing `skipReceiveBonus` guard; did not reintroduce removed Shop `coin-plus`.
+    - Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+    - Live Sheet readback confirmed `event` contains `magic-pickaxe`; browser smoke not run in this sandbox.
+  - Dependency:
+    - Start after Art/UI 1 handback for `assets/icons/artifact_magic_pickaxe_512.png`, or use that exact path if the icon is already present.
+    - Avoid colliding with active `Купон Джо` and `Сапоги скорости` work; coordinate with current dirty tree before editing shared card/event files.
+  - Requested by: user via GD.
+  - Summary:
+    - Add a new Event artifact card `Волшебная кирка`, `count: 1`.
+    - Sync `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config`.
+  - New Event card:
+    - id suggestion: `magic-pickaxe`.
+    - title: `Волшебная кирка`.
+    - deck: `event`.
+    - count: `1`.
+    - artifact: yes.
+    - icon: `./assets/icons/artifact_magic_pickaxe_512.png`.
+    - effect text, no final period:
+      - `Все игроки бросают 1 кубик и прибавляют +1 за каждые 5 монет. Победитель получает артефакт Волшебная кирка`
+    - artifact rules text, no final period:
+      - `Когда получаешь монеты, получай на 2 больше`
+  - Event flow:
+    - When the Event card is revealed, all players roll `1d6`.
+    - Each player adds `+1` for each full `5` coins they currently have: `Math.floor(coins / 5)`.
+    - Highest total wins the artifact.
+    - If tied for highest total, reroll only tied leaders until one winner remains; recalculate their coin-based bonus each reroll from current coins.
+    - Use the existing all-player roll / tie-reroll pattern from similar Event contests where possible.
+    - Human players should roll through the normal manual/phone flow if the existing contest flow supports it; bots roll automatically.
+    - Log each roll round clearly: die, coin bonus, total, tie rerolls, and final winner.
+  - Artifact gameplay:
+    - The winner keeps `Волшебная кирка` as a visible player artifact.
+    - While owned, whenever the owner gains coins from the bank/game/card/field reward, they receive `+2` extra coins.
+    - Important existing economy rule still applies: do not trigger this extra `+2` for coin transfers, stealing, tribute, direct payment from another player, auctions, black market exchanges, or any other player-to-player money movement.
+    - If there are multiple coin-gain bonus effects, stack according to the existing bonus-stacking pattern unless that would conflict with current economy helpers.
+    - Artifact is persistent and is not discarded on use.
+  - UI:
+    - Show `Волшебная кирка` as a player artifact chip next to existing artifacts.
+    - Event card face should show the artifact icon.
+    - Phone/controller snapshot should include the artifact with other player artifacts.
+  - Guardrails:
+    - Do not reintroduce removed Shop card `coin-plus`.
+    - Do not change ordinary coin transfer semantics, Shop prices, TADAM effects, board layout, routes, save/export, autorun, or unrelated cards.
+    - Preserve finite Event deck/discard lifecycle: while the artifact is owned, it should stay out of Event discard like other persistent Event artifacts.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - `magic-pickaxe` exists in Event config/CSV/Google Sheet with `count: 1`, artifact metadata, icon path, and no final periods.
+      - coin gain helper applies `+2` only to eligible non-transfer gains.
+      - transfer/payment/steal paths do not trigger artifact extra coins.
+    - Browser smoke if possible:
+      - reveal `Волшебная кирка`;
+      - all-player roll chooses a winner using `1d6 + floor(coins/5)`;
+      - tied winner reroll branch if forceable;
+      - winner receives visible artifact;
+      - green field/card/bank coin gain gives +2 extra;
+      - player-to-player transfer does not give +2 extra;
+      - phone shows artifact;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with files/checks and any assumptions.
+    - QA is not involved unless the user explicitly asks.
+
+- DONE SPEED BOOTS ARTIFACT 2026-07-05 00:15 - Add Event artifact `Сапоги скорости`:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-07-05 00:51; context handback sent to GD.
+  - Completion:
+    - Added Event artifact `speed-boots` / `Сапоги скорости`, count `1`, icon `./assets/icons/artifact_speed_boots_512.png`, effect text, and artifact rules text to `src/cards.config.js`, `cards-google-sheet.csv`, and live Google Sheet `Cards Config` / `event`.
+    - Implemented all-player contest: players roll `1d6 + playerStepBonus`; tied leaders reroll until one winner remains.
+    - Human/phone roll flow uses existing action prompt / roll context path; bots auto-resolve through existing `autoFor` behavior.
+    - Winner receives persistent visible artifact; Event card stays out of discard while owned.
+    - `playerStepBonus(...)` now adds `+5` for the artifact owner, so future movement rolls and step-bonus Event contests include it automatically.
+    - Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+    - Live Sheet readback confirmed `event` row `speed-boots`; browser smoke not run in this sandbox.
+  - Dependency:
+    - Start after Art/UI 1 handback for `assets/icons/artifact_speed_boots_512.png`, or use that exact path if the icon is already present.
+    - Also avoid colliding with active `Купон Джо` implementation; coordinate with current dirty tree before editing shared card/event files.
+  - Requested by: user via GD.
+  - Summary:
+    - Add a new Event artifact card `Сапоги скорости`, `count: 1`.
+    - Sync `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config`.
+  - New Event card:
+    - id suggestion: `speed-boots`.
+    - title: `Сапоги скорости`.
+    - deck: `event`.
+    - count: `1`.
+    - artifact: yes.
+    - icon: `./assets/icons/artifact_speed_boots_512.png`.
+    - effect text, no final period:
+      - `Все игроки бросают 1 кубик и прибавляют бонусы шагов. Победитель получает артефакт Сапоги скорости`
+    - artifact rules text, no final period:
+      - `Сапоги скорости дают +5 к шагам`
+  - Event flow:
+    - When the Event card is revealed, all players roll `1d6` and add their current step bonuses.
+    - Highest total wins the artifact.
+    - If tied for highest total, reroll only the tied leaders until one winner remains.
+    - Use the existing all-player roll / tie-reroll pattern from similar Event contests where possible.
+    - Human players should roll through the normal manual/phone flow if the existing contest flow supports it; bots roll automatically.
+    - Log each roll round clearly: die, step bonus, total, tie rerolls, and final winner.
+  - Artifact gameplay:
+    - The winner keeps `Сапоги скорости` as a visible player artifact.
+    - While owned, the artifact gives a persistent `+5` step bonus through the same movement-bonus path used by ordinary step bonuses.
+    - The bonus should affect future movement rolls and any effects that explicitly add current step bonuses.
+    - The artifact is not discarded on use.
+  - UI:
+    - Show `Сапоги скорости` as a player artifact chip next to existing artifacts.
+    - Event card face should show the artifact icon.
+    - Phone/controller snapshot should include the artifact with other player artifacts and reflect the `+5` step bonus.
+  - Guardrails:
+    - Do not change existing `winner-takes-all` / `Большой приз` reward flow, ordinary step-plus Shop cards, TADAM effects, board layout, routes, save/export, autorun, or unrelated cards.
+    - Preserve finite Event deck/discard lifecycle: while the artifact is owned, it should stay out of Event discard like other persistent Event artifacts.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - `speed-boots` exists in Event config/CSV/Google Sheet with `count: 1`, artifact metadata, icon path, and no final periods.
+      - step bonus paths include the artifact bonus where expected.
+    - Browser smoke if possible:
+      - reveal `Сапоги скорости`;
+      - all-player roll chooses a winner;
+      - tied winner reroll branch if forceable;
+      - winner receives visible artifact and `+5` step bonus;
+      - phone shows artifact/bonus;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with files/checks and any assumptions.
+    - QA is not involved unless the user explicitly asks.
+
+- DONE HERO SWORD BALANCE 2026-07-05 00:00 - Change `Меч Героя` event monster strength to 10:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-07-05 00:09; context handback sent to GD.
+  - Completion:
+    - Updated `src/cards.config.js`: description now says `с силой 10`; effect amount is `10`.
+    - Updated `cards-google-sheet.csv` row `event,hero-sword`: amount `10`, description `с силой 10`.
+    - Updated live Google Sheet `Cards Config` / `event` row `17`: `amount = 10`, description `с силой 10`.
+    - Confirmed `src/game.js` uses `effect.amount` for the target strength; no hardcoded runtime `6` remained for this setup battle.
+    - Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+    - Browser smoke not run in this sandbox.
+  - Requested by: user via GD.
+  - Summary:
+    - Change Event artifact card `hero-sword` / `Меч Героя` setup battle monster strength from `6` to `10`.
+  - Required changes:
+    - In local card config, update `hero-sword` effect amount/monster strength from `6` to `10`.
+    - Update player-facing text from `Битва с монстром с силой 6...` to `Битва с монстром с силой 10...`.
+    - Sync `cards-google-sheet.csv` and Google Sheet `Cards Config` for the `event` / `hero-sword` row.
+    - If any runtime strings, logs, previews, or tests hardcode `6` for this Event card, update them to `10`.
+  - Preserve:
+    - Card id `hero-sword`, title `Меч Героя`, deck `event`, count `1`, artifact icon, artifact ownership flow, one-die battle, bonus-per-six artifact rule, win/loss behavior.
+    - Do not change ordinary monster strengths, final monster, other Event cards, artifact art, Shop cards, board, save/export, or autorun.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static check:
+      - local config/CSV/Google Sheet `hero-sword` all show monster strength `10`;
+      - no player-facing `Меч Героя` text still says `с силой 6`.
+    - Browser smoke if easy:
+      - reveal `Меч Героя`;
+      - battle target shows strength `10`;
+      - win still grants artifact, loss still discards/no reward;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with files/checks.
+    - QA is not involved unless the user explicitly asks.
+
+- DONE JOE COUPON ARTIFACT 2026-07-04 23:44 - Remove `Безлимит Джо`, add Event artifact `Купон Джо`:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-07-05 00:37; context handback sent to GD.
+  - Completion:
+    - Removed `shop-unlimited-buy` / `Безлимит Джо` from playable Shop data in `src/cards.config.js`, `cards-google-sheet.csv`, and live Google Sheet `Cards Config` / `shop`.
+    - Added Event artifact `joe-coupon` / `Купон Джо`, count `1`, icon `./assets/icons/artifact_joe_coupon_512.png`, effect text, and artifact rules text in local config, CSV, and live Google Sheet `Cards Config` / `event`.
+    - Implemented acquisition flow: player with the fewest owned Shop cards is selected, ties use existing 1d6 tie-break, target may pay 10 coins, unaffordable/decline discards the Event card.
+    - Implemented persistent artifact ownership/status and Event discard guard while the artifact is owned.
+    - Implemented ordinary Shop action: coupon owner can pay exactly 10 coins to take all currently open Shop offer cards; this ignores Shop price modifiers and does not apply to Auction, Black Market, free rewards, or non-Shop-cell draws.
+    - Removed runtime repeat-buy behavior tied to `Безлимит Джо`; old saved items are effectively legacy-only and the card no longer appears in playable config/reference data.
+    - Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+    - Browser smoke not run in this sandbox.
+  - Dependency:
+    - Start after Art/UI 1 handback for `assets/icons/artifact_joe_coupon_512.png`, or use that exact path if the icon is already present.
+  - Requested by: user via GD.
+  - Summary:
+    - Remove the Joe Shop card `Безлимит Джо` / `shop-unlimited-buy` from the playable `shop` deck.
+    - Add a new `event` artifact card `Купон Джо`, `count: 1`, with icon `./assets/icons/artifact_joe_coupon_512.png`.
+    - Sync `src/cards.config.js`, `cards-google-sheet.csv`, and Google Sheet `Cards Config`.
+  - New Event card:
+    - id suggestion: `joe-coupon`.
+    - title: `Купон Джо`.
+    - deck: `event`.
+    - count: `1`.
+    - artifact: yes.
+    - icon: `./assets/icons/artifact_joe_coupon_512.png`.
+    - effect text, no final period:
+      - `Игрок с наименьшим количеством Лавок Джо может заплатить 10 монет и получить артефакт Купон Джо`
+    - artifact rules text, no final period:
+      - `Во время покупок карт Лавка Джо можешь заплатить 10 монет и забрать все открытые карты Лавка Джо`
+  - Draw/acquire flow:
+    - When the Event card is revealed, find the player or players with the fewest owned Joe Shop cards.
+    - Count owned Shop cards as `Лавки Джо`; include face-up and face-down owned Shop cards unless current inventory helpers already define a safer "owned Shop card" count.
+    - If tied for fewest Shop cards, resolve the owner using the existing tied-player 1d6 tie-break pattern used for similar Event artifact choices.
+    - The selected player may pay `10` coins to receive the artifact.
+    - If they cannot pay or decline, the Event card goes to Event discard and can return through normal Event reshuffle.
+    - Bots accept if they can pay `10` coins, unless an existing bot reserve/evaluation helper makes a clearly better conservative decision.
+  - Artifact gameplay:
+    - While a player owns `Купон Джо`, during an ordinary `Лавка Джо` shop-cell purchase, after the offer is opened/revealed, offer a separate action to pay `10` coins and take all currently open Shop cards from that offer.
+    - The artifact is persistent and is not discarded on use, because the requested text does not say to discard it.
+    - The `10` coin coupon payment is a flat option and should not be modified by `Скидки у Джо`, `Жадность Джо`, `Скидка от Джо`, or other per-card price modifiers.
+    - If the owner has a 3-card offer effect, `Купон Джо` takes all 3 open cards for 10 coins.
+    - Applies only to ordinary `Лавка Джо` shop-cell purchases.
+    - Does not apply to free Shop rewards, `Аукцион Джо`, `Черный рынок`, Event redistributions, or other non-shop-cell draws.
+    - Face-down owned Shop cards do not affect the coupon action except for the acquisition-count rule above.
+  - Removal of `Безлимит Джо`:
+    - Remove `shop-unlimited-buy` / `Безлимит Джо` from playable Shop card data locally, CSV, and Google Sheet.
+    - Remove or safely retire related UI chips, bot scoring, and ordinary Shop repeat-buy logic if no longer needed.
+    - If keeping a legacy runtime branch for old saves is safer, make sure it cannot appear in the current deck/reference lists and document that it is compatibility-only.
+  - UI:
+    - `Купон Джо` should show as a visible player artifact chip next to existing artifacts.
+    - Event card face should show the artifact icon.
+    - Phone/controller snapshot should include the artifact with the other player artifacts.
+  - Guardrails:
+    - Do not change unrelated Shop cards, Event cards, TADAM cards, board layout, routes, prices outside the coupon rule, Apps Script, history saving, or autorun.
+    - Preserve existing finite Shop deck/discard lifecycle: coupon-taken cards are taken from the current offer and added to inventory; do not duplicate cards or return them to the deck.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/cards.config.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static checks:
+      - `shop-unlimited-buy` is absent from playable Shop config/CSV/Sheet rows.
+      - `joe-coupon` exists in Event config/CSV/Sheet with `count: 1`, artifact flag/metadata, icon path, and no final periods.
+      - current Shop deck total and reference panel do not include `Безлимит Джо`.
+    - Browser smoke if possible:
+      - reveal `Купон Джо`;
+      - selected fewest-Shop player can pay 10 and receives artifact;
+      - decline/unaffordable branch discards Event card;
+      - ordinary Joe Shop open offer shows coupon action when owner has 10 coins;
+      - coupon takes all open cards for exactly 10 and leaves no duplicate/ghost offer cards;
+      - auction/black market/free Shop rewards do not show coupon action;
+      - artifact chip visible on host and phone;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with files/checks and any assumptions.
+    - QA is not involved unless the user explicitly asks.
+
+- DONE START ORDER SETTING 2026-07-04 23:17 - Optional random first player roll:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed locally by Dev 3 at 2026-07-04 23:24; context handback sent to GD.
+  - Completion:
+    - Added settings checkbox `Случайный первый игрок`, default unchecked.
+    - Added `randomFirstPlayer` to collected game settings/history snapshot.
+    - On new game only, enabled setting rolls 1d6 for all players, rerolls tied leaders, logs every round, and sets the winning player as active without reordering the table/player list.
+    - Autorun snapshots/restores the setting and forces it off during fast bot runs.
+    - Bumped host game script cache key to `src/game.js?v=20260704-2317`.
+    - Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+    - Browser smoke not run in this sandbox.
+  - Requested by: user via GD.
+  - Summary:
+    - Add a settings checkbox `Случайный первый игрок`.
+    - Default: unchecked/off.
+    - If enabled, when a new game is created, all players roll dice to determine who starts.
+    - Highest roll becomes first active player.
+    - After that, turns pass clockwise / in normal table order from the chosen first player.
+  - Gameplay details:
+    - Trigger only on new game creation/start, not mid-game and not when merely changing settings before pressing `Новая игра`.
+    - All participating players roll exactly once for start order.
+    - If there is a tie for highest roll, tied players reroll until one winner remains.
+    - The chosen player becomes `state.activePlayerIndex` / equivalent active player.
+    - Preserve the player list/table order; only set the starting active index. Do not reorder players unless the current turn engine requires it, and if it does, ensure the visual/table order remains intuitive.
+    - After first player is selected, normal clockwise/next-player turn progression continues.
+    - Bots and humans participate the same way; no user decisions needed besides enabling the setting.
+  - UI / settings:
+    - Add checkbox to settings panel: `Случайный первый игрок`.
+    - Default unchecked.
+    - Persist with other settings only if comparable settings are already persisted; otherwise keep consistent with current settings behavior.
+    - Include selected setting in game settings/history snapshot if the current game settings collector records settings there.
+  - UX / logs:
+    - Show a clear log/chronicle entry for the start roll:
+      - who rolled what;
+      - tie rerolls if any;
+      - who starts.
+    - If there is an existing roll-context/random-choice UI pattern suitable for non-blocking start roll display, use it. If not, simple log/toast/field message is acceptable for first pass.
+    - Phone/controller should reflect the selected first active player after game start; no special phone action required.
+  - Guardrails:
+    - Do not change dice count for normal movement.
+    - Do not change bot count/player creation, player names, turn order after the selected start player, board setup, deck setup, cards, save/export routing, Apps Script work, or autorun logic except if the setting must be disabled/ignored in autorun.
+    - If autorun creates games, keep deterministic/default behavior unless explicitly safe to support this setting; document the decision.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source checks:
+      - setting exists and default is off;
+      - off path starts with the current existing first player behavior;
+      - on path rolls all players, resolves ties, and sets active player to winner.
+    - Browser smoke if possible:
+      - new game with setting off: old first-player behavior;
+      - new game with setting on: visible/logged roll, highest roll starts;
+      - tie branch if reasonably forceable;
+      - phone/player cards show correct active player;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with implementation notes and checks.
+
+- DONE GAME SAVE PROXY BLOCKER 2026-07-04 22:24 - Apps Script smoke works, in-game save still does not send:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed locally by Dev 3 at 2026-07-04 22:38; user needs fresh server/hard refresh smoke.
+  - Dev 3 completion:
+    - Found concrete stale-client blocker: `index.html` still loaded `src/game.js?v=20260703-0239`, while the proxy save client code was newer.
+    - Bumped host cache key to `src/game.js?v=20260704-2224`.
+    - Confirmed current `server.js` source has `POST /api/game-history`.
+    - Confirmed current `src/game.js` source uses proxy-first save selection.
+    - Improved save fallback diagnostics: if `/api/game-history` is missing/stale and the client falls back to direct `no-cors`, the toast now says the save server is stale/unavailable and the Google write is unconfirmed.
+    - Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, `git diff --check`.
+  - User instruction:
+    - Stop the currently running game server completely.
+    - Start a fresh server from `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure` with `node server.js`.
+    - Hard refresh/open `http://localhost:5173/?v=20260704-2224`.
+    - Save a finished game and verify a new row in `Games` plus matching rows in `Players`.
+  - Verification limitation:
+    - Browser/server smoke could not be completed in Dev 3 sandbox because fresh server startup is blocked with `listen EPERM`, and shell cannot connect to the user’s existing `127.0.0.1:5173`.
+  - Severity: high. User confirmed Apps Script can write, but in-game save does not.
+  - New evidence:
+    - User ran `smokeRegularGameHistorySave()`.
+    - Smoke row appeared in `Games` with `smoke-board`, proving:
+      - deployed Apps Script regular route can append to `Games` / `Players`;
+      - header mapping/formulas are at least partly working;
+      - the problem is now between the game client/server and Apps Script, not the basic Apps Script regular append route.
+  - Problem:
+    - Saving from the game still does not send/write data to Google Sheets.
+    - Likely areas:
+      - active local server is stale and does not have `/api/game-history`;
+      - browser is loading old `src/game.js` / old cache key;
+      - client uses wrong endpoint or wrong Apps Script URL;
+      - proxy route fails and fallback path is not visible enough;
+      - request is blocked/failing before Apps Script.
+  - Required behavior:
+    - In-game manual save and autosave must produce a verified Google Sheets write through the proxy when server is fresh.
+    - If `/api/game-history` is missing/stale, UI should clearly say server is stale or Google save failed, not silently do nothing.
+    - Direct Apps Script fallback may remain send-only, but its status must be explicit and actionable.
+  - Investigation targets:
+    - `server.js` route `POST /api/game-history`.
+    - Current game client save endpoint selection in `src/game.js`.
+    - Cache keys in `index.html` for `src/game.js`.
+    - Console/network behavior during in-game save:
+      - HTTP status from `/api/game-history`;
+      - proxy response body;
+      - fallback status if proxy fails.
+    - Whether the currently running server process is stale and needs restart.
+  - Required output:
+    - Root cause of why in-game save does not send despite successful Apps Script smoke.
+    - Local fix if code is wrong.
+    - If only server restart is required, state exact user instruction.
+    - If code is right but active browser/server is stale, add a visible diagnostic/version check if feasible.
+  - Guardrails:
+    - Do not change gameplay rules, cards, board, autorun bot logic, or unrelated UI.
+    - Preserve regular vs Auto routing.
+    - Do not hide failed saves behind success messages.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `node --check server.js`.
+    - `git diff --check`.
+    - Browser/server smoke if possible:
+      - verify `POST /api/game-history` exists on active server;
+      - trigger in-game save;
+      - verify new row in `Games` and matching rows in `Players`;
+      - verify visible save status matches actual remote result.
+  - Handback:
+    - Update `updates.md`, mark this item done/blocked, add GD context, and ping GD directly.
+
+- DONE APPS SCRIPT MANUAL TEST HELPER 2026-07-04 22:02 - Add editor-runnable save smoke functions:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-07-04 22:12.
+  - Dev 3 completion:
+    - Added editor-runnable `smokeRegularGameHistorySave()`.
+    - Added editor-runnable `smokeAutoGameHistorySave()`.
+    - Added editor-runnable `cleanupSmokeGameHistoryRows()`.
+    - Both smoke helpers use the real `appendGameHistoryPayload(payload)` route.
+    - Smoke rows carry marker `__VBA_SMOKE_HISTORY_SAVE__` for safe identification/cleanup.
+    - Checks passed: `node --check project-memory/apps-script-auto-playtest-sheets-patch.js`, `git diff --check`.
+  - User instructions:
+    - Run `smokeRegularGameHistorySave()` from the Apps Script function dropdown to test `Games` / `Players`.
+    - Run `smokeAutoGameHistorySave()` to test `Games Auto` / `Players Auto`.
+    - After verifying rows, run `cleanupSmokeGameHistoryRows()` if the smoke rows should be removed.
+  - Source: user ran Apps Script from editor and got `Error: Empty or invalid game history payload` at `appendGameHistoryPayload`.
+  - Context:
+    - Running `appendGameHistoryPayload()` directly from Apps Script editor is expected to fail because it requires a game-history payload.
+    - User needs editor-runnable smoke functions to verify the deployed patch without finishing a real game first.
+  - Required behavior:
+    - Add clear Apps Script helper functions to `project-memory/apps-script-auto-playtest-sheets-patch.js`:
+      - one regular/manual save smoke, e.g. `smokeRegularGameHistorySave()`, which writes a tiny test payload to `Games` / `Players`;
+      - one autorun smoke, e.g. `smokeAutoGameHistorySave()`, which writes a tiny test payload to `Games Auto` / `Players Auto`;
+      - optional cleanup helper for those smoke rows if safe and easy.
+    - Helpers must use the same append route as `doPost(e)` / `appendGameHistoryPayload(payload)` so they test real header mapping/formula protections.
+    - Helpers must log a readable result with target sheets and numeric game ID.
+    - Name them so the user can pick them from the Apps Script function dropdown.
+  - Guardrails:
+    - Smoke rows must be clearly marked as smoke/test rows so they can be identified and removed.
+    - Do not change game client behavior unless needed.
+    - Do not weaken validation for real payloads.
+    - Do not write smoke rows to the wrong tabs.
+  - Test plan:
+    - `node --check project-memory/apps-script-auto-playtest-sheets-patch.js`.
+    - `git diff --check`.
+    - Static check that smoke regular target is `Games` / `Players` and smoke auto target is `Games Auto` / `Players Auto`.
+  - Handback:
+    - Update `updates.md`, mark this item done, add GD context, and ping GD directly with exact functions the user should run.
+
+- DONE HISTORY SAVE BLOCKER 2026-07-04 21:15 - Manual/autosave finished games not appearing in Google Sheets:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed locally by Dev 3 at 2026-07-04 21:43; live Apps Script deploy/manual smoke still required.
+  - Dev 3 completion:
+    - Added verifiable local proxy endpoint `POST /api/game-history` in `server.js`.
+    - Updated manual/autosave history save flow to use the proxy first and direct Apps Script `no-cors` only as send-only fallback.
+    - UI no longer says confirmed Google Sheets success for opaque `no-cors` responses:
+      - confirmed proxy/App Script JSON -> confirmed save;
+      - direct fallback -> local save + sent/unverified warning;
+      - proxy/App Script error -> local save + Google failure warning.
+    - Updated autorun remote result handling so `remoteSaved` means verified remote success, while opaque/direct sends are only `remoteSent`.
+    - Added `doPost(e)` JSON response wrapper to `project-memory/apps-script-auto-playtest-sheets-patch.js`.
+    - Live sheet readback found no `2026-07-04` rows in `Games`, `Players`, or `Games Auto`; the user-reported regular save was not present in live regular sheets.
+    - Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, `node --check project-memory/apps-script-auto-playtest-sheets-patch.js`, `git diff --check`.
+  - Remaining manual/live steps:
+    - Deploy the updated Apps Script patch/web app so it returns `{ ok: true }` after append.
+    - Run a regular finished-game save smoke with fresh `server.js`.
+    - Verify a new row appears in `Games` and matching rows appear in `Players`.
+    - Verify no regular save appears in `Games Auto` / `Players Auto`.
+  - Severity: high. User saved a finished game, but results did not appear in Google Sheets.
+  - Source: direct user report after Apps Script/Auto routing work.
+  - Problem:
+    - Finished game save was triggered, but no rows appeared in Google Sheets.
+    - This affects the regular save path, not only autorun.
+    - Recent work touched Apps Script routing and Auto tabs; regular/manual saves must remain reliable.
+  - Required behavior:
+    - Manual save and finished-game autosave write regular games only to `Games` / `Players`.
+    - Autorun saves write only to `Games Auto` / `Players Auto`.
+    - Save UI must not imply success if the remote Sheet did not accept the payload.
+    - If the browser cannot read the Apps Script response because of `no-cors`, add a safe verification/status path or at minimum show `Отправлено, проверь таблицу` instead of a confirmed success.
+    - If a local/server proxy is now preferred for readable responses, wire regular save through it consistently and keep Apps Script fallback/deploy notes clear.
+  - Investigation targets:
+    - `saveCurrentGameHistory(...)` in `src/game.js`.
+    - Existing history autosave flow after winner popup.
+    - Current Google Apps Script web app URL and deployment status.
+    - `project-memory/apps-script-auto-playtest-sheets-patch.js` regular route (`sheetTarget.mode !== "auto"`).
+    - Any CORS/no-cors response handling that may hide failures.
+  - Live sheet context:
+    - Spreadsheet: `Games Log`.
+    - Spreadsheet id: `1uC1xUk52IbpHfm9tNtHT2_cmFSNQIKCkct88TsqmmV8`.
+    - Regular tabs:
+      - `Games`, sheetId `0`;
+      - `Players`, sheetId `211927822`.
+    - Auto tabs:
+      - `Games Auto`, sheetId `190000001`;
+      - `Players Auto`, sheetId `190000002`.
+  - Required output:
+    - Identify why the user's save did not reach the Sheet:
+      - stale/deployed Apps Script missing;
+      - wrong web app URL;
+      - Apps Script runtime error;
+      - client-side request failure;
+      - schema/header mismatch;
+      - `no-cors` false-positive.
+    - Fix local code/patch where possible.
+    - If live Apps Script deployment is still required manually, give exact steps and the exact file/function names.
+    - If possible, perform or request a smoke save with a finished payload and verify a new row in `Games` + matching rows in `Players`.
+  - Guardrails:
+    - Do not change gameplay rules, cards, board, autorun bot decisions, or unrelated UI.
+    - Do not write normal saves into Auto tabs.
+    - Do not write Auto saves into regular tabs.
+    - Do not silently swallow failed remote saves.
+    - Work with current dirty tree and do not revert unrelated changes.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `node --check server.js`.
+    - `node --check project-memory/apps-script-auto-playtest-sheets-patch.js`.
+    - `git diff --check`.
+    - Static checks:
+      - regular save target is `Games` / `Players`;
+      - Auto save target is `Games Auto` / `Players Auto`;
+      - save UI/status differentiates confirmed success from send-only/no-cors.
+    - Browser/live smoke if possible:
+      - save a finished regular game;
+      - verify new row in `Games`;
+      - verify matching player rows in `Players`;
+      - verify no regular save row in Auto tabs.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done or blocked in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with the root cause and whether live deployment/manual action is still required.
+
+- DONE SHEET AUTORUN ROUTING 2026-07-03 14:18 - Auto saves must write to Auto tabs and preserve formulas:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed locally by Dev 3 at 2026-07-03 14:46; live Apps Script deploy/manual cleanup still required.
+  - Dev 3 completion:
+    - Autorun payload now includes the Games Log spreadsheet id alongside `Games Auto` / `Players Auto` sheet names and sheetIds.
+    - `project-memory/apps-script-auto-playtest-sheets-patch.js` was replaced with a deploy-ready header-mapped append path:
+      - autorun payloads route to `Games Auto` / `Players Auto`;
+      - regular payloads route to `Games` / `Players`;
+      - formula-owned columns `Длительность` and `Minutes` are protected from raw payload writes;
+      - missing headers throw explicit errors instead of adding/shifting columns.
+    - Added cleanup helpers `previewMisroutedAutorunRows()` and `repairMisroutedAutorunRows()` for post-deploy live repair.
+    - Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, `node --check project-memory/apps-script-auto-playtest-sheets-patch.js`, `git diff --check`.
+  - Remaining manual steps:
+    - Deploy the updated Apps Script patch to the Games Log web app.
+    - Run `previewMisroutedAutorunRows()`.
+    - If preview matches the known misrouted autorun rows, run `repairMisroutedAutorunRows()` once.
+  - Severity: high. Live statistics sheet is being corrupted again.
+  - Source: user report with screenshot from live `Games Log`.
+  - Problem:
+    - Autorun games are still being appended into regular `Games` and `Players`.
+    - Autorun games must append only into `Games Auto` and `Players Auto`.
+    - Regular tabs now contain new shifted old-schema rows again:
+      - `Games!A` contains old `game-...` / timestamp-like ids instead of numeric IDs;
+      - `Дата` / `Время` / `elapsedMs` and later columns are shifted;
+      - `Players` has the same shifted-row problem;
+      - formula columns drift/break when rows are appended this way.
+  - Live sheet context:
+    - Spreadsheet: `Games Log`.
+    - Spreadsheet id: `1uC1xUk52IbpHfm9tNtHT2_cmFSNQIKCkct88TsqmmV8`.
+    - Regular tabs:
+      - `Games`, sheetId `0`;
+      - `Players`, sheetId `211927822`.
+    - Auto tabs:
+      - `Games Auto`, sheetId `190000001`;
+      - `Players Auto`, sheetId `190000002`.
+  - Required behavior:
+    - Autorun saves go only to `Games Auto` / `Players Auto`.
+    - Manual/normal saves go only to `Games` / `Players`.
+    - All four tabs keep the current schema:
+      - numeric game ID (`1`, `2`, ...), not `game-...`;
+      - separate `Дата`;
+      - separate `Время`;
+      - `elapsedMs`;
+      - readable duration/formula columns where applicable.
+    - Formula columns must exist and stay valid in both regular and Auto tabs.
+    - Appending rows must never shift data into formula columns or overwrite formulas with raw payload values.
+    - Prefer header-name mapping over positional row arrays so optional fields cannot shift columns.
+  - Required fix areas:
+    - Inspect/update local save payload routing in `src/game.js`.
+    - Inspect/update endpoint/local export in `server.js` if it participates in routing or payload shape.
+    - Inspect/update `project-memory/apps-script-auto-playtest-sheets-patch.js` so it is deploy-ready and handles both regular and Auto tabs with the same schema/formula protections.
+    - If the live Apps Script deployment cannot be changed from this environment, explicitly state exact manual deployment steps and which patch file/ranges must be used.
+  - Data cleanup:
+    - If Dev 3 has working Google Sheet access, move the newly misrouted autorun rows from `Games`/`Players` into `Games Auto`/`Players Auto`, restore regular tabs, and repair formulas.
+    - If live Sheet access is not available, leave a precise cleanup recipe for GD/manual repair: which rows are bad, where they should move, and which formulas need to be copied.
+    - Do not destroy existing legitimate regular `Games` / `Players` rows.
+  - Guardrails:
+    - Do not change gameplay rules, autorun decision logic, cards, board layout, or unrelated UI.
+    - Do not mark failed/local-failed exports as successful.
+    - Do not overwrite user data in Auto tabs; append/migrate carefully.
+    - Work with the current dirty tree and do not revert unrelated changes.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `node --check server.js`.
+    - `node --check project-memory/apps-script-auto-playtest-sheets-patch.js`.
+    - `git diff --check`.
+    - Static checks:
+      - autorun path selects `Games Auto` / `Players Auto` names and sheetIds;
+      - regular save path selects `Games` / `Players`;
+      - payload/schema produces numeric ID + separate date/time;
+      - formula columns are protected/copied on append.
+    - If browser/live Sheet smoke is possible:
+      - run autorun `1`;
+      - verify row appears in `Games Auto` and `Players Auto`;
+      - verify no new autorun row appears in regular `Games` / `Players`;
+      - verify formula columns are present and correct in all four tabs.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with:
+      - whether live routing was fixed/deployed;
+      - whether live sheet rows were cleaned;
+      - what remains for manual deployment/repair, if anything.
+
+- DONE AUTORUN BLOCKERS 2026-07-03 13:04 - Fix remaining `movementAction` stall and Auto export:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-07-03 13:28; QA 2 re-check required after handback.
+  - Source: QA 2 re-check `QA RECHECK AUTO PLAYTEST MVP 2026-07-03 02:34`.
+  - Summary:
+    - Autorun no longer throws `route is not defined`, but it is still not stable.
+    - Fix the remaining autorun blockers so `1`, `10`, and then `100` bot-only runs can complete or cleanly abort with useful context.
+  - Current QA result:
+    - `1`: `Готово: 0 завершено, 1 abort, local fail 1`.
+    - Blocker shown: `AUTO BLOCKED: AUTO BLOCKED: no progress at movementAction`.
+    - `10`: `Готово: 5 завершено, 5 abort, local fail 10`.
+    - No console `route is not defined`.
+    - No console errors; warnings were local export HTTP 404.
+    - `outputs/autoplay-runs/` did not appear.
+  - New sheet context:
+    - GD has created live Google Sheet tabs:
+      - `Games Auto`, sheetId `190000001`;
+      - `Players Auto`, sheetId `190000002`.
+    - These tabs have headers copied from `Games` / `Players` and are empty.
+  - Required fixes:
+    - Investigate and fix `no progress at movementAction` in fast autorun.
+      - Add enough blocker context to identify the current player, phase, pending action, card/field if any, turn number, and recent action.
+      - If the stall is due to an informational/pending UI step, fast mode should auto-resolve it.
+      - If the stall is due to missing bot decision, report a specific missing decision type, not generic `movementAction`.
+    - Fix local fallback export during browser autorun:
+      - `/api/autoplay-runs` should be available when the project server is current;
+      - successful browser autorun should create `outputs/autoplay-runs/` JSONL/per-run JSON;
+      - stale/missing endpoint should keep reporting `local fail`, not false success.
+    - Confirm autorun payload targets `Games Auto` / `Players Auto`.
+    - If live Apps Script routing patch still cannot be deployed here, update/confirm the concrete patch file and clearly state required manual deploy.
+  - Guardrails:
+    - Do not change normal gameplay rules.
+    - Do not change manual save target (`Games` / `Players`) or regular game history behavior.
+    - Do not hide aborts by marking blocked runs successful.
+    - Do not touch card configs, board layout, or unrelated UI.
+    - Work with current dirty tree and do not revert unrelated changes.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `node --check server.js`.
+    - `git diff --check`.
+    - Browser/local smoke if possible:
+      - fresh server/process with current `server.js`;
+      - autorun `1`;
+      - autorun `10`;
+      - if stable, autorun `100`;
+      - verify no `no progress at movementAction` unless the abort includes specific context;
+      - verify local files under `outputs/autoplay-runs/` when endpoint is available;
+      - verify settings are restored after series.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with results, not only docs.
+
+- DONE INFO HISTORY FULL LOG TOGGLE 2026-07-03 02:29 - Toggle full chronicle and preserve latest-first numbering:
+  - Owner: `Dev 1`.
+  - Dispatch status: sent directly to Dev 1 thread at 2026-07-03 02:29; QA is not involved unless user asks.
+  - Requested by: user via `GD`.
+  - Context:
+    - The info/history popup has a `Вся хроника` button from `DONE INFO HISTORY FULL LOG 2026-07-03 01:12`.
+    - User reports two issues:
+      - pressing `Вся хроника` again should collapse back to the latest 50 actions;
+      - full chronicle reverses the action numbering/order compared with the latest-50 mode.
+  - Required behavior:
+    - `Вся хроника` must be a toggle:
+      - if latest-50 mode is active, click opens full chronicle;
+      - if full chronicle is already active, click returns to latest-50 mode.
+    - Full chronicle order and numbering must match the latest-50 display style:
+      - newest/current actions appear first, as in the 50-action mode;
+      - action numbering must not flip so `1` becomes the first/top entry unless that is how latest-50 mode does it.
+    - The section title/button state should make the current mode clear, but keep visual changes minimal.
+    - `Копировать` should still copy the full chronicle, independent of which mode is visible.
+  - Guardrails:
+    - Do not change gameplay log content semantics.
+    - Do not restore the old permanent chronicle block.
+    - Do not change info popup open/close behavior, current action highlight, game rules, or save/export logic.
+    - Do not touch the new History header icon/layout unless necessary.
+    - Work with current dirty tree and do not revert unrelated changes.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser smoke if possible:
+      - open info popup: latest 50 shown;
+      - click `Вся хроника`: full list shown in same newest-first/order style as latest-50;
+      - click `Вся хроника` again: latest 50 returns;
+      - `Копировать` still copies full chronicle;
+      - repeated toggles do not duplicate entries;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly.
+
+- DONE AUTORUN QA BLOCKERS 2026-07-03 02:16 - Fix autorun runtime error and local fallback output:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-07-03 02:33; ready for QA 2 re-check.
+  - Source: QA 2 report for `QA AUTO PLAYTEST MVP 2026-07-03 02:04`.
+  - Summary:
+    - Fix the high-severity blockers found during autorun smoke:
+      - `ReferenceError: route is not defined` in `resolveBackToNearestPlayer`.
+      - local fallback output under `outputs/autoplay-runs/` not being written/verified after browser autorun.
+  - Finding 1: `route is not defined`:
+    - Repro from QA:
+      - Open `http://localhost:5173/`.
+      - Open settings.
+      - Click `Автопрогон` -> `10`.
+      - Wait until status reaches `Готово`.
+    - Actual:
+      - Series finished as `5 completed / 5 abort`.
+      - Console repeated `ReferenceError: route is not defined` at `resolveBackToNearestPlayer`, called from `applyCardEffect` for `back-to-nearest-player` / `Назад к сопернику`.
+      - Stack paths included normal landing, red field, and chaos portal Bad-card draw.
+    - Expected:
+      - No uncaught runtime errors.
+      - If a run aborts, it should be clean `AUTO BLOCKED` with preserved blocker context.
+  - Finding 2: local fallback output missing:
+    - Repro from QA:
+      - Run autorun `1` or `10`.
+      - Inspect `outputs/autoplay-runs/`.
+    - Actual:
+      - Folder did not exist after observed browser autorun attempts.
+      - QA could not verify per-run JSON/JSONL output.
+      - Static concern: `saveAutoPlaytestSnapshot()` marks `localSaved = true` after `fetch('/api/autoplay-runs')` resolves but does not check `response.ok`, so 404/old-server response could look successful.
+    - Expected:
+      - Browser autorun writes JSONL + per-run JSON via `/api/autoplay-runs` when server endpoint is available.
+      - If endpoint is missing/unavailable, status should reflect local save failure clearly, not silently mark it saved.
+      - Saved data must include status, elapsedMs/readableDuration, runIndex, seed/runId, final outcome or abortReason, fastMode, and sheetTarget.
+  - Guardrails:
+    - Do not change normal game rules, manual save, regular `Games` / `Players` save target, card configs, board layout, or non-autorun flow.
+    - Do not hide aborts by treating runtime errors as success.
+    - Preserve `AUTO BLOCKED` context long enough for QA/user to inspect it.
+    - Work with current dirty tree and do not revert unrelated changes.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `node --check server.js`.
+    - `git diff --check`.
+    - Local/browser smoke if possible:
+      - autorun `1` completes or cleanly aborts without uncaught console errors;
+      - autorun `10` no longer aborts due to `route is not defined`;
+      - output files appear under `outputs/autoplay-runs/` when server is active;
+      - failed fallback save reports failure instead of false success.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly.
+    - After handback GD will send QA 2 re-check.
+
+- DONE HISTORY TOGGLE BUTTON 2026-07-03 02:10 - Open History block from header button:
+  - Owner: `Dev 1`.
+  - Dispatch status: sent directly to Dev 1 thread at 2026-07-03 02:10; QA is not involved unless user asks.
+  - Requested by: user via `GD`.
+  - Summary:
+    - The `История` block should no longer be always visible.
+    - Add a new header button between the cards/reference button and the phone button.
+    - Clicking the new button toggles the `История` block open/closed.
+    - Shrink the `Игроков` and `Ботов` controls enough so the new button fits in the same top controls row.
+  - Required behavior:
+    - Add a compact `История` button in the top/right controls row:
+      - position: between the current cards/reference button and the phones button;
+      - icon-only or icon-forward style, matching the existing cards/phone/settings/fullscreen buttons;
+      - active state when the History block is open.
+    - Make the `История` panel hidden by default or at least collapsible via the button.
+    - Button click opens/closes the full existing `История` block, including the `Сохранить` button and all summary/player final stats.
+    - Preserve current history data, save button behavior, autosave behavior, and sheet export logic.
+    - Reduce the width/footprint of the `Игроков` and `Ботов` controls so the row does not overflow with the new button.
+  - Guardrails:
+    - Do not remove the History feature or change what it records.
+    - Do not confuse this with the small info/chronicle popup; this is the larger end-game/history stats block.
+    - Do not change gameplay rules, save payloads, Google Sheet mapping, phone controller logic, cards, or autorun.
+    - Work with the current dirty tree and do not revert unrelated changes.
+  - Likely code areas:
+    - `index.html`: add history header button / wrap or identify the History panel.
+    - `src/game.js`: toggle state, button active state, rendering if needed.
+    - `styles.css`: matching icon button, compact player/bot selects, collapsed History panel.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser smoke if possible:
+      - History hidden/collapsed initially;
+      - click history button opens full History block;
+      - click again closes it;
+      - button sits between cards and phones;
+      - cards/phones/settings/fullscreen/new game buttons still work;
+      - player/bot controls remain readable and usable;
+      - desktop and mobile have no horizontal overflow;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result, not only docs.
+
+- DONE AUTO PLAYTEST MVP 2026-07-03 01:26 - Fast bot-only autorun with Auto sheets:
+  - Owner: `Dev 3`.
+  - Dispatch status: completed by Dev 3 at 2026-07-03 01:52; QA is not involved unless user asks.
+  - Requested by: user via `GD`.
+  - Summary:
+    - Implement an MVP of fast automatic bot-only game runs for statistics collection.
+    - Add separate Google Sheet tabs `Games Auto` and `Players Auto`; autorun games must save there, not into regular `Games` / `Players`.
+  - Product goal:
+    - Let the game run bot-only parties as fast as possible, with animations/delays disabled, so balance stats can be collected.
+    - Keep the normal playable game unchanged.
+  - MVP scope:
+    - Add a dev/settings control to run bot-only auto games, initially enough for `1 / 10 / 100` runs or a simple numeric count.
+    - During autorun:
+      - all players are bots;
+      - dice/card/movement animations and artificial delays are skipped;
+      - card reveal confirmations, `Далее`, `В бой`, shop reveal pauses, toast/banner delays and similar UI waits auto-resolve;
+      - UI rendering can be throttled or only updated per game/result;
+      - gameplay rules should still use the same core game functions wherever possible.
+    - Add safety limits:
+      - max turns per game, suggested `500`;
+      - max actions/chain depth per turn, suggested `100`;
+      - if exceeded, mark the run as aborted/failed with a reason instead of hanging.
+    - Add seeded/random reproducibility if reasonably cheap:
+      - store seed per run;
+      - if full seeded RNG is too risky for MVP, at least store a generated run id and note seed as future work.
+  - Bot decision coverage:
+    - Autorun must not wait for human input.
+    - If any prompt/choice lacks a bot decision path, do not hang:
+      - log an `AUTO BLOCKED` reason;
+      - abort that run cleanly;
+      - include blocker type/context in the saved local/autosheet data.
+    - Choices to audit include cards, fields, target players, shop buy/refuse, auctions, portals, held cards, battle options, dice-control-like choices, board-cell choices.
+  - Auto statistics saving:
+    - Add or update the Apps Script / local endpoint payload logic so autorun saves to separate tabs:
+      - `Games Auto`
+      - `Players Auto`
+    - `Games Auto` should mirror the useful regular `Games` columns as much as possible, including:
+      - numeric `ID`;
+      - separate `Дата`;
+      - separate `Время`;
+      - `elapsedMs`;
+      - human-readable duration;
+      - finished/aborted state;
+      - board/settings;
+      - player/bot counts;
+      - final outcome/winner/final scores;
+      - autorun-specific fields: runIndex, seed, abortReason, fastMode.
+    - `Players Auto` should mirror useful regular `Players` columns as much as possible, linked by numeric game ID, plus autorun-specific fields if needed.
+    - If live Apps Script cannot be edited from the environment, produce a concrete patch file in `project-memory/` and make local export/payload ready.
+  - Local output:
+    - Save a local machine-readable result as fallback, for example under ignored `outputs/autoplay-runs/`.
+    - Do not commit heavy output files.
+  - Guardrails:
+    - Do not change normal game behavior, regular `Games` / `Players` saving, Google Sheet card config, card rules, board layout, or UI flows outside autorun.
+    - Do not make PnP/output artifacts tracked.
+    - Work with the current dirty tree and do not revert unrelated changes.
+    - Keep this as an MVP vertical slice; do not overbuild dashboards before the fast run loop is stable.
+  - Suggested implementation approach:
+    - Add `state.autoRun` / `fastMode` flags and central helpers for delay/animation bypass.
+    - Wrap/short-circuit existing waits rather than duplicating all rules.
+    - Add an autorun orchestrator such as `runAutoGames(count)`.
+    - Use existing game reset/start and existing bot logic.
+    - Add robust timeout/abort handling around each run.
+    - Add explicit save target `auto` to history export or sheet payload.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static/source checks:
+      - normal save target remains `Games` / `Players`;
+      - autorun save target is `Games Auto` / `Players Auto`;
+      - default playable mode does not enable fastMode.
+    - Local smoke if possible:
+      - run 1 auto game to completion or clean abort;
+      - run 10 auto games without hanging;
+      - check local result rows include elapsedMs/duration/outcome/abortReason;
+      - no console errors.
+    - If Google Sheet write is possible:
+      - verify rows appear in `Games Auto` and `Players Auto`, not regular tabs.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result, not only docs.
+
+- DONE INFO HISTORY FULL LOG 2026-07-03 01:12 - Show full chronicle and copy full chronicle:
+  - Owner: `Dev 1`.
+  - Dispatch status: sent directly to Dev 1 thread at 2026-07-03 01:12; QA is not involved unless user asks.
+  - Requested by: user via `GD`.
+  - Context:
+    - The info/history popup currently shows the latest 50 actions.
+    - User wants two buttons in this popup near the header/close area.
+  - Required behavior:
+    - Add two compact buttons to the info/history popup:
+      - `Вся хроника`: loads/shows the full chronicle from the start of the current game, beyond the current latest 50 entries.
+      - `Копировать`: copies the full chronicle text to clipboard for pasting into ChatGPT/analysis.
+    - Default popup view can remain the latest 50 actions.
+    - After pressing `Вся хроника`, the list should show the whole current game chronicle in the same readable style and remain scrollable.
+    - `Копировать` must copy the whole current game chronicle, not only visible/latest 50 entries.
+    - Show a light feedback state/toast/text such as `Хроника скопирована` for about 2 seconds.
+    - Copy output should be plain text, ordered naturally and suitable for ChatGPT analysis:
+      - include action numbers;
+      - strip HTML tags/icons into readable text where possible;
+      - preserve player names/card/field names.
+  - Guardrails:
+    - Do not change gameplay log content semantics.
+    - Do not break current latest-50 performance cap for the default popup view.
+    - Do not restore the old permanent chronicle block.
+    - Do not change info popup open/close behavior, current action highlight, or game rules.
+    - Work with the current dirty tree and do not revert unrelated changes, especially fresh Art/UI card text wrapping changes.
+  - Likely code areas:
+    - `src/game.js`: log storage/rendering, info popup controls, clipboard copy.
+    - `index.html`: two buttons/feedback node in `#infoHistoryPopup`.
+    - `styles.css`: compact header controls and feedback styling.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser smoke if possible:
+      - default popup shows latest 50;
+      - `Вся хроника` shows entries from start of game;
+      - copied text contains full chronicle in correct order;
+      - copy feedback appears once and disappears;
+      - repeated open/close does not duplicate buttons or entries;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result, not only docs.
+
+- DONE PLAYER SHOP POPUP 2026-07-03 00:59 - Player card button opens owned Joe Shop cards:
+  - Owner: `Dev 1`.
+  - Dispatch status: sent directly to Dev 1 thread at 2026-07-03 00:59; QA is not involved unless user asks.
+  - Requested by: user via `GD`.
+  - Summary:
+    - Add a button on each player score/card near `Лавка Джо`.
+    - Clicking it opens a popup with all `Лавка Джо` cards owned by that player.
+    - Card rendering must use the exact same in-game card face format, not simplified text.
+  - Required behavior:
+    - On each player card, add a compact button in the `Лавка Джо` area.
+    - The button opens a popup similar to the info/history popup:
+      - dark modal/backdrop styling;
+      - close button;
+      - backdrop/Escape close;
+      - scrollable content if there are many cards;
+      - safe desktop and mobile layout.
+    - Popup title should clearly name the player and `Лавка Джо`.
+    - Show every owned Joe Shop card as a real card face using the existing in-game card renderer/layout.
+    - Cards must not overlap; keep consistent card sizing and small gaps.
+    - Face-down Joe Shop cards should remain visually face-down in the popup.
+    - If the player has no Joe Shop cards, show a clean empty state.
+  - Guardrails:
+    - Do not change Shop card rules, inventory logic, deck/discard lifecycle, prices, face-down mechanics, or score calculations.
+    - Do not make the card badges themselves trigger gameplay actions; this is a viewing popup only.
+    - Do not rewrite the player card layout beyond the small button and necessary spacing.
+    - Work with the current dirty tree and do not revert unrelated changes.
+  - Likely code areas:
+    - `index.html`: popup markup near the existing info popup.
+    - `src/game.js`: `renderScores()`, popup open/close/render handlers, Escape cleanup.
+    - `styles.css`: score-card button and popup/card-grid styling.
+  - Test plan:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Browser smoke if possible:
+      - player with several Joe Shop cards opens popup;
+      - cards render as full in-game Shop cards;
+      - face-down owned cards render face-down;
+      - empty player state is clean;
+      - popup closes via close button, backdrop, and Escape;
+      - player score cards still fit on desktop/mobile;
+      - no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`.
+    - Mark this item done in `project-memory/inbox/for-dev.md`.
+    - Add context note to `project-memory/inbox/for-gd.md`.
+    - Ping GD directly with result, not only docs.
+
 - DONE BATTLE CTA TEXT 2026-06-26 12:10 - Use `В бой` before battle rolls:
   - Owner: `Dev 3`.
   - Dispatch status: sent directly to Dev 3 thread at 2026-06-26 11:57; QA is not involved unless user asks.
