@@ -1,4 +1,4 @@
-import { cardConfig } from "./cards.config.js?v=20260705-0400";
+import { cardConfig } from "./cards.config.js?v=20260709-0001";
 import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260703-0118";
 
 const boardEl = document.querySelector("#board");
@@ -1028,7 +1028,6 @@ async function rollAndMove({ animate = true } = {}) {
     await resolveStartTurnTadamEffects(player);
     applyTurnStartArtifacts(player);
     resolveGoldenCollectionStart(player);
-    await resolveSpeedPotionStart(player);
     await resolveTurnShopBuys(player);
     setAutoPlaytestPhase("movement:extra-die-choice", { player });
     const extraDice = await chooseExtraDie(player, animate);
@@ -2113,6 +2112,11 @@ function routeProgress(player) {
   return routeIndex.get(player?.position) ?? 0;
 }
 
+function routeCellIndex(player) {
+  const progress = routeProgress(player);
+  return progress > 0 ? progress - 1 : -1;
+}
+
 function leadingPlayer() {
   return [...state.players].sort((a, b) => getLeaderScore(b) - getLeaderScore(a))[0] || null;
 }
@@ -2868,17 +2872,27 @@ function renderScores() {
 
 function openPlayerShopPopup(playerId) {
   if (!ui.playerShopPopup) return;
-  const player = state.players.find((item) => String(item.id) === String(playerId));
+  const player = playerById(playerId);
   if (!player) return;
 
   ui.playerShopPopup.hidden = false;
   const heldCardsCount = playerOwnedNonShopCards(player).length;
+  const shopCardsCount = (player.items || []).length;
   if (ui.playerShopTitle) ui.playerShopTitle.textContent = `${player.name}: Карты`;
   if (ui.playerShopSubtitle) {
-    ui.playerShopSubtitle.textContent = `${heldCardsCount} ${genericCardsWord(heldCardsCount)}, ${player.items.length} ${shopCardsWord(player.items.length)}`;
+    ui.playerShopSubtitle.textContent = `${heldCardsCount} ${genericCardsWord(heldCardsCount)}, ${shopCardsCount} ${shopCardsWord(shopCardsCount)}`;
   }
   renderPlayerShopPopup(player);
   ui.playerShopCloseBtn?.focus({ preventScroll: true });
+}
+
+function playerById(playerId) {
+  const numericId = Number(playerId);
+  if (Number.isFinite(numericId)) {
+    const player = state.players.find((item) => item.id === numericId);
+    if (player) return player;
+  }
+  return state.players.find((item) => String(item.id) === String(playerId)) || null;
 }
 
 function closePlayerShopPopup() {
@@ -2893,51 +2907,91 @@ function playerShopPopupOpen() {
 
 function renderPlayerShopPopup(player) {
   if (!ui.playerShopBody) return;
-  const ownedCardsMarkup = renderPlayerOwnedCardsSection(player);
-  const shopCardsMarkup = renderPlayerShopCardsSection(player);
+  const ownedCards = playerOwnedNonShopCards(player);
+  const shopItems = player.items || [];
+  if (!ownedCards.length && !shopItems.length) {
+    ui.playerShopBody.innerHTML = `<div class="player-shop-empty">У ${escapeHtml(player.name)} пока нет карт или артефактов</div>`;
+    return;
+  }
+  const ownedCardsMarkup = ownedCards.length ? renderPlayerOwnedCardsSection(ownedCards) : "";
+  const shopCardsMarkup = shopItems.length ? renderPlayerShopCardsSection(shopItems) : "";
   ui.playerShopBody.innerHTML = `${ownedCardsMarkup}${shopCardsMarkup}`;
 }
 
 function playerOwnedNonShopCards(player) {
   return [
+    ...playerArtifacts(player).map((artifact) => ({
+      artifact,
+      card: artifactSourceCard(artifact),
+      deckId: "event",
+      label: "Артефакт",
+    })),
     ...pendingGoodCards(player).map((card) => ({ card, deckId: "good", label: "Хорошо" })),
+    ...nextBattlePenaltyCards(player).map((card) => ({ card, deckId: "good", label: "Хорошо" })),
+    ...nextBadExtraDrawCards(player).map((card) => ({ card, deckId: "good", label: "Хорошо" })),
     ...pendingBadCards(player).map((card) => ({ card, deckId: "bad", label: "Плохо" })),
     ...eventStatusCards(player).map((card) => ({ card, deckId: "event", label: "Событие" })),
   ];
 }
 
-function renderPlayerOwnedCardsSection(player) {
-  const cards = playerOwnedNonShopCards(player);
-  const content = cards.length
-    ? `<div class="player-shop-grid player-shop-grid-owned">${cards.map(renderPlayerOwnedCardCell).join("")}</div>`
-    : `<div class="player-shop-empty player-shop-empty-compact">У ${escapeHtml(player.name)} пока нет карт Хорошо, Плохо или События</div>`;
+function artifactSourceCard(artifact) {
+  if (!artifact || !state?.artifacts) return null;
+  const keysById = {
+    "anti-bad": "antiBadCard",
+    "golden-horseshoe": "goldenHorseshoeCard",
+    "hero-sword": "heroSwordCard",
+    "joe-coupon": "joeCouponCard",
+    "magic-pickaxe": "magicPickaxeCard",
+    "speed-boots": "speedBootsCard",
+  };
+  const mappedCard = state.artifacts[keysById[artifact.id]];
+  if (mappedCard) return mappedCard;
+  return Object.values(state.artifacts).find((value) => (
+    value &&
+    typeof value === "object" &&
+    (value.id === artifact.id || value.title === artifact.title)
+  )) || null;
+}
+
+function renderPlayerOwnedCardsSection(cards) {
   return `
-    <section class="player-shop-section player-shop-owned-section" aria-label="Карты Хорошо, Плохо и События">
+    <section class="player-shop-section player-shop-owned-section" aria-label="Карты, статусы и артефакты игрока">
       <h3>Карты игрока</h3>
-      ${content}
+      <div class="player-shop-grid player-shop-grid-owned">${cards.map(renderPlayerOwnedCardCell).join("")}</div>
     </section>
   `;
 }
 
-function renderPlayerOwnedCardCell({ card, deckId, label }) {
-  const title = card.title || card.shortTitle || label;
+function renderPlayerOwnedCardCell({ artifact, card, deckId, label }) {
+  const title = artifact?.title || card?.title || card?.shortTitle || label;
+  const cardMarkup = card
+    ? cardFaceMarkupForDeck(deckId, card, { revealed: true })
+    : playerArtifactFallbackMarkup(artifact);
   return `
     <div class="player-shop-card-cell player-shop-owned-card-cell" title="${escapeHtml(`${label}: ${title}`)}">
-      ${referenceCardMarkup(deckId, card, true)}
+      ${cardMarkup}
       <span class="player-shop-card-label">${escapeHtml(label)}</span>
     </div>
   `;
 }
 
-function renderPlayerShopCardsSection(player) {
-  const items = player.items || [];
-  const content = items.length
-    ? `<div class="player-shop-grid">${renderGroupedPlayerShopCards(items)}</div>`
-    : `<div class="player-shop-empty player-shop-empty-compact">У ${escapeHtml(player.name)} пока нет карт Лавка Джо</div>`;
+function playerArtifactFallbackMarkup(artifact) {
+  const title = artifact?.title || "Артефакт";
+  const hint = artifact?.hint || artifact?.shortTitle || "";
+  return `
+    <article class="player-artifact-card-preview" aria-label="${escapeHtml(title)}">
+      ${artifact?.icon ? `<img class="player-artifact-card-icon" src="${escapeHtml(artifact.icon)}" alt="" aria-hidden="true">` : ""}
+      <strong>${escapeHtml(title)}</strong>
+      ${hint ? `<span>${iconizeHtml(escapeHtml(hint))}</span>` : ""}
+    </article>
+  `;
+}
+
+function renderPlayerShopCardsSection(items) {
   return `
     <section class="player-shop-section player-shop-joe-section" aria-label="Карты Лавки Джо">
       <h3>Лавка Джо</h3>
-      ${content}
+      <div class="player-shop-grid">${renderGroupedPlayerShopCards(items)}</div>
     </section>
   `;
 }
@@ -9601,7 +9655,8 @@ async function resolveBackToNearestRed(player) {
     return;
   }
 
-  const steps = target.index - routeProgress(player);
+  const currentIndex = routeCellIndex(player);
+  const steps = currentIndex >= 0 ? target.index - currentIndex : target.progress - routeProgress(player);
   setRedPathTargetPreview(target);
   log(`${playerName(player)} отходит назад до ближайшего красного поля: <strong>${cellLabel(target.cell)}</strong>.`, { toast: true });
   await sleep(360);
@@ -9806,12 +9861,12 @@ async function resolveLeadersBack(player, steps = 5) {
 }
 
 function nearestRouteCellBehind(player, predicate) {
-  const currentIndex = routeProgress(player);
+  const currentIndex = routeCellIndex(player);
   for (let index = currentIndex - 1; index >= 0; index -= 1) {
     const routeCell = routeCells[index];
     if (!routeCell) continue;
     const cell = cellKey(routeCell.col, routeCell.row);
-    if (predicate(cell, index)) return { cell, index };
+    if (predicate(cell, index)) return { cell, index, progress: index + 1 };
   }
   return null;
 }
@@ -11694,7 +11749,6 @@ const pendingGoodEffectTypes = new Set([
   "second-chance",
   "strength-potion",
   "player-battle-potion",
-  "speed-potion",
   "dice-control",
   "backward-reversal",
 ]);
@@ -11716,7 +11770,6 @@ function pendingGoodCardLabel(card) {
     "field-shield": "Щит поля",
     "player-battle-potion": "Дуэль +3",
     "second-chance": "Второй шанс",
-    "speed-potion": "Скорость",
     "strength-potion": "Сила +3",
   };
   return labels[type] || card?.shortTitle || card?.title || "Хорошо";
@@ -11947,56 +12000,6 @@ async function chooseUseBackwardReversal(player, amount) {
     previewField: !isBot(player),
     summary: `${playerChoiceBadge(player)} может сбросить Разворот и пойти вперед вместо движения назад.`,
     title: "Разворот",
-  });
-  return choice === "use";
-}
-
-async function resolveSpeedPotionStart(player) {
-  if (player.turnStepBonus || !pendingGoodCardsOfType(player, "speed-potion").length) return 0;
-  const amount = Number(pendingGoodCardsOfType(player, "speed-potion")[0]?.effect?.steps) || 5;
-  const usePotion = isBot(player)
-    ? shouldBotUseSpeedPotion(player, amount)
-    : await chooseUseSpeedPotion(player, amount);
-  if (!usePotion) return 0;
-
-  const card = consumePendingGoodCard(player, "speed-potion");
-  player.turnStepBonus = amount;
-  render();
-  log(`${playerName(player)} сбрасывает ${cardNameStrong(pendingGoodCardLabel(card))}: <strong>+${amount}</strong> к шагам на этот ход.`, {
-    toast: true,
-  });
-  return amount;
-}
-
-function shouldBotUseSpeedPotion(player, amount) {
-  const current = routeProgress(player);
-  const targetCell = projectedRouteCell(player, amount);
-  const event = cellEvents[targetCell];
-  const nearFinish = finalDistance(player) <= amount + totalDiceForPlayer(player) * 3.5 + 6;
-  return nearFinish || current < routeProgress({ position: targetCell }) || ["good", "shop", "tadam", "green"].includes(event);
-}
-
-async function chooseUseSpeedPotion(player, amount) {
-  const choice = await chooseCardAction({
-    choices: [
-      {
-        id: "use",
-        label: `+${amount} шагов`,
-        note: "только этот ход",
-        score: shouldBotUseSpeedPotion(player, amount) ? 22 : 6,
-      },
-      {
-        id: "keep",
-        label: "Оставить",
-        note: "на потом",
-        score: shouldBotUseSpeedPotion(player, amount) ? 4 : 18,
-      },
-    ],
-    kicker: "Хорошо",
-    kind: "speed-potion",
-    playerId: player.id,
-    summary: `${playerChoiceBadge(player)} может сбросить Зелье скорости перед броском.`,
-    title: "Зелье скорости",
   });
   return choice === "use";
 }

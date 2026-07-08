@@ -20,6 +20,129 @@ Open questions:
 - ...
 ```
 
+## 2026-07-09 00:37 - Dev 3
+
+Changed:
+- Removed Good card `speed-potion` / `Зелье скорости` from the playable local Good deck.
+- Removed the CSV row for `good,speed-potion`.
+- Removed the runtime start-turn/pre-roll hook that offered to discard `Зелье скорости` for `+5` steps this turn.
+- Removed `speed-potion` from held Good effect registration and status label mapping.
+- Bumped the `cards.config.js` import cache key in `src/game.js` and the host `src/game.js` cache key in `index.html`.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Preserved other step effects: `Сапоги Скорости`, `Быстрые сапоги`, `Платный марш`, `Фора последнему`, duplicate-dice steps, and monster-victory steps were not changed.
+- Static search in `src/game.js`, `src/cards.config.js`, `src/controller.js`, `cards-google-sheet.csv`, and `index.html` found no `speed-potion`, `Зелье скорости`, or the removed `+5 к шагам на этот ход` text.
+- Checks passed: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`.
+- Live Google Sheet `Cards Config` / `good` readback still showed `speed-potion` at row 20, but this session exposed only metadata/read/search Sheets tools, not a write/batch-update tool, so the live Sheet row was not removed here.
+- Browser smoke was not run.
+
+Open questions:
+- Live Google Sheet `Cards Config` / `good` row 20 still needs deletion by someone with Sheets write tool access.
+
+## 2026-07-09 00:34 - Dev 1
+
+Changed:
+- Fixed player `Карты` popup so each score-card button resolves the clicked player by id instead of relying on any active/stale player context.
+- Fixed owned-card rendering path: popup no longer calls removed `referenceCardMarkup(...)`; it now uses the current shared in-game card-face renderer.
+- Expanded popup contents beyond Joe Shop cards:
+  - owned Joe Shop cards still render as real Shop card faces, including face-down cards;
+  - held/persistent Good and Bad cards still render as card faces;
+  - Good status cards from `Сглаз` / `Двойное Плохо` now appear in the popup;
+  - Event status cards and player artifacts from `playerArtifacts(...)` now appear in the popup.
+- Added fallback card-like artifact rendering for artifacts that only have a chip/icon in state, such as `Волшебный Кошель`.
+- Changed popup empty state to show only when the selected player truly has no cards, statuses, artifacts, or Joe Shop items.
+- Bumped host `index.html` cache keys for `src/game.js` and `styles.css`.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Root cause: the popup only collected a narrow subset of owned non-Shop cards, omitted `playerArtifacts(...)` and some status-card arrays, and used a stale/nonexistent card-render helper.
+- Gameplay rules, inventory state, deck/discard lifecycle, card config, CSV, Google Sheet, PnP output, and balance were not changed.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+- Static source checks passed for selected-player lookup, artifact/status inclusion, face-down Shop rendering path, and whole-popup empty state.
+- Browser smoke was attempted against the local server, but Playwright could not launch because the Chromium executable is missing in this environment.
+
+Open questions:
+- None.
+
+## 2026-07-09 00:32 - Dev 2
+
+Changed:
+- Updated Event card `monster-rage` / `Ярость монстров` physical `count` from `4` to `5`.
+- Synced local config, CSV mirror, and live Google Sheet `Cards Config` / `event` row `8`.
+- Preserved card text and runtime stacking/gameplay mechanics.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Checks passed: `node --check src/cards.config.js`, `node --check src/game.js`, `git diff --check`.
+- Static/readback passed: local config count `5`, CSV count `5`, Google Sheet `event!M8` count `5`.
+- `src/controller.js` was not touched.
+
+Open questions:
+- None.
+
+## 2026-07-09 00:27 - Dev 3
+
+Changed:
+- Fixed Bad card `back-to-red` / `Красная дорожка` movement target.
+- Root cause: `nearestRouteCellBehind(...)` mixed 1-based `routeProgress(...)` with 0-based `routeCells` indexes, while `movePlayerSteps(...)` uses 0-based route indexes for backward movement.
+- Added `routeCellIndex(...)` and changed `nearestRouteCellBehind(...)` / `resolveBackToNearestRed(...)` to compute backward steps in the same 0-based index space.
+- Board preview still uses the same `target.cell`, so preview and actual landing now point to the same nearest red cell.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+
+Notes for others:
+- Card text/data, CSV, Google Sheet, route order, board config, PnP, and other cards were not changed.
+- Backward landing still calls `resolveLanding(player, { forwardTriggers: false, movement: "backward" })` through the existing `movePlayerSteps(..., { resolveBackwardLanding: true })` path.
+- Checks passed: `node --check src/game.js`, `node --check src/controller.js`, `git diff --check`.
+- Targeted static calculation passed: nearest red one step behind gives `steps = -1` and lands on that same red cell.
+- Browser smoke was not run.
+
+Open questions:
+- None.
+
+## 2026-07-09 00:19 - Dev 3
+
+Changed:
+- Updated Event card `monster-rage` / `Ярость монстров` text locally and in CSV.
+- Removed the phrase `Эффект складывается с другими копиями` from the player-facing description.
+- Preserved runtime stacking mechanics, id, count, effect type, and amount.
+- Per GD correction, did not implement the player `Карты` popup bug task; only read the relevant code and left it for reassignment.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `project-memory/updates.md`
+
+Notes for others:
+- Live Google Sheet `Cards Config` / `event` readback showed `monster-rage` already had no removed phrase, so no Sheet write was needed.
+- Checks passed: `node --check src/cards.config.js`, `node --check src/game.js`, `git diff --check`.
+- Popup `Карты` observations only: likely code areas are `openPlayerShopPopup(...)`, `playerOwnedNonShopCards(...)`, `renderPlayerOwnedCardsSection(...)`, `renderPlayerShopCardsSection(...)`, and `playerArtifacts(...)`; no code changes were made for that task.
+
+Open questions:
+- None.
+
 ## 2026-07-07 17:00 - Dev 3
 
 Changed:

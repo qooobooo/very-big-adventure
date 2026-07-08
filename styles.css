@@ -10312,6 +10312,48 @@ button.player-shop-backdrop:active:not(:disabled) {
   font-weight: 900;
 }
 
+.player-artifact-card-preview {
+  width: var(--card-face-width);
+  aspect-ratio: 0.716;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  align-items: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 16px 14px;
+  border: 3px solid rgba(255, 236, 166, 0.78);
+  border-radius: 14px;
+  color: #fff5d7;
+  background:
+    linear-gradient(180deg, rgba(84, 68, 34, 0.88), rgba(25, 30, 24, 0.96)),
+    radial-gradient(circle at 50% 18%, rgba(255, 222, 118, 0.24), transparent 46%);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(0, 0, 0, 0.44);
+  text-align: center;
+}
+
+.player-artifact-card-icon {
+  width: min(58%, 112px);
+  aspect-ratio: 1;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.45));
+}
+
+.player-artifact-card-preview strong {
+  color: var(--gold-2);
+  font-size: clamp(0.88rem, 1.35vw, 1.08rem);
+  font-weight: 1000;
+  line-height: 1.06;
+}
+
+.player-artifact-card-preview span {
+  color: rgba(255, 247, 232, 0.86);
+  font-size: clamp(0.68rem, 1.05vw, 0.84rem);
+  font-weight: 900;
+  line-height: 1.18;
+}
+
 .player-shop-face-down-label {
   display: inline-flex;
   align-items: center;

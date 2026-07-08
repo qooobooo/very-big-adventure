@@ -4,6 +4,46 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- DONE PLAYER CARDS POPUP BUG 2026-07-09 - Карты игрока показывают все owned cards/statuses:
+  - Owner: `Dev 1`.
+  - Source task:
+    - `ACTIVE PLAYER CARDS POPUP BUG 2026-07-09 - Карты игрока показывают не все owned cards/statuses`.
+  - Completed:
+    - Fixed player lookup for score-card `Карты` buttons through a selected-player id resolver.
+    - Replaced the broken/stale `referenceCardMarkup(...)` popup path with the current shared in-game card-face renderer.
+    - Popup now includes selected player's Joe Shop cards, held Good/Bad cards, Good status cards (`Сглаз`, `Двойное Плохо`), Event statuses, and artifacts from `playerArtifacts(...)`.
+    - Added a card-like fallback for artifact chips without stored source card data, including `Волшебный Кошель`.
+    - Empty state now appears only when the selected player has no cards/statuses/artifacts/Shop cards at all.
+  - Files:
+    - `src/game.js`.
+    - `styles.css`.
+    - `index.html`.
+  - Checks passed:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check`.
+    - Static source checks for selected-player lookup, artifact/status inclusion, face-down Shop rendering, and empty-state logic.
+  - Notes:
+    - Gameplay rules, inventory state, deck lifecycle, card configs, CSV, Google Sheet, PnP output, and balance were not changed.
+    - Browser smoke was attempted against the local server, but Playwright could not launch because the Chromium executable is missing in this environment.
+
+- DONE CARD COUNT 2026-07-09 00:32 - Ярость Монстров count 5:
+  - Owner: `Dev 2`.
+  - Source task:
+    - `ACTIVE CARD COUNT 2026-07-09 - Ярость Монстров count 5`.
+  - Completed:
+    - Changed Event card `monster-rage` / `Ярость монстров` physical `count` from `4` to `5`.
+    - Synced `src/cards.config.js`, `cards-google-sheet.csv`, and live Google Sheet `Cards Config` / `event!M8`.
+    - Preserved card text and runtime stacking/gameplay mechanics.
+  - Checks passed:
+    - `node --check src/cards.config.js`.
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Static/readback: local config count `5`, CSV count `5`, Google Sheet row `8` count `5`.
+  - Notes:
+    - `src/controller.js` was not touched.
+    - QA was not involved per task instruction.
+
 - DONE STEPS ICON GRAMMAR 2026-07-05 04:18 - Remove leftover step word endings after icon render:
   - Owner: `Dev 3`.
   - Dispatch status: sent directly to Dev 3 thread at 2026-07-05 04:18.

@@ -127,13 +127,6 @@ export const cardConfig = {
       effect: { type: "feed-monster-plus3", amount: 3 },
     },
     {
-      id: "speed-potion",
-      count: 2,
-      title: "Зелье скорости",
-      description: "Оставь эту карту себе. Можешь сбросить в начале хода и получить +5 к шагам на этот ход",
-      effect: { type: "speed-potion", steps: 5 },
-    },
-    {
       id: "backward-reversal",
       count: 2,
       title: "Разворот",
@@ -521,9 +514,9 @@ export const cardConfig = {
     },
     {
       id: "monster-rage",
-      count: 4,
+      count: 5,
       title: "Ярость монстров",
-      description: "Все монстры получают +1 к силе. Эффект складывается с другими копиями",
+      description: "Все монстры получают +1 к силе",
       effect: { type: "event-monster-rage" },
     },
     {

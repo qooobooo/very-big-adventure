@@ -4,6 +4,45 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-07-09 00:34 - Dev 1 context handback: `PLAYER CARDS POPUP BUG - Карты игрока показывают все owned cards/statuses`
+  - Root cause:
+    - The popup collected only a narrow set of non-Shop cards, omitted `playerArtifacts(...)` and some stored status-card arrays, and still called removed/stale `referenceCardMarkup(...)`.
+  - Completed:
+    - Hardened score-card `Карты` button lookup so the popup resolves the selected player by the clicked `player.id`.
+    - Popup now shows the selected player's owned Joe Shop cards, held Good/Bad cards, Good status cards (`Сглаз`, `Двойное Плохо`), Event status cards, and artifacts.
+    - Artifacts use the real Event card face when the source card is stored; otherwise they render as a clean card-like fallback with icon/title/hint.
+    - Face-down Shop cards still render face-down.
+    - Empty state now appears only when the selected player truly has no cards/statuses/artifacts/Shop cards.
+  - Files:
+    - `src/game.js`.
+    - `styles.css`.
+    - `index.html`.
+  - Checks passed:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check`.
+    - Static source checks for selected-player lookup and owned-card/status/artifact inclusion.
+  - Not checked:
+    - Browser smoke was attempted against the local server, but Playwright could not launch because the Chromium executable is missing in this environment.
+  - Scope:
+    - No gameplay rules, inventory state, deck lifecycle, card configs, CSV, Google Sheet, PnP output, or balance changes.
+
+- 2026-07-09 00:32 - Dev 2 context handback: `CARD COUNT - Ярость Монстров count 5`
+  - Source task:
+    - `ACTIVE CARD COUNT 2026-07-09 - Ярость Монстров count 5`.
+  - Completed:
+    - Updated Event card `monster-rage` / `Ярость монстров` physical `count` from `4` to `5`.
+    - Synced `src/cards.config.js`, `cards-google-sheet.csv`, and live Google Sheet `Cards Config` / `event!M8`.
+    - Did not change card text, runtime stacking, gameplay logic, UI, PnP, or other cards/counts.
+  - Checks passed:
+    - `node --check src/cards.config.js`.
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Static/readback: local config count `5`, CSV count `5`, Google Sheet `event` row `8` count `5`.
+  - Notes:
+    - `src/controller.js` was not touched.
+    - QA was not involved.
+
 - 2026-07-06 01:22 - Art/UI 1 context handback: `PNP BAD CARDS`
   - Source task:
     - `ACTIVE PNP BAD CARDS 2026-07-06 00:50 - Print-ready Плохо cards with readable text`.
