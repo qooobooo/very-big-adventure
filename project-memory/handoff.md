@@ -1,6 +1,6 @@
 # Project Handoff
 
-Last updated: 2026-06-09 by GD.
+Last updated: 2026-07-27 by Important.
 
 ## Очень Большая Бродилка
 
@@ -12,7 +12,8 @@ Active chats:
 - `Dev 1`: main implementation chat.
 - `Dev 2`: additional implementation chat.
 - `Dev 3`: additional implementation chat.
-- `GD`: game design, contracts, rules, balance, and implementation-ready specs for Dev roles.
+- `GD 1`: main game-design chat and direct continuation of the former `GD`; game design, contracts, rules, balance, and implementation-ready specs for Dev roles.
+- `GD 2`: additional game-design chat for parallel work by explicit assignment.
 - `Art / UI 1`: visual assets and UI direction.
 - `Art / UI 2`: additional visual assets and UI direction.
 - `Art / UI 3`: additional visual assets and UI direction.
@@ -20,6 +21,8 @@ Active chats:
 - `QA 2`: additional testing chat for smoke checks, regression checks, and bug reports.
 
 Current shape: a local web prototype of a board-game race with players, dice, seals, route cells, good/bad cards, green/red fields, TADAM cards, and Joe's Shop.
+
+GD coordination: `GD 1` and `GD 2` share `project-memory/inbox/for-gd.md`. Every task must name one GD owner explicitly; direct handbacks go to that owner's active Codex thread.
 
 Key files:
 
@@ -40,14 +43,14 @@ Current important state:
   - If the current mode may be insufficient, say `Лучше переключить чат на High/Extra High`.
   - Do not reveal long chain-of-thought; for complex answers, add `Проверка рисков и допущений`.
 - Required task lifecycle for implementation/design tasks:
-  1. For planning/executing multi-role work, GD routes tasks through specialists by default: Dev for implementation, Art / UI for visual assets/UI polish, and QA only when the user explicitly asks.
-  2. GD should not directly implement cross-role plans unless the user explicitly asks GD to do the implementation personally or the change is an urgent tiny documentation/memory edit.
-  3. GD plans and multi-role tasks must include explicit `Ownership`: which role/chat owns each part of the work.
+  1. For planning/executing multi-role work, the assigned GD owner (`GD 1` or `GD 2`) routes tasks through specialists by default: Dev for implementation, Art / UI for visual assets/UI polish, and QA only when the user explicitly asks.
+  2. The assigned GD owner should not directly implement cross-role plans unless the user explicitly asks that GD to do the implementation personally or the change is an urgent tiny documentation/memory edit.
+  3. GD plans and multi-role tasks must include explicit `Ownership`: which role/chat owns each part of the work, including which GD owns the task.
   4. If a task is split into waves, every wave must have an assigned owner before it is sent to development.
-  5. GD creates an implementation-ready task for the executor.
-  6. Default pipeline: the executor completes it, writes a handback, updates `updates.md`, and sends it to GD as a context note only.
-     - If GD or another active role needs to react soon, the executor also sends a direct message to that active Codex thread; the inbox note alone is not enough for expected handbacks.
-  7. GD does not verify or approve handbacks by default; GD only keeps them in mind.
+  5. The assigned GD owner creates an implementation-ready task for the executor.
+  6. Default pipeline: the executor completes it, writes a handback, updates `updates.md`, and sends it to the assigned GD owner as a context note only.
+     - If the assigned GD owner or another active role needs to react soon, the executor also sends a direct message to that active Codex thread; the inbox note alone is not enough for expected handbacks.
+  7. The assigned GD owner does not verify or approve handbacks by default; that GD only keeps them in mind.
   8. GD approval/checking/rework happens only when the user explicitly asks for review/approval/checking.
   9. QA is skipped by default and is involved only when the user explicitly asks, for example says `привлеки QA`.
   10. If QA is explicitly requested, use the QA-gated pipeline: executor -> QA approval/rework -> GD context note, unless the user also asks GD for approval.
@@ -76,7 +79,8 @@ Only these chats are active in this project memory right now:
 - `Dev 1`
 - `Dev 2`
 - `Dev 3`
-- `GD`
+- `GD 1`
+- `GD 2`
 - `Important`
 - `Art / UI 1`
 - `Art / UI 2`

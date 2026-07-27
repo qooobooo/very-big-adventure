@@ -4,6 +4,279 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- DONE TRAVELER COMPASS ARTIFACT 2026-07-27 06:17 - Add Event artifact `Компас Странника`:
+  - Owner: `Dev 1`; GD owner: `GD 1`; QA was not requested.
+  - Added `traveler-compass`, count `1`, artifact icon `./assets/icons/artifact_traveler_compass_512.png`, and the exact approved description without a final period.
+  - All players contest with exactly `1d6 + current strength bonus + current step bonus`; tied leaders reroll through the same shared contest flow until one winner remains.
+  - The winner owns the persistent artifact; its Event copy stays out of discard while owned and is visible in host status, player cards popup, and phone snapshot.
+  - After the owner's ordinary movement roll, once per roll, the shared move-one-farther UI offers a voluntary `3`-coin payment for exactly `+1` step. It reuses normal/+1 board targets, phone actions, and bot evaluation and does not trigger `Чужая расплата`.
+  - Local config/CSV and live `Cards Config/event!A25:O25` are synced; exact readback found one matching id.
+  - Representative human browser flow, deterministic/static checks, syntax checks, and `git diff --check` PASS; forced tie/bot/connected-phone browser E2E was not run.
+
+- DONE OTHERS LOSS INCOME REWARD 3 2026-07-27 05:59 - Update `Чужая расплата` reward:
+  - Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+  - Exact text: `Когда кто-то другой теряет монеты, не совершая покупку, получи 3 монет`.
+  - Effect amount is now `3`; the existing rule covering any actual other-player negative coin delta except explicit purchases is unchanged.
+  - Local config/CSV and live `Cards Config/shop!F20:N20` are synced; count `2`, note, and formatting are preserved.
+  - No `src/game.js` logic change was needed because the reward already reads `card.effect.amount`.
+
+- DONE OTHERS LOSS INCOME NON-PURCHASE 2026-07-27 05:30 - Update `Чужая расплата`:
+  - Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+  - Exact text: `Когда кто-то другой теряет монеты, не совершая покупку, получи 5 монет`.
+  - Any actual negative coin delta of another player now triggers each active copy independently unless the delta category is `purchase`.
+  - Penalties, compulsory/optional payments, VS contributions, and transfers/theft qualify; actual-zero loss and the owner's own loss still do not.
+  - Explicit purchase exclusions cover ordinary Shop-card purchases, Купон Джо artifact purchase, extra-turn purchase, player-to-player Shop purchase, Купон Джо bulk purchase, face-down Shop buyback, and Аукцион Джо award payment.
+  - Local config/CSV and live `Cards Config/shop!L20:N20` are synced.
+  - Deterministic extracted-runtime checks PASS for loss/payment/transfer/default negative, purchase exclusion, two copies, zero actual loss, and own-source exclusion.
+  - Browser reference PASS: exact text, `x2`, console warnings/errors `0`; syntax/diff checks PASS.
+
+- DONE SHOP REACTIVE INCOME + AUTHORITATIVE COUNTS 2026-07-27 05:22:
+  - Owner: `Dev 2`; GD owner: `GD 1`; QA was not requested.
+  - Added Shop cards `strength-cluster` / `Скопление силы` count `5`, `speed-cluster` / `Скопление скорости` count `5`, `others-loss-income` / `Чужая расплата` count `2`, and `monster-victory-income` / `Охотничья доля` count `2`.
+  - Cluster bonuses use only face-up owned copies and exact totals `N*(N-1)*1` strength / `N*(N-1)*2` steps. Reactive income fires once per face-up owned copy and uses the ordinary receive path.
+  - `Чужая расплата` reacts only to actual categorized penalty loss; payments, bids, purchases, exchanges, transfers, own loss, and zero delta are excluded. `Охотничья доля` reacts to another player's ordinary/final/individual Event monster victory, excluding team Event, VS, and final PvP.
+  - Applied the superseding exact count list to all 20 playable Shop rows. Local config, CSV, and live `Cards Config/shop!A2:O21` match; total physical Shop deck size is `60`; no playable Shop rows exist outside the list.
+  - Canceled names/ids `Братство клинков`, `Лига скороходов`, `blade-brotherhood`, and `swiftfoot-league` are absent.
+  - Browser/runtime/syntax/static/diff checks PASS; screenshot `/private/tmp/shop-reactive-popup.png`; no temporary harness remains.
+
+- DONE FIELD2 PORTAL MOVE 2026-07-27 04:01 - Move marked Chaos Portal and apply follow-up field replacements:
+  - Owner: `Dev 1`; GD owner: `GD 1`; QA not involved.
+  - `field2 2-8` changed from `chaos-portal` through the requested intermediate `bad` state to final `event`; the newer user request supersedes the intermediate value.
+  - Screenshot-targeted `field2 3-10` changed from `green` to `chaos-portal`.
+  - Screenshot-targeted `field2 2-10` changed from `event` to ordinary `good`.
+  - Preserved `field2 13-0 = event`, the other Chaos Portal at `13-7`, every neighboring cell, and the exact `pathCells` / `route` order.
+  - Only board event mapping and the host JS cache key changed; cards, decks, portal mechanics, PnP, CSV, and Google Sheet were untouched.
+  - Checks/browser evidence are recorded in `project-memory/inbox/for-gd.md`.
+
+- DONE JOE AUCTION EVENT 2026-07-27 03:57 - Replace field `Аукцион Джо` with `Событие` and add Event card:
+  - Owner: `Dev 2`; GD owner: `GD 1`; QA was not involved.
+  - `field2 13-0` is now the ordinary `event` field; route/path order, coordinates, and neighboring cells are unchanged.
+  - Added ordinary Event card `event-joe-auction` / `Аукцион Джо`, effect `event-joe-auction`, count `1`, without icon/artifact/persistent fields.
+  - Card effect awaits the existing `resolveJoeAuction(player)`; auction implementation, bot/phone paths, bids, payment, three-card award, and Shop lifecycle were not duplicated or changed.
+  - Obsolete field-only dispatch/reference/help/history/bot/style wiring was removed while the reusable resolver/helpers remain.
+  - Local config/CSV and live `Cards Config/event!A24:O24` are synced; connector readback found exactly one matching row.
+  - Browser PASS: human phone bid plus bot bidding, winner paid once and received exactly three Shop items, bot-only completion, one Event discard, Event tile at `13-0`, console `0`.
+  - Checks PASS: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, static assertions, `git diff --check`; temporary harness absent.
+
+- DONE HISTORY SAVE DOPost RECOVERY 2026-07-27 04:01 - `Сохранить` appends Games Log rows again:
+  - Owner: `Dev 3`; GD owner: `GD 2`; QA is not involved.
+  - Follow-up 2026-07-27 04:23:
+    - User still reproduced no new Sheet row because the long-running Node process on port `5173` had loaded the pre-fix `server.js`; static files were current, but the in-memory proxy handler was stale.
+    - `GD 2` restarted only that exact server process from the project root. The existing browser game state remained open.
+    - The same open page then created `Games` ID `64` and exactly two matching `Players` ID `64` rows for `Пес` and `Кот`.
+    - No additional game-code change was required; the deployed fix was correct but had not been loaded by the active Node process.
+  - Completed:
+    - Replaced the stale Apps Script URL in both `src/game.js` and `server.js` with active Version 5 deployment `AKfycbwOAc0oYzUPkPII4Q40lJ086TKKr-xjqE0x_pXh-hgFXSARm8bZQFz6qqF3h2fXnc7Miw`.
+    - Fixed `server.js postJson(...)` redirect handling: `301` / `302` / `303` follow as `GET`, while `307` / `308` preserve the original method/body.
+    - Verified the proxy receives Apps Script JSON and reports `verified: true`; an HTML `HTTP 200` or direct `no-cors` send is still not treated as confirmed success.
+    - Manual browser `История -> Сохранить` on the fresh server created `Games` ID `61` and exactly two matching `Players` ID `61` rows for `Пес` and `Кот`.
+    - A minimal proxy diagnostic was accepted by the permissive live handler as an empty regular-game row with ID `62`; it remains in the Sheet and was not silently deleted.
+  - Checks PASS: `node --check server.js`; `node --check src/game.js`; `node --check project-memory/apps-script-auto-playtest-sheets-patch.js`; `git diff --check`.
+  - Honest scope: manual save is confirmed end-to-end; the readback row has `finished = false`, so this run does not separately claim a finished-game autosave test. Auto routing code was not changed.
+
+- DONE MONSTER RAGE UPDATE 2026-07-27 02:21 - Ярость монстров x10 + draw Event:
+  - Owner: `Dev 1`; GD owner: `GD 1`; QA not involved.
+  - `monster-rage` now has `count: 10` and exact text `Все монстры получают +1 к силе. Возьми ещё 1 карту Событие` in local config/CSV.
+  - Existing permanent monster-strength stacking remains unchanged; every activation then awaits one shared `drawAndApplyCard(player, "event", "Событие")`, including recursive Rage chains.
+  - Browser PASS: real `Rage -> Rage -> Справедливость` flow stacked the indicator to `+2` and opened the third Event; console warnings/errors `0`.
+  - Runtime/static PASS: normal Event discard, artifact/persistent ownership, physical count/text, recursive shared lifecycle, and unchanged `field2 11-9 = all-or-nothing`.
+  - Checks PASS: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, targeted harnesses, `git diff --check`.
+  - Live Sheet is read-only in this session. Pending exact write: `Cards Config/event!M8:N8` = `10` | `Все монстры получают +1 к силе. Возьми ещё 1 карту Событие`.
+
+- DONE EVENT CARD 2026-07-27 01:52 - Add `Игра Джо`:
+  - Owner: `Dev 2`; GD owner: `GD 1`; QA not involved.
+  - Added one ordinary `event` card: id `event-joe-game`, title `Игра Джо`, effect `event-joe-game`, count `1`, non-artifact/non-persistent.
+  - Effect dispatch contains only `await resolveJoeNumberGame(player, { sourceLabel: "Игра Джо" })`; existing assignment, 1d6, two-Shop-card reward, one-by-one human claim, automatic bot claim, phone action, finite deck, and discard paths are reused.
+  - Local config and CSV are synced; `field2 11-9` remains `all-or-nothing`; no old active `joe-game` field was restored.
+  - Browser PASS: active/other/unassigned outcomes, phone actions, one-by-one two-card claim, bot auto-claim, normal Event discard, console `0`.
+  - Syntax/static/diff checks PASS and temporary harness is absent.
+  - Live read confirmed the current 21-row Event table and absent id; exact pending append is `event!A23:O23`. This session has no Sheets write/batch-update tool, so write/readback is the only remaining external item.
+
+- DONE ALL OR NOTHING SINGLE MODAL UI 2026-07-27 02:22 - Remove roll-context window and keep one compact choice modal:
+  - Completed by `Dev 2` for `GD 2`; QA was not involved.
+  - Initial, safe, continue, cash-out, and bust all use only the compact `.choice-panel-all-or-nothing` modal family; `resolveAllOrNothing(...)` has no `showActionPrompt(...)` path.
+  - Scoped desktop/mobile CSS is complete; `390x844` safe and bust actions fit above the turn controls with no clipping.
+  - Phone progression and full history passed, including disabled `Банк сгорел` plus the only active `Уйти` action.
+  - Deterministic host/phone/reset/bot scenarios and syntax/static/diff checks passed; six screenshots are in `/private/tmp/all-or-nothing-{initial,safe,bust}-{desktop,mobile}.png`; no temporary harness remains.
+  - Requested by: user via `GD 2`, with screenshots `1` (remove) and `2` (keep).
+  - Ownership:
+    - GD owner: `GD 2` — exact UI contract and user handoff.
+    - Implementation owner: `Dev 2` — finish and verify the already-written single-modal refactor.
+    - Dev 3 wrote the functional `pendingCardChoice` refactor, then its turn stopped producing tool calls before scoped CSS/cache keys/smoke. GD 2 sent Dev 3 an explicit stop; Dev 2 now owns all remaining edits and the final handback.
+    - Preserve the already-present Event-card changes and Dev 3's functional refactor. Stay out of live Sheet scope except for Dev 2's separately owned Event-card follow-up.
+    - `GD 1`, `Dev 1`, `Dev 3`, Art / UI, and QA are not owners of this UI task now.
+  - User requirement:
+    - Remove the large `roll-context` / `action-prompt` window shown in screenshot 1 from the complete `Все или ничего` flow.
+    - Use only the compact dark-fantasy choice modal shown in screenshot 2 for the mandatory first roll, every post-roll choice, and any required end-state acknowledgement.
+    - Put this exact rule text inside that modal:
+      - `Брось 1 кубик и отложи столько монет, сколько выпало на кубике. Можешь забрать эти монеты себе, либо бросить кубик ещё раз и отложить ещё монеты. Бросать кубик можешь сколько угодно раз, но если выпадет одно число 2 раза подряд, верни все отложенные монеты и закончи ход`
+  - Single-modal state contract:
+    1. Before the first roll, open the compact `choice-panel-all-or-nothing` modal immediately with the exact rule, bank `0`, last result `—`, and one primary action `Бросить кубик`.
+    2. Do not call/show `showActionPrompt(...)`, the large roll-context card, or a second informational window before that roll.
+    3. During each dice animation, no second modal may appear. After the roll, return to/update the same compact modal family.
+    4. After a safe roll, show the exact rule plus two actions only: `Забрать N монет` and `Бросить ещё`.
+    5. On `Бросить ещё`, close/update the same modal, animate the roll, then show that compact modal again with the new bank and last number; do not insert the removed window between these states.
+    6. Cash-out may close the modal and finish through normal log/toast feedback; it must not open the removed large result window.
+    7. On a consecutive duplicate/bust, keep the same compact modal open and show exactly:
+       - do not show the sentence `X выпала 2 раза подряд`;
+       - instead, show the complete roll history as a prominent rounded status chip in the exact compact format `Броски: 6, 2, 2` (using the actual full sequence);
+       - the left action-card position that normally contains `Забрать N монет` becomes a clearly non-interactive status card with text `Банк сгорел`;
+       - the right action-card position that normally contains `Бросить ещё` becomes the only actionable button `Уйти`;
+       - `Уйти` closes the compact modal and ends the field/turn normally;
+       - no `Забрать`, `Бросить ещё`, `Далее`, or large roll-context/result window may appear in the bust state.
+    8. Preserve reset-safe Promise cleanup and automatic bot resolution.
+  - Visual direction from `game-ui-frontend`:
+    - Keep the existing dark fantasy material language: dark green/brown glass, warm gold contour, readable cream text, restrained glow.
+    - Match screenshot 2's wide, compact hierarchy rather than the current large nearly full-square overlay.
+    - The exact rule is a readable paragraph below the heading, not a giant title and not mixed into one status sentence.
+    - Below the rule, render clearly separated status cards/chips:
+      - `Банк` with a large gold coin value using the shared coin renderer;
+      - `Последнее число` with a large die/value treatment; use `—` before the first roll.
+      - `Броски` with the complete comma-separated sequence after rolls begin, matching the supplied visual example such as `Броски: 6, 2, 2`.
+    - Remove `Реальные монеты не изменились` from the main summary; bank, latest number, and full roll history are the focal data.
+    - Buttons stay as in screenshot 2: two equal columns on desktop after a safe roll, one column before the mandatory first roll; stack cleanly on narrow/mobile layouts.
+    - Add selectors scoped to `.choice-panel-all-or-nothing` / `.all-or-nothing-*`; do not globally restyle every choice dialog.
+    - Desktop target: wide compact dialog that does not recreate screenshot 1's huge overlay. Mobile target: readable rule/statuses/buttons with no clipping or horizontal overflow.
+  - Phone/controller:
+    - Phone must receive the same state progression: initial `Бросить кубик`, then exactly `Забрать N монет` / `Бросить ещё`, refreshed bank and last number after continuing, and clean completion/bust.
+    - In the bust state, phone must show the complete roll sequence instead of a duplicated-value sentence, a non-actionable `Банк сгорел` status, and only the `Уйти` action.
+    - Do not change the controller protocol if the shared card-choice actions already cover it.
+  - Mechanics guardrails:
+    - Do not change pot math, consecutive-only bust logic, coin award semantics, bot scoring, dice control, field placement/id, generalized Joe mini-game, Event card, card config/CSV/Google Sheet, Shop flows, route, save/export, or unrelated UI.
+    - Preserve all unrelated dirty-tree changes and bump cache keys only where required.
+    - QA is not involved because the user did not request it.
+  - Required checks:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static: `resolveAllOrNothing(...)` has no active `showActionPrompt(...)` / large roll-context path; exact requested rule text appears in the compact modal; all mechanics paths remain.
+    - Browser visual smoke at desktop around `1280x720` and phone around `390x844`:
+      - screenshot-1 window never appears;
+      - initial compact modal shows exact rule, bank `0`, last `—`, one roll action;
+      - safe roll updates the same modal to bank/last plus exactly two choices;
+      - continue updates bank/last without an intermediate large modal;
+      - bust shows the full sequence such as `Броски: 6, 2, 2`, non-interactive `Банк сгорел`, and the only action `Уйти`; it does not show `X выпала 2 раза подряд`; cash-out finishes without the removed window;
+      - no clipping/overflow; playfield remains visible around the compact dialog; console errors `0`.
+    - Re-run at least `3 -> take`, `3,5,3 -> take`, `3,3 -> bust`, phone continue/cash-out, reset mid-bank, and bot completion to prove UI refactor did not change mechanics.
+  - Handback:
+    - Mark this task DONE, update `project-memory/updates.md` and `project-memory/inbox/for-gd.md`, and send the final context handback directly to active `GD 2` thread `019fa065-8ae7-76c1-9974-ffcef9cbf541`.
+
+- DONE PLAYER HISTORY STATS 2026-07-27 00:56 - Correct coins, player interactions, and max owned dice:
+  - Owner: `Dev 1`.
+  - Completed:
+    - `Монеты +` / `Монеты -` now use actual balance deltas; starting coins are excluded and losses stop at zero.
+    - `Удвой монеты` and the VS pot now enter history without changing their exact/no-receive-bonus gameplay rules.
+    - Renamed `Эффекты игроков` to `Воздействия других игроков`; fixed reversed `Бедняцкий налет` and same-cell duel Shop victims, removed neutral `Равновесие`, and covered successful audited direct mass/choice effects without counting no-ops.
+    - `Макс. кубиков` now tracks the player's owned/current dice characteristic from `totalDiceForPlayer(...)`, initialized at game start and updated by real dice-stat gains; special rolls and rerolls do not affect it.
+  - Files: `src/game.js` and project-memory handback files.
+  - Checks:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check`.
+    - Targeted runtime/static history checks passed, including the per-player coin invariant.
+    - In-app browser fresh-game history smoke passed with zero console errors.
+  - QA was not involved per task instruction.
+
+- DONE ALL OR NOTHING FIELD 2026-07-27 01:15 - Replace `Игра Джо` with `Все или ничего`:
+  - Requested by: user via `GD 2`.
+  - Ownership:
+    - GD owner: `GD 2` — mechanic contract and user handoff.
+    - Implementation owner: `Dev 2` — all runtime, UI, phone, bot, field metadata, style-selector, cleanup, and verification work in this task.
+    - `GD 1`, `Dev 1`, `Dev 3`, Art / UI, and QA are not owners of this task.
+  - Completed by `Dev 2`:
+    - `field2 11-9` now uses `all-or-nothing`; host, phone, logs, roll context, reference/manual activation, history label, bot scoring, tooltip, icon alt, and CSS mapping use `Все или ничего`.
+    - The temporary bank changes no real coins before cash-out; only consecutive duplicate rolls bust; reset clears an unfinished bank safely.
+    - Former Joe Game field wiring was removed, while the old mini-game was generalized behind reusable `resolveJoeNumberGame(...)` helpers for Dev 1's future Event card. The Event card itself was not added.
+    - Shared `claimShopCardsOneByOne(...)` remains intact for Coupon and other Shop flows.
+    - Deterministic host scenarios, phone action refresh/cash-out, bot completion, production random-roll smoke, source checks, and zero-console-error checks passed. QA was not involved.
+  - User-facing rule:
+    - Field title: `Все или ничего`.
+    - Field text: `Брось 1 кубик и отложи столько монет, сколько выпало. Можешь забрать все отложенные монеты или бросить ещё раз. Если одно число выпадет 2 раза подряд, верни все отложенные монеты и закончи ход`.
+  - Placement and identity:
+    - Replace `field2 11-9: "joe-game"` with a new event type such as `field2 11-9: "all-or-nothing"`.
+    - Remove `joe-game` from active field/reference/tooltip/history/bot/dispatch lists and replace those paths with `all-or-nothing`.
+    - Remove the old Joe Game only from active field/reference/tooltip/history/bot/dispatch paths.
+    - Coordination addendum from `GD 1`: a future Event card `Игра Джо` will reuse the former number-assignment / Joe-die / two-Shop-card reward mini-game. Preserve those helpers when safe, preferably as reusable/generalized helpers rather than active field-specific wiring.
+    - Do not implement the Event card `Игра Джо` in this task; it is owned separately by `Dev 1` after this handback.
+    - Do not remove shared multi-claim helpers still used by `Купон Джо` or other Shop flows.
+  - Exact mechanic contract:
+    1. Landing player must make the first `1d6` roll; there is no take/leave choice before it.
+    2. The field has a temporary bank/pot starting at `0`; do not credit the player's real coins during the roll chain.
+    3. On a safe roll, add the rolled value to the temporary pot and show the new pot plus the rolled sequence/previous roll.
+    4. After every safe roll, offer exactly two actions to the landing player: `Забрать N монет` and `Бросить ещё`.
+    5. `Забрать N монет` credits the whole pot exactly once through the normal coin-reward path, then the field resolution ends and the turn ends normally.
+    6. If the new roll equals the immediately previous roll, the player busts: the whole temporary pot is lost/returned to the bank, the player's real coin balance does not increase, and the field resolution/turn ends immediately.
+    7. Only consecutive equality busts. A sequence such as `3, 5, 3` is safe and creates a pot of `11`; `3, 3` and `3, 5, 5` bust.
+    8. Human players may continue without an artificial roll-count limit. Keep normal reset/abort safety and do not leave pending prompts after New Game/reset.
+  - UI, phone, log, and bots:
+    - Reuse the shared dice animation/action-prompt/roll-context paths so the host clearly shows the roll, current pot, previous number, safe result, cash-out, or bust.
+    - The two post-roll actions must work from the main UI and phone/controller through the shared action path.
+    - Logs/toasts must distinguish: roll added to pot, voluntary cash-out, and duplicate bust with zero reward.
+    - Bots must resolve the field automatically and terminate. Use current bot personality risk/economy weights; a valid simple choice score is:
+      - take utility based on current pot;
+      - roll-again utility based on the one-step expectation `(5 * pot + 21 - previousRoll) / 6`, adjusted by `personality.risk`.
+      - Exact scoring can vary, but conservative and risky bots should not all make identical choices and no bot may loop forever outside normal probability/autorun guards.
+    - Update cell scoring/nearby-interest scoring so bots understand the new coin-risk field instead of Shop-card value.
+  - Visible field metadata/style:
+    - Update board title, tooltip, field-effect text, history label, reference entry, and manual reference-field activation to `Все или ничего` and the new rule.
+    - Rename relevant CSS/event icon selectors from `joe-game` to `all-or-nothing` and preserve the current tile readability/layout.
+    - Reuse `assets/icons/joe_game_512.png` for this implementation as an existing dice/game-table visual; change visible alt/title copy to `Все или ничего`. Do not create or request a new asset in this task.
+    - Bump cache keys only where required for changed runtime/CSS.
+  - Guardrails:
+    - Do not change unrelated fields, route order, movement, dice math, player dice bonuses, battle rolls, card configs, CSV, Google Sheet, Shop deck/inventory, `Купон Джо`, `Аукцион Джо`, save/export, or unrelated styles/assets.
+    - The temporary pot comes from the game/bank; it is not paid from the player's existing coins.
+    - Work over the current dirty tree and preserve all unrelated local changes.
+    - QA is not involved because the user did not request it.
+  - Required checks:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` if touched.
+    - `git diff --check`.
+    - Static scan: `field2 11-9` is `all-or-nothing`; no active `joe-game` field mapping/copy/dispatch remains; shared Shop multi-claim support still exists for its other consumers.
+    - Deterministic runtime scenarios:
+      - first roll `3`, take -> exactly `+3` coins once;
+      - `3, 5, 2`, take -> exactly `+10` coins once;
+      - `3, 3` -> `+0`, field/turn ends;
+      - `3, 5, 5` -> `+0`, prior pot is lost;
+      - `3, 5, 3`, take -> exactly `+11`, proving non-consecutive repeats are allowed;
+      - no real coins change before cash-out.
+    - Browser smoke if available: `field2 11-9` visible as `Все или ничего`; human take/continue/bust; phone action refresh; at least one bot/autorun completion; no console errors.
+  - Handback:
+    - Update `project-memory/updates.md`, `project-memory/inbox/for-dev.md`, and `project-memory/inbox/for-gd.md`.
+    - Send the completed context handback directly to the active `GD 2` thread `019fa065-8ae7-76c1-9974-ffcef9cbf541`; do not send it generically to `GD 1`.
+    - In that handback, list exactly which former Joe Game helpers were preserved, generalized, or removed and why.
+    - `GD 2` will forward the resulting helper inventory directly to `GD 1` thread `019e9f0c-3576-7862-a4b6-7e0116e27081` so `Dev 1` can implement the separate Event card without duplicating or guessing the old mini-game contract.
+
+- DONE FINAL SCORE 2026-07-27 00:21 - 1 очко за каждый шаг игрока:
+  - Owner: `Dev 1`.
+  - Source task: `ACTIVE FINAL SCORE 2026-07-27 - 1 очко за каждый шаг игрока`.
+  - Completed:
+    - Added the final displayed `Шаги` value from `playerStepBonus(player)` to every player's final score.
+    - Added `steps` to total/winner math, final summary, history/winner/chronicle breakdowns, and saved player snapshot/export data.
+    - Kept ordinary play and autorun on the same `finalBattleScore(...)` path.
+  - Files: `src/game.js`, `styles.css`, `index.html`.
+  - Checks:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check`.
+    - Runtime scenarios: `Шаги +0`, `Шаги +7`, per-player values, and winner change all passed.
+    - In-app browser autorun `1/1` passed with winner/history/chronicle/snapshot verification and zero console errors.
+  - QA was not involved per task instruction.
+
+- DONE MULTI SHOP TAKE UX 2026-07-27 00:20 - Получение нескольких карт Лавки Джо по одной:
+  - Owner: `Dev 2`.
+  - Source task: `ACTIVE MULTI SHOP TAKE UX 2026-07-26 - Получение нескольких карт Лавки Джо по одной`, including urgent `Купон Джо` blocker addendum.
+  - Completed:
+    - Added one-screen, one-card-at-a-time claiming for human `Игра Джо` rewards and `Купон Джо` take-all offers.
+    - Fixed coupon special-action mapping so `__joe_coupon_all__` no longer resolves to `null` / decline.
+    - Added physical-copy claim ids, double-click protection, phone action refresh, and New Game/reset cleanup.
+    - Kept bots automatic and left `Аукцион Джо` automatic after bidding because it has no claim screen.
+  - Files: `src/game.js`, `index.html`.
+  - Checks:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - Deterministic in-app browser smoke passed coupon success/decline, rapid double click, phone second claim, Joe Game `2 -> 1 -> 0`, reset cleanup, and zero console errors.
+  - QA was not involved per task instruction.
+
 - DONE PLAYER CARDS POPUP BUG 2026-07-09 - Карты игрока показывают все owned cards/statuses:
   - Owner: `Dev 1`.
   - Source task:

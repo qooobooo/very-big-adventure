@@ -61,7 +61,7 @@ Important files:
 - `project-memory/handoff.md` — stable project handoff and current architecture notes.
 - `project-memory/updates.md` — newest project news, newest entries at the top.
 - `project-memory/inbox/for-dev.md` — tasks for Dev roles.
-- `project-memory/inbox/for-gd.md` — tasks/questions for GD.
+- `project-memory/inbox/for-gd.md` — shared tasks/questions for `GD 1` and `GD 2`.
 - `project-memory/inbox/for-qa.md` — QA tasks and approval gates.
 - `project-memory/inbox/for-ui.md` — Art / UI tasks.
 - `project-memory/inbox/for-important.md` — coordination/memory tasks.
@@ -76,7 +76,8 @@ Current active roles:
 - `Dev 1`: main implementation.
 - `Dev 2`: additional implementation.
 - `Dev 3`: additional implementation / isolated tasks.
-- `GD`: game design, rules, balance, core loop, implementation-ready specs.
+- `GD 1`: main game-design chat and direct continuation of the former `GD`.
+- `GD 2`: additional game-design chat for parallel work by explicit assignment.
 - `Art / UI 1`: visual assets and UI direction.
 - `Art / UI 2`: additional visual assets and UI direction.
 - `Art / UI 3`: additional visual assets and UI direction.
@@ -87,15 +88,15 @@ Current active roles:
 
 Mandatory process:
 
-1. GD creates an implementation-ready task.
+1. The assigned GD owner (`GD 1` or `GD 2`) creates an implementation-ready task.
 2. Executor completes the task and writes a handback.
 3. Executor updates `project-memory/updates.md`.
 4. Executor sends result to QA.
 5. QA is the first approval gate:
    - if failed, QA sends reproducible rework back to executor;
-   - if approved, QA sends the approved result to GD.
-6. GD gives final approval or sends rework back.
-7. A task is not final until GD explicitly approves it.
+   - if approved, QA sends the approved result to the assigned GD owner.
+6. The assigned GD owner gives final approval or sends rework back.
+7. A task is not final until the assigned GD owner explicitly approves it.
 
 Do not treat Dev handback as final acceptance.
 
@@ -205,7 +206,7 @@ Archive rename format:
 
 Examples:
 
-- `GD - 07.06`
+- `GD 1 - 07.06`
 - `Dev 3 - 07.06`
 - `QA 2 - 07.06`
 - `Art / UI 2 - 07.06`

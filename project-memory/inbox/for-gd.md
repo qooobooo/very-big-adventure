@@ -4,6 +4,258 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-07-27 06:17 - Dev 1 direct context handback to `GD 1`: `TRAVELER COMPASS ARTIFACT`
+  - Implemented Event artifact `traveler-compass` / `Компас Странника`, count `1`, with exact approved description and `./assets/icons/artifact_traveler_compass_512.png`.
+  - Contest path: all players roll exactly `1d6` and add authoritative current strength plus step bonuses; tied leaders reroll through the generalized shared contest helper until one winner remains.
+  - Winner receives persistent ownership. The exact Event copy is protected from discard while owned and appears in host chips, player cards popup, and phone snapshot.
+  - Owner's ordinary movement roll now offers the existing normal/+1 board-preview decision once: pay `3` coins for exactly `+1` step or decline. The payment uses the authoritative voluntary-purchase exclusion, so `Чужая расплата` does not react.
+  - Reused the existing host, phone `move-farther`, and bot post-roll paths; battle/Event/tie-break/contest rolls do not enter this movement hook.
+  - Live Sheet PASS: `Cards Config/event!A25:O25` exact readback matches id/title/effect/dice/cost/steps/artifact/count/description; search found exactly one matching id.
+  - Browser PASS for a representative two-human contest, artifact ownership/popup, normal movement offer, two board targets, payment, and boosted movement; console errors `0`. Controller page loads cleanly and common phone/bot/tie paths pass source assertions; forced connected-phone, bot contest, and tied-reroll browser E2E were not run.
+  - Checks PASS: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `node --check server.js`, deterministic contract assertions, and `git diff --check`.
+  - Files: `src/game.js`, `src/cards.config.js`, `cards-google-sheet.csv`, `index.html`, `assets/icons/artifact_traveler_compass_512.png`, and project-memory handback files.
+  - Blockers: none.
+
+- 2026-07-27 05:59 - GD 2 context note: `ЧУЖАЯ РАСПЛАТА — REWARD 3`
+  - Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+  - Exact player-facing text is now `Когда кто-то другой теряет монеты, не совершая покупку, получи 3 монет`.
+  - Each active copy now awards `3` coins; the existing non-purchase-loss trigger and all purchase exclusions are unchanged.
+  - `src/cards.config.js`, `cards-google-sheet.csv`, and live `Cards Config/shop!F20:N20` are synced.
+  - Live readback confirms amount `3`, exact description, unchanged count `2`, unchanged implementation note, and preserved formatting.
+  - No game-logic edit was required; the amount remains data-driven through `card.effect.amount`.
+
+- 2026-07-27 05:54 - Art / UI 1 direct context handback to `GD 1`: `Компас Странника` artifact icon
+  - Created `assets/icons/artifact_traveler_compass_512.png` for the new Event artifact.
+  - Visual: compact golden travel compass with a crisp compass rose, warm artifact lighting, dark rim definition, and a purple gemstone/needle accent matching the current artifact family.
+  - No title or rules text is baked into the asset; no character or shield is used.
+  - Scope stayed visual-only; gameplay, configs, CSV, Google Sheet, cache keys, and unrelated assets were not changed.
+  - Checks PASS: PNG `512x512 RGBA`; transparent corners/background; full-size and `48x48` chip review; `git diff --check`.
+
+- 2026-07-27 05:30 - GD 2 context note: `ЧУЖАЯ РАСПЛАТА — NON-PURCHASE LOSS`
+  - Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+  - Exact player-facing text is now `Когда кто-то другой теряет монеты, не совершая покупку, получи 5 монет`.
+  - Runtime contract:
+    - each face-up owned copy independently awards its normal `5` coins when another player has an actual negative coin delta;
+    - all negative categories qualify except explicit `purchase`;
+    - purchases of Shop cards/artifacts/extra turns, Shop buybacks, Coupon bulk offers, and Joe Auction awards are excluded;
+    - actual-zero loss and the source player's own card remain excluded.
+  - Local `src/cards.config.js`, `cards-google-sheet.csv`, and live `Cards Config/shop!L20:N20` are synced and read back.
+  - Deterministic runtime checks PASS for `loss`, `payment`, `transfer`, default negative, purchase exclusion, two copies, zero balance, and own source.
+  - Browser reference PASS: exact text, count `x2`, console warnings/errors `0`.
+  - Checks PASS: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, `git diff --check`; temporary test script removed.
+  - Files: `src/game.js`, `src/cards.config.js`, `cards-google-sheet.csv`, `index.html`, and project-memory handback files.
+
+- 2026-07-27 05:22 - Dev 2 / GD 1 context handback: `SHOP REACTIVE INCOME + AUTHORITATIVE COUNTS`
+  - Ownership: GD owner `GD 1`; implementation owner `Dev 2`; QA was not requested.
+  - New cards implemented:
+    - `strength-cluster` / `Скопление силы`, count `5`, exact face-up total `N*(N-1)*1` strength.
+    - `speed-cluster` / `Скопление скорости`, count `5`, exact face-up total `N*(N-1)*2` steps.
+    - `others-loss-income` / `Чужая расплата`, count `2`, one ordinary receive trigger per face-up owned copy on another player's actual categorized penalty loss.
+    - `monster-victory-income` / `Охотничья доля`, count `2`, one ordinary receive trigger per face-up owned copy on another player's individual monster victory.
+  - Count-only sync: `battle-plus=7`, `step-plus=7`, `green-fields-plus5=5`, `monster-strength-plus3=3`, and all twelve other pre-existing Shop ids in the authoritative list are `2`.
+  - Trigger coverage: actual-zero, own loss/victory, payment, purchase, bid, exchange, and transfer do not reward; ordinary/final monsters and individual `Меч Героя` do; team Event, VS, and final PvP do not. Multiple owners/copies resolve independently, and each copy gets the normal receive bonus independently.
+  - Data audit: all requested pre-existing rows, including `event-income`, `monster-victory-strength`, and `monster-victory-steps`, were present. No requested row remains missing/pending. No playable Shop row exists outside the final 20-id list.
+  - Physical Shop deck: local config `20` rows / `60` copies; CSV `20` rows / `60` copies; live Sheet exact readback `20` rows / `60` copies. New live rows are `Cards Config/shop!A18:O21`; existing counts updated at `M2:M17`; ids are unique.
+  - Canceled rename confirmation: `Братство клинков`, `Лига скороходов`, `blade-brotherhood`, and `swiftfoot-league` are absent locally, in CSV, and in live Sheet. No erroneous live write occurred before the corrected names were known.
+  - Browser PASS: host sidebar immediately showed `+6` strength / `+12` steps for three copies; player cards popup grouped `x3/x3/x2/x1`; phone snapshot matched; bot valuations were finite; reset canceled pending reward; fresh browser console warnings/errors `0`. Screenshot: `/private/tmp/shop-reactive-popup.png`.
+  - Checks PASS: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, deterministic reactive/cluster/data scripts, static finite-deck audit, and `git diff --check`. Temporary harness/scripts are absent.
+  - Files: `src/game.js`, `src/cards.config.js`, `cards-google-sheet.csv`, `index.html`, `project-memory/updates.md`, `project-memory/inbox/for-dev.md`, `project-memory/inbox/for-gd.md`.
+
+- 2026-07-27 04:01 - Dev 1 / GD 1 context handback: `FIELD2 PORTAL MOVE`
+  - Ownership: GD owner `GD 1`; implementation owner `Dev 1`; QA was not requested.
+  - Exact mapping change:
+    - portal target `field2 3-10`: `green` -> `chaos-portal`;
+    - former portal `field2 2-8`: `chaos-portal` -> intermediate `bad` -> final `event` after the newer user request;
+    - marked Event `field2 2-10`: `event` -> `good`.
+  - Preserved Dev 2's `field2 13-0 = event`, the second existing Chaos Portal at `13-7`, all neighboring event mappings, and the exact `pathCells` / `route` order.
+  - Bumped only the host `src/game.js` cache key; no portal mechanics, cards/decks, PnP, CSV, or Google Sheet data changed.
+  - Checks PASS: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`; exact static readback of all five protected/changed coordinates and two Chaos Portal cells.
+  - Browser PASS on `field2`: `2-8` rendered `Событие`, `2-10` rendered `Хорошо`, `3-10` rendered `Портал хаоса`, `13-0` remained `Событие`, `13-7` remained `Портал хаоса`; console warnings/errors `0`.
+  - Screenshot: `/private/tmp/field2-final-four-changes-dev1.png`.
+
+- 2026-07-27 04:01 - Dev 3 / GD 2 context handback: `HISTORY SAVE DOPost RECOVERY`
+  - Ownership: GD owner `GD 2`; implementation owner `Dev 3`; QA was not requested.
+  - Follow-up 2026-07-27 04:23:
+    - User's repeated failure was reproduced against the still-running pre-fix Node process on `5173`; it served current static assets but retained stale proxy code in memory.
+    - After restarting that exact server from the project root, the same already-open game page saved successfully as `Games` ID `64` with two matching `Players` ID `64` rows.
+    - The follow-up required no additional game-code change.
+  - Root causes:
+    - the URL hardcoded in `src/game.js` and `server.js` pointed to a deployment that returned an HTML error `Не удалось найти функцию скрипта: doPost`;
+    - `server.js postJson(...)` incorrectly repeated `POST` to the Google `302` result URL, which accepts `GET` and otherwise returned `405`.
+  - Completed:
+    - both constants now use active Version 5 deployment `AKfycbwOAc0oYzUPkPII4Q40lJ086TKKr-xjqE0x_pXh-hgFXSARm8bZQFz6qqF3h2fXnc7Miw`;
+    - `301` / `302` / `303` follow as `GET`; `307` / `308` retain the original method/body;
+    - proxy live response is parsed as JSON and confirmed with `verified: true`.
+  - Live readback PASS:
+    - baseline `Games` max ID was `60`;
+    - one browser `История -> Сохранить` created `Games!A62:Y62` with ID `61`;
+    - `Players!A152:AI153` contains exactly two matching ID `61` rows for `Пес` and `Кот`.
+    - A separate minimal proxy diagnostic created an empty regular-game row with ID `62`; it remains in the Sheet pending an explicit cleanup request.
+  - Checks PASS: `node --check server.js`; `node --check src/game.js`; `node --check project-memory/apps-script-auto-playtest-sheets-patch.js`; `git diff --check`.
+  - Scope note: manual save is confirmed; the test row is `finished = false`, so finished-game autosave is not separately claimed. Auto routing code was unchanged.
+
+- 2026-07-27 03:57 - Dev 2 context handback to `GD 1`: `JOE AUCTION EVENT`
+  - Ownership: GD owner `GD 1`; implementation owner `Dev 2`; QA was not requested.
+  - Completed:
+    - Replaced the only active `joe-auction` field, `field2 13-0`, with the ordinary `event` field; route/path order, coordinates, and neighboring cells are unchanged.
+    - Added ordinary Event card `event-joe-auction` / `Аукцион Джо`, effect `event-joe-auction`, count `1`, without icon/artifact/persistent fields.
+    - The effect awaits the single existing `resolveJoeAuction(player)` implementation. Bidding order, bids/pass, winner payment, three-Shop-card award, bot behavior, phone actions, replenishing Shop source copies, and shared multi-claim code remain reused.
+    - Removed only obsolete field-specific Joe Auction board/reference/help/history/bot/style wiring.
+  - Browser PASS:
+    - Real Event draw opened exactly three Shop cards; human bid through the phone action path, the bot followed its normal bid path, and the winner paid `20 -> 0` once and received exactly three owned Shop items.
+    - Three source offers returned to Shop discard; the Event card entered Event discard exactly once.
+    - Bot-only auction completed automatically; `field2 13-0` rendered as `Событие`; console warnings/errors were `0`.
+  - Live Sheet PASS:
+    - Added `event-joe-auction` at `Cards Config/event!A24:O24`.
+    - Exact connector readback matches local id/title/effect/count/description.
+    - Exact search across `event!A1:O30` returned one matching row, so there is no duplicate.
+  - Checks PASS: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; static field/card/resolver/cache assertions; `git diff --check`; no temporary harness remains.
+  - Files: `src/game.js`, `src/cards.config.js`, `cards-google-sheet.csv`, `styles.css`, `index.html`, `controller.html`, and project-memory handback files.
+
+- 2026-07-27 02:22 - Dev 2 context handback to `GD 2`: `ALL OR NOTHING SINGLE MODAL UI`
+  - Completed:
+    - Removed the large roll-context/action-prompt window from the complete `Все или ничего` flow; initial, safe, continue, cash-out, and bust all stay in the compact `pendingCardChoice` modal family.
+    - The exact requested rule remains visible above dedicated `Банк`, `Последнее число`, and complete `Броски` states.
+    - Safe state exposes only `Забрать N монет` / `Бросить ещё`; bust exposes disabled `Банк сгорел` plus the only active action `Уйти`, without the duplicate-value sentence or `Далее`.
+    - Phone gets the same bank/last/history progression through the existing `card-choice` protocol; no protocol changes were made.
+    - Added scoped dark-fantasy styling and a compact `390x844` branch that keeps both stacked actions fully visible above the turn controls.
+  - Browser/mechanics PASS:
+    - Desktop `1280x720` and mobile `390x844`: initial/safe/bust are readable, unclipped, and leave the playfield visible.
+    - `3 -> +3`; `3,5,2 -> +10`; `3,5,3 -> +11`; `3,3 -> +0`; `3,5,5 -> +0`; no real coins before cash-out.
+    - Phone continue/cash-out/bust, reset mid-bank, and bot auto-completion passed.
+    - Screenshots: `/private/tmp/all-or-nothing-{initial,safe,bust}-{desktop,mobile}.png`.
+  - Checks PASS: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; static contract/harness assertions; `git diff --check`; production reload shows no test harness.
+  - Console note: in-app Browser completed all flows without tool-visible runtime failures; standalone Playwright console capture was unavailable because macOS denied `MachPortRendezvous`.
+  - Preserved: Event `Игра Джо`, `resolveJoeNumberGame(...)`, Shop multi-claim, all pot/bust/award/bot math, card config/CSV/Sheet, and unrelated dirty-tree work. QA was not requested.
+
+- 2026-07-27 02:21 - Dev 1 context handback to `GD 1`: `MONSTER RAGE UPDATE - x10 + draw Event`
+  - Completed locally:
+    - `monster-rage` / `Ярость монстров` now has 10 physical copies.
+    - Exact card text: `Все монстры получают +1 к силе. Возьми ещё 1 карту Событие`.
+    - Existing `resolveEventMonsterRage(...)` remains the first action and still stacks permanent global monster strength. The branch then awaits `drawAndApplyCard(player, "event", "Событие")`; no extra/infinite deck or duplicate Event lifecycle was added.
+    - Shared reveal/effect/discard/ownership behavior is preserved, including recursive Rage chains and persistent artifacts returning `{ discard: false }`.
+  - Browser PASS:
+    - Reference Rage activated the stack to `+1` and drew a physical Event.
+    - That physical Event was another Rage; applying it raised the persistent indicator and monster tooltip bonus to `+2`, then opened a third physical Event.
+    - The third Event was `Справедливость` and entered its normal live effect prompt. Console warnings/errors: `0`.
+  - Targeted runtime PASS:
+    - Deterministic `Rage -> Rage -> ordinary Event` trace calls the shared Event draw twice and applies both stacks.
+    - Ordinary Event resolves to discard; persistent/artifact `{ discard: false }` remains owned and is not discarded.
+  - Checks PASS: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; exact config/CSV assertions; targeted runtime harnesses; `git diff --check`.
+  - Files: `src/cards.config.js`, `cards-google-sheet.csv`, `src/game.js`, `index.html`, project-memory handback files.
+  - Live Sheet pending:
+    - Readback confirms `monster-rage` at `Cards Config/event!A8:O8` with old `count = 5` and old description.
+    - This session has read-only Sheets access. Exact pending write/readback: `event!M8:N8` = `10` | `Все монстры получают +1 к силе. Возьми ещё 1 карту Событие`.
+  - QA was not requested.
+
+- 2026-07-27 01:52 - Dev 2 context handback to `GD 1`: `EVENT CARD - Игра Джо`
+  - Local implementation PASS:
+    - Added ordinary Event card id `event-joe-game`, title `Игра Джо`, effect `event-joe-game`, count `1`; no artifact/persistent/icon fields.
+    - Description: `Выбери 2 цифры себе и по 1 каждому другому игроку. Брось кубик: игрок с выпавшей цифрой получает 2 карты Лавки Джо`.
+    - Dispatch branch contains only `await resolveJoeNumberGame(player, { sourceLabel: "Игра Джо" })`; shared Joe-number resolver and `awardJoeNumberGameShopCards` / `claimShopCardsOneByOne` were not duplicated or changed.
+    - Normal `drawAndApplyCard(...)` lifecycle returns the resolved card to Event discard. `field2 11-9` remains `all-or-nothing`; active old field `joe-game` was not restored.
+  - Browser PASS:
+    - Active phone winner received exactly two face-up Shop cards one by one (`0 -> 1 -> 2` inventory), with the remaining card still revealed/clickable after the first claim.
+    - Another-player result awarded exactly two cards to that player; unassigned `4` awarded none; bot assignment/reward auto-completed with two cards.
+    - Every completed scenario put exactly one `event-joe-game` copy in Event discard; production reload had no test panel; console warnings/errors `0`.
+    - Screenshot: `/private/tmp/event-joe-game-phone-claim.png`.
+  - Checks PASS: `node --check src/game.js`; `node --check src/cards.config.js`; `node --check src/controller.js`; static config/CSV/physical-count/exact-branch/field/cache/harness checks; `git diff --check`.
+  - Files: `src/cards.config.js`, `cards-google-sheet.csv`, `src/game.js`, `index.html`, project-memory handback files.
+  - Live Sheet is the only pending item:
+    - Target: Google Sheet `Cards Config`, tab `event`.
+    - Live read completed: `event!A1:B30` contains 21 data rows, ends with `golden-horseshoe` at row 22, and has no `event-joe-game`. Exact append range is `event!A23:O23`.
+    - Exact pending row values in header order `deck,id,title,shortTitle,effect_type,amount,steps,cost,dice,mode,target_deck,notes,count,description,artifact_desr`:
+      - `event | event-joe-game | Игра Джо | [blank] | event-joe-game | [blank] | [blank] | [blank] | [blank] | [blank] | [blank] | ordinary Event card; uses shared Joe number game resolver | 1 | Выбери 2 цифры себе и по 1 каждому другому игроку. Брось кубик: игрок с выпавшей цифрой получает 2 карты Лавки Джо | [blank]`.
+    - After write, exact readback is required; no `no-cors` success is accepted.
+    - Blocker: the current session exposes Google Sheets metadata/read/search actions but no write/batch-update action. No fallback or unverified write was attempted.
+  - Temporary deterministic browser hook/panel was fully removed before final checks. QA was not requested.
+
+- 2026-07-27 01:15 - Dev 2 context handback to `GD 2`: `ALL OR NOTHING FIELD`
+  - Completed:
+    - `field2 11-9` is now `all-or-nothing` / `Все или ничего`; all active field/reference/tooltip/history/bot/dispatch/style paths use the new identity and exact rule copy.
+    - First `1d6` is mandatory. Safe rolls build a temporary bank without changing real coins; host and phone then expose only `Забрать N монет` and `Бросить ещё`. Only an immediately repeated number busts and awards zero.
+    - Cash-out credits the bank once through the normal reward path; New Game/reset aborts an unfinished local bank and clears pending UI.
+    - Bots compare cash-out with `(5 * pot + 21 - previousRoll) / 6`, tilted by `personality.risk`; cell scoring no longer uses Shop-card value.
+  - Former Joe mini-game helper inventory for forwarding to `GD 1`:
+    - Generalized entrypoint: `resolveJoeNumberGame(player, { sourceLabel })`.
+    - Generalized assignment helpers: `chooseJoeNumberGameAssignments`, `randomJoeNumberGameAssignments`, `chooseJoeNumberGameNumber`, `assignJoeNumberGameNumber`.
+    - Generalized presentation helpers: `joeNumberGameAssignmentsText`, `joeNumberGameAssignmentsShortText`, `joeNumberGamePlayerNumbers`, `joeNumberGameRollParticipants`, `joeNumberGameRollOutcomes`.
+    - Generalized reward helper: `awardJoeNumberGameShopCards`, still drawing two finite Shop offers and using one-by-one human claim / automatic bot claim with source copies returned to replenishing Shop stock.
+    - Preserved shared dependencies: `claimShopCardsOneByOne`, `revealShopCardBacks`, `drawCardsFromDeck`, `auctionBidderOrder`, shared dice animation/roll context, and phone `card-choice`/`roll` actions.
+    - Removed only active old field wiring and old field-specific names: `joe-game` board/reference/history/bot/dispatch/CSS mappings and `resolveJoeGame` / `chooseJoeGameAssignments` / related old-name functions. The future Event card was intentionally not added.
+  - Files: `src/game.js`, `styles.css`, `index.html`, project-memory handback files.
+  - Checks/evidence:
+    - `node --check src/game.js`; `node --check src/controller.js`; `git diff --check` passed.
+    - Deterministic browser: `3 -> +3`; `3,5,2 -> +10`; `3,3 -> +0`; `3,5,5 -> +0`; `3,5,3 -> +11`; no pre-cash-out coin changes.
+    - Phone controller refreshed `roll -> two choices -> roll -> updated pot -> cash-out`; bot completed a risk/bust flow; reset cleared a pending bank; production random-roll smoke passed.
+    - Host and controller console errors: `0`. QA was not involved.
+
+- 2026-07-27 00:56 - Dev 1 context handback: `PLAYER HISTORY STATS - coins, interactions, owned dice`
+  - Root causes:
+    - Coin history lived inside `addCoins(...)`, but `Удвой монеты` and the VS winner pot changed `player.coins` directly and bypassed it.
+    - `maxDiceThrown` used every roll's dice-array length, so six-die field rolls, contests, tie-breaks, and rerolls could inflate a stat intended to mean owned dice.
+    - Several `recordEffectReceived(target, actor)` calls reversed victim/actor, neutral Event `Равновесие` was counted as a player action, and direct Bad/Good multi-player effects omitted successful targets.
+  - Semantic decisions:
+    - Added `applyCoinDelta(...)` as the exact low-level balance/history path. `addCoins(...)` still owns receive bonuses and blockers; doubling and VS pot call the low-level path to preserve their old exact/no-bonus behavior.
+    - Direct effects count only when another player caused a real resolved change. `Равновесие` is neutral and excluded; blocked/no-card/refused/no-movement/zero-coin results do not count.
+    - `Макс. кубиков` keeps the existing snapshot field for compatibility but now reads `totalDiceForPlayer(...)` only at new-game initialization and real `addDiceBonus(...)` changes.
+  - Completed:
+    - Fixed actual gain/loss accounting, transfer accounting, doubling, VS pot, and old-history numeric fallbacks.
+    - Fixed `Бедняцкий налет` and same-cell duel Shop directions; added audited coverage for `Щедрость не туда`, successful `Чужая распродажа`, `Откат лидеров`, `Сбор монет`, successful `Плохой подарок`, and the other-player choice in `Кубик неприятностей`.
+    - Renamed history label to `Воздействия других игроков`.
+  - Files: `src/game.js`, project-memory updates/inboxes.
+  - Checks passed:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check`.
+    - Targeted runtime harness: starting 10 excluded; receive bonus recorded as actual; over-loss clamped; transfer one delta per side; doubling exact; VS ante/pot exact; coin invariant passed; effect target/self rules passed; initial owned dice and real `+1` update passed while a six-die special roll did not change max.
+    - Static audit: no `recordDiceThrown(...)` remains; two known reversed calls are corrected; neutral `Равновесие` has no player-effect record; direct mass effects have success guards.
+    - In-app browser: fresh history shows `Монеты + 0`, `Макс. кубиков 1`, and the new interaction label for both players; console errors `0`.
+  - Not checked:
+    - No long manual human party was played through every audited card/field path; those branches were covered by source audit plus the targeted runtime helper harness.
+  - QA was not involved per instruction.
+
+- 2026-07-27 00:21 - Dev 1 context handback: `FINAL SCORE - 1 очко за каждый шаг игрока`
+  - Root scoring path:
+    - `resolveFinalBattle()` builds every player's score through shared `finalBattleScore(...)`; ordinary play and autorun already converge there.
+    - The new component reads `playerStepBonus(player)`, the same source rendered as `Шаги` on player cards. Existing movement cleanup still clears one-turn bonuses before the final result when their lifecycle ends.
+  - Completed:
+    - Added `steps` at one point per displayed step to `total`, so winner selection uses the new sum.
+    - Added the component to final summary/score JSON, explicit `finalScoreSteps`, history stat/formula, winner popup, and chronicle final-score entry.
+    - Preserved all existing movement, cards, artifacts, TADAM, boss force, position bonus, and Shop score rules.
+  - Files: `src/game.js`, `styles.css`, `index.html`, project-memory updates/inboxes.
+  - Checks passed:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js`.
+    - `git diff --check`.
+    - Runtime source scenarios: `Шаги +0` adds `0`; `Шаги +7` adds `7`; different players keep their own values; new total can change the winner; formula contains the step component.
+    - In-app browser autorun: `1/1` finished, winner popup/history/chronicle rendered the new component, console errors `0`.
+    - Saved snapshot readback: displayed `stepBonus` matched `finalScoreSteps`, `finalScoreJson.steps`, and `finalSummary.players[].score.steps` for both players (`5` and `2`).
+  - Not checked:
+    - No separate manual human-play final battle was run; deterministic runtime checks and a full browser autorun covered the shared path.
+  - QA was not involved per instruction.
+
+- 2026-07-27 00:20 - Dev 2 context handback: `MULTI SHOP TAKE UX`
+  - Completed:
+    - Human `Игра Джо` rewards and `Купон Джо` take-all offers now stay on one open-card screen and grant/remove exactly one clicked card at a time.
+    - Remaining cards stay face-up and clickable; the flow closes only after the last claim.
+    - Bots still claim all rewards automatically; phone actions update after each individual claim; unfinished claim state clears on New Game/reset.
+  - Coupon blocker root cause:
+    - `chooseShopCardFromFace(...)` / `chooseRevealedShopCard(...)` passed special id `__joe_coupon_all__` into a lookup that only searched `offer` card ids.
+    - The lookup returned `null`, and `resolveShop(...)` interpreted that result as decline.
+    - The special id is now preserved as a sentinel; payment happens once before the protected multi-claim flow.
+  - Multi-Shop audit:
+    - `Игра Джо`: changed to one-by-one claim.
+    - `Купон Джо`: changed to one-by-one claim without refreshing the offer.
+    - `Аукцион Джо`: intentionally unchanged; cards are awarded automatically after the deliberate bidding flow and there is no click-to-claim reward screen.
+    - Other Shop draw/grant paths are single-card paths.
+  - Files: `src/game.js`, `index.html`, project-memory updates/inboxes.
+  - Checks passed:
+    - `node --check src/game.js`.
+    - `git diff --check`.
+    - In-app browser smoke: coupon paid exactly 10 once; double click granted one card; remaining card stayed open; phone claimed the second; true decline changed neither coins nor inventory; Joe Game state `2 -> 1 -> 0`; New Game cleared an unfinished claim; console errors `0`.
+  - QA was not involved per instruction.
+
 - 2026-07-09 00:34 - Dev 1 context handback: `PLAYER CARDS POPUP BUG - Карты игрока показывают все owned cards/statuses`
   - Root cause:
     - The popup collected only a narrow set of non-Shop cards, omitted `playerArtifacts(...)` and some stored status-card arrays, and still called removed/stale `referenceCardMarkup(...)`.

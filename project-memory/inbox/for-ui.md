@@ -4,6 +4,15 @@ For UI/UX and art-asset tasks related to "Очень Большая Бродил
 
 ## Open Items
 
+- DONE ARTIFACT ICON 2026-07-27 05:54 - `Компас Странника` artifact icon:
+  - Owner: `Art / UI 1`.
+  - Requested by: `GD 1`.
+  - Created `assets/icons/artifact_traveler_compass_512.png` as a standalone Event-artifact icon.
+  - The icon uses a clear golden compass rose, warm polished metal, a purple gemstone pivot, and a purple rear needle accent in the established artifact palette.
+  - Kept the silhouette compact and free of baked text, characters, shields, or scenery so it remains readable in a small artifact chip and on an Event card.
+  - Scope remained visual-only: no gameplay, config, CSV, Google Sheet, cache-key, or unrelated-asset changes.
+  - Checks passed: `512x512 RGBA`, transparent corners/background, full-size and `48x48` visual review, `git diff --check`.
+
 - DONE PNP BAD CARDS 2026-07-06 01:22 - Print-ready `Плохо` cards with readable text:
   - Owner: `Art / UI 1`.
   - Dispatch status: send directly to Art/UI 1 thread at 2026-07-06 00:50.

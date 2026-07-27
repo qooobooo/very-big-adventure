@@ -15,7 +15,7 @@ const roomTtlMs = 1000 * 60 * 60 * 6;
 const defaultRoomMode = "full";
 const roomModes = new Set(["full", "big-button"]);
 const autoPlaytestOutputDir = path.join(root, "outputs", "autoplay-runs");
-const googleSheetsSaveUrl = "https://script.google.com/macros/s/AKfycbxNXmGjR9w3U0vmUd9xS5Rc2KHwR8Q7ViB5Pcl70qIOEhwIJp_M_1faO7RvpDtuPLqkdQ/exec";
+const googleSheetsSaveUrl = "https://script.google.com/macros/s/AKfycbwOAc0oYzUPkPII4Q40lJ086TKKr-xjqE0x_pXh-hgFXSARm8bZQFz6qqF3h2fXnc7Miw/exec";
 
 const types = {
   ".css": "text/css;charset=utf-8",
@@ -134,26 +134,31 @@ function saveAutoPlaytestRun(payload) {
   return { runId, runIndex };
 }
 
-function postJson(urlString, payload, redirects = 0) {
+function postJson(urlString, payload, redirects = 0, method = "POST") {
   return new Promise((resolve, reject) => {
     const url = new URL(urlString);
     const transport = url.protocol === "http:" ? http : https;
-    const body = JSON.stringify(payload || {});
+    const sendsBody = method !== "GET" && method !== "HEAD";
+    const body = sendsBody ? JSON.stringify(payload || {}) : "";
+    const headers = sendsBody
+      ? {
+          "Content-Length": Buffer.byteLength(body),
+          "Content-Type": "text/plain;charset=utf-8",
+        }
+      : {};
     const request = transport.request({
       hostname: url.hostname,
-      method: "POST",
+      method,
       path: `${url.pathname}${url.search}`,
       port: url.port || (url.protocol === "http:" ? 80 : 443),
       protocol: url.protocol,
-      headers: {
-        "Content-Length": Buffer.byteLength(body),
-        "Content-Type": "text/plain;charset=utf-8",
-      },
+      headers,
     }, (response) => {
       const location = response.headers.location;
       if ([301, 302, 303, 307, 308].includes(response.statusCode) && location && redirects < 5) {
         response.resume();
-        resolve(postJson(new URL(location, url).toString(), payload, redirects + 1));
+        const redirectMethod = [307, 308].includes(response.statusCode) ? method : "GET";
+        resolve(postJson(new URL(location, url).toString(), payload, redirects + 1, redirectMethod));
         return;
       }
 
@@ -171,7 +176,7 @@ function postJson(urlString, payload, redirects = 0) {
       });
     });
     request.on("error", reject);
-    request.write(body);
+    if (sendsBody) request.write(body);
     request.end();
   });
 }

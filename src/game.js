@@ -1,4 +1,4 @@
-import { cardConfig } from "./cards.config.js?v=20260709-0001";
+import { cardConfig } from "./cards.config.js?v=20260727-0600";
 import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260703-0118";
 
 const boardEl = document.querySelector("#board");
@@ -12,7 +12,7 @@ const sidePanelEl = document.querySelector(".side-panel");
 const wideLayoutQuery = window.matchMedia("(min-width: 1200px)");
 const phoneLayoutQuery = window.matchMedia("(max-width: 680px) and (hover: none) and (pointer: coarse)");
 const savedGamesStorageKey = "very-big-adventure.saved-games";
-const googleSheetsSaveUrl = "https://script.google.com/macros/s/AKfycbxNXmGjR9w3U0vmUd9xS5Rc2KHwR8Q7ViB5Pcl70qIOEhwIJp_M_1faO7RvpDtuPLqkdQ/exec";
+const googleSheetsSaveUrl = "https://script.google.com/macros/s/AKfycbwOAc0oYzUPkPII4Q40lJ086TKKr-xjqE0x_pXh-hgFXSARm8bZQFz6qqF3h2fXnc7Miw/exec";
 const googleSheetsProxySaveUrl = "/api/game-history";
 const autoPlaytestLocalSaveUrl = "/api/autoplay-runs";
 const autoPlaytestMaxTurns = 500;
@@ -234,13 +234,13 @@ const boardConfigs = {
       "2-3": "red",
       "2-4": "bad",
       "2-6": "black-market",
-      "2-8": "chaos-portal",
-      "2-10": "event",
+      "2-8": "event",
+      "2-10": "good",
       "2-14": "green",
       "3-4": "event",
       "3-6": "red",
       "3-8": "red",
-      "3-10": "green",
+      "3-10": "chaos-portal",
       "3-14": "good",
       "4-0": "green",
       "4-1": "green",
@@ -295,7 +295,7 @@ const boardConfigs = {
       "10-14": "tadam",
       "11-2": "red",
       "11-4": "bad",
-      "11-9": "joe-game",
+      "11-9": "all-or-nothing",
       "11-11": "pay-double",
       "12-0": "good",
       "12-1": "good",
@@ -309,7 +309,7 @@ const boardConfigs = {
       "12-12": "bad",
       "12-13": "green",
       "12-14": "green",
-      "13-0": "joe-auction",
+      "13-0": "event",
       "13-7": "chaos-portal",
       "13-9": "good",
       "13-14": "shop",
@@ -359,6 +359,7 @@ const coinDoubleBannerFadeMs = 220;
 const tadamActivationFlashMs = 2800;
 const humanRollCooldownMs = 650;
 const infoHistoryDefaultLimit = 50;
+const allOrNothingRuleText = "Брось 1 кубик и отложи столько монет, сколько выпало на кубике. Можешь забрать эти монеты себе, либо бросить кубик ещё раз и отложить ещё монеты. Бросать кубик можешь сколько угодно раз, но если выпадет одно число 2 раза подряд, верни все отложенные монеты и закончи ход";
 const blackMarketStrengthCards = 1;
 const blackMarketStrengthBonus = 2;
 const blackMarketCoinsCards = 2;
@@ -381,12 +382,12 @@ const joeCouponIconSrc = "./assets/icons/artifact_joe_coupon_512.png";
 const speedBootsIconSrc = "./assets/icons/artifact_speed_boots_512.png";
 const magicPickaxeIconSrc = "./assets/icons/artifact_magic_pickaxe_512.png?v=20260705-0400";
 const goldenHorseshoeIconSrc = "./assets/icons/artifact_golden_horseshoe_512.png";
+const travelerCompassIconSrc = "./assets/icons/artifact_traveler_compass_512.png";
 const joeCouponShopChoiceId = "__joe_coupon_all__";
 const finalEnemyIconSrc = "./assets/icons/final_enemy.png?v=20260525-0146";
 const blackMarketIconSrc = "./assets/icons/black_market_ultra_simple_512.png?v=20260619-0138";
 const chaosPortalIconSrc = "./assets/icons/chaos_portal_1254.png?v=20260601-0276";
 const eventIconSrc = "./assets/icons/event_quest_512.png";
-const joeAuctionIconSrc = "./assets/icons/joe_auction_512.png?v=20260619-0120";
 const portalIconSrc = "./assets/icons/portal_1254.png?v=20260530-0222";
 const vsIconSrc = "./assets/icons/vs_1254.png?v=20260531-0233";
 const eventIcons = {
@@ -399,11 +400,10 @@ const eventIcons = {
   event: `<img class="tile-icon-image tile-icon-event" src="${eventIconSrc}" alt="Событие">`,
   good: '<img class="tile-icon-image tile-icon-good" src="./assets/icons/good_512.png" alt="Хорошо">',
   green: "",
-  "joe-game": '<img class="tile-icon-image tile-icon-joe-game" src="./assets/icons/joe_game_512.png?v=20260609-0400" alt="Игра Джо">',
+  "all-or-nothing": '<img class="tile-icon-image tile-icon-all-or-nothing" src="./assets/icons/all_or_nothing_512.png?v=20260727-0145" alt="Все или ничего">',
   red: "",
   "dice-fortune": '<img class="tile-icon-image tile-icon-dice-fortune" src="./assets/tiles/dice_fortune_1254.png?v=20260521-0035" alt="Кубик удачи">',
   "pay-double": '<img class="tile-icon-image tile-icon-pay-double" src="./assets/tiles/pay_double_1024.png?v=20260521-1205" alt="Удвой монеты">',
-  "joe-auction": `<img class="tile-icon-image tile-icon-joe-auction" src="${joeAuctionIconSrc}" alt="Аукцион Джо">`,
   shop: '<img class="tile-icon-image tile-icon-shop" src="./assets/icons/joes_shop_512.png" alt="Лавка Джо">',
   tadam: '<img class="tile-icon-image tile-icon-tadam" src="./assets/icons/tadam_512.png?v=20260621-0118" alt="ТАДАМ!">',
   vs: `<img class="tile-icon-image tile-icon-vs" src="${vsIconSrc}" alt="VS">`,
@@ -432,6 +432,7 @@ const historyFieldLabels = {
   bad: "Плохо",
   "very-bad": "Очень Плохо",
   "big-rest": "Большой привал",
+  "all-or-nothing": "Все или ничего",
   "black-market": "Черный рынок",
   "chaos-portal": "Портал хаоса",
   "dice-fortune": "Кубик удачи",
@@ -440,8 +441,6 @@ const historyFieldLabels = {
   finish: "Финиш",
   good: "Хорошо",
   green: "Зеленое",
-  "joe-auction": "Аукцион Джо",
-  "joe-game": "Игра Джо",
   "pay-double": "Удвой свои монеты",
   path: "Обычное",
   red: "Красное",
@@ -662,6 +661,7 @@ function newGame() {
     phoneDiceRoll: null,
     pendingPreRoll: null,
     pendingShop: null,
+    pendingShopClaim: null,
     preRollResolver: null,
     players: names.slice(0, playerCount).map((hero, index) => ({
       ...hero,
@@ -700,6 +700,8 @@ function newGame() {
       goldenHorseshoeOwnerId: null,
       speedBootsCard: null,
       speedBootsOwnerId: null,
+      travelerCompassCard: null,
+      travelerCompassOwnerId: null,
     },
     turns: 0,
     unityBattleProgress: null,
@@ -707,6 +709,7 @@ function newGame() {
     walkPath: [],
   };
   state.history = createGameHistory(state.players);
+  state.players.forEach(recordOwnedDice);
   log("<strong>Игра началась!</strong>");
   resolveRandomFirstPlayerStart();
 
@@ -783,6 +786,7 @@ function resetTransientUi() {
   state.pendingMoveOneFarther = null;
   state.pendingPreRoll = null;
   state.pendingShop = null;
+  state.pendingShopClaim = null;
   state.phoneCardPreview = null;
   state.phoneDiceRoll = null;
   state.preRollResolver = null;
@@ -949,8 +953,8 @@ function recordPlayerStopped(player, cell = player?.position) {
 function recordCoinDelta(player, delta) {
   const history = playerHistory(player);
   if (!history || !delta) return;
-  if (delta > 0) history.coinsEarned += delta;
-  else history.coinsSpent += Math.abs(delta);
+  if (delta > 0) history.coinsEarned = (Number(history.coinsEarned) || 0) + delta;
+  else history.coinsSpent = (Number(history.coinsSpent) || 0) + Math.abs(delta);
 }
 
 function recordShopCards(player) {
@@ -959,16 +963,17 @@ function recordShopCards(player) {
   history.maxShopCards = Math.max(history.maxShopCards, player.items.length);
 }
 
-function recordDiceThrown(player, diceCount) {
+function recordOwnedDice(player) {
   const history = playerHistory(player);
   if (!history) return;
-  history.maxDiceThrown = Math.max(history.maxDiceThrown, diceCount);
+  history.maxDiceThrown = Math.max(Number(history.maxDiceThrown) || 0, totalDiceForPlayer(player));
 }
 
+// The target receives the resolved direct effect; the actor caused it.
 function recordEffectReceived(target, actor = null) {
   if (!target || !actor || target.id === actor.id) return;
   const history = playerHistory(target);
-  if (history) history.effectsReceived += 1;
+  if (history) history.effectsReceived = (Number(history.effectsReceived) || 0) + 1;
 }
 
 function recordMonsterBattle(player, door, force, won) {
@@ -1006,7 +1011,8 @@ async function rollAndMove({ animate = true } = {}) {
     state.pendingMoveDieReroll ||
     state.pendingMoveOneFarther ||
     state.pendingPreRoll ||
-    state.pendingShop
+    state.pendingShop ||
+    state.pendingShopClaim
   ) {
     return;
   }
@@ -1037,7 +1043,6 @@ async function rollAndMove({ animate = true } = {}) {
     render();
 
     let rolls = rollDice(totalDiceForPlayer(player, extraDice));
-    recordDiceThrown(player, rolls.length);
     const bonus = playerStepBonus(player);
     setAutoPlaytestPhase("movement:roll", { player, rolls });
     if (animate) await animateDice(rolls, { bonus, player });
@@ -1047,7 +1052,12 @@ async function rollAndMove({ animate = true } = {}) {
     resolveGoldenHorseshoeMovementReward(player, rolls);
     setAutoPlaytestPhase("movement:duplicate-rewards", { player, rolls });
     const duplicateSteps = await resolveDuplicateDiceRewards(player, rolls);
-    const totalSteps = rolled + bonus + duplicateSteps;
+    const rolledSteps = rolled + bonus + duplicateSteps;
+    state.dice = rolledSteps;
+    state.walkPath = animate && !ui.showWalkPath?.checked ? buildWalkPath(player, rolledSteps) : [];
+    renderTileStates();
+    const postRollSteps = await resolveMoveOneFarther(player, rolledSteps);
+    const totalSteps = rolledSteps + postRollSteps;
     state.dice = totalSteps;
     state.walkPath = animate && !ui.showWalkPath?.checked ? buildWalkPath(player, totalSteps) : [];
     renderTileStates();
@@ -1448,6 +1458,9 @@ function shopDuplicatePenalty(player, card) {
   const effectType = card.effect?.type;
   const copies = activeShopItems(player).filter((item) => item.id === card.id || item.effect?.type === effectType).length;
   if (copies <= 0) return 0;
+  if (["strength-cluster", "speed-cluster", "others-loss-income", "monster-victory-income"].includes(effectType)) {
+    return 0;
+  }
   if (effectType === "passive-step-bonus") return [0, 8, 28, 50, 72][Math.min(copies, 4)] || 72;
   if (effectType === "passive-battle-bonus") return [0, 4, 9, 16, 24][Math.min(copies, 4)] || 24;
   if (effectType === "green-fields-plus5") return [0, 6, 16, 30, 46][Math.min(copies, 4)] || 46;
@@ -1794,6 +1807,21 @@ function scoreShopCard(player, card) {
       if (gate.hardGate) score += 22 * personality.battle;
       if (gate.failedAttempts > 0) score += Math.min(22, gate.failedAttempts * 5) * personality.battle;
     }
+  } else if (effect.type === "strength-cluster") {
+    const copies = activeShopItems(player).filter((item) => item.id === card.id).length;
+    const marginalBonus = copies * 2 * (Number(effect.amount) || 1);
+    score = (copies === 0 ? 14 : 18 + marginalBonus * 8) * personality.battle;
+    if (gate && marginalBonus > 0) {
+      const afterChance = estimateWinChance(gate.dice, gate.bonus + marginalBonus, gate.target);
+      score += winChanceDeltaScore(gate.chance, afterChance, gate.weight) * personality.battle;
+    }
+  } else if (effect.type === "speed-cluster") {
+    const copies = activeShopItems(player).filter((item) => item.id === card.id).length;
+    const marginalBonus = copies * 2 * (Number(effect.steps) || 2);
+    const leader = leadingPlayer();
+    const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
+    score = (copies === 0 ? 14 : 18 + marginalBonus * 3) * personality.progress;
+    if (lag > 18) score += Math.min(16, lag * 0.2) * personality.progress;
   } else if (effect.type === "green-fields-plus5") {
     score = (phase === "early" ? 24 : phase === "mid" ? 18 : 10) * personality.economy;
     if (nearbyInterestingCells(player, 12).score > 0) score += 4;
@@ -1814,6 +1842,18 @@ function scoreShopCard(player, card) {
     score = (phase === "early" ? 24 : phase === "mid" ? 18 : 8) * personality.economy;
   } else if (effect.type === "event-income") {
     score = (phase === "early" ? 22 : phase === "mid" ? 17 : 8) * personality.economy;
+  } else if (effect.type === "others-loss-income") {
+    const copies = activeShopEffectItems(player, "others-loss-income").length;
+    const opponents = Math.max(1, state.players.length - 1);
+    score = (phase === "early" ? 24 : phase === "mid" ? 19 : 11) * personality.economy;
+    score *= Math.min(1.7, 0.7 + opponents * 0.25);
+    score += copies * 3 * personality.economy;
+  } else if (effect.type === "monster-victory-income") {
+    const copies = activeShopEffectItems(player, "monster-victory-income").length;
+    const potentialHunters = state.players.filter((target) => target.id !== player.id && nextUnbeatenEnemy(target)).length;
+    score = (phase === "early" ? 25 : phase === "mid" ? 21 : 12) * personality.economy;
+    score *= Math.min(1.65, 0.8 + potentialHunters * 0.22);
+    score += copies * 3 * personality.economy;
   } else if (effect.type === "monster-victory-strength") {
     score = 18 * personality.battle;
     if (gate) {
@@ -2050,8 +2090,7 @@ function scoreCellForBot(player, cell, context = {}) {
     scoreBlackMarketChoice(player, "rush"),
     scoreBlackMarketChoice(player, "leave"),
   ) * 0.72;
-  else if (event === "joe-auction") score += player.coins >= 5 ? 14 * personality.shop + Math.min(10, player.coins * 0.35) : 2;
-  else if (event === "joe-game") score += 16 * personality.shop + 8 * personality.chaos;
+  else if (event === "all-or-nothing") score += 7 * personality.economy + 5 * personality.risk + 2 * personality.chaos;
   else if (event === "chaos-portal") score += 8 * personality.chaos + (player.coins < 5 ? 4 : 0);
   else if (event === "green") score += 10 + scoreFieldTadamEffect("green-field");
   else if (event === "red") score += -11 + scoreFieldTadamEffect("red-field");
@@ -2155,7 +2194,7 @@ function nearbyInterestingCells(player, steps) {
     cell = defaultNextCell(cell);
     if (!cell) break;
     const event = cellEvents[cell];
-    if (["good", "green", "shop", "black-market", "joe-auction", "joe-game", "pay-double", "event"].includes(event)) score += 3;
+    if (["good", "green", "shop", "black-market", "all-or-nothing", "pay-double", "event"].includes(event)) score += 3;
     if (["bad", "red"].includes(event)) score -= 2;
     if (event === "very-bad") score -= 6;
     if (event === "chaos-portal") score += 2 * botPersonality(player).chaos;
@@ -2261,7 +2300,8 @@ function runBotAction() {
     !state.pendingMoveDieReroll &&
     !state.pendingMoveOneFarther &&
     !state.pendingPreRoll &&
-    !state.pendingShop
+    !state.pendingShop &&
+    !state.pendingShopClaim
   ) {
     triggerRollButtonAction({ fromBot: true });
   }
@@ -2943,6 +2983,7 @@ function artifactSourceCard(artifact) {
     "joe-coupon": "joeCouponCard",
     "magic-pickaxe": "magicPickaxeCard",
     "speed-boots": "speedBootsCard",
+    "traveler-compass": "travelerCompassCard",
   };
   const mappedCard = state.artifacts[keysById[artifact.id]];
   if (mappedCard) return mappedCard;
@@ -3103,10 +3144,10 @@ function phoneGameSnapshot() {
   };
 }
 
-function phoneActionContext({ kicker = "", title = "", summary = "" } = {}) {
+function phoneActionContext({ kicker = "", phoneSummary = "", title = "", summary = "" } = {}) {
   const context = {
     contextKicker: plainText(kicker || ""),
-    contextSummary: plainText(summary || ""),
+    contextSummary: plainText(phoneSummary || summary || ""),
     contextTitle: plainText(title || ""),
   };
   return context.contextKicker || context.contextSummary || context.contextTitle ? context : {};
@@ -4416,6 +4457,7 @@ function renderFinalHistoryPlayer(player) {
         <div><dt>Монеты</dt><dd>${score.coins ?? 0}</dd></div>
         <div><dt>Лавки</dt><dd>${score.shop ?? 0}</dd></div>
         <div><dt>Урон</dt><dd>${score.damage ?? 0}</dd></div>
+        <div><dt>Шаги</dt><dd>${finalScorePointsText(score.steps)}</dd></div>
         <div><dt>Позиция</dt><dd>${score.position ?? 0}</dd></div>
         <div><dt>Сила</dt><dd>${forceText}</dd></div>
       </dl>
@@ -4430,8 +4472,14 @@ function finalScoreFormulaText(score = {}) {
   const coins = score.coins ?? 0;
   const shop = score.shop ?? 0;
   const damage = score.damage ?? 0;
+  const steps = score.steps ?? 0;
   const position = score.position ?? 0;
-  return `${total} = ${coins} монеты + ${shop} Лавка Джо + ${damage} урон боссу + ${position} позиция`;
+  return `${total} = ${coins} монеты + ${shop} Лавка Джо + ${damage} урон боссу + ${steps} за шаги + ${position} позиция`;
+}
+
+function finalScorePointsText(points = 0) {
+  const value = Number(points) || 0;
+  return `${value > 0 ? "+" : ""}${value} очков`;
 }
 
 function finalHistorySummaryForSnapshot() {
@@ -4509,6 +4557,7 @@ function buildFinalHistorySheetExport(summary = finalHistorySummaryForSnapshot()
       finalScoreJson: finalPlayer ? JSON.stringify(score) : "",
       finalScorePosition: score.position ?? "",
       finalScoreShop: score.shop ?? "",
+      finalScoreSteps: score.steps ?? "",
       finalScoreTotal: score.total ?? "",
       finalWinner: finalPlayer ? Boolean(finalPlayer.winner) : "",
       playerId: player.id,
@@ -4530,12 +4579,12 @@ function renderPlayerHistory(player) {
       <dl class="history-stats">
         <div><dt>Ходы</dt><dd>${history.turns}</dd></div>
         <div><dt>Клетки</dt><dd>${history.cellsPassed}</dd></div>
-        <div><dt>Монеты +</dt><dd>${history.coinsEarned}</dd></div>
-        <div><dt>Монеты -</dt><dd>${history.coinsSpent}</dd></div>
+        <div><dt>Монеты +</dt><dd>${history.coinsEarned ?? 0}</dd></div>
+        <div><dt>Монеты -</dt><dd>${history.coinsSpent ?? 0}</dd></div>
         <div><dt>Макс. Лавок</dt><dd>${history.maxShopCards}</dd></div>
         <div><dt>Лавок сейчас</dt><dd>${player.items.length}</dd></div>
-        <div><dt>Эффекты игроков</dt><dd>${history.effectsReceived}</dd></div>
-        <div><dt>Макс. кубиков</dt><dd>${history.maxDiceThrown}</dd></div>
+        <div><dt>Воздействия других игроков</dt><dd>${history.effectsReceived ?? 0}</dd></div>
+        <div><dt>Макс. кубиков</dt><dd>${history.maxDiceThrown ?? 0}</dd></div>
         <div><dt>Итоговая сила</dt><dd>${battleForceText(playerBattleBonus(player))}</dd></div>
         <div><dt>Итоговые шаги</dt><dd>${stepBonusText(playerStepBonus(player))}</dd></div>
       </dl>
@@ -5008,6 +5057,15 @@ function playerArtifacts(player) {
       title: "Золотая Подкова",
     });
   }
+  if (state.artifacts.travelerCompassOwnerId === player.id) {
+    artifacts.push({
+      hint: "после броска движения: 3 монеты за +1 шаг",
+      icon: travelerCompassIconSrc,
+      id: "traveler-compass",
+      shortTitle: "3 монеты: +1",
+      title: "Компас Странника",
+    });
+  }
   return artifacts;
 }
 
@@ -5094,6 +5152,42 @@ function resolveMonsterVictoryShopRewards(player) {
   return ` <strong>Лавка Джо</strong>: ${rewardText}.`;
 }
 
+function scheduleReactiveShopIncome(sourcePlayer, effectType, cardTitle, triggerText) {
+  if (!sourcePlayer || !state?.players?.length) return;
+  const scheduledState = state;
+  queueMicrotask(() => {
+    if (state !== scheduledState || !state.players.includes(sourcePlayer)) return;
+    let attempted = false;
+    for (const owner of state.players) {
+      if (owner.id === sourcePlayer.id) continue;
+      const cards = activeShopEffectItems(owner, effectType);
+      if (!cards.length) continue;
+      attempted = true;
+      let amount = 0;
+      let gained = 0;
+      for (const card of cards) {
+        const cardAmount = Math.max(0, Number(card.effect?.amount) || 0);
+        amount += cardAmount;
+        gained += Math.max(0, addCoins(owner, cardAmount));
+      }
+      if (gained <= 0) continue;
+      const actualText = gained !== amount ? `, с бонусами ${coinAmount(gained)}` : "";
+      log(`${playerName(owner)} получает ${coinAmount(amount)}${actualText} по <strong>${cardTitle}</strong>: ${playerName(sourcePlayer)} ${triggerText}.`, {
+        toast: true,
+      });
+    }
+    if (attempted) render();
+  });
+}
+
+function notifyOtherPlayerCoinLoss(sourcePlayer) {
+  scheduleReactiveShopIncome(sourcePlayer, "others-loss-income", "Чужая расплата", "теряет монеты, не совершая покупку");
+}
+
+function notifyOtherPlayerMonsterVictory(sourcePlayer) {
+  scheduleReactiveShopIncome(sourcePlayer, "monster-victory-income", "Охотничья доля", "побеждает монстра");
+}
+
 function resolveMagicWalletOvertake(player, fromCell, toCell) {
   if (!player || !state?.artifacts) return;
   const owner = state.players.find((item) => item.id === state.artifacts.magicWalletOwnerId);
@@ -5175,6 +5269,15 @@ function grantGoldenHorseshoeArtifact(target, card) {
   return true;
 }
 
+function grantTravelerCompassArtifact(target, card) {
+  if (!target || !state?.artifacts) return false;
+  state.artifacts.travelerCompassOwnerId = target.id;
+  state.artifacts.travelerCompassCard = card || state.artifacts.travelerCompassCard || null;
+  log(`${playerName(target)} получает артефакт <strong>Компас Странника</strong>.`, { toast: true });
+  render();
+  return true;
+}
+
 function hasHeroSwordArtifact(player) {
   return Boolean(player && state?.artifacts?.heroSwordOwnerId === player.id);
 }
@@ -5197,6 +5300,10 @@ function hasMagicPickaxeArtifact(player) {
 
 function hasGoldenHorseshoeArtifact(player) {
   return Boolean(player && state?.artifacts?.goldenHorseshoeOwnerId === player.id);
+}
+
+function hasTravelerCompassArtifact(player) {
+  return Boolean(player && state?.artifacts?.travelerCompassOwnerId === player.id);
 }
 
 function heroSwordCombatBonus(player, rolls) {
@@ -5246,6 +5353,13 @@ function hasActiveShopEffect(player, type) {
 function activeShopEffectAmount(player, type, field = "amount") {
   return activeShopEffectItems(player, type)
     .reduce((sum, item) => sum + (Number(item.effect?.[field]) || 0), 0);
+}
+
+function activeShopSetBonus(player, cardId, field) {
+  const cards = activeShopItems(player).filter((item) => item.id === cardId);
+  if (cards.length < 2) return 0;
+  const otherCopies = cards.length - 1;
+  return cards.reduce((sum, item) => sum + otherCopies * (Number(item.effect?.[field]) || 0), 0);
 }
 
 function faceDownShopItems(player) {
@@ -5318,7 +5432,8 @@ function renderTurn() {
           Boolean(state.pendingMoveOneFarther) ||
           Boolean(state.pendingPreRoll) ||
           Boolean(state.pendingDiceControl) ||
-          Boolean(state.pendingShop))));
+          Boolean(state.pendingShop) ||
+          Boolean(state.pendingShopClaim))));
   renderInfoHistoryCurrentActionEntry();
 }
 
@@ -5638,8 +5753,7 @@ const referenceFieldTypes = [
   "enemy",
   "vs",
   "chaos-portal",
-  "joe-game",
-  "joe-auction",
+  "all-or-nothing",
   "black-market",
   "big-rest",
   "dice-fortune",
@@ -5648,6 +5762,7 @@ const referenceFieldTypes = [
 
 function referenceFieldInfo(type) {
   const titles = {
+    "all-or-nothing": "Все или ничего",
     bad: "Плохо",
     "big-rest": "Большой привал",
     "black-market": "Черный рынок",
@@ -5658,8 +5773,6 @@ function referenceFieldInfo(type) {
     finish: "Финиш",
     good: "Хорошо",
     green: "Зеленое поле",
-    "joe-auction": "Аукцион Джо",
-    "joe-game": "Игра Джо",
     "pay-double": "Удвой монеты",
     red: "Красное поле",
     shop: "Лавка Джо",
@@ -5669,6 +5782,7 @@ function referenceFieldInfo(type) {
     vs: "VS",
   };
   const effects = {
+    "all-or-nothing": allOrNothingRuleText,
     bad: "Тяни карту Плохо",
     "big-rest": "Выбери: +10 монет, +1 к силе или +2 к шагам",
     "black-market": "Поменяй Лавки Джо: 1 карта — +2 к силе; 2 карты — 30 монет; 3 карты — +10 к силе в следующем бою с монстром и 30 шагов вперед",
@@ -5679,8 +5793,6 @@ function referenceFieldInfo(type) {
     finish: "финальная битва",
     good: "Тяни карту Хорошо",
     green: referenceGreenEffectLabel(),
-    "joe-auction": "Открываются 3 карты Лавки Джо. Игроки делают ставки от активного игрока. Победитель забирает все 3 карты",
-    "joe-game": "Выбери 2 цифры себе и по 1 каждому другому игроку. Выпавший игрок получает 2 карты Лавки Джо",
     "pay-double": "Удвой свои монеты",
     red: referenceRedEffectLabel(),
     shop: `Выбери 1 из 2 карт Лавка Джо и купи за ${joeShopCardCost()} монет`,
@@ -5736,6 +5848,7 @@ function referenceActionBlocked() {
       state.pendingMoveDieReroll ||
       state.pendingMoveOneFarther ||
       state.pendingShop ||
+      state.pendingShopClaim ||
       actionPromptResolver
   );
 }
@@ -5829,10 +5942,8 @@ async function applyReferenceField(type) {
       await drawTadamCard(player);
     } else if (type === "shop") {
       await resolveShop(player);
-    } else if (type === "joe-auction") {
-      await resolveJoeAuction(player);
-    } else if (type === "joe-game") {
-      await resolveJoeGame(player);
+    } else if (type === "all-or-nothing") {
+      await resolveAllOrNothing(player);
     } else if (type === "dice-fortune") {
       await resolveDiceFortuneField(player);
     } else if (type === "pay-double") {
@@ -6172,11 +6283,16 @@ function renderWinnerPopup() {
   const battleSummary = battle
     ? `<small>${battle.bossWon ? "Босс победил" : "Игроки победили"}: игроки ${battle.playersForce}, босс ${battle.bossForce}</small>`
     : "";
+  const winnerSummary = battle?.finalSummary?.players?.find((player) => player.id === winner.id);
+  const winnerScoreSummary = winnerSummary
+    ? `<small class="winner-score-formula">${escapeHtml(winnerSummary.scoreFormula || finalScoreFormulaText(winnerSummary.score))}</small>`
+    : "";
   ui.winnerPopup.innerHTML = `
     <div class="winner-confetti" aria-hidden="true">${confetti}</div>
     <div class="winner-card">
       <p>Победил - <span class="player-name" style="--player-color: ${winner.color}">${winner.name}</span>!</p>
       ${battleSummary}
+      ${winnerScoreSummary}
     </div>
   `;
   scheduleFinishedGameHistoryAutosave();
@@ -6811,10 +6927,8 @@ async function resolveLanding(player, { fieldEffects = true, forwardTriggers = n
       if (immediateStepBonus > 0 && !state.finished) {
         await resolveImmediateShopStepMovement(player, immediateStepBonus);
       }
-    } else if (event === "joe-auction") {
-      await resolveJoeAuction(player);
-    } else if (event === "joe-game") {
-      await resolveJoeGame(player);
+    } else if (event === "all-or-nothing") {
+      await resolveAllOrNothing(player);
     } else if (event === "enemy") {
       await resolveEnemyBattle(player);
     } else if (event === "dice-fortune") {
@@ -7128,7 +7242,6 @@ async function resolveEnemyBattle(player) {
   rawRolls = await maybeUseDiceControl(player, rawRolls, { mode: "monster", title: "Контроль кубика: битва с монстром" });
   const sixesToOnes = consumeMonsterSixesToOnes(player, rawRolls, "битве с монстром");
   const rolls = sixesToOnes.rolls;
-  recordDiceThrown(player, diceCount);
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const baseBonus = playerCombatBonus(player);
   const strengthBonus = await chooseStrengthPotion(player, "битве с монстром");
@@ -7166,6 +7279,8 @@ async function resolveEnemyBattle(player) {
       clearEnemyBattleHud();
       return resolveEnemyBattle(player);
     }
+
+    notifyOtherPlayerMonsterVictory(player);
 
     state.enemyBattleProgress = {
       bonus,
@@ -7401,7 +7516,6 @@ async function resolveChaosPortal(player) {
   });
 
   let rolls = rollDice(1);
-  recordDiceThrown(player, 1);
   state.isAnimating = true;
   state.dice = null;
   render();
@@ -7655,7 +7769,6 @@ async function resolveDiceFortuneField(player) {
   });
 
   let rolls = rollDice(diceFortuneDiceCount);
-  recordDiceThrown(player, diceFortuneDiceCount);
   state.dice = null;
   render();
   showRollContextStatus({
@@ -7833,9 +7946,7 @@ function rollContextPromptMarkup(message, contextInput) {
 
 async function resolvePayDoubleField(player) {
   const before = player.coins;
-  player.coins *= 2;
-  const gained = player.coins - before;
-  if (gained > 0) showCoinFloat(player, gained);
+  const gained = applyCoinDelta(player, before);
   await showCoinDoubleBanner(before, player.coins);
   const message = `${playerName(player)} попадает на <strong>Удвой свои монеты</strong>. Было <strong>${coinAmount(before)}</strong>, стало <strong>${coinAmount(player.coins)}</strong> <span class="nowrap">(${coinAmount(`+${gained}`)})</span>.`;
 
@@ -7959,8 +8070,7 @@ async function resolveVsField(player) {
   state.isAnimating = false;
   state.dice = null;
   if (pot > 0) {
-    winner.coins += pot;
-    showCoinFloat(winner, pot);
+    applyCoinDelta(winner, pot);
   }
   const message = `${playerName(winner)} выигрывает VS-битву и забирает банк <strong>${coinAmount(pot)}</strong>`;
   state.vsBattleProgress = {
@@ -8124,6 +8234,12 @@ async function resolveFinalBattle(boss, animate = true) {
   state.finalBattleProgress = null;
   state.dice = null;
 
+  log(
+    `<strong>Итоговые очки.</strong> ${scores
+      .map((score) => `${playerName(state.players.find((player) => player.id === score.playerId))}: ${escapeHtml(finalScoreFormulaText(score))}`)
+      .join("; ")}.`,
+  );
+
   if (bossWon) {
     log(`<strong>Финальная битва завершена.</strong> Босс ${playerName(boss)} побеждает: ${bossForce} против ${playersForce}.`);
     if (animate) {
@@ -8134,7 +8250,7 @@ async function resolveFinalBattle(boss, animate = true) {
   } else {
     const scoreText = scores
       .filter((score) => challengers.some((player) => player.id === score.playerId))
-      .map((score) => `${state.players.find((player) => player.id === score.playerId)?.name}: ${score.total} (+${score.position} за позицию)`)
+      .map((score) => `${state.players.find((player) => player.id === score.playerId)?.name}: ${score.total}`)
       .join(", ");
     log(
       `<strong>Финальная битва завершена.</strong> Игроки побеждают босса: ${playersForce} против ${bossForce}. По очкам побеждает ${playerName(winner)} (${scoreText}).`,
@@ -8214,6 +8330,7 @@ function buildFinalBattleSummary({
           damageToBoss: score.damageToBoss,
           position: score.position,
           shop: score.shop,
+          steps: score.steps,
           total: score.total,
         },
         scoreFormula: finalScoreFormulaText(score),
@@ -8236,7 +8353,6 @@ async function rollPlayerBattlePower(player, animate, { label = "", isFinalBattl
   const diceCount = totalDiceForPlayer(player);
   let rolls = rollDice(diceCount);
   rolls = await maybeUseDiceControl(player, rolls, { mode: "battle", title: "Контроль кубика: бросок силы" });
-  recordDiceThrown(player, diceCount);
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const baseBonus = playerCombatBonus(player);
   const playerBattlePotionBonus = await choosePlayerBattlePotion(player, isFinalBattle ? "финальной битве" : "битве с игроком");
@@ -8265,7 +8381,6 @@ async function rollPlayerMonsterBattlePower(player, animate, { label = "" } = {}
   rawRolls = await maybeUseDiceControl(player, rawRolls, { mode: "monster", title: "Контроль кубика: Сплочение" });
   const sixesToOnes = consumeMonsterSixesToOnes(player, rawRolls, "Сплочении");
   const rolls = sixesToOnes.rolls;
-  recordDiceThrown(player, diceCount);
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const baseBonus = playerCombatBonus(player);
   const strengthBonus = await chooseStrengthPotion(player, "Сплочении");
@@ -8301,6 +8416,7 @@ function finalBattleScore(player, damageToBoss, position = 1) {
   const coins = player.coins;
   const shop = activeShopItems(player).length * 5;
   const damage = damageToBoss * 2;
+  const steps = Number(playerStepBonus(player)) || 0;
   return {
     coins,
     damage,
@@ -8308,7 +8424,8 @@ function finalBattleScore(player, damageToBoss, position = 1) {
     playerId: player.id,
     position,
     shop,
-    total: coins + shop + damage + position,
+    steps,
+    total: coins + shop + damage + steps + position,
   };
 }
 
@@ -8521,7 +8638,6 @@ async function resolveMoveDieRerolls(player, rolls, animate) {
     card._moveDieRerollUsedAt = state.turns;
     const oldValue = currentRolls[dieIndex];
     const newValue = d6();
-    recordDiceThrown(player, 1);
     if (animate) {
       state.isAnimating = true;
       render();
@@ -8594,25 +8710,31 @@ function hasDuplicateRoll(rolls) {
   return false;
 }
 
-async function resolveMoveOneFarther(player, currentSteps, animate) {
-  if (!animate) return 0;
-  const cards = activeShopEffectItems(player, "move-one-farther")
-    .filter((card) => card._moveOneFartherUsedAt !== state.turns);
+async function resolveMoveOneFarther(player, currentSteps) {
+  const options = activeShopEffectItems(player, "move-one-farther")
+    .filter((card) => card._moveOneFartherUsedAt !== state.turns)
+    .map((card) => ({ card, paymentCategory: "payment", sourceLabel: "Лавке Джо" }));
+  const compassCard = state?.artifacts?.travelerCompassCard;
+  if (hasTravelerCompassArtifact(player) && compassCard?._moveOneFartherUsedAt !== state.turns) {
+    options.push({ card: compassCard, paymentCategory: "purchase", sourceLabel: "артефакту Компас Странника" });
+  }
   let extraSteps = 0;
-  for (const [index, card] of cards.entries()) {
+  for (const [index, option] of options.entries()) {
+    const { card } = option;
     const cost = Math.max(0, Number(card.effect?.cost) || 3);
     const steps = Math.max(1, Number(card.effect?.steps) || 1);
     if (player.coins < cost) continue;
     const baseSteps = currentSteps + extraSteps;
     const choice = isBot(player)
       ? chooseBotMoveOneFarther(player, baseSteps, cost)
-      : await chooseMoveOneFarther(player, card, cost, steps, baseSteps, index, cards.length);
+      : await chooseMoveOneFarther(player, card, cost, steps, baseSteps, index, options.length);
     if (choice !== "pay" || player.coins < cost) continue;
-    addCoins(player, -cost);
+    // Compass payment is voluntary and must not trigger other-player loss reactions.
+    addCoins(player, -cost, { category: option.paymentCategory });
     card._moveOneFartherUsedAt = state.turns;
     extraSteps += steps;
     showDiceFloat(player, steps);
-    log(`${playerName(player)} платит <strong>${coinAmount(cost)}</strong> по <strong>Лавке Джо</strong> и идет на <strong>+${steps}</strong> шаг дальше.`, {
+    log(`${playerName(player)} платит <strong>${coinAmount(cost)}</strong> по <strong>${option.sourceLabel}</strong> и идет на <strong>+${steps}</strong> шаг дальше.`, {
       toast: true,
     });
     render();
@@ -8698,12 +8820,11 @@ async function resolveGreenField(player) {
 }
 
 async function resolveRedField(player) {
-  addCoins(player, -3);
-  log(`${playerName(player)} теряет <strong>3 монеты</strong> на красном поле.`, { toast: true });
   const extraLoss = tadamEffectAmount("red-extra-loss");
+  addCoins(player, -(3 + extraLoss), { category: "loss" });
+  log(`${playerName(player)} теряет <strong>3 монеты</strong> на красном поле.`, { toast: true });
   if (extraLoss > 0) {
     flashTadamCardsByType("red-extra-loss");
-    addCoins(player, -extraLoss);
     log(`<strong>ТАДАМ</strong>: красное поле отнимает у ${playerName(player)} дополнительно ${coinAmount(extraLoss)}.`, {
       toast: true,
     });
@@ -8722,20 +8843,20 @@ async function drawAndApplyCard(player, deckId, deckName = deckLabel(deckId), { 
       `${playerName(player)} сбрасывает <strong>Плохо</strong>: вместо карты <strong>Хорошо</strong> ничего не происходит.`,
       { autoFor: player },
     );
-    return;
+    return false;
   }
 
   const card = drawCardFromDeck(deckId);
   if (!card) {
     log(`В колоде <strong>${deckName}</strong> нет доступных карт.`, { toast: true });
-    return;
+    return false;
   }
   if (deckName === "Хорошо") {
     log(`${playerName(player)} тянет карту <strong>${deckName}</strong>: ${cardNameMarkup(card.title)}`);
     await revealGoodCard(player, card);
     if (await resolveGoodCashout(player, card)) {
       discardResolvedCard(deckId, card);
-      return;
+      return true;
     }
     log(`${playerName(player)} применяет карту <strong>Хорошо</strong>: ${cardNameMarkup(card.title)}`, { toast: true });
   } else if (deckName === "Плохо") {
@@ -8761,6 +8882,7 @@ async function drawAndApplyCard(player, deckId, deckName = deckLabel(deckId), { 
   if (deckId === "bad" && !skipNextBadExtraDraw) {
     await resolveNextBadExtraDraw(player);
   }
+  return true;
 }
 
 async function resolveGoodCashout(player, card) {
@@ -9145,8 +9267,9 @@ function eventCardMarkup(card, { revealed }) {
   const icon = !isArtifact && card.icon ? `<img class="event-card-artifact-icon" src="${card.icon}" alt="" aria-hidden="true">` : "";
   const iconClass = icon ? "has-card-face-icon" : "";
   const artifactClass = isArtifact ? `is-event-artifact-card is-artifact-${card.id}` : "";
+  const specialFaceClass = card.id === "monster-rage" ? "is-event-monster-rage" : "";
   const textClass = `event-card-text ${eventCardTextDensityClass(textForDensity, title)} ${cardFaceDescriptionDensityClass(textForDensity)} ${cardFaceTitleDensityClass(title)} ${iconClass} ${artifactClass}`.trim();
-  const previewClass = `event-card-preview ${revealed && isArtifact ? "is-event-artifact-card" : ""}`.trim();
+  const previewClass = `event-card-preview ${revealed && isArtifact ? "is-event-artifact-card" : ""} ${specialFaceClass}`.trim();
   const artifactArtStyle = revealed && isArtifact && card.icon
     ? ` style="--event-artifact-art: url('${escapeHtml(card.icon)}')"`
     : "";
@@ -9219,6 +9342,22 @@ function eventCardDescriptionLines(description) {
 }
 
 async function revealShopCards(cards, player = null) {
+  if (!(await revealShopCardBacks(cards, player))) return;
+
+  const resetToken = transientUiResetToken;
+  const singleCard = cards.length === 1 ? cards[0] : null;
+  if (singleCard) setPhoneCardPreview(player, "Лавка Джо", singleCard, true);
+  const facePrompt = showActionPrompt(cardFaceStageMarkup(shopCardsMarkup(cards, { revealed: true })), {
+    autoFor: player,
+    buttonLabel: "Далее",
+  });
+  wireShopCardClick(actionPromptResolver);
+  await facePrompt;
+  if (resetToken !== transientUiResetToken) return;
+  if (singleCard) clearPhoneCardPreview();
+}
+
+async function revealShopCardBacks(cards, player = null) {
   const resetToken = transientUiResetToken;
   const singleCard = cards.length === 1 ? cards[0] : null;
   if (singleCard) setPhoneCardPreview(player, "Лавка Джо", singleCard, false);
@@ -9229,17 +9368,8 @@ async function revealShopCards(cards, player = null) {
   const backResolver = actionPromptResolver;
   wireShopCardClick(backResolver);
   await backPrompt;
-  if (resetToken !== transientUiResetToken) return;
-
-  if (singleCard) setPhoneCardPreview(player, "Лавка Джо", singleCard, true);
-  const facePrompt = showActionPrompt(cardFaceStageMarkup(shopCardsMarkup(cards, { revealed: true })), {
-    autoFor: player,
-    buttonLabel: "Далее",
-  });
-  wireShopCardClick(actionPromptResolver);
-  await facePrompt;
-  if (resetToken !== transientUiResetToken) return;
-  if (singleCard) clearPhoneCardPreview();
+  if (resetToken !== transientUiResetToken) return false;
+  return true;
 }
 
 async function revealSelectableShopCards(cards, player = null, { cost = 5 } = {}) {
@@ -9300,7 +9430,9 @@ function chooseShopCardFromFace(offer, player = null, { cost = 5 } = {}) {
       if (completed) return;
       completed = true;
       unsubscribeReset();
-      const card = offer.find((item) => item.id === cardId) || null;
+      const card = cardId === joeCouponShopChoiceId
+        ? joeCouponShopChoiceId
+        : offer.find((item) => item.id === cardId) || null;
       if (selectedButton) markSelectedShopCard(selectedButton);
       window.setTimeout(() => {
         actionPromptResolver = null;
@@ -9385,7 +9517,9 @@ function chooseRevealedShopCard(offer, player = null, { cost = 5 } = {}) {
       if (completed) return;
       completed = true;
       unsubscribeReset();
-      const card = offer.find((item) => item.id === cardId) || null;
+      const card = cardId === joeCouponShopChoiceId
+        ? joeCouponShopChoiceId
+        : offer.find((item) => item.id === cardId) || null;
       if (selectedButton) markSelectedShopCard(selectedButton);
       window.setTimeout(() => {
         actionPromptResolver = null;
@@ -9460,10 +9594,10 @@ function markSelectedShopCard(selectedButton) {
   selectedButton.setAttribute("aria-pressed", "true");
 }
 
-function shopCardsMarkup(cards, { revealed, selectable = false, showCoupon = false, showDecline = false } = {}) {
+function shopCardsMarkup(cards, { revealed, selectable = false, selectionId = null, showCoupon = false, showDecline = false } = {}) {
   const className = `shop-card-reveal ${revealed ? "is-revealed" : "is-hidden"} ${selectable ? "is-selectable" : ""}`.trim();
   const cardsMarkup = cards
-    .map((card) => {
+    .map((card, index) => {
       const description = cardBodyText(card);
       const title = cardFaceTitleText(card, "Лавка Джо");
       const textClass = `shop-card-text ${cardFaceTextDensityClass(description, title)} ${cardFaceDescriptionDensityClass(description)} ${cardFaceTitleDensityClass(title)}`.trim();
@@ -9476,7 +9610,7 @@ function shopCardsMarkup(cards, { revealed, selectable = false, showCoupon = fal
         : "";
 
       return `
-        <button class="shop-card-preview" type="button" ${selectable ? `data-shop-card-id="${card.id}"` : ""} aria-label="${revealed ? "Выбрать карту Лавка Джо" : "Открыть карту Лавка Джо"}">
+        <button class="shop-card-preview" type="button" ${selectable ? `data-shop-card-id="${escapeHtml(selectionId ? selectionId(card, index) : card.id)}"` : ""} aria-label="${revealed ? "Выбрать карту Лавка Джо" : "Открыть карту Лавка Джо"}">
           ${cardText}
         </button>
       `;
@@ -9504,7 +9638,7 @@ async function applyCardEffect(player, effect, source = {}) {
   if (!effect) return;
 
   if (effect.type === "coins") {
-    addCoins(player, effect.amount);
+    addCoins(player, effect.amount, { category: effect.amount < 0 ? "loss" : "reward" });
   } else if (effect.type === "move") {
     await confirmMoveEffect(player, effect.steps);
     await movePlayerSteps(player, effect.steps);
@@ -9615,8 +9749,15 @@ async function applyCardEffect(player, effect, source = {}) {
     return resolveEventMagicPickaxe(player, source.card, effect);
   } else if (effect.type === "event-golden-horseshoe") {
     return resolveEventGoldenHorseshoe(player, source.card, effect);
+  } else if (effect.type === "event-traveler-compass") {
+    return resolveEventTravelerCompass(player, source.card, effect);
+  } else if (effect.type === "event-joe-game") {
+    await resolveJoeNumberGame(player, { sourceLabel: "Игра Джо" });
+  } else if (effect.type === "event-joe-auction") {
+    await resolveJoeAuction(player);
   } else if (effect.type === "event-monster-rage") {
     resolveEventMonsterRage(effect.amount ?? 1);
+    await drawAndApplyCard(player, "event", "Событие");
   } else if (effect.type === "event-golden-markers") {
     await resolveEventGoldenMarkers(player, effect.count ?? 5, effect.amount ?? 10);
   } else if (effect.type === "event-rich-tax") {
@@ -9641,7 +9782,7 @@ function resolveShopDebt(player, amount = 2) {
     return;
   }
 
-  addCoins(player, -loss);
+  addCoins(player, -loss, { category: "loss" });
   log(
     `${playerName(player)} теряет <strong>${coinAmount(loss)}</strong>: ${shopCount} карт Лавки Джо по ${coinAmount(amount)}.`,
     { toast: true },
@@ -9738,7 +9879,7 @@ async function resolveBackToNearestPlayer(player, fallbackLoss = 5) {
     .sort((a, b) => routeProgress(b) - routeProgress(a));
 
   if (!behind.length) {
-    addCoins(player, -fallbackLoss);
+    addCoins(player, -fallbackLoss, { category: "loss" });
     log(`${playerName(player)} последний игрок и теряет <strong>${coinAmount(fallbackLoss)}</strong>.`, { toast: true });
     return;
   }
@@ -9789,7 +9930,7 @@ function resolveOtherPlayersCoins(player, amount = 5) {
   }
 
   for (const target of targets) {
-    addCoins(target, amount);
+    if (addCoins(target, amount) > 0) recordEffectReceived(target, player);
   }
   log(`Все игроки, кроме ${playerName(player)}, получают <strong>${coinAmount(amount)}</strong>: ${targets.map(playerName).join(", ")}.`, {
     toast: true,
@@ -9804,7 +9945,7 @@ async function resolveOtherPlayersShopOffer(player, cost = 5) {
   }
 
   for (const target of targets) {
-    await resolveSingleShopOfferForOtherPlayer(target, cost);
+    if (await resolveSingleShopOfferForOtherPlayer(target, cost)) recordEffectReceived(target, player);
   }
 }
 
@@ -9812,7 +9953,7 @@ async function resolveSingleShopOfferForOtherPlayer(player, cost) {
   const card = drawCardFromDeck("shop");
   if (!card) {
     log(`${playerName(player)} не получает оффер: в колоде <strong>Лавка Джо</strong> нет доступных карт.`, { toast: true });
-    return;
+    return false;
   }
 
   await revealShopCards([card], player);
@@ -9821,22 +9962,23 @@ async function resolveSingleShopOfferForOtherPlayer(player, cost) {
     log(`${playerName(player)} не может купить ${shopCardTitleStrong(card)}: не хватает ${coinAmount(cost - player.coins)}.`, {
       toast: true,
     });
-    return;
+    return false;
   }
 
   const choice = await chooseRevealedShopCard([card], player);
   if (!choice) {
     discardCardToDeck("shop", card);
     log(`${playerName(player)} отказывается покупать ${shopCardTitleStrong(card)}.`, { toast: true });
-    return;
+    return false;
   }
 
-  addCoins(player, -cost);
+  addCoins(player, -cost, { category: "purchase" });
   player.items.push(ownedShopItem(card));
   discardCardToDeck("shop", card);
   recordShopCards(player);
   render();
   log(`${playerName(player)} покупает ${shopCardTitleStrong(card)} за ${coinAmount(cost)}.`, { toast: true });
+  return true;
 }
 
 async function resolveLeadersBack(player, steps = 5) {
@@ -9856,7 +9998,9 @@ async function resolveLeadersBack(player, steps = 5) {
     { toast: true },
   );
   for (const target of targets) {
+    const beforePosition = target.position;
     await movePlayerSteps(target, -steps);
+    if (target.position !== beforePosition) recordEffectReceived(target, player);
   }
 }
 
@@ -9930,7 +10074,7 @@ async function resolvePoorestStealsShop(player) {
   thief.items.push(card);
   recordShopCards(player);
   recordShopCards(thief);
-  recordEffectReceived(thief, player);
+  recordEffectReceived(player, thief);
   render();
   log(
     `${playerName(thief)} забирает у ${playerName(player)} карту ${shopCardTitleStrong(card)}: меньше всего монет (${coinAmount(minCoins)}).`,
@@ -9992,7 +10136,6 @@ async function resolveBadDieChoice(player, { coinLoss = 8, backwardSteps = 8 } =
   });
 
   let rolls = rollDice(1);
-  recordDiceThrown(player, 1);
   state.dice = null;
   state.isAnimating = true;
   render();
@@ -10007,12 +10150,14 @@ async function resolveBadDieChoice(player, { coinLoss = 8, backwardSteps = 8 } =
   state.dice = roll;
 
   let penalty = null;
+  let penaltyActor = null;
   if (roll <= 2) {
     penalty = "back";
   } else if (roll <= 4) {
     penalty = "coins";
   } else {
     const chooser = await chooseBadDiePenaltyChooser(player);
+    penaltyActor = chooser;
     penalty = chooser ? await chooseBadDiePenalty(chooser, player, { coinLoss, backwardSteps }) : "back";
   }
 
@@ -10027,7 +10172,8 @@ async function resolveBadDieChoice(player, { coinLoss = 8, backwardSteps = 8 } =
       resultHighlight: true,
     },
   });
-  await applyBadDiePenalty(player, penalty, { coinLoss, backwardSteps });
+  const affected = await applyBadDiePenalty(player, penalty, { coinLoss, backwardSteps });
+  if (affected) recordEffectReceived(player, penaltyActor);
 }
 
 async function resolveFlipShopDown(player, count = 2) {
@@ -10158,16 +10304,18 @@ async function chooseBadDiePenalty(chooser, player, { coinLoss = 8, backwardStep
 
 async function applyBadDiePenalty(player, penalty, { coinLoss = 8, backwardSteps = 8 } = {}) {
   if (penalty === "coins") {
-    addCoins(player, -coinLoss);
+    const spent = addCoins(player, -coinLoss, { category: "loss" });
     log(`${playerName(player)} теряет <strong>${coinAmount(coinLoss)}</strong> по карте <strong>Плохо</strong>.`, { toast: true });
-    return;
+    return spent < 0;
   }
 
+  const beforePosition = player.position;
   log(`${playerName(player)} отходит на <strong>${backwardSteps}</strong> шагов назад по карте <strong>Плохо</strong>.`, { toast: true });
   setBadDieTargetPreview(player, backwardSteps);
   await sleep(360);
   clearBadDieTargetPreview();
   await movePlayerSteps(player, -backwardSteps);
+  return player.position !== beforePosition;
 }
 
 function setBadDieTargetPreview(player, backwardSteps) {
@@ -10263,7 +10411,6 @@ async function resolveEventBalance(player, amount = 10) {
     return;
   }
   const given = stealCoins(richest, poorest, amount);
-  if (given > 0) recordEffectReceived(poorest, richest);
   log(`${playerName(richest)} отдает ${playerName(poorest)} <strong>${coinAmount(given)}</strong> по событию <strong>Равновесие</strong>.`, {
     toast: true,
   });
@@ -10394,7 +10541,7 @@ async function resolveEventUnity(player, effect = {}) {
     log(message, { toast: true });
     await showActionPrompt(message, { autoFor: player });
   } else {
-    for (const target of state.players) addCoins(target, -penalty);
+    for (const target of state.players) addCoins(target, -penalty, { category: "loss" });
     const message = `<strong>Сплочение</strong>: команда проигрывает ${teamTotal} против ${monsterStrength}. Все теряют <strong>${coinAmount(penalty)}</strong>.`;
     state.unityBattleProgress = {
       ...state.unityBattleProgress,
@@ -10644,7 +10791,6 @@ async function rollEventChoiceDie(player, context) {
     rollContext,
   });
   let rolls = rollDice(1);
-  recordDiceThrown(player, 1);
   state.dice = null;
   render();
   showRollContextStatus({
@@ -10689,6 +10835,7 @@ async function resolveEventHeroSword(player, card, effect = {}) {
   const formulaText = combatBonusFormulaText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus);
   if (result.total >= targetStrength) {
     grantHeroSwordArtifact(player, card);
+    notifyOtherPlayerMonsterVictory(player);
     log(`${playerName(player)} побеждает в испытании <strong>Меч Героя</strong>: ${formatRoll(result.rolls)}${formulaText}. Артефакт остается у игрока.`, { toast: true });
     await showActionPrompt(
       `${playerName(player)} побеждает: ${formatRoll(result.rolls)}${formulaText}. Получен артефакт <strong>Меч Героя</strong>.`,
@@ -10708,7 +10855,6 @@ async function resolveEventHeroSword(player, card, effect = {}) {
 async function rollHeroSwordArtifactBattle(player) {
   let rolls = rollDice(1);
   rolls = await maybeUseDiceControl(player, rolls, { mode: "event-hero-sword", title: "Контроль кубика: Меч Героя" });
-  recordDiceThrown(player, 1);
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const baseBonus = playerCombatBonus(player);
   const curse = consumeNextBattlePenalty(player);
@@ -10782,7 +10928,7 @@ async function resolveEventJoeCoupon(player, card, effect = {}) {
     return { discard: true };
   }
 
-  addCoins(target, -cost);
+  addCoins(target, -cost, { category: "purchase" });
   log(`${playerName(target)} платит ${coinAmount(cost)} и получает артефакт <strong>Купон Джо</strong>.`, { toast: true });
   grantJoeCouponArtifact(target, card);
   await showActionPrompt(
@@ -11136,7 +11282,24 @@ async function resolveEventGoldenHorseshoe(player, card, effect = {}) {
   return { discard: false };
 }
 
-async function resolveStepContestArtifact({ activePlayer, artifactTitle, card, criterion, grant, mode, resultText }) {
+async function resolveEventTravelerCompass(player, card, effect = {}) {
+  const cost = Math.max(0, Number(effect.cost) || 3);
+  const steps = Math.max(1, Number(effect.steps) || 1);
+  const winner = await resolveStepContestArtifact({
+    activePlayer: player,
+    artifactTitle: "Компас Странника",
+    bonusFor: (target) => playerBattleBonus(target) + playerStepBonus(target),
+    card,
+    criterion: "1 кубик + бонусы силы и шагов. Лучший результат получает артефакт",
+    grant: grantTravelerCompassArtifact,
+    mode: "event-traveler-compass",
+    resultText: `После броска движения можно заплатить ${coinAmount(cost)} и пройти на ${steps} шаг дальше`,
+  });
+  if (!winner) return { discard: true };
+  return { discard: false };
+}
+
+async function resolveStepContestArtifact({ activePlayer, artifactTitle, bonusFor = playerStepBonus, card, criterion, grant, mode, resultText }) {
   let contenders = [...state.players];
   let round = 1;
   let winner = contenders[0] || activePlayer;
@@ -11146,6 +11309,7 @@ async function resolveStepContestArtifact({ activePlayer, artifactTitle, card, c
     for (const contender of contenders) {
       const result = await rollStepContestPower(contender, {
         artifactTitle,
+        bonusFor,
         contenders,
         criterion,
         mode,
@@ -11176,8 +11340,8 @@ async function resolveStepContestArtifact({ activePlayer, artifactTitle, card, c
   return winner;
 }
 
-async function rollStepContestPower(player, { artifactTitle, contenders, criterion, mode, round }) {
-  const bonus = playerStepBonus(player);
+async function rollStepContestPower(player, { artifactTitle, bonusFor, contenders, criterion, mode, round }) {
+  const bonus = bonusFor(player);
   const title = round > 1 ? `${artifactTitle}: переброс ${round}` : artifactTitle;
   const rollContext = {
     criterion,
@@ -11194,7 +11358,6 @@ async function rollStepContestPower(player, { artifactTitle, contenders, criteri
   });
 
   let rolls = rollDice(1);
-  recordDiceThrown(player, 1);
   state.dice = null;
   render();
   showRollContextStatus({
@@ -11280,7 +11443,6 @@ async function rollMovementDiceContestPower(player, { artifactTitle, contenders,
   });
 
   let rolls = rollDice(diceCount);
-  recordDiceThrown(player, diceCount);
   state.dice = null;
   render();
   showRollContextStatus({
@@ -11365,7 +11527,6 @@ async function rollCoinContestPower(player, { artifactTitle, contenders, criteri
   });
 
   let rolls = rollDice(1);
-  recordDiceThrown(player, 1);
   state.dice = null;
   render();
   showRollContextStatus({
@@ -11411,7 +11572,6 @@ async function rollWinnerTakesAllPower(player, round, contenders) {
   });
 
   let rolls = rollDice(1);
-  recordDiceThrown(player, 1);
   state.dice = null;
   render();
   showRollContextStatus({
@@ -11469,7 +11629,7 @@ async function resolveOptionalExtraTurn(player, cost) {
     return;
   }
 
-  addCoins(player, -cost);
+  addCoins(player, -cost, { category: "purchase" });
   state.extraTurnPlayerId = player.id;
   log(`${playerName(player)} платит <strong>${cost} монет</strong> и готовит еще один ход.`, { toast: true });
 }
@@ -11558,7 +11718,7 @@ async function resolveBuyShopCardFromPlayer(player, cost) {
   if (!target || cardIndex < 0) return;
 
   const [card] = target.items.splice(cardIndex, 1);
-  addCoins(player, -cost);
+  addCoins(player, -cost, { category: "purchase" });
   addCoins(target, cost, { skipReceiveBonus: true });
   player.items.push(card);
   recordShopCards(player);
@@ -11589,7 +11749,6 @@ async function resolveChoosePlayerBackRoll(player) {
 
   const diceCount = totalDiceForPlayer(target);
   let rolls = rollDice(diceCount);
-  recordDiceThrown(target, diceCount);
   await animateDice(rolls, { bonus: playerStepBonus(target), label: "Назад", player: target });
   rolls = await maybeUseDiceControl(target, rolls, { mode: "backward-roll", title: "Контроль кубика: движение назад" });
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
@@ -11599,8 +11758,9 @@ async function resolveChoosePlayerBackRoll(player) {
     `${playerName(player)} отправляет ${playerName(target)} назад: ${formatRoll(rolls)}${bonus ? ` + ${bonus} бонус = <strong>${total}</strong>` : ""}.`,
   );
   await showActionPrompt(`${playerName(target)} идет назад на <strong>${total}</strong>.`, { autoFor: player });
-  recordEffectReceived(target, player);
+  const beforePosition = target.position;
   await movePlayerSteps(target, -total);
+  if (target.position !== beforePosition) recordEffectReceived(target, player);
 }
 
 async function resolveGiveNextBattlePenalty(player, card, amount = -3) {
@@ -11838,9 +11998,8 @@ async function resolveBadGift(player) {
   });
   const target = targets.find((item) => item.id === Number(choice));
   if (!target) return;
-  recordEffectReceived(target, player);
   log(`${playerName(player)} дарит ${playerName(target)} карту <strong>Плохо</strong>.`, { toast: true });
-  await drawAndApplyCard(target, "bad", "Плохо");
+  if (await drawAndApplyCard(target, "bad", "Плохо")) recordEffectReceived(target, player);
 }
 
 async function resolveGreenPath(player) {
@@ -11882,6 +12041,8 @@ function resolveCoinTribute(player, amount = 3, twoPlayerAmount = 5) {
     .filter((target) => target.id !== player.id)
     .map((target) => ({ target, taken: stealCoins(target, player, tribute) }))
     .filter((item) => item.taken > 0);
+
+  for (const { target } of transfers) recordEffectReceived(target, player);
 
   if (!transfers.length) {
     log(`${playerName(player)} объявляет <strong>Сбор монет</strong>, но никто не может заплатить.`, { toast: true });
@@ -12385,7 +12546,7 @@ async function resolveShop(player) {
       bought = directChoice || (await chooseRevealedShopCard(offer, player, { cost }));
     }
     if (bought === joeCouponShopChoiceId) {
-      immediateStepBonus += takeJoeCouponShopOffer(player, offer);
+      immediateStepBonus += await takeJoeCouponShopOffer(player, offer);
       return immediateStepBonus;
     }
     if (!bought) {
@@ -12394,7 +12555,7 @@ async function resolveShop(player) {
       return immediateStepBonus;
     }
 
-    addCoins(player, -cost);
+    addCoins(player, -cost, { category: "purchase" });
     player.items.push(ownedShopItem(bought));
     if (bought.effect?.type === "passive-step-bonus") {
       immediateStepBonus += Math.max(0, Number(bought.effect.steps) || 0);
@@ -12429,12 +12590,10 @@ function joeCouponShopActionOptions(player, offer) {
   ];
 }
 
-function takeJoeCouponShopOffer(player, offer) {
+async function takeJoeCouponShopOffer(player, offer) {
   if (!canUseJoeCouponInShop(player, offer)) return 0;
   const cards = offer.splice(0);
-  addCoins(player, -10);
-  player.items.push(...cards.map(ownedShopItem).filter(Boolean));
-  recordShopCards(player);
+  addCoins(player, -10, { category: "purchase" });
   const immediateStepBonus = cards
     .filter((card) => card.effect?.type === "passive-step-bonus")
     .reduce((sum, card) => sum + Math.max(0, Number(card.effect.steps) || 0), 0);
@@ -12442,8 +12601,150 @@ function takeJoeCouponShopOffer(player, offer) {
     `${playerName(player)} использует артефакт <strong>Купон Джо</strong>, платит ${coinAmount(10)} и забирает все открытые карты Лавки Джо: ${cards.map((card) => cardNameStrong(card.title)).join(" / ")}.`,
     { toast: true },
   );
-  render();
+  await claimShopCardsOneByOne(player, cards, {
+    kicker: "Купон Джо",
+    summary: `${playerChoiceBadge(player)} уже заплатил ${coinAmount(10)}. Забери каждую открытую карту отдельно.`,
+    title: "Забери все карты",
+  });
   return immediateStepBonus;
+}
+
+async function claimShopCardsOneByOne(player, cards, {
+  kicker = "Лавка Джо",
+  returnSourcesToShop = false,
+  summary = "Забери каждую карту отдельно.",
+  title = "Забери карты",
+} = {}) {
+  const entries = cards.map((card, index) => ({
+    card,
+    claimId: card._copyId || `${card.id}:${index}`,
+  }));
+  const claimed = [];
+
+  const grant = (entry) => {
+    const owned = ownedShopItem(entry.card);
+    if (!owned) return;
+    player.items.push(owned);
+    if (returnSourcesToShop) discardCardToDeck("shop", entry.card);
+    claimed.push(entry.card);
+    recordShopCards(player);
+  };
+
+  if (!entries.length) return claimed;
+  if (isBot(player) || !ui.eventToast) {
+    entries.forEach(grant);
+    render();
+    return claimed;
+  }
+
+  const resetToken = transientUiResetToken;
+  state.pendingShopClaim = {
+    playerId: player.id,
+    remaining: entries.map((entry) => entry.claimId),
+  };
+
+  return new Promise((resolve) => {
+    let completed = false;
+    let claimLocked = false;
+    let unsubscribeReset = () => {};
+
+    const finish = () => {
+      if (completed) return;
+      completed = true;
+      unsubscribeReset();
+      actionPromptResolver = null;
+      actionPromptButtonLabel = "Далее";
+      actionPromptAutoPlayerId = null;
+      actionPromptChoiceOptions = [];
+      actionPromptChoiceResolver = null;
+      state.pendingShopClaim = null;
+      hideEventToast({ quick: true, force: true });
+      render();
+      resolve(claimed);
+    };
+
+    const renderClaimPrompt = () => {
+      if (completed) return;
+      if (!entries.length) {
+        finish();
+        return;
+      }
+
+      window.clearTimeout(eventToastFadeTimer);
+      window.clearTimeout(eventToastHideTimer);
+      ui.eventToast.hidden = false;
+      ui.eventToast.innerHTML = `
+        <div class="event-toast-copy">
+          <div class="roll-context-copy">
+            <span class="roll-context-kicker">${escapeHtml(kicker)}</span>
+            <strong>${escapeHtml(title)}</strong>
+            <p>${iconizeHtml(summary)}</p>
+            <small>Осталось карт: ${entries.length}</small>
+          </div>
+          ${cardFaceStageMarkup(shopCardsMarkup(entries.map((entry) => entry.card), {
+            revealed: true,
+            selectable: true,
+            selectionId: (_card, index) => entries[index].claimId,
+          }))}
+        </div>
+      `;
+      ui.eventToast.classList.remove("fading", "quick-fading", "visible");
+      ui.eventToast.classList.add("action-prompt");
+      void ui.eventToast.offsetWidth;
+      ui.eventToast.classList.add("visible");
+      actionPromptResolver = null;
+      actionPromptButtonLabel = "Забери карту";
+      actionPromptAutoPlayerId = player.id;
+      actionPromptChoiceOptions = entries.map((entry) => ({
+        card: entry.card,
+        deck: "Лавка Джо",
+        displayKind: "shop-card",
+        id: entry.claimId,
+        label: cardDisplayText(entry.card),
+        note: "забрать",
+      }));
+      actionPromptChoiceResolver = claim;
+      ui.eventToast.querySelectorAll("[data-shop-card-id]").forEach((button) => {
+        button.addEventListener("click", () => claim(button.dataset.shopCardId, { selectedButton: button }));
+      });
+      state.pendingShopClaim.remaining = entries.map((entry) => entry.claimId);
+      render();
+    };
+
+    const claim = (claimId, { selectedButton = null } = {}) => {
+      if (completed || claimLocked || resetToken !== transientUiResetToken) return;
+      const index = entries.findIndex((entry) => String(entry.claimId) === String(claimId));
+      if (index < 0) return;
+      claimLocked = true;
+      const [entry] = entries.splice(index, 1);
+      grant(entry);
+      state.pendingShopClaim.remaining = entries.map((item) => item.claimId);
+
+      if (selectedButton) {
+        selectedButton.disabled = true;
+        selectedButton.classList.add("is-selected");
+      }
+
+      render();
+      window.setTimeout(() => {
+        claimLocked = false;
+        renderClaimPrompt();
+      }, selectedButton ? 180 : 0);
+    };
+
+    unsubscribeReset = onTransientReset(resetToken, () => {
+      if (completed) return;
+      completed = true;
+      actionPromptResolver = null;
+      actionPromptButtonLabel = "Далее";
+      actionPromptAutoPlayerId = null;
+      actionPromptChoiceOptions = [];
+      actionPromptChoiceResolver = null;
+      if (state) state.pendingShopClaim = null;
+      resolve(claimed);
+    });
+    renderClaimPrompt();
+  });
 }
 
 async function resolveImmediateShopStepMovement(player, steps) {
@@ -12536,7 +12837,7 @@ function buyBackFaceDownShopCardsForBot(player, cost = 5) {
 function buyBackFaceDownShopCard(player, index, cost = 5, { silent = false } = {}) {
   const card = player.items?.[index];
   if (!card || !isShopItemFaceDown(card) || player.coins < cost) return false;
-  addCoins(player, -cost);
+  addCoins(player, -cost, { category: "purchase" });
   delete card.faceDown;
   recordShopCards(player);
   if (!silent) {
@@ -12582,7 +12883,7 @@ async function resolveJoeAuction(player) {
     leaders = await resolveJoeAuctionTie(leaders, highestBid);
   }
   const winner = leaders[0];
-  addCoins(winner, -highestBid);
+  addCoins(winner, -highestBid, { category: "purchase" });
   winner.items.push(...offer.map(ownedShopItem).filter(Boolean));
   discardCardsToDeck("shop", offer);
   recordShopCards(winner);
@@ -12725,28 +13026,226 @@ function formatAuctionBid(bid) {
   return bid > 0 ? coinAmount(bid) : "Пас";
 }
 
-async function resolveJoeGame(player) {
-  const assignments = isBot(player)
-    ? randomJoeGameAssignments(player)
-    : await chooseJoeGameAssignments(player);
-  const summary = joeGameAssignmentsText(assignments);
+async function resolveAllOrNothing(player, { rollProvider = null } = {}) {
+  const resetToken = transientUiResetToken;
+  const startingCoins = player.coins;
+  const rolls = [];
+  let pot = 0;
+  let previousRoll = null;
 
-  log(`${playerName(player)} запускает <strong>Игру Джо</strong>: ${summary}.`);
+  log(`${playerName(player)} начинает <strong>Все или ничего</strong>. Монеты будут начислены только после выбора «Забрать».`);
+
+  const firstChoice = await chooseAllOrNothingFirstRoll(player, resetToken);
+  if (firstChoice !== "roll" || resetToken !== transientUiResetToken) {
+    return { outcome: "aborted", pot: 0, rolls };
+  }
+
+  while (resetToken === transientUiResetToken) {
+    let currentRolls = [normalizeAllOrNothingRoll(rollProvider ? rollProvider() : rollDice(1)[0])];
+    state.dice = null;
+    state.isAnimating = true;
+    render();
+    await animateDice(currentRolls, { label: "Все или ничего", player });
+    if (resetToken !== transientUiResetToken) return { outcome: "aborted", pot: 0, rolls };
+    if (!rollProvider) {
+      currentRolls = await maybeUseDiceControl(player, currentRolls, {
+        mode: "all-or-nothing",
+        title: "Контроль кубика: Все или ничего",
+      });
+      if (resetToken !== transientUiResetToken) return { outcome: "aborted", pot: 0, rolls };
+    }
+    state.isAnimating = false;
+
+    const roll = normalizeAllOrNothingRoll(currentRolls[0]);
+    state.dice = roll;
+    rolls.push(roll);
+    render();
+
+    if (roll === previousRoll) {
+      const lostPot = pot;
+      const message = `${playerName(player)} теряет временный банк ${coinAmount(lostPot)} в <strong>Все или ничего</strong>. Банк сгорел.`;
+      log(message, { toast: true });
+      const choice = await chooseAllOrNothingBustExit(player, lostPot, roll, rolls, resetToken);
+      if (choice === null || resetToken !== transientUiResetToken) return { outcome: "aborted", pot: 0, rolls };
+      return { coinsAfter: player.coins, coinsBefore: startingCoins, outcome: "bust", pot: 0, rolls };
+    }
+
+    pot += roll;
+    const safeMessage = `${playerName(player)} выбрасывает <strong>${roll}</strong>. Временный банк: <strong>${coinAmount(pot)}</strong>. Монеты игрока пока не меняются.`;
+    log(safeMessage);
+    const choice = await chooseAllOrNothingAction(player, pot, roll, rolls, resetToken);
+    if (choice === null || resetToken !== transientUiResetToken) return { outcome: "aborted", pot: 0, rolls };
+
+    if (choice === "take") {
+      const received = addCoins(player, pot, { skipReceiveBonus: true });
+      const message = `${playerName(player)} забирает банк <strong>${coinAmount(pot)}</strong> в <strong>Все или ничего</strong>.`;
+      log(message, { toast: true });
+      render();
+      return { coinsAfter: player.coins, coinsBefore: startingCoins, outcome: "take", pot, received, rolls };
+    }
+
+    previousRoll = roll;
+  }
+
+  return { outcome: "aborted", pot: 0, rolls };
+}
+
+function normalizeAllOrNothingRoll(value) {
+  const roll = Math.floor(Number(value));
+  return Math.max(1, Math.min(6, Number.isFinite(roll) ? roll : 1));
+}
+
+function allOrNothingBotScores(player, pot, previousRoll) {
+  const risk = botPersonality(player).risk;
+  const rollExpectedValue = (5 * pot + 21 - previousRoll) / 6;
+  return {
+    roll: rollExpectedValue + (risk - 1) * (pot + 6),
+    take: pot,
+  };
+}
+
+function allOrNothingStatusMarkup(pot, lastRoll, rolls, { bust = false } = {}) {
+  const history = rolls.length
+    ? `<div class="all-or-nothing-roll-history">Броски: <strong>${rolls.join(", ")}</strong></div>`
+    : "";
+  const bankClass = bust ? " is-burned" : "";
+  const bankLabel = bust ? "Банк сгорел" : "Банк";
+  return `
+    <div class="all-or-nothing-status-grid">
+      <div class="all-or-nothing-status-card${bankClass}">
+        <span>${bankLabel}</span>
+        <strong>${coinAmount(pot)}</strong>
+      </div>
+      <div class="all-or-nothing-status-card">
+        <span>Последнее число</span>
+        <strong>${lastRoll ?? "—"}</strong>
+      </div>
+      ${history}
+    </div>
+  `;
+}
+
+function allOrNothingPhoneSummary(pot, lastRoll, rolls, { bust = false } = {}) {
+  const history = rolls.length ? ` Броски: ${rolls.join(", ")}.` : "";
+  const outcome = bust ? " Банк сгорел." : "";
+  return `${allOrNothingRuleText} Банк: ${pot} монет. Последнее число: ${lastRoll ?? "—"}.${history}${outcome}`;
+}
+
+function chooseAllOrNothingFirstRoll(player, resetToken) {
+  return waitForAllOrNothingChoice({
+    buttonsClass: "all-or-nothing-buttons is-initial",
+    canPreviewField: false,
+    choices: [
+      {
+        className: "all-or-nothing-primary",
+        id: "roll",
+        label: "Бросить кубик",
+        score: 0,
+      },
+    ],
+    kicker: "Все или ничего",
+    kind: "all-or-nothing",
+    playerId: player.id,
+    summary: allOrNothingRuleText,
+    phoneSummary: allOrNothingPhoneSummary(0, null, []),
+    bodyHtml: allOrNothingStatusMarkup(0, null, []),
+    title: "Обязательный бросок",
+  }, resetToken);
+}
+
+function chooseAllOrNothingAction(player, pot, previousRoll, rolls, resetToken) {
+  const scores = allOrNothingBotScores(player, pot, previousRoll);
+  return waitForAllOrNothingChoice({
+    buttonsClass: "all-or-nothing-buttons",
+    canPreviewField: false,
+    choices: [
+      {
+        id: "take",
+        label: `Забрать ${pot} монет`,
+        score: scores.take,
+      },
+      {
+        id: "roll-again",
+        label: "Бросить ещё",
+        score: scores.roll,
+      },
+    ],
+    kicker: "Все или ничего",
+    kind: "all-or-nothing",
+    playerId: player.id,
+    summary: allOrNothingRuleText,
+    phoneSummary: allOrNothingPhoneSummary(pot, previousRoll, rolls),
+    bodyHtml: allOrNothingStatusMarkup(pot, previousRoll, rolls),
+    title: "Забрать или рискнуть?",
+  }, resetToken);
+}
+
+function chooseAllOrNothingBustExit(player, lostPot, lastRoll, rolls, resetToken) {
+  return waitForAllOrNothingChoice({
+    buttonsClass: "all-or-nothing-buttons is-bust",
+    canPreviewField: false,
+    choices: [
+      {
+        className: "all-or-nothing-leave",
+        id: "leave",
+        label: "Уйти",
+        score: 0,
+      },
+    ],
+    kicker: "Все или ничего",
+    kind: "all-or-nothing",
+    playerId: player.id,
+    summary: allOrNothingRuleText,
+    phoneSummary: allOrNothingPhoneSummary(lostPot, lastRoll, rolls, { bust: true }),
+    bodyHtml: allOrNothingStatusMarkup(lostPot, lastRoll, rolls, { bust: true }),
+    title: "Все потеряно",
+  }, resetToken);
+}
+
+function waitForAllOrNothingChoice(config, resetToken) {
+  state.pendingCardChoice = { ...config, previewField: false };
+  render();
+
+  return new Promise((resolve) => {
+    let settled = false;
+    let unsubscribeReset = () => {};
+    const choiceResolver = (choiceId) => {
+      if (settled) return;
+      settled = true;
+      unsubscribeReset();
+      if (state.cardChoiceResolver === choiceResolver) {
+        state.pendingCardChoice = null;
+        state.cardChoiceResolver = null;
+      }
+      resolve(resetToken === transientUiResetToken ? choiceId : null);
+    };
+    unsubscribeReset = onTransientReset(resetToken, () => choiceResolver(null));
+    state.cardChoiceResolver = choiceResolver;
+    scheduleBotAction(botChoiceDelay("card"), { replace: true });
+  });
+}
+
+async function resolveJoeNumberGame(player, { sourceLabel = "Игра Джо" } = {}) {
+  const assignments = isBot(player)
+    ? randomJoeNumberGameAssignments(player)
+    : await chooseJoeNumberGameAssignments(player, sourceLabel);
+  const summary = joeNumberGameAssignmentsText(assignments);
+
+  log(`${playerName(player)} запускает <strong>${sourceLabel}</strong>: ${summary}.`);
   await showActionPrompt(
-    `<strong>Игра Джо</strong>: ${summary}. Теперь Джо бросает кубик.`,
+    `<strong>${sourceLabel}</strong>: ${summary}. Теперь Джо бросает кубик.`,
     { autoFor: player, buttonLabel: "Бросить кубик" },
   );
 
   const rollContext = {
     criterion: "Если выпала назначенная цифра, этот игрок получает 2 карты Лавки Джо.",
-    kicker: "Игра Джо",
-    outcomes: joeGameRollOutcomes(assignments),
-    participants: joeGameRollParticipants(assignments),
+    kicker: sourceLabel,
+    outcomes: joeNumberGameRollOutcomes(assignments),
+    participants: joeNumberGameRollParticipants(assignments),
     reason: `${playerChoiceBadge(player)} назначил цифры.`,
     title: "Джо бросает кубик",
   };
   const roll = rollDice(1)[0];
-  recordDiceThrown(player, 1);
   state.dice = null;
   state.isAnimating = true;
   render();
@@ -12754,13 +13253,13 @@ async function resolveJoeGame(player) {
     ...rollContext,
     result: "Кубик Джо катится.",
   });
-  await animateDice([roll], { label: "Игра Джо", player });
+  await animateDice([roll], { label: sourceLabel, player });
   state.isAnimating = false;
   state.dice = roll;
 
   const winner = assignments.byNumber.get(roll) || null;
   if (!winner) {
-    const message = `В <strong>Игре Джо</strong> выпало <strong>${roll}</strong>. Эта цифра никому не назначена, награды нет.`;
+    const message = `В <strong>${sourceLabel}</strong> выпало <strong>${roll}</strong>. Эта цифра никому не назначена, награды нет.`;
     log(message, { toast: true });
     await showActionPrompt("", {
       autoFor: player,
@@ -12772,49 +13271,50 @@ async function resolveJoeGame(player) {
       },
     });
     render();
-    return;
+    return { assignments, cards: [], roll, winner: null };
   }
 
   const cards = drawCardsFromDeck("shop", 2);
-  const rewardText = await awardJoeGameShopCards(winner, cards);
-  const message = `В <strong>Игре Джо</strong> выпало <strong>${roll}</strong>: ${playerName(winner)} получает ${rewardText}.`;
+  const rewardText = await awardJoeNumberGameShopCards(winner, cards, { sourceLabel });
+  const message = `В <strong>${sourceLabel}</strong> выпало <strong>${roll}</strong>: ${playerName(winner)} получает ${rewardText}.`;
   log(message, { toast: true });
   await showActionPrompt("", {
     autoFor: winner,
-      rollContext: {
-        ...rollContext,
-        result: message,
-        resultHighlight: true,
-        title: "Результат Игры Джо",
-      },
-    });
+    rollContext: {
+      ...rollContext,
+      result: message,
+      resultHighlight: true,
+      title: `Результат: ${sourceLabel}`,
+    },
+  });
   render();
+  return { assignments, cards, roll, winner };
 }
 
-async function chooseJoeGameAssignments(activePlayer) {
+async function chooseJoeNumberGameAssignments(activePlayer, sourceLabel) {
   const byNumber = new Map();
   const byPlayerId = new Map(state.players.map((player) => [player.id, []]));
   const remaining = [1, 2, 3, 4, 5, 6];
   const steps = [
-    { player: activePlayer, title: "Игра Джо. Первая цифра себе", summary: "Выбери первую цифру для себя." },
-    { player: activePlayer, title: "Игра Джо. Вторая цифра себе", summary: "Выбери вторую цифру для себя." },
+    { player: activePlayer, title: `${sourceLabel}. Первая цифра себе`, summary: "Выбери первую цифру для себя." },
+    { player: activePlayer, title: `${sourceLabel}. Вторая цифра себе`, summary: "Выбери вторую цифру для себя." },
     ...auctionBidderOrder(activePlayer).slice(1).map((player) => ({
       player,
-      title: `Игра Джо. Цифра для ${player.name}`,
+      title: `${sourceLabel}. Цифра для ${player.name}`,
       summary: `Выбери цифру для ${playerChoiceBadge(player)}.`,
     })),
   ];
 
   for (const step of steps) {
     if (remaining.length === 0) break;
-    const number = await chooseJoeGameNumber(activePlayer, step.player, remaining, step);
-    assignJoeGameNumber({ byNumber, byPlayerId, number, player: step.player, remaining });
+    const number = await chooseJoeNumberGameNumber(activePlayer, step.player, remaining, step, sourceLabel);
+    assignJoeNumberGameNumber({ byNumber, byPlayerId, number, player: step.player, remaining });
   }
 
   return { byNumber, byPlayerId };
 }
 
-function randomJoeGameAssignments(activePlayer) {
+function randomJoeNumberGameAssignments(activePlayer) {
   const byNumber = new Map();
   const byPlayerId = new Map(state.players.map((player) => [player.id, []]));
   const remaining = shuffleCards([1, 2, 3, 4, 5, 6]);
@@ -12823,24 +13323,24 @@ function randomJoeGameAssignments(activePlayer) {
   for (const player of order) {
     if (remaining.length === 0) break;
     const number = remaining[0];
-    assignJoeGameNumber({ byNumber, byPlayerId, number, player, remaining });
+    assignJoeNumberGameNumber({ byNumber, byPlayerId, number, player, remaining });
   }
 
   return { byNumber, byPlayerId };
 }
 
-async function chooseJoeGameNumber(activePlayer, targetPlayer, remaining, step) {
-  const takenText = joeGameAssignmentsShortText(remaining);
+async function chooseJoeNumberGameNumber(activePlayer, targetPlayer, remaining, step, sourceLabel) {
+  const takenText = joeNumberGameAssignmentsShortText(remaining);
   const choice = await chooseCardAction({
-    buttonsClass: "joe-game-buttons",
+    buttonsClass: "joe-number-game-buttons",
     choices: remaining.map((number) => ({
       id: String(number),
       label: String(number),
       note: targetPlayer.id === activePlayer.id ? "себе" : targetPlayer.name,
       score: 0,
     })),
-    kicker: "Игра Джо",
-    kind: "joe-game-number",
+    kicker: sourceLabel,
+    kind: "joe-number-game-number",
     playerId: activePlayer.id,
     summary: `${step.summary} ${takenText}`,
     title: step.title,
@@ -12849,33 +13349,33 @@ async function chooseJoeGameNumber(activePlayer, targetPlayer, remaining, step) 
   return remaining.includes(number) ? number : remaining[0];
 }
 
-function assignJoeGameNumber({ byNumber, byPlayerId, number, player, remaining }) {
+function assignJoeNumberGameNumber({ byNumber, byPlayerId, number, player, remaining }) {
   byNumber.set(number, player);
   byPlayerId.get(player.id)?.push(number);
   const index = remaining.indexOf(number);
   if (index >= 0) remaining.splice(index, 1);
 }
 
-function joeGameAssignmentsText(assignments) {
+function joeNumberGameAssignmentsText(assignments) {
   return state.players
-    .map((player) => `${playerName(player)}: <strong>${joeGamePlayerNumbers(assignments, player).join(", ") || "-"}</strong>`)
+    .map((player) => `${playerName(player)}: <strong>${joeNumberGamePlayerNumbers(assignments, player).join(", ") || "-"}</strong>`)
     .join("; ");
 }
 
-function joeGameAssignmentsShortText(remaining) {
+function joeNumberGameAssignmentsShortText(remaining) {
   const taken = [1, 2, 3, 4, 5, 6].filter((number) => !remaining.includes(number));
   return taken.length ? `Уже заняты: ${taken.join(", ")}.` : "Все цифры свободны.";
 }
 
-function joeGamePlayerNumbers(assignments, player) {
+function joeNumberGamePlayerNumbers(assignments, player) {
   return [...(assignments.byPlayerId.get(player.id) || [])].sort((a, b) => a - b);
 }
 
-function joeGameRollParticipants(assignments) {
-  return state.players.map((player) => `${playerChoiceBadge(player)} <strong>${joeGamePlayerNumbers(assignments, player).join(", ") || "-"}</strong>`);
+function joeNumberGameRollParticipants(assignments) {
+  return state.players.map((player) => `${playerChoiceBadge(player)} <strong>${joeNumberGamePlayerNumbers(assignments, player).join(", ") || "-"}</strong>`);
 }
 
-function joeGameRollOutcomes(assignments) {
+function joeNumberGameRollOutcomes(assignments) {
   return [1, 2, 3, 4, 5, 6].map((number) => {
     const player = assignments.byNumber.get(number);
     return {
@@ -12885,14 +13385,23 @@ function joeGameRollOutcomes(assignments) {
   });
 }
 
-async function awardJoeGameShopCards(player, cards) {
+async function awardJoeNumberGameShopCards(player, cards, { sourceLabel = "Игра Джо" } = {}) {
   if (!cards.length) return "ничего: в колоде Лавки Джо нет доступных карт";
 
-  await revealShopCards(cards, player);
-  player.items.push(...cards.map(ownedShopItem).filter(Boolean));
-  discardCardsToDeck("shop", cards);
-  recordShopCards(player);
-  render();
+  if (isBot(player)) {
+    await claimShopCardsOneByOne(player, cards, { returnSourcesToShop: true });
+  } else {
+    const resetToken = transientUiResetToken;
+    if (!(await revealShopCardBacks(cards, player)) || resetToken !== transientUiResetToken) {
+      return "ничего: получение карт было отменено";
+    }
+    await claimShopCardsOneByOne(player, cards, {
+      kicker: sourceLabel,
+      returnSourcesToShop: true,
+      summary: `${playerChoiceBadge(player)} получает награду. Кликни по каждой карте отдельно.`,
+      title: "Забери выигранные карты",
+    });
+  }
 
   const cardNames = cards.map((card) => cardNameStrong(card.title)).join(" / ");
   if (cards.length < 2) return `только 1 карту Лавки Джо: ${cardNames}`;
@@ -13004,7 +13513,18 @@ async function movePlayerSteps(player, steps, { resolveBackwardLanding = false }
   }
 }
 
-function addCoins(player, amount, { skipReceiveBonus = false } = {}) {
+function applyCoinDelta(player, amount, { category = "system" } = {}) {
+  if (!player || !Number.isFinite(amount) || amount === 0) return 0;
+  const before = player.coins;
+  player.coins = Math.max(0, before + amount);
+  const delta = player.coins - before;
+  recordCoinDelta(player, delta);
+  if (delta !== 0) showCoinFloat(player, delta);
+  if (delta < 0 && category !== "purchase") notifyOtherPlayerCoinLoss(player);
+  return delta;
+}
+
+function addCoins(player, amount, { skipReceiveBonus = false, category = amount < 0 ? "payment" : "reward" } = {}) {
   const bonus = amount > 0 && !skipReceiveBonus ? playerCoinBonus(player) : 0;
   const total = amount + bonus;
   if (total > 0 && consumePendingBadCard(player, "block-next-coins")) {
@@ -13014,12 +13534,7 @@ function addCoins(player, amount, { skipReceiveBonus = false } = {}) {
     render();
     return 0;
   }
-  const before = player.coins;
-  player.coins = Math.max(0, player.coins + total);
-  const delta = player.coins - before;
-  recordCoinDelta(player, delta);
-  if (delta !== 0) showCoinFloat(player, delta);
-  return total;
+  return applyCoinDelta(player, total, { category });
 }
 
 function awardMonsterHuntReward(player) {
@@ -13038,12 +13553,8 @@ function monsterHuntRewardText(amount) {
 
 function stealCoins(fromPlayer, toPlayer, amount) {
   if (!fromPlayer || !toPlayer || fromPlayer.id === toPlayer.id) return 0;
-  const taken = Math.min(amount, fromPlayer.coins);
-  fromPlayer.coins -= taken;
-  if (taken > 0) {
-    recordCoinDelta(fromPlayer, -taken);
-    showCoinFloat(fromPlayer, -taken);
-  }
+  const taken = Math.min(Math.max(0, Number(amount) || 0), fromPlayer.coins);
+  applyCoinDelta(fromPlayer, -taken, { category: "transfer" });
   addCoins(toPlayer, taken, { skipReceiveBonus: true });
   return taken;
 }
@@ -13331,7 +13842,7 @@ async function takeSameCellDuelShopCard(winner, loser) {
   winner.items.push(card);
   recordShopCards(loser);
   recordShopCards(winner);
-  recordEffectReceived(winner, loser);
+  recordEffectReceived(loser, winner);
   render();
   log(`${playerName(winner)} забирает у ${playerName(loser)} карту ${shopCardTitleStrong(card)} за победу в битве на одной клетке.`, { toast: true });
   await showActionPrompt(`${playerName(winner)} забирает у ${playerName(loser)} карту ${shopCardTitleStrong(card)}.`, {
@@ -13447,6 +13958,7 @@ function tileTitle(cell) {
   if (doorByEnemyCell(cell)?.isFinalBoss) return "Финальный монстр";
   if (cell === finishCell) return "Финиш";
   const namesByEvent = {
+    "all-or-nothing": `Все или ничего — ${allOrNothingRuleText}`,
     bad: "Плохо",
     "very-bad": 'Очень Плохо — возьми 3 карты "Плохо"',
     "big-rest": "Большой привал — выбери: восстановиться +10 монет; потренироваться +1 силе; ускориться +2 к шагам",
@@ -13457,8 +13969,6 @@ function tileTitle(cell) {
     event: "Событие",
     good: "Хорошо",
     green: "Зеленое поле",
-    "joe-auction": "Аукцион Джо — открываются 3 карты Лавки Джо. Все игроки, начиная с активного игрока, делают ставки монетами либо пасуют. Победитель забирает все 3 карты Лавка Джо. Остальные игроки забирают свои поставленные монеты",
-    "joe-game": "Игра Джо — выбери 2 цифры себе и по 1 каждому другому игроку. Брось кубик: игрок с выпавшей цифрой получает 2 карты Лавки Джо",
     "pay-double": "Удвой свои монеты",
     red: "Красное поле",
     shop: "Лавка Джо",
@@ -13474,6 +13984,7 @@ function fieldEffectText(cell) {
   if (cell === finishCell) return "<span>Финиш</span><strong>Финальная битва</strong>";
 
   const texts = {
+    "all-or-nothing": ["Все или ничего", allOrNothingRuleText],
     bad: ["Плохо", "Тяни карту Плохо"],
     "very-bad": ["Очень Плохо", 'Возьми 3 карты "Плохо"'],
     "big-rest": ["Большой привал", "Выбери: восстановиться +10 монет; потренироваться +1 силе; ускориться +2 к шагам"],
@@ -13484,8 +13995,6 @@ function fieldEffectText(cell) {
     event: ["Событие", "Тяни карту Событие"],
     good: ["Хорошо", "Тяни карту Хорошо"],
     green: ["Зеленое поле", greenEffectLabel()],
-    "joe-auction": ["Аукцион Джо", "3 карты Лавки Джо. Ставки от активного игрока. Победитель забирает все 3"],
-    "joe-game": ["Игра Джо", "Выбери цифры. Выпавший игрок получает 2 Лавки Джо"],
     "pay-double": ["Удвой свои монеты", "Удвой свои монеты"],
     red: ["Красное поле", redEffectLabel()],
     shop: ["Лавка Джо", `2 карты на выбор за ${joeShopCardCost()} монет`],
@@ -14023,7 +14532,7 @@ function playerStepBonus(player) {
   const artifactBonus = hasSpeedBootsArtifact(player) ? 5 : 0;
   return playerManualStepBonus(player) + (Number(player?.turnStepBonus) || 0) + artifactBonus + activeShopItems(player)
     .filter((item) => item.effect?.type === "passive-step-bonus")
-    .reduce((sum, item) => sum + item.effect.steps, 0);
+    .reduce((sum, item) => sum + item.effect.steps, 0) + activeShopSetBonus(player, "speed-cluster", "steps");
 }
 
 function playerManualStepBonus(player) {
@@ -14033,7 +14542,7 @@ function playerManualStepBonus(player) {
 function playerBattleBonus(player) {
   return playerManualBattleBonus(player) + activeShopItems(player)
     .filter((item) => item.effect?.type === "passive-battle-bonus")
-    .reduce((sum, item) => sum + item.effect.amount, 0);
+    .reduce((sum, item) => sum + item.effect.amount, 0) + activeShopSetBonus(player, "strength-cluster", "amount");
 }
 
 function playerManualBattleBonus(player) {
@@ -14334,6 +14843,7 @@ function playerDiceBonus(player) {
 function addDiceBonus(player, amount) {
   if (!player || amount <= 0) return;
   player.diceBonus = playerDiceBonus(player) + amount;
+  recordOwnedDice(player);
   showDiceFloat(player, amount);
 }
 
@@ -14399,6 +14909,7 @@ async function moveActivePlayerExactSteps() {
     state.pendingMoveDieReroll ||
     state.pendingMoveOneFarther ||
     state.pendingShop ||
+    state.pendingShopClaim ||
     actionPromptResolver
   ) {
     return;
@@ -14619,13 +15130,15 @@ function isPersistentEventArtifact(card) {
   const speedBootsCopyId = state?.artifacts?.speedBootsCard?._copyId || state?.artifacts?.speedBootsCard?.id;
   const magicPickaxeCopyId = state?.artifacts?.magicPickaxeCard?._copyId || state?.artifacts?.magicPickaxeCard?.id;
   const goldenHorseshoeCopyId = state?.artifacts?.goldenHorseshoeCard?._copyId || state?.artifacts?.goldenHorseshoeCard?.id;
+  const travelerCompassCopyId = state?.artifacts?.travelerCompassCard?._copyId || state?.artifacts?.travelerCompassCard?.id;
   return Boolean(
     (type === "event-hero-sword" && copyId && copyId === heroSwordCopyId) ||
     (type === "event-anti-bad" && copyId && copyId === antiBadCopyId) ||
     (type === "event-joe-coupon" && copyId && copyId === joeCouponCopyId) ||
     (type === "event-speed-boots" && copyId && copyId === speedBootsCopyId) ||
     (type === "event-magic-pickaxe" && copyId && copyId === magicPickaxeCopyId) ||
-    (type === "event-golden-horseshoe" && copyId && copyId === goldenHorseshoeCopyId)
+    (type === "event-golden-horseshoe" && copyId && copyId === goldenHorseshoeCopyId) ||
+    (type === "event-traveler-compass" && copyId && copyId === travelerCompassCopyId)
   );
 }
 

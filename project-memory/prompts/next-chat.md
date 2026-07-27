@@ -13,7 +13,8 @@ Meaning of that request: prepare a ready copy-paste onboarding prompt for the ne
 - если ты `Dev 1`, пиши промт для следующего `Dev 1`;
 - если ты `Dev 2`, пиши промт для следующего `Dev 2`;
 - если ты `Dev 3`, пиши промт для следующего `Dev 3`;
-- если ты `GD`, пиши промт для следующего GD;
+- если ты `GD 1`, пиши промт для следующего `GD 1`;
+- если ты `GD 2`, пиши промт для следующего `GD 2`;
 - если ты `QA 1`, пиши промт для следующего `QA 1`;
 - если ты `QA 2`, пиши промт для следующего `QA 2`;
 - если ты `Important`, пиши промт для следующего Important;
@@ -22,7 +23,7 @@ Meaning of that request: prepare a ready copy-paste onboarding prompt for the ne
 - если ты `Art / UI 3`, пиши промт для следующего `Art / UI 3`;
 - если ты `UI`, уточни актуальную официальную роль в project-memory: сейчас активны `Art / UI 1`, `Art / UI 2` и `Art / UI 3`.
 - если роль другая, сохрани эту же роль и явно назови ее в промте.
-- Сохраняй официальный номер роли, если он есть: `Dev 1` заменяет `Dev 1`, `Dev 2` заменяет `Dev 2`, `Dev 3` заменяет `Dev 3`, `QA 1` заменяет `QA 1`, `QA 2` заменяет `QA 2`, `Art / UI 1` заменяет `Art / UI 1`, `Art / UI 2` заменяет `Art / UI 2`, `Art / UI 3` заменяет `Art / UI 3`, `GD` заменяет `GD`.
+- Сохраняй официальный номер роли, если он есть: `Dev 1` заменяет `Dev 1`, `Dev 2` заменяет `Dev 2`, `Dev 3` заменяет `Dev 3`, `QA 1` заменяет `QA 1`, `QA 2` заменяет `QA 2`, `Art / UI 1` заменяет `Art / UI 1`, `Art / UI 2` заменяет `Art / UI 2`, `Art / UI 3` заменяет `Art / UI 3`, `GD 1` заменяет `GD 1`, `GD 2` заменяет `GD 2`.
 
 Контекст проекта:
 - Проект: "Очень Большая Бродилка".
@@ -42,7 +43,8 @@ Meaning of that request: prepare a ready copy-paste onboarding prompt for the ne
    - `Dev 1`: `project-memory/inbox/for-dev.md`
    - `Dev 2`: `project-memory/inbox/for-dev.md`
    - `Dev 3`: `project-memory/inbox/for-dev.md`
-   - `GD`: `project-memory/inbox/for-gd.md`
+   - `GD 1`: `project-memory/inbox/for-gd.md`
+   - `GD 2`: `project-memory/inbox/for-gd.md`
    - `QA 1`: `project-memory/inbox/for-qa.md`
    - `QA 2`: `project-memory/inbox/for-qa.md`
    - `Art / UI 1`: `project-memory/inbox/for-ui.md`
@@ -70,7 +72,9 @@ Meaning of that request: prepare a ready copy-paste onboarding prompt for the ne
   - `Dev 1`: основная разработка и реализация.
   - `Dev 2`: дополнительная разработка и UI/QA-проходы по назначению.
   - `Dev 3`: дополнительная разработка и отдельные вертикальные slice-задачи по назначению.
-  - `GD`: геймдизайн, правила, баланс, core loop, постановки для Dev roles.
+  - `GD 1`: основной геймдизайн-чат и прямой продолжатель прежнего `GD`; правила, баланс, core loop, постановки для Dev roles.
+  - `GD 2`: дополнительный геймдизайн-чат для параллельной работы по явному назначению.
+  - Обе GD-роли используют `project-memory/inbox/for-gd.md`; каждая задача должна иметь одного явно назначенного GD-владельца.
   - `Art / UI 1`: визуальные ассеты и UI direction.
   - `Art / UI 2`: дополнительный чат для визуальных ассетов и UI direction.
   - `Art / UI 3`: дополнительный чат для визуальных ассетов и UI direction.
@@ -114,8 +118,8 @@ Meaning of that request: prepare a ready copy-paste onboarding prompt for the ne
 
 После промта для следующего чата отдельно добавь строку для переименования архивируемого чата:
 - Формат: `<роль/имя чата> - <текущая дата DD.MM>`.
-- Пример: `GD - 07.06`.
-- Используй свою официальную роль/имя чата: `Dev 1`, `Dev 2`, `Dev 3`, `GD`, `Important`, `Art / UI 1`, `Art / UI 2`, `Art / UI 3`, `QA 1`, `QA 2` или другую активную роль из project-memory.
+- Пример: `GD 1 - 07.06`.
+- Используй свою официальную роль/имя чата: `Dev 1`, `Dev 2`, `Dev 3`, `GD 1`, `GD 2`, `Important`, `Art / UI 1`, `Art / UI 2`, `Art / UI 3`, `QA 1`, `QA 2` или другую активную роль из project-memory.
 - Пользователь переименует текущий чат перед архивацией в этот текст.
 
 Выведи только готовый copy-paste промт для следующего чата в одном блоке `text`.

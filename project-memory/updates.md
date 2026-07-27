@@ -20,6 +20,695 @@ Open questions:
 - ...
 ```
 
+## 2026-07-27 06:17 - Dev 1
+
+Changed:
+- Added the ordinary Event artifact `traveler-compass` / `Компас Странника`, count `1`, with the exact approved icon and player-facing description.
+- Implemented the shared 1d6 contest with current strength and step bonuses, tied-leader rerolls, persistent ownership, host/player-card/phone artifact presentation, and Event discard ownership guard.
+- Reused the existing post-roll `+1` movement decision and board-preview flow: the owner may voluntarily pay `3` coins once after a normal movement roll, without triggering `Чужая расплата`.
+- Synced local config, CSV, and live `Cards Config/event!A25:O25`; exact readback found one row and no duplicate id.
+
+Files:
+- `src/game.js`
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `index.html`
+- `assets/icons/artifact_traveler_compass_512.png`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Owner: `Dev 1`; GD owner: `GD 1`; QA was not requested.
+- Browser representative human flow PASS: contest, ownership, player-card popup, ordinary movement offer, normal/+1 board targets, payment, and movement completion; console errors `0`.
+- Static/common-path coverage confirms phone actions, bots, tied rerolls, reset-safe artifact state, and voluntary-payment exclusion; forced phone/bot/tie browser E2E was not run.
+- Syntax, deterministic assertions, Sheet exact readback, and `git diff --check` PASS.
+
+Open questions:
+- None.
+
+## 2026-07-27 05:59 - GD 2
+
+Changed:
+- Updated `others-loss-income` / `Чужая расплата` reward from `5` to `3` coins.
+- Set the exact player-facing text to `Когда кто-то другой теряет монеты, не совершая покупку, получи 3 монет`.
+- Kept the existing non-purchase-loss trigger contract unchanged and synced local config, CSV, and live `Cards Config/shop!F20:N20`.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+- Each active copy now awards exactly `3` coins through the existing data-driven effect; no `src/game.js` logic change was needed.
+- Live Sheet readback confirms `F20 = 3`, exact `N20` text, unchanged count `M20 = 2`, unchanged note, and preserved wrapping/alignment.
+
+Open questions:
+- None.
+
+## 2026-07-27 05:54 - Art / UI 1
+
+Changed:
+- Created the new Event-artifact icon `Компас Странника` at `assets/icons/artifact_traveler_compass_512.png`.
+- Matched the current artifact family with a compact golden compass rose, polished warm metal, dark edge definition, and a purple gemstone/needle accent.
+- Kept the asset text-free and readable at both card-face and small artifact-chip sizes.
+
+Files:
+- `assets/icons/artifact_traveler_compass_512.png`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual asset only; no gameplay/config/CSV/Google Sheet/cache-key changes were made.
+- PNG verified as `512x512 RGBA` with transparent corners; full-size and `48x48` views were checked.
+- QA was not requested.
+
+Open questions:
+- None.
+
+## 2026-07-27 05:30 - GD 2
+
+Changed:
+- Updated `others-loss-income` / `Чужая расплата` to exact text `Когда кто-то другой теряет монеты, не совершая покупку, получи 5 монет`.
+- Broadened its authoritative trigger from categorized penalty-only loss to every actual negative coin delta of another player except explicit purchases.
+- Marked actual purchase paths with `category: "purchase"`: ordinary Shop cards, Купон Джо artifact, extra turn, player-to-player Shop card, ordinary/bulk Shop offers, face-down Shop buyback, and Аукцион Джо.
+- Synced `src/cards.config.js`, `cards-google-sheet.csv`, and live `Cards Config/shop!L20:N20`; exact readback preserves count `2` and cell wrapping.
+
+Files:
+- `src/game.js`
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+- Penalties, payments, VS contributions, and transfers/theft qualify. Purchases, actual-zero loss, and own-source loss do not.
+- Deterministic extracted-runtime checks passed for loss/payment/transfer/default negative, purchase exclusion, two copies, zero actual loss, and own source.
+- Browser reference shows the exact text and `x2`; console warnings/errors were `0`.
+- Syntax checks and `git diff --check` passed; temporary test script was removed.
+
+Open questions:
+- None.
+
+## 2026-07-27 05:22 - Dev 2
+
+Changed:
+- Completed `ACTIVE SHOP REACTIVE INCOME CARDS` plus the superseding authoritative Shop count list for GD 1; QA was not requested.
+- Added `strength-cluster` / `Скопление силы` and `speed-cluster` / `Скопление скорости`, both count `5`, with face-up-only totals `N*(N-1)*1` strength and `N*(N-1)*2` steps.
+- Added `others-loss-income` / `Чужая расплата` and `monster-victory-income` / `Охотничья доля`, both count `2`; each face-up owned copy resolves as its own ordinary coin-receive trigger.
+- Added categorized authoritative coin deltas so actual penalty losses trigger `Чужая расплата`, while payments, bids, purchases, exchanges, and transfers do not. Added authoritative individual-monster victory triggers for ordinary/final monsters and `Меч Героя`; team Event, VS, and final PvP are excluded.
+- Applied the exact 20-card Shop count list. Local config, CSV, and live `Cards Config/shop!A2:O21` now contain exactly 20 playable Shop rows and `60` physical cards, with no extra playable Shop rows.
+- Confirmed the canceled art renames `Братство клинков` / `Лига скороходов` and their ids are absent; only the original `Скопление` names are playable.
+
+Files:
+- `src/game.js`
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Runtime checks PASS for cluster `N=0..3`, face-down/mixed inventory isolation, actual-zero loss, penalty/payment/transfer/own-source distinctions, multiple copies/owners, receive bonuses per copy, monster victory, and reset cancellation.
+- Browser PASS: host stats `+6/+12`, grouped player-card popup, phone snapshot, finite bot scores, reset, and fresh-tab console warnings/errors `0`. Screenshot: `/private/tmp/shop-reactive-popup.png`.
+- Live Sheet exact readback PASS after write; four new rows are `shop!A18:O21`, existing counts are updated in `M2:M17`, and no duplicate ids were found.
+- Checks PASS: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, data/static scripts, and `git diff --check`. Temporary browser harness and scripts were removed.
+
+Open questions:
+- None.
+
+## 2026-07-27 04:23 - GD 2
+
+Changed:
+- Reproduced the user's repeated `История -> Сохранить` failure and found an operational stale-process cause: the Node server on port `5173` had loaded the old proxy implementation before the source fix, while serving the newly updated static files.
+- Restarted only that exact server process from `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure`; no additional game-code change was needed.
+- Repeated Save from the same open browser game and confirmed live `Games` ID `64` plus exactly two `Players` ID `64` rows for `Пес` and `Кот`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- The source-level Apps Script URL and redirect fix were correct; the user's active Node process simply had not reloaded `server.js`.
+- The server is now running on `http://localhost:5173` from the active project root. Existing browser-side game state was preserved.
+- QA was not requested.
+
+Open questions:
+- None for the reported manual-save failure.
+
+## 2026-07-27 04:01 - Dev 1
+
+Changed:
+- Moved the marked `field2` Chaos Portal from `2-8` to the screenshot-targeted cell `3-10`.
+- Applied the newer user follow-up to the former portal cell: `2-8` changed through the requested intermediate `bad` state to final `event`.
+- Replaced the screenshot-marked `event` at `2-10` with ordinary `good`.
+- Preserved `field2 13-0 = event`, the second Chaos Portal at `13-7`, and the complete route/path order.
+- Bumped the host `src/game.js` cache key.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Ownership: GD owner `GD 1`; implementation owner `Dev 1`; QA was not requested.
+- No Chaos Portal mechanics, card/deck data, neighboring cells, PnP materials, CSV, or Google Sheet content changed.
+- Checks and field2 browser smoke are recorded in the GD handback.
+
+Open questions:
+- None.
+
+## 2026-07-27 04:01 - GD 2
+
+Changed:
+- Closed `HISTORY SAVE DOPost RECOVERY` after Dev 3's narrow endpoint/proxy implementation and GD 2's live manual-save readback.
+- Replaced the stale Apps Script deployment URL in `src/game.js` and `server.js` with the active Version 5 deployment that returns JSON from `doPost`.
+- Corrected proxy redirect semantics so Google Apps Script `302` is followed as `GET`; `307` / `308` still preserve the original method and body.
+- Verified one real browser `История -> Сохранить` against a fresh server: `Games` advanced from max ID `60` to ID `61`, and `Players!A152:AI153` contains exactly two ID `61` rows for `Пес` and `Кот`.
+- Recorded Dev 3's final diagnostic note: a minimal proxy probe was accepted as an empty regular-game row with ID `62`; it was deliberately not deleted without explicit approval.
+
+Files:
+- `src/game.js`
+- `server.js`
+- `index.html`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Apps Script source already contained the canonical `doPost`; no new deployment was required. The bug was a stale hardcoded deployment URL plus incorrect proxy handling of Google's redirect.
+- The proxy separately returned `verified: true` from live Apps Script JSON. The client still does not treat `no-cors` as confirmed save.
+- Syntax checks and `git diff --check` passed. QA was not requested.
+- The manual-save readback row has `finished = false`; finished-game autosave was not separately claimed. Auto routing was not changed.
+
+Open questions:
+- None for the reported manual `Сохранить` failure.
+
+## 2026-07-27 03:57 - Dev 2
+
+Changed:
+- Replaced the only active `joe-auction` field at `field2 13-0` with the ordinary `event` field without changing the route or neighboring cells.
+- Added the ordinary Event card `event-joe-auction` / `Аукцион Джо`, count `1`, using the existing `resolveJoeAuction(player)` implementation and normal Event discard lifecycle.
+- Removed only obsolete field-specific Joe Auction wiring/styles; preserved the auction resolver, bidding helpers, bot behavior, phone actions, Shop award lifecycle, and shared multi-claim code.
+- Synced the card to local config/CSV and live `Cards Config/event!A24:O24`.
+
+Files:
+- `src/game.js`
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Ownership: GD owner `GD 1`; implementation owner `Dev 2`; QA was not requested.
+- Browser PASS: real Event draw, human phone bid, bot bid path, winner payment `20 -> 0`, exactly three Shop items awarded, source offers returned to Shop discard, one Event discard, bot-only completion, `field2 13-0` rendered as `Событие`, and console warnings/errors `0`.
+- Live connector readback found exactly one `event-joe-auction` row at `event!A24:O24`, with matching id/title/effect/count/description and no duplicate.
+- Syntax/static/diff checks passed; no temporary browser harness remains.
+
+Open questions:
+- None.
+
+## 2026-07-27 03:47 - Art / UI 2
+
+Changed:
+- Updated the `Все или ничего` bust popup to keep showing the last accumulated bank in the red `Банк сгорел` status instead of replacing it with `0`.
+- Passed the same lost-bank value into the phone summary for host/controller consistency.
+- Preserved the actual bust result as `pot: 0`; this is display-only and does not award the lost bank.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Real browser bust-flow PASS: bank immediately before the repeated roll was `24`, red `Банк сгорел` displayed `24`, roll history advanced from `6, 3, 5, 4, 5, 1` to `6, 3, 5, 4, 5, 1, 1`, and the only action remained `Уйти`.
+- Console warnings/errors were `0`. Evidence: `/private/tmp/all-or-nothing-lost-bank-artui2.png`.
+- No pot math, payout, duplicate rule, bot behavior, field mapping, cards, CSV, Google Sheet, or unrelated UI changed. QA was not requested.
+
+Open questions:
+- None.
+
+## 2026-07-27 03:29 - Art / UI 2
+
+Changed:
+- Simplified the `Все или ничего` bust state: the upper bank status now reads `Банк сгорел` and uses a dedicated red danger treatment.
+- Removed the duplicate disabled `Банк сгорел` action from the bottom row.
+- Made the only remaining `Уйти` action span the full popup width.
+- Bumped the host JS and shared CSS cache keys.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Real browser bust-flow PASS after a repeated roll: exactly one active button, red upper `Банк сгорел`, and no disabled duplicate action.
+- Classic UI passed at `1280x720` and `390x844`; Tabletop UI passed at `390x844`. The popup remained inside `.map-wrap`, and console warnings/errors were `0`.
+- Evidence: `/private/tmp/all-or-nothing-bust-desktop-artui2.png` and `/private/tmp/all-or-nothing-bust-mobile-artui2.png`.
+- No pot math, duplicate-roll rule, bot behavior, field mapping, card data, CSV, Google Sheet, or unrelated popup changed. QA was not requested.
+
+Open questions:
+- None.
+
+## 2026-07-27 03:28 - GD 2
+
+Changed:
+- Investigated the user report that `История -> Сохранить` no longer persists logs to Google Sheets.
+- Confirmed the same-origin local route exists: deliberately invalid JSON to `POST /api/game-history` returns the local server's expected `500 {"error":"Invalid JSON"}` and cannot reach the Sheet.
+- Confirmed the live deployment failure without writing data: deliberately invalid text POST to the exact hardcoded Apps Script URL returns `HTTP 200 text/html` with `Не удалось найти функцию скрипта: doPost` instead of the required JSON response.
+- Assigned `ACTIVE HISTORY SAVE DOPost RECOVERY 2026-07-27 03:28` to `Dev 3`, the prior owner of this save/export subsystem.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Ownership: `GD 2` owns diagnosis/contract/user handoff; `Dev 3` owns Apps Script deployment recovery, URL/proxy changes if needed, and real browser plus Sheet readback.
+- LocalStorage saving is still present; the confirmed broken part is the remote Games Log append endpoint.
+- Regular `Games` / `Players`, auto `Games Auto` / `Players Auto`, header-name mapping, and formula-owned columns must all be preserved.
+- QA was not requested and is not involved.
+
+Open questions:
+- Whether Dev 3's signed-in browser session has permission to edit and redeploy the live Apps Script project; if not, hand back the exact minimal user action and all locally completed safeguards.
+
+## 2026-07-27 03:25 - Art / UI 1
+
+Changed:
+- Reduced the red `Ярость монстров` face treatment to a 60% translucent glaze over the original parchment texture.
+- Kept the golden frame, Event symbol, card text, and card-specific rendering unchanged.
+- Bumped the card asset and stylesheet cache keys.
+
+Files:
+- `assets/cards/event_monster-rage_front.png`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only refinement. No card data, gameplay, deck lifecycle, CSV, Google Sheet, or unrelated Event visuals changed.
+
+Open questions:
+- None.
+
+## 2026-07-27 02:45 - Art / UI 2
+
+Changed:
+- Reworked the `Все или ничего` choice popup into a compact content-sized dialog instead of the desktop-wide full-height panel.
+- Centered the popup inside the playfield, capped its width and height, and added contained scrolling only for genuinely short viewports.
+- Tightened the content measure and spacing while preserving the existing rule text, bank/last-roll cards, history chip, actions, and gameplay flow.
+- Bumped the shared CSS cache key for the host and phone controller.
+
+Files:
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser visual PASS for the active safe-roll state in Classic UI at `1280x720` and `390x844`, plus Tabletop UI at `390x844`.
+- The popup stayed entirely inside `.map-wrap`; normal content required no internal scrolling, action buttons remained fully visible, and browser console warnings/errors were `0`.
+- Evidence: `/private/tmp/all-or-nothing-popup-desktop-artui2.png`, `/private/tmp/all-or-nothing-popup-mobile-artui2.png`, `/private/tmp/all-or-nothing-popup-tabletop-mobile-artui2.png`.
+- No gameplay, rule text, field mapping, cards, assets, CSV, Google Sheet, or unrelated popup styles changed. QA was not requested.
+
+Open questions:
+- None.
+
+## 2026-07-27 02:36 - Art / UI 1
+
+Changed:
+- Recolored only the face background of Event card `monster-rage` / `Ярость монстров` to a red parchment texture.
+- Preserved the shared golden frame and restored the original Event symbol over the red face without changing its artwork.
+- Added a card-specific face class and asset override so every other Event card keeps the standard golden face.
+
+Files:
+- `assets/cards/event_monster-rage_front.png`
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only card-face change. No card title, description, count, effect, gameplay, CSV, Google Sheet, deck lifecycle, or unrelated Event card changed.
+- The new card-specific PNG is `744x1039 RGBA`.
+
+Open questions:
+- None.
+
+## 2026-07-27 02:22 - Dev 2
+
+Changed:
+- Finished the `Все или ничего` single-modal takeover: initial, safe, continue, cash-out, and bust states now stay in the compact `pendingCardChoice` modal family with the exact rule text and no large roll-context/action-prompt window.
+- Added scoped dark-fantasy host styling for bank, last number, full roll-history chip, and action states; tightened only the mobile branch so both stacked actions remain fully visible above the turn controls at `390x844`.
+- Preserved phone `card-choice` actions and added the dedicated phone summary path for bank/last/history; bust exposes disabled `Банк сгорел` plus the only active action `Уйти`.
+- Bumped shared CSS cache keys for host/controller and preserved the newer concurrent host/card-config key `20260727-0221`.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Browser visual PASS at `1280x720` and `390x844` for initial/safe/bust. Evidence: `/private/tmp/all-or-nothing-{initial,safe,bust}-{desktop,mobile}.png`; no clipping after the mobile CSS pass and the playfield remains visible.
+- Deterministic PASS: `3 -> +3`, `3,5,2 -> +10`, `3,5,3 -> +11`, `3,3 -> +0`, `3,5,5 -> +0`; no coins before cash-out. Phone continue/cash-out/bust, reset mid-bank, and bot completion also passed.
+- Checks PASS: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, static contract assertions, `git diff --check`, and production scan proving no temporary harness remains.
+- In-app Browser completed the flows without tool-visible runtime failures. A second standalone Playwright console collector could not launch because macOS denied `MachPortRendezvous`; this did not block the successful in-app visual/interaction smoke.
+- Event `Игра Джо`, generalized Joe resolver, Shop flows, card data/CSV/Sheet, and all mechanics were preserved. QA was not requested.
+
+Open questions:
+- None.
+
+## 2026-07-27 02:21 - Dev 1
+
+Changed:
+- Updated Event `monster-rage` / `Ярость монстров` to 10 physical copies and exact text `Все монстры получают +1 к силе. Возьми ещё 1 карту Событие` in local config/CSV.
+- Kept the existing permanent `eventMonsterRage` stack and added one shared `drawAndApplyCard(player, "event", "Событие")` after each activation, so chained Rage copies recurse through the normal finite Event reveal/effect/discard/ownership lifecycle.
+- Bumped the existing host/card-config cache keys.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Browser PASS: reference Rage activated `+1`, its physical extra Event was another Rage, the second activation stacked to `Ярость монстров +2`, and a third physical Event opened through the normal flow; the third card was `Справедливость`. Console warnings/errors: `0`.
+- Targeted runtime PASS: `Rage -> Rage -> ordinary Event`, ordinary Event discard, and persistent/artifact `discard: false` ownership behavior through shared `drawAndApplyCard(...)`.
+- Checks PASS: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, config/CSV/runtime assertions, `git diff --check`.
+- Live Sheet readback found `monster-rage` at `Cards Config/event!A8:O8`; this session remains read-only. Pending write is exactly `event!M8:N8` = `10` and `Все монстры получают +1 к силе. Возьми ещё 1 карту Событие`.
+- QA was not requested.
+
+Open questions:
+- Live Sheet write/readback still needs a session with Sheets write access.
+
+## 2026-07-27 01:52 - Dev 2
+
+Changed:
+- Added the ordinary Event card `event-joe-game` / `Игра Джо`, `count: 1`, effect `event-joe-game`, without artifact/persistent fields.
+- Added the exact effect dispatch call `await resolveJoeNumberGame(player, { sourceLabel: "Игра Джо" })`; shared Joe-number and Shop multi-claim helpers were reused unchanged.
+- Synced the local card row to `src/cards.config.js` and `cards-google-sheet.csv`; aligned host/config cache keys with the concurrent `20260727-0008` host key.
+
+Files:
+- `src/cards.config.js`
+- `cards-google-sheet.csv`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Local/static PASS: one physical Event copy, exact resolver-only branch, ordinary Event discard lifecycle, `field2 11-9` remains `all-or-nothing`, and no temporary browser hook/panel remains.
+- Browser PASS: active phone winner, another-player winner, unassigned roll, two face-up Shop cards claimed one by one, automatic bot claim, Event discard, and production reload; console warnings/errors `0`. Evidence screenshot: `/private/tmp/event-joe-game-phone-claim.png`.
+- Checks PASS: `node --check src/game.js`, `node --check src/cards.config.js`, `node --check src/controller.js`, static config/CSV/field/cache/harness assertions, `git diff --check`.
+- Live Google Sheet read confirmed `Cards Config/event` has 21 data rows, ends at `golden-horseshoe` on row 22, and does not contain `event-joe-game`; the exact pending write is `event!A23:O23`. This session exposes metadata/read/search tools but no Sheets write/batch-update tool, so live write/readback is the only remaining pending item and exact row data is recorded in the GD handback.
+- QA was not requested.
+
+Open questions:
+- Live Sheet write/readback requires a session with a Sheets write or batch-update tool.
+
+## 2026-07-27 01:45 - Art / UI 1
+
+Changed:
+- Created a dedicated field icon for `Все или ничего`: an ivory die above ornate golden scales with a full coin pan and an empty cracked pan.
+- Replaced the temporary `joe_game_512.png` field visual with the new `all_or_nothing_512.png` asset.
+- Preserved the old Joe game icon for its separate reusable mechanic and bumped the host `game.js` cache key.
+
+Files:
+- `assets/icons/all_or_nothing_512.png`
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual-only field asset change. No gameplay, rule text, field mapping, cards, CSV, Google Sheet, deck lifecycle, or unrelated UI changed.
+- Final asset is a transparent `512x512` RGBA PNG and is composed for readability at board-tile size.
+
+Open questions:
+- None.
+
+## 2026-07-27 01:33 - GD 2
+
+Changed:
+- Converted the user's two screenshots into a queued implementation-ready UI pass for `Все или ничего`.
+- The large mandatory-roll `roll-context` window must be removed; the full field flow will use only one compact dark-fantasy choice modal with the exact requested rule, a prominent bank, and a prominent last-roll value.
+- Added the exact bust state for that compact modal: show the complete roll sequence such as `Броски: 6, 2, 2` instead of `X выпала 2 раза подряд`; the former take slot becomes non-interactive `Банк сгорел`, and the former roll-again slot becomes the only action `Уйти`.
+- Initially queued the implementation behind Dev 2's Event-card task, briefly assigned the functional refactor to Dev 3, then returned final ownership to Dev 2 after Dev 3's turn stopped producing tool calls before CSS/cache-key/smoke completion.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Ownership: `GD 2` owns this UI pass; `Dev 2` is the sole implementation owner for completion and final handback. Dev 3 was explicitly stopped and must not make further changes.
+- Dev 2 must preserve the already-present Event-card changes and Dev 3's functional single-modal refactor; this UI pass stays out of card config/CSV/Google Sheet scope.
+- This is a presentation/interaction-flow refinement only. Existing pot math, duplicate rule, bot behavior, field identity, generalized Joe mini-game, cards/data/Sheet, and unrelated UI stay unchanged.
+- QA was not requested.
+
+Open questions:
+- None.
+
+## 2026-07-27 01:15 - Dev 2
+
+Changed:
+- Replaced `field2 11-9` / active `joe-game` field wiring with `all-or-nothing` / `Все или ничего` across gameplay dispatch, board/reference/history copy, manual field activation, bot scoring, icon alt, and CSS selectors.
+- Added mandatory `1d6` push-your-luck resolution with a temporary bank, exactly two post-roll actions, consecutive-only duplicate busts, exact one-time cash-out, shared host/phone actions, dice animation/roll context/logs, reset safety, and risk-aware bot choices.
+- Preserved the former Joe mini-game as inactive reusable `resolveJoeNumberGame(...)` plus generalized assignment/roll/reward helpers for Dev 1's future Event card; no Event card was added and shared Shop multi-claim remained intact.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Deterministic browser scenarios passed: `3 -> +3`; `3,5,2 -> +10`; `3,3 -> +0`; `3,5,5 -> +0`; `3,5,3 -> +11`; real coins stayed unchanged before cash-out.
+- Phone controller passed roll, continue, refreshed two-choice state, and `8`-coin cash-out; bot risked and resolved a `3,1,1` bust without stalling; New Game cleared an unfinished bank.
+- Production reload showed the exact field title/rule and loaded 512px visual; random first roll showed exactly two choices; host/controller console errors were `0`.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`; static old-field-wiring and shared-claim scans.
+
+Open questions:
+- None.
+
+## 2026-07-27 00:56 - Dev 1
+
+Changed:
+- Corrected player history coin accounting around one authoritative actual-delta path: starting coins stay excluded, gains/losses are clamped to the real balance change, transfers are recorded once per side, and receive bonuses remain part of the actual gain.
+- Routed `Удвой монеты` and the VS winner pot through exact history-aware coin deltas without adding receive bonuses or changing their gameplay semantics.
+- Renamed the visible history stat to `Воздействия других игроков`, fixed reversed victim/actor entries, removed neutral Event `Равновесие`, and added successful/no-op-aware coverage for audited direct multi-player card effects.
+- Replaced roll-length history tracking with the maximum owned `Кубики` stat from `totalDiceForPlayer(...)`; it initializes at new game and updates when the real dice bonus changes.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- No gameplay rewards, receive-bonus rules, movement, dice rolls, card/config data, final scoring, Shop multi-claim work, PnP, or save/export shape changed.
+- Targeted runtime checks passed for starting coins, receive bonus, over-balance loss, transfer, exact doubling, VS pot, per-player coin invariants, effect direction/no-op guards, initial owned dice, and owned-dice growth; static scan confirms special roll counts no longer feed history.
+- In-app browser smoke showed `Монеты + = 0`, `Макс. кубиков = 1`, and `Воздействия других игроков` for both players on a fresh game, with zero console errors.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-27 00:52 - GD 2
+
+Changed:
+- Took explicit ownership of the user request to replace field `Игра Джо` with the push-your-luck field `Все или ничего`.
+- Defined the implementation contract: mandatory first `1d6`, temporary coin pot, take-or-roll-again choice after safe rolls, and loss of the whole pot when the same number appears twice consecutively.
+- Assigned all implementation work to `Dev 2`, including the `field2 11-9` event replacement, old Joe Game cleanup, host/phone prompts, bot behavior, metadata, styles, and deterministic/browser verification.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Ownership is exclusive for this task: `GD 2` is the GD owner and `Dev 2` is the implementation owner; `GD 1`, other Dev roles, Art / UI, and QA should not duplicate it.
+- The existing `assets/icons/joe_game_512.png` may be reused as the current dice/game-table tile visual; no new asset is required.
+- Card configs, CSV, Google Sheet, Shop flows, route order, and unrelated gameplay are out of scope. QA was not requested.
+- Dev 2 must hand back directly to the active `GD 2` task after completion.
+- Coordination addendum from `GD 1`: the former `Игра Джо` mini-game helpers must remain reusable where safe because `Dev 1` will separately add an Event card with that mechanic. This field task must not add the Event card; its handback must provide an exact preserved/generalized/removed helper inventory for `GD 1`.
+
+Open questions:
+- None.
+
+## 2026-07-27 00:47 - Important
+
+Changed:
+- Renamed the existing visible Codex task `GD` to `GD 1`; it remains the main continuation of the former GD role.
+- Created and onboarded a new visible Codex task `GD 2` for additional game-design work by explicit assignment.
+- Added `GD 1` and `GD 2` to the active-role lists, inbox routing, onboarding/news/replacement prompts, and coordination rules.
+- Both GD roles now share `project-memory/inbox/for-gd.md`; every task must name one GD owner explicitly to prevent duplicate work.
+
+Files:
+- `AGENTS.md`
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/updates.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/prompts/read-news.md`
+- `project-memory/prompts/next-chat.md`
+
+Notes for others:
+- `GD 1` thread id: `019e9f0c-3576-7862-a4b6-7e0116e27081`.
+- `GD 2` thread id: `019fa065-8ae7-76c1-9974-ffcef9cbf541`.
+- Direct handbacks must go to the explicitly assigned GD owner's active Codex task, not generically to either GD.
+- No game code or local Codex `.jsonl` files were changed by this coordination update.
+
+Open questions:
+- None.
+
+## 2026-07-27 00:21 - Dev 1
+
+Changed:
+- Added each player's displayed final `Шаги` characteristic to the shared `finalBattleScore(...)` path at one point per step.
+- Added `steps` to final score totals, winner selection input, final summary, history breakdown, winner popup formula, chronicle final-score entry, and player snapshot/export data.
+- Kept the score source aligned with the HUD by using `playerStepBonus(player)`; expired per-turn step bonuses remain governed by their existing lifecycle.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- No movement, step acquisition, cards, artifacts, TADAM, final-battle force, boss bonuses, card config, CSV, or Google Sheet Cards Config behavior changed.
+- Runtime unit scenarios passed for `Шаги +0`, `Шаги +7`, distinct player values, and a winner changed by the new score component.
+- In-app browser autorun completed `1/1` game with zero console errors. Winner popup/history/chronicle showed the step component, and the saved autorun snapshot matched displayed step bonuses (`5 -> 5`, `2 -> 2`) in `finalScoreSteps`, `finalScoreJson`, and `finalSummary`.
+- Checks passed: `node --check src/game.js`; `node --check src/controller.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-27 00:20 - Dev 2
+
+Changed:
+- Added a shared human multi-claim flow for Shop rewards: each open card is claimed once and removed independently while the remaining cards stay open and clickable.
+- `Игра Джо` now awards its two Shop cards one by one on the same screen; bots still collect the full reward automatically.
+- `Купон Джо` now deducts exactly 10 coins once, then lets the player claim every current open offer card one by one without refreshing the offer.
+- Fixed the coupon action mapping bug: the special `__joe_coupon_all__` id was previously looked up only among card ids, became `null`, and entered the decline branch.
+- Added unique physical-copy claim ids, rapid/double-click protection, phone action refresh after each claim, and reset cleanup for unfinished claims.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Audit found three 2+ Shop award paths: `Игра Джо` changed to click-to-claim; `Купон Джо` changed to click-to-claim; `Аукцион Джо` remains automatic after bidding because it has no separate claim screen and the bid is the deliberate player action.
+- No card config/count/text, CSV, Google Sheet, balance, or Shop deck/inventory semantics were changed.
+- In-app browser smoke passed: coupon `30 -> 20` coins once; double click granted one card only; remaining card stayed open; second claim through phone action completed the flow; true decline left coins/items unchanged; Joe Game state moved `2 -> 1 -> 0`; New Game cleared unfinished claim state; console errors `0`.
+- Standalone Playwright Chromium was blocked by macOS MachPort sandbox, so the same deterministic smoke was completed in the in-app browser.
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-26 23:47 - Art / UI 1
+
+Changed:
+- Aligned the player-owned cards grid in the `Карты игрока` popup with the `Лавка Джо` grid size.
+- Removed the smaller `Карты игрока` card scale by setting `.player-shop-grid-owned` to the same `--card-face-width` clamp used by regular popup card grids.
+- Bumped the `styles.css` cache key in `index.html`.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Visual/layout only; no gameplay rules, card configs, CSV, Google Sheet, card assets, deck lifecycle, or popup data logic changed.
+- Browser smoke against local server confirmed matching card preview sizes: `208x291` for both owned cards and Joe Shop cards at `1920x1080` and `1280x720`, `164x229` for both at `390x844`.
+- Checks passed: `node --check src/game.js`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-13 17:22 - Art / UI 1
+
+Changed:
+- Created print-ready PnP output for all 20 current unique `ТАДАМ` cards, one visible copy per unique card.
+- Used existing card-specific TADAM top-infographic `frontArt` assets and rendered title/description text only into ignored output copies.
+- Matched the latest PnP cutting layout: A4 pages use a zero-gap 3x3 card grid so adjacent cards share cut lines.
+- Added `ТАДАМ` to the ignored zero-gap PnP sheet helper for future local rebuilds.
+
+Files:
+- `output/pnp/tadam_cards/tadam_cards_one_each_a4.pdf`
+- `output/pnp/tadam_cards/tadam_cards_one_each_contact_sheet.png`
+- `output/pnp/tadam_cards/tadam_cards_one_each_preview.png`
+- `output/pnp/tadam_cards/cards/`
+- `output/pnp/tadam_cards/rendered/`
+- `output/pnp/tadam_cards/README.txt`
+- `output/pnp/tadam_cards/build_tadam_pnp.py`
+- `output/pnp/build_touching_card_sheets.py`
+- `project-memory/updates.md`
+
+Notes for others:
+- Output is under ignored `output/`; no gameplay rules, card configs, CSV, Google Sheet, deck lifecycle, source TADAM assets, or unrelated assets changed.
+- Special typography handling was used for long cards such as `Дуэль на клетке`, `Обмен удачи`, `Подкуп монстра`, and `Бремя богатства`.
+- Checks passed: visual review of contact sheet and all 3 rendered PDF pages; 20 PNGs are `744x1039` RGBA; PDF is A4 with 3 pages; generated files confirmed under ignored `output/`; `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-09 13:54 - Art / UI 1
+
+Changed:
+- Rebuilt all current PnP card PDFs with cards touching each other in the print grid, so adjacent cards share cut lines and are easier to cut with scissors.
+- Applied the zero-gap layout to `Плохо`, `Хорошо`, `Лавка Джо`, `Событие`, and the one-page card-backs sheet.
+- Added a shared ignored helper for rebuilding the zero-gap sheets and updated the local ignored PnP builders for `Событие`, `Лавка Джо`, and `Рубашки` so future rerenders keep zero spacing.
+
+Files:
+- `output/pnp/bad_cards/bad_cards_one_each_a4.pdf`
+- `output/pnp/good_cards/good_cards_one_each_a4.pdf`
+- `output/pnp/shop_cards/shop_cards_one_each_a4.pdf`
+- `output/pnp/event_cards/event_cards_one_each_a4.pdf`
+- `output/pnp/card_backs/card_backs_one_each_a4.pdf`
+- `output/pnp/*/rendered/`
+- `output/pnp/*/*_preview.png`
+- `output/pnp/build_touching_card_sheets.py`
+- `project-memory/updates.md`
+
+Notes for others:
+- Output is under ignored `output/`; no gameplay rules, card configs, CSV, Google Sheet, deck lifecycle, source art, or card PNG content changed.
+- Rounded card corners still naturally leave tiny white diamonds at 4-card intersections, but the card rectangles themselves have zero horizontal/vertical gap.
+- Checks passed: visual review of representative rendered pages for `Плохо`, `Хорошо`, `Лавка Джо`, `Событие`, and `Рубашки`; all PDFs are A4; all source card PNGs remain `744x1039` RGBA; generated files confirmed under ignored `output/`; `git diff --check`.
+
+Open questions:
+- None.
+
 ## 2026-07-09 00:37 - Dev 3
 
 Changed:

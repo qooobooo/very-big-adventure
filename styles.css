@@ -5358,6 +5358,11 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   font-weight: 800;
 }
 
+.winner-card .winner-score-formula {
+  max-width: 680px;
+  line-height: 1.35;
+}
+
 .winner-confetti {
   position: absolute;
   inset: 0;
@@ -5503,12 +5508,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   height: 82%;
 }
 
-.board[data-board-id="field2"] .tile-icon-joe-auction {
-  width: 82%;
-  height: 82%;
-}
-
-.board[data-board-id="field2"] .tile-icon-joe-game {
+.board[data-board-id="field2"] .tile-icon-all-or-nothing {
   width: 82%;
   height: 82%;
 }
@@ -6014,15 +6014,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   height: 82%;
 }
 
-.tile-icon-joe-auction {
-  object-fit: contain;
-  object-position: center;
-  filter:
-    drop-shadow(0 2px 2px rgba(0, 0, 0, 0.34))
-    drop-shadow(0 0 9px rgba(255, 200, 78, 0.42));
-}
-
-.tile-icon-joe-game {
+.tile-icon-all-or-nothing {
   object-fit: contain;
   object-position: center;
   filter:
@@ -6564,8 +6556,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 .tile-bad,
 .tile-very-bad,
 .tile-enemy,
-.tile-joe-auction,
-.tile-joe-game,
+.tile-all-or-nothing,
 .tile-pay-double,
 .tile-shop,
 .tile-tadam,
@@ -6597,8 +6588,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 .tile-bad::before,
 .tile-very-bad::before,
 .tile-enemy::before,
-.tile-joe-auction::before,
-.tile-joe-game::before,
+.tile-all-or-nothing::before,
 .tile-pay-double::before,
 .tile-shop::before,
 .tile-tadam::before,
@@ -6647,8 +6637,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 .tile-dice-fortune,
 .tile-event,
 .tile-enemy,
-.tile-joe-auction,
-.tile-joe-game,
+.tile-all-or-nothing,
 .tile-pay-double,
 .tile-shop,
 .tile-tadam,
@@ -6665,8 +6654,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 .tile-dice-fortune,
 .tile-event,
 .tile-enemy,
-.tile-joe-auction,
-.tile-joe-game,
+.tile-all-or-nothing,
 .tile-pay-double,
 .tile-shop,
 .tile-tadam,
@@ -6685,14 +6673,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
     0 0 12px rgba(255, 198, 84, 0.52);
 }
 
-.tile-joe-auction {
-  background-image:
-    radial-gradient(circle at 68% 30%, rgba(255, 225, 90, 0.32), transparent 28%),
-    radial-gradient(circle at 32% 70%, rgba(100, 58, 22, 0.24), transparent 34%),
-    var(--tile-gray-art);
-}
-
-.tile-joe-game {
+.tile-all-or-nothing {
   background-image:
     radial-gradient(circle at 68% 32%, rgba(86, 211, 255, 0.28), transparent 30%),
     radial-gradient(circle at 30% 70%, rgba(255, 225, 90, 0.24), transparent 34%),
@@ -8546,6 +8527,10 @@ button.event-card-preview:focus-visible {
   --card-art: url("./assets/cards/event_front.png?v=20260612-1800");
 }
 
+.event-card-reveal.is-revealed .event-card-preview.is-event-monster-rage {
+  --card-art: url("./assets/cards/event_monster-rage_front.png?v=20260727-0325");
+}
+
 button.event-card-preview.is-event-artifact-card::before,
 button.event-card-preview.is-event-artifact-card::after {
   content: "";
@@ -9448,6 +9433,236 @@ button.shop-card-decline:focus-visible {
   gap: 8px;
 }
 
+.choice-panel.choice-panel-all-or-nothing {
+  top: 50%;
+  width: min(calc(100% - 32px), 780px);
+  max-width: 780px;
+  height: auto;
+  max-height: calc(100% - 28px);
+  aspect-ratio: auto;
+  place-items: center;
+  padding: 0;
+  box-sizing: border-box;
+  transform: translate(-50%, -50%);
+}
+
+.choice-panel.choice-panel-all-or-nothing::before {
+  border-color: rgba(224, 179, 78, 0.46);
+  background:
+    radial-gradient(circle at 9% 12%, rgba(176, 129, 43, 0.12), transparent 34%),
+    linear-gradient(135deg, rgba(31, 38, 30, 0.97), rgba(13, 21, 19, 0.98));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 248, 225, 0.08),
+    0 18px 54px rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(7px);
+}
+
+.choice-panel-all-or-nothing .choice-dialog {
+  width: 100%;
+  max-height: 100%;
+  gap: 14px;
+  padding: clamp(16px, 2.25vw, 24px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.choice-panel-all-or-nothing .choice-copy {
+  gap: 7px;
+}
+
+.choice-panel-all-or-nothing .choice-kicker {
+  color: #ffd77b;
+  font-size: clamp(0.72rem, 1.15vw, 0.85rem);
+}
+
+.choice-panel-all-or-nothing .choice-dialog h3 {
+  font-size: clamp(1.3rem, 2.45vw, 1.85rem);
+}
+
+.choice-panel-all-or-nothing .choice-summary {
+  max-width: 72ch;
+  color: rgba(246, 240, 221, 0.78);
+  font-size: clamp(0.78rem, 1.25vw, 0.94rem);
+  line-height: 1.46;
+}
+
+.all-or-nothing-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.all-or-nothing-status-card {
+  min-height: 62px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  padding: 10px 14px;
+  border: 1px solid rgba(221, 182, 95, 0.34);
+  border-radius: 7px;
+  background:
+    linear-gradient(135deg, rgba(255, 222, 143, 0.08), rgba(110, 174, 157, 0.05)),
+    rgba(13, 21, 19, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.all-or-nothing-status-card > span {
+  color: rgba(239, 229, 201, 0.64);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.all-or-nothing-status-card > strong {
+  color: #ffe19a;
+  font-size: clamp(1.32rem, 2.5vw, 1.9rem);
+  line-height: 1;
+}
+
+.all-or-nothing-status-card.is-burned {
+  border-color: rgba(219, 91, 72, 0.58);
+  background:
+    linear-gradient(135deg, rgba(153, 53, 42, 0.2), rgba(79, 34, 30, 0.12)),
+    rgba(28, 20, 19, 0.86);
+}
+
+.all-or-nothing-status-card.is-burned > span {
+  color: #ff8f7d;
+}
+
+.all-or-nothing-status-card.is-burned > strong {
+  color: #ffb09f;
+}
+
+.all-or-nothing-status-card .inline-icon {
+  width: 0.9em;
+  height: 0.9em;
+}
+
+.all-or-nothing-roll-history {
+  grid-column: 1 / -1;
+  justify-self: start;
+  max-width: 100%;
+  padding: 7px 13px;
+  border: 1px solid rgba(221, 182, 95, 0.35);
+  border-radius: 999px;
+  color: rgba(246, 240, 221, 0.78);
+  background: rgba(255, 226, 157, 0.06);
+  font-size: clamp(0.78rem, 1.35vw, 0.94rem);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.all-or-nothing-roll-history strong {
+  color: #ffd77b;
+}
+
+.all-or-nothing-buttons {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.all-or-nothing-buttons.is-initial {
+  grid-template-columns: 1fr;
+}
+
+.all-or-nothing-buttons.is-bust {
+  grid-template-columns: 1fr;
+}
+
+.all-or-nothing-buttons .choice-button {
+  min-height: 72px;
+  border-color: rgba(224, 182, 90, 0.4);
+  background:
+    linear-gradient(135deg, rgba(95, 141, 124, 0.18), rgba(46, 56, 49, 0.14)),
+    rgba(31, 41, 37, 0.96);
+}
+
+.all-or-nothing-buttons .choice-button b {
+  color: #ffd77b;
+  font-size: clamp(0.96rem, 1.8vw, 1.18rem);
+}
+
+.all-or-nothing-buttons .choice-button:hover:not(:disabled),
+.all-or-nothing-buttons .choice-button:focus-visible:not(:disabled) {
+  border-color: rgba(255, 213, 118, 0.76);
+  background:
+    linear-gradient(135deg, rgba(141, 193, 164, 0.24), rgba(80, 90, 66, 0.18)),
+    rgba(35, 48, 42, 0.98);
+}
+
+@media (max-width: 620px) {
+  .choice-panel.choice-panel-all-or-nothing {
+    top: 50%;
+    width: calc(100% - 12px);
+    max-height: calc(100% - 12px);
+  }
+
+  .choice-panel-all-or-nothing .choice-dialog {
+    gap: 7px;
+    padding: 10px 12px;
+  }
+
+  .choice-panel-all-or-nothing .choice-copy {
+    gap: 4px;
+  }
+
+  .choice-panel-all-or-nothing .choice-kicker {
+    font-size: 0.65rem;
+  }
+
+  .choice-panel-all-or-nothing .choice-dialog h3 {
+    font-size: 1.16rem;
+  }
+
+  .choice-panel-all-or-nothing .choice-summary {
+    font-size: 0.69rem;
+    line-height: 1.28;
+  }
+
+  .all-or-nothing-status-grid {
+    gap: 6px;
+  }
+
+  .all-or-nothing-status-card {
+    min-height: 46px;
+    padding: 6px 9px;
+  }
+
+  .all-or-nothing-status-card > span {
+    font-size: 0.61rem;
+  }
+
+  .all-or-nothing-status-card > strong {
+    font-size: 1.25rem;
+  }
+
+  .all-or-nothing-roll-history {
+    padding: 5px 10px;
+    font-size: 0.72rem;
+  }
+
+  .all-or-nothing-buttons,
+  .all-or-nothing-buttons.is-initial {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .all-or-nothing-buttons .choice-button {
+    min-height: 48px;
+    padding: 8px 12px;
+  }
+
+  .all-or-nothing-buttons .choice-button b {
+    font-size: 0.94rem;
+  }
+}
+
 .shop-buttons {
   grid-template-columns: 1fr;
 }
@@ -10243,7 +10458,7 @@ button.player-shop-backdrop:active:not(:disabled) {
 }
 
 .player-shop-grid-owned {
-  --card-face-width: clamp(132px, 15vw, 188px);
+  --card-face-width: clamp(150px, 18vw, 208px);
 }
 
 .player-shop-card-cell {
