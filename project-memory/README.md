@@ -12,7 +12,7 @@ This folder is the shared mailbox for Codex chats working on "Очень Бол�
    - `prompts/read-news.md`
 2. During work, keep edits inside your assigned project folder.
 3. After meaningful work, append a short update to `updates.md`.
-4. If Dev 1, Dev 2, Dev 3, Important, GD 1, GD 2, Art / UI 1, Art / UI 2, Art / UI 3, QA 1, or QA 2 needs to act, write a note in the matching inbox file.
+4. If Dev 1, Dev 2, Dev 3, Important, GD 1, GD 2, GD 3, Art / UI 1, Art / UI 2, Art / UI 3, QA 1, or QA 2 needs to act, write a note in the matching inbox file.
 5. If a task is handed back to a specific active role/chat, or the next step requires that role to react, also send a direct message to that role's active Codex thread. Do not rely only on the inbox file for urgent or expected handbacks.
 
 ## Reasoning Depth
@@ -58,7 +58,7 @@ Behavior rules:
 
 ## Task Lifecycle
 
-0. For planning and executing multi-role work, the assigned GD owner (`GD 1` or `GD 2`) routes tasks through the appropriate specialists by default:
+0. For planning and executing multi-role work, the assigned GD owner (`GD 1`, `GD 2`, or `GD 3`) routes tasks through the appropriate specialists by default:
    - Dev handles implementation.
    - Art / UI handles visual assets, board presentation, and UI polish.
    - QA handles testing only when the user explicitly asks to involve QA.
@@ -120,13 +120,14 @@ Behavior rules:
 - `Dev 3`: additional implementation chat for the prototype.
 - `GD 1`: main game-design chat and direct continuation of the former `GD`; owns assigned rules, contracts, balance, core loop, and implementation-ready design notes for Dev roles.
 - `GD 2`: additional game-design chat for parallel assigned rules, contracts, balance work, mechanic decomposition, and implementation-ready design notes.
+- `GD 3`: third game-design chat for additional parallel work by explicit assignment.
 - `Art / UI 1`: visual assets and UI direction for the prototype.
 - `Art / UI 2`: additional visual assets and UI direction chat for the prototype.
 - `Art / UI 3`: additional visual assets and UI direction chat for the prototype.
 - `QA 1`: testing, smoke checks, regression checks, and bug reports for Dev roles.
 - `QA 2`: additional testing chat for smoke checks, regression checks, and bug reports.
 
-`GD 1` and `GD 2` share `project-memory/inbox/for-gd.md`. Every task must name one GD owner explicitly; neither role should assume or duplicate the other role's work without a handoff.
+`GD 1`, `GD 2`, and `GD 3` share `project-memory/inbox/for-gd.md`. Every task must name one GD owner explicitly; no GD role should assume or duplicate another role's work without a handoff.
 
 Do not edit local Codex session logs. They are read-only context.
 

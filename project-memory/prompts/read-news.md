@@ -18,6 +18,7 @@ Meaning of that request: refresh yourself from project memory, summarize what ch
   - `Dev 3`: `project-memory/inbox/for-dev.md`
   - `GD 1`: `project-memory/inbox/for-gd.md`
   - `GD 2`: `project-memory/inbox/for-gd.md`
+  - `GD 3`: `project-memory/inbox/for-gd.md`
   - `QA 1`: `project-memory/inbox/for-qa.md`
   - `QA 2`: `project-memory/inbox/for-qa.md`
   - `Art / UI 1`: `project-memory/inbox/for-ui.md`

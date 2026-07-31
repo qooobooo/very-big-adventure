@@ -61,7 +61,7 @@ Important files:
 - `project-memory/handoff.md` — stable project handoff and current architecture notes.
 - `project-memory/updates.md` — newest project news, newest entries at the top.
 - `project-memory/inbox/for-dev.md` — tasks for Dev roles.
-- `project-memory/inbox/for-gd.md` — shared tasks/questions for `GD 1` and `GD 2`.
+- `project-memory/inbox/for-gd.md` — shared tasks/questions for `GD 1`, `GD 2`, and `GD 3`.
 - `project-memory/inbox/for-qa.md` — QA tasks and approval gates.
 - `project-memory/inbox/for-ui.md` — Art / UI tasks.
 - `project-memory/inbox/for-important.md` — coordination/memory tasks.
@@ -78,6 +78,7 @@ Current active roles:
 - `Dev 3`: additional implementation / isolated tasks.
 - `GD 1`: main game-design chat and direct continuation of the former `GD`.
 - `GD 2`: additional game-design chat for parallel work by explicit assignment.
+- `GD 3`: third game-design chat for additional parallel work by explicit assignment.
 - `Art / UI 1`: visual assets and UI direction.
 - `Art / UI 2`: additional visual assets and UI direction.
 - `Art / UI 3`: additional visual assets and UI direction.
@@ -88,7 +89,7 @@ Current active roles:
 
 Mandatory process:
 
-1. The assigned GD owner (`GD 1` or `GD 2`) creates an implementation-ready task.
+1. The assigned GD owner (`GD 1`, `GD 2`, or `GD 3`) creates an implementation-ready task.
 2. Executor completes the task and writes a handback.
 3. Executor updates `project-memory/updates.md`.
 4. Executor sends result to QA.

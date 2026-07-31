@@ -21,7 +21,7 @@ Then read the inbox that matches your role:
 
 - Important: `project-memory/inbox/for-important.md`
 - Dev 1 / Dev 2 / Dev 3: `project-memory/inbox/for-dev.md`
-- GD 1 / GD 2: `project-memory/inbox/for-gd.md`
+- GD 1 / GD 2 / GD 3: `project-memory/inbox/for-gd.md`
 - Art / UI 1 / Art / UI 2 / Art / UI 3: `project-memory/inbox/for-ui.md`
 - QA 1 / QA 2: `project-memory/inbox/for-qa.md`
 
@@ -37,7 +37,8 @@ Known roles:
 - Dev 1 / Dev 2 / Dev 3 = "Очень Большая Бродилка" implementation in `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure`.
 - GD 1 = main game-design chat and direct continuation of the former GD.
 - GD 2 = additional game-design chat for parallel work by explicit assignment.
-- GD 1 / GD 2 = game design, contracts, rules, balance, core loop, and implementation-ready specs for Dev roles; every task names one GD owner explicitly.
+- GD 3 = third game-design chat for additional parallel work by explicit assignment.
+- GD 1 / GD 2 / GD 3 = game design, contracts, rules, balance, core loop, and implementation-ready specs for Dev roles; every task names one GD owner explicitly.
 - Art / UI 1 / Art / UI 2 / Art / UI 3 = visual assets and UI direction for the prototype.
 - QA 1 / QA 2 = testing, smoke checks, regression checks, and bug reports for Dev roles.
 
@@ -58,7 +59,7 @@ Reasoning depth rule:
 
 Required task lifecycle:
 
-- The assigned GD owner (`GD 1` or `GD 2`) creates implementation-ready tasks for the executor.
+- The assigned GD owner (`GD 1`, `GD 2`, or `GD 3`) creates implementation-ready tasks for the executor.
 - The executor completes the task, writes a handback, updates `updates.md`, and sends the result to QA.
 - QA is the first approval gate: approve and forward to the assigned GD owner, or return a reproducible rework task to the executor.
 - The assigned GD owner gives final approval only after QA approval, or sends clear rework back to the executor.
@@ -72,7 +73,7 @@ After meaningful work, append a short entry to:
 
 `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/updates.md`
 
-If Dev 1, Dev 2, Dev 3, Important, GD 1, GD 2, Art / UI 1, Art / UI 2, Art / UI 3, QA 1, or QA 2 needs to do something, write it in the matching inbox under:
+If Dev 1, Dev 2, Dev 3, Important, GD 1, GD 2, GD 3, Art / UI 1, Art / UI 2, Art / UI 3, QA 1, or QA 2 needs to do something, write it in the matching inbox under:
 
 `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure/project-memory/inbox/`
 

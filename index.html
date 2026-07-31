@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260727-0340" />
+    <link rel="stylesheet" href="./styles.css?v=20260728-0820" />
   </head>
   <body data-ui-style="classic" data-font-style="standard">
     <main class="app-shell">
@@ -54,6 +54,7 @@
               <label>
                 <span class="control-label-copy">Игроков</span>
                 <select id="playerCount">
+                  <option value="1">Соло</option>
                   <option value="2" selected>2</option>
                   <option value="3">3</option>
                   <option value="4">4</option>
@@ -234,6 +235,10 @@
                 <input id="hidePlayers" type="checkbox" />
                 <span>Скрыть игроков</span>
               </label>
+              <label class="cheat-toggle">
+                <input id="disableDragon" type="checkbox" checked />
+                <span>Выключить дракона</span>
+              </label>
             </div>
           </section>
           <section class="tadam-card">
@@ -270,6 +275,10 @@
               <button class="secondary reference-toggle" type="button" data-reference-toggle="event" aria-pressed="false">
                 <img class="reference-toggle-icon" src="./assets/cards/event_back.png" alt="" aria-hidden="true">
                 <span class="reference-toggle-label">События</span>
+              </button>
+              <button class="secondary reference-toggle" type="button" data-reference-toggle="legendary" aria-pressed="false">
+                <img class="reference-toggle-icon reference-toggle-icon-legendary" src="./assets/icons/legendary_doom_scythe_512.png" alt="" aria-hidden="true">
+                <span class="reference-toggle-label">Легендарное оружие</span>
               </button>
               <button class="secondary reference-toggle" type="button" data-reference-toggle="fields" aria-pressed="false">
                 <img class="reference-toggle-icon reference-toggle-icon-field" src="./assets/icons/start_512.png" alt="" aria-hidden="true">
@@ -332,6 +341,6 @@
 
     </main>
 
-    <script type="module" src="./src/game.js?v=20260727-0600"></script>
+    <script type="module" src="./src/game.js?v=20260731-0001"></script>
   </body>
 </html>

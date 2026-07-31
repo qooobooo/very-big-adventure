@@ -4,6 +4,37 @@ For UI/UX and art-asset tasks related to "Очень Большая Бродил
 
 ## Open Items
 
+- DONE DRAGON VISUAL PHASE 3 2026-07-27 02:48 - Final integration polish after Dev 1:
+  - Owner: `Art / UI 1`; GD owner: `GD 1`; QA was not requested.
+  - Tightened the integrated `field2` Dragon overlay in `styles.css`: smaller footprint, lighter shadow, denser segment spacing, and an in-composition progress/strength pill instead of the offset side badge.
+  - Verified desktop, large, and `390x844` responsive states, plus `2p/3p/4p` prefills (`16 / 32`, `8 / 32`, `0 / 32`) and the disabled hidden state via the real settings toggle.
+  - Live browser checks also captured player-colored tokens, the newest-token pulse, and a full counter during autorun; the overlay stayed readable and did not collide with prompts or the battle HUD in the checked states.
+  - Scope remained visual-only. No gameplay, state, scoring, phone payloads, board geometry, or card/config data changed.
+
+- DONE DRAGON VISUAL PHASE 1 2026-07-27 23:58 - Sleeping Dragon asset and counter visual contract:
+  - Owner: `Art / UI 1`; GD owner: `GD 1`; QA was not requested.
+  - Created `assets/icons/dragon_sleeping_1024.png`, a wide sleeping crimson Dragon cutout for the empty cave terrain above the inner horizontal `field2` route.
+  - Asset is `1024x1024 RGBA` with transparent corners/background and no baked title, rules, strength, progress, counter, or scenery.
+  - Defined the 32-segment desktop/fullscreen arcs, mobile `4x8` fallback ribbon, neutral baseline, losing-player token colors, progress/strength badge, pulse/full/disabled/hidden states, layering, and collision rules in `project-memory/dragon-visual-contract.md`.
+  - Visual previews are under ignored `output/dragon_visual_phase1/`; the approved placement keeps the Dragon, segments, and badge off every route tile.
+  - Scope remained visual/specification only; no gameplay or state wiring was added.
+
+- DONE PNP REFRESH 2026-07-27 14:58 - Current Shop, Event, and field print sets:
+  - Owner: `Art / UI 1`.
+  - Requested by: `GD 1`, with the final field PNG supplied directly by the user.
+  - Rebuilt `output/pnp/shop_cards/` from the current `cardConfig.shop`: exactly 20 unique cards, one copy each, no missing or obsolete ids.
+  - Rebuilt `output/pnp/event_cards/` from the current `cardConfig.event`: exactly 24 unique cards, including `Игра Джо`, `Аукцион Джо`, `Компас Странника`, and the current red `Ярость монстров`.
+  - Rebuilt `output/pnp/field_a4_2x2/` from the user-provided current field PNG as four ordered A4 quadrants with crop marks.
+  - Outputs include individual PNGs, contact sheets/previews, print-ready A4 PDFs, and rendered PDF page previews.
+  - Static checks passed:
+    - Shop: 20 PNGs, all `744x1039 RGBA`, A4 PDF with 3 pages.
+    - Event: 24 PNGs, all `744x1039 RGBA`, A4 PDF with 3 pages.
+    - Field: `1440x1440 RGB` source, four `720x720 RGB` quadrants, A4 PDF with 4 pages.
+    - Reassembled field quadrants match the normalized source pixel-for-pixel.
+  - Visual checks passed on both contact sheets and all 10 rendered A4 pages; card text, inline icons, artifact layouts, crop marks, and field quadrant order are clean.
+  - Git guard passed: `.gitignore` still ignores `output/`; `git status --short --ignored output/pnp` returns only `!! output/`; `git diff --check` passed.
+  - QA was not requested.
+
 - DONE ARTIFACT ICON 2026-07-27 05:54 - `Компас Странника` artifact icon:
   - Owner: `Art / UI 1`.
   - Requested by: `GD 1`.

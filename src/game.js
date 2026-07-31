@@ -1,4 +1,4 @@
-import { cardConfig } from "./cards.config.js?v=20260727-0600";
+import { cardConfig } from "./cards.config.js?v=20260728-0800";
 import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260703-0118";
 
 const boardEl = document.querySelector("#board");
@@ -45,6 +45,7 @@ const ui = {
   coinDoubleBanner: document.querySelector("#coinDoubleBanner"),
   copyPhoneRoomUrlBtn: document.querySelector("#copyPhoneRoomUrlBtn"),
   createPhoneRoomBtn: document.querySelector("#createPhoneRoomBtn"),
+  disableDragon: document.querySelector("#disableDragon"),
   diceCount: document.querySelector("#diceCount"),
   diceValue: document.querySelector("#diceValue"),
   eventToast: document.querySelector("#eventToast"),
@@ -360,6 +361,10 @@ const tadamActivationFlashMs = 2800;
 const humanRollCooldownMs = 650;
 const infoHistoryDefaultLimit = 50;
 const allOrNothingRuleText = "Брось 1 кубик и отложи столько монет, сколько выпало на кубике. Можешь забрать эти монеты себе, либо бросить кубик ещё раз и отложить ещё монеты. Бросать кубик можешь сколько угодно раз, но если выпадет одно число 2 раза подряд, верни все отложенные монеты и закончи ход";
+const chaosPortalRuleText = "Игрок бросает кубик:\n1-2: Назад к ближайшему монстру/порталу;\n3-4: Назад к ближайшей Лавке Джо;\n5: Назад к ближайшему Привалу;\n6: Вперед к ближайшему монстру/порталу.\n\nЭффект поля срабатывает, даже при движении назад";
+const dragonSegmentCount = 32;
+const dragonStrengthPerPlayer = 35;
+const dragonWakeEmphasisMs = 760;
 const blackMarketStrengthCards = 1;
 const blackMarketStrengthBonus = 2;
 const blackMarketCoinsCards = 2;
@@ -385,6 +390,7 @@ const goldenHorseshoeIconSrc = "./assets/icons/artifact_golden_horseshoe_512.png
 const travelerCompassIconSrc = "./assets/icons/artifact_traveler_compass_512.png";
 const joeCouponShopChoiceId = "__joe_coupon_all__";
 const finalEnemyIconSrc = "./assets/icons/final_enemy.png?v=20260525-0146";
+const doomScytheIconSrc = "./assets/icons/legendary_doom_scythe_512.png";
 const blackMarketIconSrc = "./assets/icons/black_market_ultra_simple_512.png?v=20260619-0138";
 const chaosPortalIconSrc = "./assets/icons/chaos_portal_1254.png?v=20260601-0276";
 const eventIconSrc = "./assets/icons/event_quest_512.png";
@@ -393,7 +399,7 @@ const vsIconSrc = "./assets/icons/vs_1254.png?v=20260531-0233";
 const eventIcons = {
   bad: '<img class="tile-icon-image tile-icon-bad" src="./assets/icons/bad_tight.png" alt="Плохо">',
   "very-bad": '<img class="tile-icon-image tile-icon-very-bad" src="./assets/icons/very_bad_512.png?v=20260609-0412" alt="Очень Плохо">',
-  "big-rest": '<img class="tile-icon-image tile-icon-big-rest" src="./assets/icons/big_rest_fire_512.png" alt="Большой привал">',
+  "big-rest": '<img class="tile-icon-image tile-icon-big-rest" src="./assets/icons/big_rest_fire_512.png" alt="Привал">',
   "black-market": `<img class="tile-icon-image tile-icon-black-market" src="${blackMarketIconSrc}" alt="Черный рынок">`,
   "chaos-portal": `<img class="tile-icon-image tile-icon-chaos-portal" src="${chaosPortalIconSrc}" alt="Портал хаоса">`,
   enemy: '<img class="tile-icon-image tile-icon-enemy" src="./assets/icons/enemy_512.png" alt="Враг">',
@@ -419,7 +425,7 @@ applyFontStyle();
 applyBoardConfig(ui.boardSelect?.value || "field2");
 
 const shopCards = expandDeck(cardConfig.shop);
-const finiteDeckIds = ["good", "bad", "tadam", "event", "shop"];
+const finiteDeckIds = ["good", "bad", "tadam", "event", "legendary", "shop"];
 
 const names = [
   { name: "Пес", color: "#8b1713", token: "./assets/player-tokens/dog.png?v=20260520-0310" },
@@ -431,7 +437,7 @@ const names = [
 const historyFieldLabels = {
   bad: "Плохо",
   "very-bad": "Очень Плохо",
-  "big-rest": "Большой привал",
+  "big-rest": "Привал",
   "all-or-nothing": "Все или ничего",
   "black-market": "Черный рынок",
   "chaos-portal": "Портал хаоса",
@@ -495,6 +501,7 @@ let transientUiResetToken = 0;
 let gameLogEntries = [];
 let infoHistoryShowFull = false;
 let infoHistoryCopyFeedbackTimer = null;
+let dragonSegmentPulseTimer = null;
 
 function applyBoardConfig(boardId) {
   const config = boardConfigs[boardId] || boardConfigs.field2;
@@ -620,6 +627,7 @@ function newGame() {
   const playerCount = Number(ui.playerCount.value);
   const botCount = selectedBotCount(playerCount);
   const startingCoins = selectedStartingCoins();
+  const gameSettings = collectGameSettings();
   const doors = {};
   for (const door of activeBoardConfig.doors) {
     doors[door.id] = { ...door, openedBy: [] };
@@ -637,6 +645,8 @@ function newGame() {
     redPathTargetPreview: null,
     decks: buildDeckState(),
     doors,
+    dragon: createDragonState(playerCount, dragonDisabledSetting()),
+    dragonBattleProgress: null,
     enemyBattleProgress: null,
     eventMonsterRage: 0,
     goldenMarkers: [],
@@ -644,10 +654,12 @@ function newGame() {
     finalBattle: null,
     finalBattleProgress: null,
     finished: false,
-    gameSettings: collectGameSettings(),
+    gameMode: isSoloGame(gameSettings) ? "solo" : "multiplayer",
+    gameSettings,
     botTurnPlayerId: null,
     isAnimating: false,
     landingCell: null,
+    legendaryWeapon: null,
     modifierPlayerId: 0,
     movingPlayerId: null,
     extraTurnPlayerId: null,
@@ -709,6 +721,7 @@ function newGame() {
     walkPath: [],
   };
   state.history = createGameHistory(state.players);
+  syncDragonHistory();
   state.players.forEach(recordOwnedDice);
   log("<strong>Игра началась!</strong>");
   resolveRandomFirstPlayerStart();
@@ -774,6 +787,7 @@ function resetTransientUi() {
   if (!state) return;
   state.cardChoiceResolver = null;
   state.choiceResolver = null;
+  state.dragonBattleProgress = null;
   state.enemyBattleProgress = null;
   state.finalBattleProgress = null;
   state.isAnimating = false;
@@ -828,12 +842,14 @@ function resetTransientResolversAndTimers() {
   window.clearTimeout(monsterDefeatBannerHideTimer);
   window.clearTimeout(coinDoubleBannerHideTimer);
   window.clearTimeout(phoneDiceRollClearTimer);
+  window.clearTimeout(dragonSegmentPulseTimer);
   botActionTimer = null;
   eventToastFadeTimer = null;
   eventToastHideTimer = null;
   monsterDefeatBannerHideTimer = null;
   coinDoubleBannerHideTimer = null;
   phoneDiceRollClearTimer = null;
+  dragonSegmentPulseTimer = null;
 }
 
 function hardHideEventToast() {
@@ -882,12 +898,33 @@ function createGameHistory(players) {
     autoSaveFailedAt: null,
     autoSaveRequestedAt: null,
     autoSavedAt: null,
+    dragon: null,
     finalSummary: null,
     finishedAt: null,
     startedAt: Date.now(),
     tadamPlayed: 0,
     players: Object.fromEntries(players.map((player) => [player.id, createPlayerHistory()])),
   };
+}
+
+function gameModeFrom(source = state) {
+  const explicitMode = source?.gameMode
+    ?? source?.gameSettings?.gameMode
+    ?? source?.settings?.startedWith?.gameMode;
+  if (explicitMode === "solo" || explicitMode === "multiplayer") return explicitMode;
+
+  const playerCount = Number(
+    source?.playerCount
+      ?? source?.gameSettings?.playerCount
+      ?? source?.settings?.startedWith?.playerCount
+      ?? source?.players?.length
+      ?? source,
+  );
+  return playerCount === 1 ? "solo" : "multiplayer";
+}
+
+function isSoloGame(source = state) {
+  return gameModeFrom(source) === "solo";
 }
 
 function collectGameSettings() {
@@ -898,8 +935,10 @@ function collectGameSettings() {
     botCount: selectedBotCount(playerCount),
     botSpeed: ui.botSpeed?.value || "standard",
     diceCount: Number(ui.diceCount?.value) || 1,
+    disableDragon: dragonDisabledSetting(),
     exactMoveAmount: exactMoveControlAmount(),
     fontStyle: selectedFontStyle(),
+    gameMode: gameModeFrom({ playerCount }),
     monsterStrengthMode: monsterStrengthMode(),
     playerCount,
     randomFirstPlayer: Boolean(ui.randomFirstPlayer?.checked),
@@ -976,18 +1015,24 @@ function recordEffectReceived(target, actor = null) {
   if (history) history.effectsReceived = (Number(history.effectsReceived) || 0) + 1;
 }
 
-function recordMonsterBattle(player, door, force, won) {
+function recordMonsterBattle(player, door, force, won, rollDetails = null) {
   const history = playerHistory(player);
   if (!history || !door) return;
-  const requiredForce = effectiveMonsterStrength(door);
+  const recordedRequiredForce = Number(rollDetails?.requiredForce);
+  const requiredForce = Number.isFinite(recordedRequiredForce)
+    ? recordedRequiredForce
+    : monsterBattleTargetStrength(door, player);
   const key = door.label || `Монстр ${requiredForce}`;
   const battle = history.monsterBattles[key] || {
     attempts: 0,
     clearedForce: null,
     damage: requiredForce,
+    rolls: [],
     wins: 0,
   };
   battle.attempts += 1;
+  if (!Array.isArray(battle.rolls)) battle.rolls = [];
+  if (rollDetails) battle.rolls.push(cloneData(rollDetails));
   if (won) {
     battle.wins += 1;
     battle.clearedForce = force;
@@ -1327,6 +1372,89 @@ function monsterRageBonus() {
   return Math.max(0, Number(state?.eventMonsterRage) || 0);
 }
 
+function dragonInitialPrefill(playerCount) {
+  const count = Math.max(1, Math.min(4, Number(playerCount) || 2));
+  if (count === 1) return 22;
+  if (count === 2) return 16;
+  if (count === 3) return 8;
+  return 0;
+}
+
+function dragonDisabledSetting() {
+  return ui.disableDragon ? Boolean(ui.disableDragon.checked) : true;
+}
+
+function createDragonState(playerCount, disabled = true) {
+  return {
+    disabled: Boolean(disabled),
+    initiatorId: null,
+    lastAddedSegment: null,
+    outcome: null,
+    prefill: dragonInitialPrefill(playerCount),
+    scores: [],
+    status: "sleeping",
+    strength: null,
+    teamTotal: 0,
+    tieRolls: [],
+    tokens: [],
+    winnerId: null,
+  };
+}
+
+function dragonProgress(dragon = state?.dragon) {
+  if (!dragon) return 0;
+  return Math.min(dragonSegmentCount, Math.max(0, Number(dragon.prefill) || 0) + (dragon.tokens?.length || 0));
+}
+
+function dragonIsEnabled() {
+  return Boolean(state?.dragon && !state.dragon.disabled);
+}
+
+function dragonPersistentStrength() {
+  const playerCount = state?.players?.length || 0;
+  const base = dragonStrengthPerPlayer * playerCount;
+  const rage = monsterRageBonus();
+  const banner = monsterBannerBonus();
+  const modifiers = [
+    rage ? { amount: rage, id: "monster-rage", label: "Ярость монстров" } : null,
+    banner ? { amount: banner, id: "monster-banner", label: "Знамя Монстров" } : null,
+  ].filter(Boolean);
+  return {
+    base,
+    modifiers,
+    total: base + modifiers.reduce((sum, item) => sum + item.amount, 0),
+  };
+}
+
+function currentDragonStrength() {
+  const strength = state?.dragon?.strength;
+  return strength?.total ?? dragonPersistentStrength().total;
+}
+
+function dragonSnapshot(dragon = state?.dragon) {
+  if (!dragon) return null;
+  const strength = dragon.strength || dragonPersistentStrength();
+  return {
+    disabled: Boolean(dragon.disabled),
+    initiatorId: dragon.initiatorId ?? null,
+    outcome: dragon.outcome || null,
+    prefill: Math.max(0, Number(dragon.prefill) || 0),
+    progress: dragonProgress(dragon),
+    scores: cloneData(dragon.scores || []),
+    status: dragon.status || "sleeping",
+    strength: cloneData(strength),
+    teamTotal: Math.max(0, Number(dragon.teamTotal) || 0),
+    tieRolls: cloneData(dragon.tieRolls || []),
+    tokens: cloneData(dragon.tokens || []),
+    winnerId: dragon.winnerId ?? null,
+  };
+}
+
+function syncDragonHistory() {
+  if (!state?.history) return;
+  state.history.dragon = dragonSnapshot();
+}
+
 function eventStatusCards(player) {
   return Array.isArray(player?.eventCards) ? player.eventCards : [];
 }
@@ -1368,9 +1496,11 @@ function monsterStrengthText(door) {
   return monsterBattleStrengthText(door);
 }
 
-function monsterBattleStrengthText(door, bribeBonus = 0) {
+function monsterBattleStrengthText(door, bribeBonus = 0, legendaryBonus = 0) {
   if (!door) return "0";
-  const effective = effectiveMonsterStrength(door) + Math.max(0, Number(bribeBonus) || 0);
+  const effective = effectiveMonsterStrength(door)
+    + Math.max(0, Number(bribeBonus) || 0)
+    + Math.max(0, Number(legendaryBonus) || 0);
   const rage = monsterRageBonus();
   const strongBonus = ordinaryMonsterStrengthBonus(door);
   const bannerBonus = monsterBannerBonus();
@@ -1379,6 +1509,7 @@ function monsterBattleStrengthText(door, bribeBonus = 0) {
   if (rage) parts.push(`ярость ${rage}`);
   if (bannerBonus) parts.push(`знамя +${bannerBonus}`);
   if (bribeBonus) parts.push(`подкуп +${bribeBonus}`);
+  if (legendaryBonus) parts.push(`Золотой Палач +${legendaryBonus}`);
   if (!parts.length) return String(effective);
   return `${effective} (база ${door.damage} + ${parts.join(" + ")})`;
 }
@@ -1437,7 +1568,7 @@ function monsterGatePressure(player) {
   const distance = Math.max(0, (routeIndex.get(door.enemyCell) ?? routeProgress(player)) - routeProgress(player));
   const dice = totalDiceForPlayer(player);
   const bonus = playerMonsterBattleBonus(player);
-  const target = effectiveMonsterStrength(door);
+  const target = monsterBattleTargetStrength(door, player);
   const chance = estimateWinChance(dice, bonus, target);
   const weight = monsterGateWeight(door);
   const nearby = distance <= 32;
@@ -1502,7 +1633,7 @@ function chooseBotPreRoll(player, card) {
   let declineScore = 0;
 
   if (door && !isDoorOpenForPlayer(door, player)) {
-    const target = effectiveMonsterStrength(door);
+    const target = monsterBattleTargetStrength(door, player);
     const currentChance = estimateWinChance(currentDice, playerMonsterBattleBonus(player), target);
     const nextChance = estimateWinChance(nextDice, playerMonsterBattleBonus(player), target);
     const gateWeight = monsterGateWeight(door);
@@ -1680,7 +1811,7 @@ function portalCatastrophicDanger(player, cell) {
   if (event !== "enemy") return 0;
   const door = doorByEnemyCell(cell);
   if (!door || isDoorOpenForPlayer(door, player)) return 0;
-  const chance = estimateWinChance(totalDiceForPlayer(player), playerMonsterBattleBonus(player), effectiveMonsterStrength(door));
+  const chance = estimateWinChance(totalDiceForPlayer(player), playerMonsterBattleBonus(player), monsterBattleTargetStrength(door, player));
   const weight = monsterGateWeight(door);
   if (chance < 0.12) return 95 * weight;
   if (chance < 0.24) return 68 * weight;
@@ -1718,7 +1849,7 @@ function scoreChaosPortalChoice(player, choice) {
     } else if (isDoorOpenForPlayer(door, player)) {
       score += 8 * personality.progress;
     } else {
-      const chance = estimateWinChance(totalDiceForPlayer(player), playerMonsterBattleBonus(player), effectiveMonsterStrength(door));
+      const chance = estimateWinChance(totalDiceForPlayer(player), playerMonsterBattleBonus(player), monsterBattleTargetStrength(door, player));
       score += chance >= 0.55 ? 22 * chance * personality.battle : -20 / personality.risk;
       if (player.coins < 5) score += 8 * personality.economy;
     }
@@ -2103,7 +2234,7 @@ function scoreCellForBot(player, cell, context = {}) {
     const door = doorByEnemyCell(cell);
     if (!door || isDoorOpenForPlayer(door, player)) score += 10;
     else {
-      const chance = estimateWinChance(totalDiceForPlayer(player), playerMonsterBattleBonus(player), effectiveMonsterStrength(door));
+      const chance = estimateWinChance(totalDiceForPlayer(player), playerMonsterBattleBonus(player), monsterBattleTargetStrength(door, player));
       if (chance >= 0.6) score += 32 * chance * personality.battle;
       else if (chance >= 0.35) score += (chance * 22 - 8) * personality.risk * personality.battle;
       else score -= 28 / personality.risk;
@@ -2352,6 +2483,7 @@ function renderBoard() {
   if (boardEl.dataset.ready !== "true") buildBoardShell();
   renderEnemyLocks();
   renderGoldenMarkers();
+  renderDragonOverlay();
   renderTileStates();
   renderTokens();
 }
@@ -2387,8 +2519,64 @@ function buildBoardShell() {
 
   const tokenLayer = document.createElement("div");
   tokenLayer.className = "token-layer";
+  const dragonOverlay = buildDragonOverlay();
+  tileGrid.append(dragonOverlay);
   boardEl.append(tileGrid, tokenLayer);
   boardEl.dataset.ready = "true";
+}
+
+function buildDragonOverlay() {
+  const overlay = document.createElement("div");
+  overlay.className = "dragon-overlay";
+  overlay.setAttribute("role", "img");
+  const segments = Array.from({ length: dragonSegmentCount }, (_, segment) => {
+    const angle = -Math.PI / 2 + (segment / dragonSegmentCount) * Math.PI * 2;
+    const x = 50 + Math.cos(angle) * 45;
+    const y = 50 + Math.sin(angle) * 38;
+    return `<i class="dragon-segment" data-dragon-segment="${segment}" style="--dragon-x:${x.toFixed(2)}%;--dragon-y:${y.toFixed(2)}%"></i>`;
+  }).join("");
+  overlay.innerHTML = `
+    <div class="dragon-figure"></div>
+    <div class="dragon-counter">${segments}</div>
+    <div class="dragon-status-pill">
+      <b data-dragon-progress hidden>0 / ${dragonSegmentCount}</b>
+      <span><img src="./assets/icons/strength_sword_512.png" alt="" aria-hidden="true"><b data-dragon-strength>0</b></span>
+    </div>
+  `;
+  return overlay;
+}
+
+function renderDragonOverlay() {
+  const overlay = boardEl.querySelector(".dragon-overlay");
+  if (!overlay) return;
+  const visible = activeBoardConfig.id === "field2" && dragonIsEnabled();
+  overlay.hidden = !visible;
+  if (!visible) return;
+
+  const dragon = state.dragon;
+  const progress = dragonProgress(dragon);
+  overlay.classList.toggle("is-awakening", dragon.status === "awakening");
+  overlay.classList.toggle("is-awake", ["battle", "players-won", "dragon-won"].includes(dragon.status));
+  overlay.classList.toggle("is-full", progress >= dragonSegmentCount);
+  overlay.querySelector("[data-dragon-progress]").textContent = `${progress} / ${dragonSegmentCount}`;
+  overlay.querySelector("[data-dragon-strength]").textContent = String(currentDragonStrength());
+  overlay.setAttribute("aria-label", `Дракон: счетчик ${progress} из ${dragonSegmentCount}, сила ${currentDragonStrength()}`);
+
+  const tokensBySegment = new Map((dragon.tokens || []).map((token, index) => [dragon.prefill + index, token]));
+  overlay.querySelectorAll("[data-dragon-segment]").forEach((segment) => {
+    const index = Number(segment.dataset.dragonSegment);
+    const token = tokensBySegment.get(index);
+    segment.classList.toggle("is-neutral", index < dragon.prefill);
+    segment.classList.toggle("is-player", Boolean(token));
+    segment.classList.toggle("is-new", index === dragon.lastAddedSegment);
+    if (token?.color) {
+      segment.style.setProperty("--player-accent", token.color);
+      segment.title = `${token.playerName || "Игрок"}: поражение монстру`;
+    } else {
+      segment.style.removeProperty("--player-accent");
+      segment.removeAttribute("title");
+    }
+  });
 }
 
 function renderEnemyLocks() {
@@ -3133,8 +3321,10 @@ function phoneGameSnapshot() {
     controllerMode: phoneRoom.mode,
     diceVisible: phoneRoom.diceVisible,
     diceRoll: phoneDiceRollSnapshot(),
+    dragon: dragonSnapshot(),
     eventMonsterRage: monsterRageBonus(),
     finished: Boolean(state.finished),
+    legendaryWeapon: legendaryWeaponSnapshot(),
     players: state.players.map(phonePlayerSnapshot),
     rollContext: actionPromptRollContextSnapshot(),
     round: state.round,
@@ -4411,20 +4601,27 @@ function renderHistory() {
 function renderFinalHistorySummary(summary) {
   if (!summary || !Array.isArray(summary.players)) return "";
   const rows = summary.players.map((player) => renderFinalHistoryPlayer(player)).join("");
-  const outcomeLabel = summary.bossWon ? "Босс удержал победу" : "Игроки победили босса";
+  const outcomeLabel = finalHistoryOutcomeText(summary);
   const winnerRole = summary.winnerRole === "boss" ? "Босс" : "Игрок";
+  const winnerText = summary.commonLoss
+    ? ""
+    : ` Победитель: <strong>${summary.winnerName}</strong> (${winnerRole}).`;
+  const scoreBadge = summary.commonLoss
+    ? ""
+    : `<span><b>${summary.winnerScore}</b><small>счет победителя</small></span>`;
+  const opponentLabel = summary.kind === "dragon" ? "сила Дракона" : "сила босса";
   return `
     <section class="history-final">
       <div class="history-final-head">
         <div>
           <h3>Итог партии</h3>
-          <p>${outcomeLabel}. Победитель: <strong>${summary.winnerName}</strong> (${winnerRole}).</p>
+          <p>${outcomeLabel}.${winnerText}</p>
         </div>
-        <span><b>${summary.winnerScore}</b><small>счет победителя</small></span>
+        ${scoreBadge}
       </div>
       <div class="history-final-force">
         <span><b>${summary.playersForce}</b><small>сила игроков</small></span>
-        <span><b>${summary.bossForce}</b><small>сила босса</small></span>
+        <span><b>${summary.bossForce}</b><small>${opponentLabel}</small></span>
       </div>
       <div class="history-final-players">${rows}</div>
     </section>
@@ -4432,15 +4629,18 @@ function renderFinalHistorySummary(summary) {
 }
 
 function renderFinalHistoryPlayer(player) {
+  const hasScore = Boolean(player.score);
   const score = player.score || {};
   const force = player.force || {};
   const role = player.role === "boss" ? "Босс" : "Игрок";
-  const scoreFormula = player.scoreFormula || finalScoreFormulaText(score);
+  const scoreFormula = hasScore ? (player.scoreFormula || finalScoreFormulaText(score)) : "Общий проигрыш";
   const opponentBonusText = finalHistoryOpponentBonusText(force);
+  const legendaryWeaponText = finalHistoryLegendaryWeaponText(force);
   const forceParts = [
     force.rolled !== undefined ? `кубики ${force.rolled}` : "",
     force.bonus ? `бонус ${force.bonus}` : "",
     opponentBonusText,
+    legendaryWeaponText,
   ].filter(Boolean);
   const rollText = Array.isArray(force.rolls) && force.rolls.length
     ? force.rolls.map((rolls) => `[${rolls.join(", ")}]`).join(" ")
@@ -4453,12 +4653,12 @@ function renderFinalHistoryPlayer(player) {
         <small>${role}${player.winner ? " · победитель" : ""}</small>
       </div>
       <dl class="history-final-stats">
-        <div><dt>Очки</dt><dd>${score.total ?? 0}</dd></div>
-        <div><dt>Монеты</dt><dd>${score.coins ?? 0}</dd></div>
-        <div><dt>Лавки</dt><dd>${score.shop ?? 0}</dd></div>
-        <div><dt>Урон</dt><dd>${score.damage ?? 0}</dd></div>
-        <div><dt>Шаги</dt><dd>${finalScorePointsText(score.steps)}</dd></div>
-        <div><dt>Позиция</dt><dd>${score.position ?? 0}</dd></div>
+        <div><dt>Очки</dt><dd>${hasScore ? score.total : "—"}</dd></div>
+        <div><dt>Монеты</dt><dd>${hasScore ? score.coins : "—"}</dd></div>
+        <div><dt>Лавки</dt><dd>${hasScore ? score.shop : "—"}</dd></div>
+        <div><dt>Урон</dt><dd>${hasScore ? score.damage : "—"}</dd></div>
+        <div><dt>Шаги</dt><dd>${hasScore ? finalScorePointsText(score.steps) : "—"}</dd></div>
+        <div><dt>Позиция</dt><dd>${hasScore ? score.position : "—"}</dd></div>
         <div><dt>Сила</dt><dd>${forceText}</dd></div>
       </dl>
       <p class="history-final-score-text">${scoreFormula}</p>
@@ -4467,14 +4667,14 @@ function renderFinalHistoryPlayer(player) {
   `;
 }
 
-function finalScoreFormulaText(score = {}) {
+function finalScoreFormulaText(score = {}, { damageLabel = "урон боссу" } = {}) {
   const total = score.total ?? 0;
   const coins = score.coins ?? 0;
   const shop = score.shop ?? 0;
   const damage = score.damage ?? 0;
   const steps = score.steps ?? 0;
   const position = score.position ?? 0;
-  return `${total} = ${coins} монеты + ${shop} Лавка Джо + ${damage} урон боссу + ${steps} за шаги + ${position} позиция`;
+  return `${total} = ${coins} монеты + ${shop} Лавка Джо + ${damage} ${damageLabel} + ${steps} за шаги + ${position} позиция`;
 }
 
 function finalScorePointsText(points = 0) {
@@ -4488,6 +4688,9 @@ function finalHistorySummaryForSnapshot() {
 
 function finalHistoryOutcomeText(summary) {
   if (!summary) return "";
+  if (summary.kind === "dragon") {
+    return summary.commonLoss ? "Дракон победил. Все игроки проиграли" : "Игроки победили Дракона";
+  }
   return summary.bossWon ? "Босс удержал победу" : "Игроки победили босса";
 }
 
@@ -4498,15 +4701,48 @@ function finalHistoryRoleText(role) {
 
 function finalHistoryForceBreakdownText(force = {}) {
   const opponentBonusText = finalHistoryOpponentBonusText(force);
+  const legendaryText = finalHistoryLegendaryWeaponText(force);
   const parts = [
     force.rolled !== undefined ? `кубики ${force.rolled}` : "",
     force.bonus ? `бонус ${force.bonus}` : "",
     opponentBonusText,
+    legendaryText,
   ].filter(Boolean);
   const rollsText = Array.isArray(force.rolls) && force.rolls.length
     ? force.rolls.map((rolls) => `[${rolls.join(", ")}]`).join(" ")
     : "";
-  return `${parts.join(" + ") || "без бонусов"}${rollsText ? ` · ${rollsText}` : ""}`;
+  const scytheText = finalHistoryLegendaryRollsText(force);
+  return `${parts.join(" + ") || "без бонусов"}${scytheText ? ` · ${scytheText}` : ""}${rollsText ? ` · итог ${rollsText}` : ""}`;
+}
+
+function finalHistoryLegendaryRollsText(force = {}) {
+  const weapon = force.legendaryWeapon;
+  if (weapon?.effectType !== "legendary-opponent-sixes-to-ones" && weapon?.id !== "doom-scythe") return "";
+  const rawGroups = Array.isArray(force.rawRolls) ? force.rawRolls : [];
+  const adjustedGroups = Array.isArray(force.weaponAdjustedRolls) ? force.weaponAdjustedRolls : [];
+  const transformations = rawGroups.map((raw, index) => {
+    const adjusted = adjustedGroups[index];
+    if (!Array.isArray(raw) || !Array.isArray(adjusted) || raw.join(",") === adjusted.join(",")) return "";
+    return `[${raw.join(", ")}] → [${adjusted.join(", ")}]`;
+  }).filter(Boolean);
+  return transformations.length ? `Коса Рока: ${transformations.join("; ")}` : "";
+}
+
+function finalHistoryLegendaryWeaponText(force = {}) {
+  const weapon = force.legendaryWeapon;
+  if (!weapon?.title) return "";
+  if (weapon.effectType === "legendary-opponent-sixes-to-ones" || weapon.id === "doom-scythe") {
+    return `${weapon.title}: 6→1 у противников`;
+  }
+  if (weapon.effectType === "legendary-opponent-coins-strength" || weapon.id === "golden-executioner") {
+    const bonus = Math.max(0, Number(force.legendaryBonus) || 0);
+    if (!bonus) return "";
+    const details = (force.legendaryBonusByOpponent || [])
+      .map((item) => `${item.name}: ${item.coins} монет → +${item.bonus}`)
+      .join(", ");
+    return `${weapon.title}: +${bonus}${details ? ` (${details})` : ""}`;
+  }
+  return `${weapon.title}: ${weapon.description || "легендарный эффект"}`;
 }
 
 function finalHistoryOpponentBonusText(force = {}) {
@@ -4636,11 +4872,13 @@ function buildGameHistorySnapshot() {
     game: {
       activeBoard: activeBoardConfig.id,
       artifacts: state.artifacts,
+      dragon: dragonSnapshot(),
       elapsedMs: historyEnd - state.history.startedAt,
       eventMonsterRage: monsterRageBonus(),
       finished: state.finished,
       finalBattle: state.finalBattle,
       finalSummary,
+      legendaryWeapon: legendaryWeaponSnapshot(),
       ...sheetExport.game,
       round: state.round,
       turns: state.turns,
@@ -5655,24 +5893,22 @@ const referenceDeckTitles = {
   bad: "Плохо",
   event: "События",
   good: "Хорошо",
+  legendary: "Легендарное оружие",
   shop: "Лавка Джо",
   tadam: "Тадам!",
 };
 
 function renderReferenceDeck(deckId, title) {
   const cards = uniqueConfiguredCards(cardConfig[deckId] || []);
+  const interactive = deckId !== "legendary";
   const items = cards
     .map((card) => {
       const count = Number(card.count) || 0;
       const cardTitle = card.title || title;
       return `
         <article
-          class="reference-card-item"
-          role="button"
-          tabindex="0"
-          aria-label="${escapeHtml(`Применить ${title}: ${cardTitle}`)}"
-          data-reference-card-deck="${escapeHtml(deckId)}"
-          data-reference-card-id="${escapeHtml(card.id || "")}"
+          class="reference-card-item${interactive ? "" : " is-display-only"}"
+          ${interactive ? `role="button" tabindex="0" aria-label="${escapeHtml(`Применить ${title}: ${cardTitle}`)}" data-reference-card-deck="${escapeHtml(deckId)}" data-reference-card-id="${escapeHtml(card.id || "")}"` : `aria-label="${escapeHtml(`${title}: ${cardTitle}`)}"`}
         >
           <span class="reference-card-count">x${count}</span>
           ${referenceCardFaceMarkup(deckId, card, { title: cardTitle })}
@@ -5764,7 +6000,7 @@ function referenceFieldInfo(type) {
   const titles = {
     "all-or-nothing": "Все или ничего",
     bad: "Плохо",
-    "big-rest": "Большой привал",
+    "big-rest": "Привал",
     "black-market": "Черный рынок",
     "chaos-portal": "Портал хаоса",
     "dice-fortune": "x6 кубиков",
@@ -5786,7 +6022,7 @@ function referenceFieldInfo(type) {
     bad: "Тяни карту Плохо",
     "big-rest": "Выбери: +10 монет, +1 к силе или +2 к шагам",
     "black-market": "Поменяй Лавки Джо: 1 карта — +2 к силе; 2 карты — 30 монет; 3 карты — +10 к силе в следующем бою с монстром и 30 шагов вперед",
-    "chaos-portal": "Брось кубик: 1-2 — назад к ближайшему монстру/порталу; 3-4 — к ближайшей Лавке Джо; 5 — к ближайшему Хорошо; 6 — вперед к ближайшему монстру/порталу",
+    "chaos-portal": chaosPortalRuleText,
     "dice-fortune": `Брось кубик 6 раз. За каждую 6 получи ${diceFortuneCoinReward} монет. За каждую 1 отойди на ${diceFortuneBackwardStepPenalty} шагов назад`,
     enemy: "Победи, чтобы пройти дальше. При поражении получи +1/+2/+3/+5 силы и отправляйся на старт",
     event: "Тяни карту Событие",
@@ -6272,6 +6508,19 @@ function renderWinnerPopup() {
     return;
   }
 
+  const battle = state.finalBattle;
+  if (battle?.kind === "dragon" && battle.commonLoss) {
+    ui.winnerPopup.hidden = false;
+    ui.winnerPopup.innerHTML = `
+      <div class="winner-card dragon-common-loss">
+        <p>Дракон победил. Все игроки проиграли</p>
+        <small>Игроки ${battle.playersForce}, Дракон ${battle.bossForce}</small>
+      </div>
+    `;
+    scheduleFinishedGameHistoryAutosave();
+    return;
+  }
+
   const winner = findWinner();
   const confetti = Array.from(
     { length: 18 },
@@ -6279,13 +6528,31 @@ function renderWinnerPopup() {
       `<i style="--i: ${index}; --left: ${8 + index * 5}%; --hue: ${(index * 47) % 360}; --x: ${-34 + index * 4}px"></i>`,
   ).join("");
   ui.winnerPopup.hidden = false;
-  const battle = state.finalBattle;
+  const battleOpponent = battle?.kind === "dragon" ? "Дракон" : "босс";
   const battleSummary = battle
-    ? `<small>${battle.bossWon ? "Босс победил" : "Игроки победили"}: игроки ${battle.playersForce}, босс ${battle.bossForce}</small>`
+    ? `<small>${battle.kind === "dragon" ? "Игроки победили Дракона" : (battle.bossWon ? "Босс победил" : "Игроки победили")}: игроки ${battle.playersForce}, ${battleOpponent} ${battle.bossForce}</small>`
     : "";
   const winnerSummary = battle?.finalSummary?.players?.find((player) => player.id === winner.id);
-  const winnerScoreSummary = winnerSummary
+  const winnerScoreSummary = winnerSummary && !battle?.bossWon
     ? `<small class="winner-score-formula">${escapeHtml(winnerSummary.scoreFormula || finalScoreFormulaText(winnerSummary.score))}</small>`
+    : "";
+  const dragonScoreRows = battle?.kind === "dragon"
+    ? (battle.finalSummary?.players || []).map((player) => `
+        <div style="--player-color:${player.color}">
+          <b>${escapeHtml(player.name)}</b>
+          <span>вклад ${player.force?.total ?? 0}</span>
+          <small>${escapeHtml(player.scoreFormula || "")}</small>
+        </div>
+      `).join("")
+    : "";
+  const dragonTieRounds = battle?.kind === "dragon"
+    ? (battle.finalSummary?.dragon?.tieRolls || []).map((round) => {
+        const results = (round.results || []).map((result) => {
+          const player = state.players.find((item) => item.id === result.playerId);
+          return `${player?.name || result.playerId}: ${result.roll}`;
+        }).join(", ");
+        return `Раунд ${round.round}: ${results}`;
+      }).join(" · ")
     : "";
   ui.winnerPopup.innerHTML = `
     <div class="winner-confetti" aria-hidden="true">${confetti}</div>
@@ -6293,6 +6560,8 @@ function renderWinnerPopup() {
       <p>Победил - <span class="player-name" style="--player-color: ${winner.color}">${winner.name}</span>!</p>
       ${battleSummary}
       ${winnerScoreSummary}
+      ${dragonScoreRows ? `<div class="winner-dragon-scores">${dragonScoreRows}</div>` : ""}
+      ${dragonTieRounds ? `<small class="winner-dragon-ties">${escapeHtml(dragonTieRounds)}</small>` : ""}
     </div>
   `;
   scheduleFinishedGameHistoryAutosave();
@@ -6301,6 +6570,7 @@ function renderWinnerPopup() {
 function renderFinalBattleHud() {
   if (!ui.finalBattleHud) return;
 
+  const dragonProgressState = state.dragonBattleProgress;
   const progress = state.finalBattleProgress;
   const enemyProgress = state.enemyBattleProgress;
   const vsProgress = state.vsBattleProgress;
@@ -6317,6 +6587,10 @@ function renderFinalBattleHud() {
     renderUnityBattleHud(unityProgress);
     return;
   }
+  if (dragonProgressState && !state.finished) {
+    renderDragonBattleHud(dragonProgressState);
+    return;
+  }
 
   if (!progress || state.finished) {
     ui.finalBattleHud.hidden = true;
@@ -6327,7 +6601,8 @@ function renderFinalBattleHud() {
 
   const boss = state.players.find((player) => player.id === progress.bossId);
   const challengers = state.players.filter((player) => player.id !== progress.bossId);
-  const bossDisplayForce = progress.bossBonusApplied || progress.bossRollsStarted ? progress.bossForce : "?";
+  const bossDisplayForce = progress.bossRollsStarted ? progress.bossForce : "?";
+  const bossWeapon = boss ? legendaryWeaponHeldByPlayer(boss) : null;
   const rollingPlayerId = progress.rollingPlayerId ?? null;
   const isBossRolling = boss?.id === rollingPlayerId && progress.isRolling;
   const isChallengerRolling = challengers.some((player) => player.id === rollingPlayerId) && progress.isRolling;
@@ -6344,8 +6619,55 @@ function renderFinalBattleHud() {
     <div class="final-battle-vs">VS</div>
     <div class="final-battle-side boss ${isBossRolling ? "is-rolling" : ""}" style="--player-color: ${boss?.color || "#ff7d5d"}">
       <span>Босс${boss ? ` - ${boss.name}` : ""}</span>
+      ${legendaryWeaponStatusMarkup(bossWeapon, { compact: true })}
       ${boss ? playerBattleStrengthText(boss) : ""}
       <strong>${bossDisplayForce}</strong>
+    </div>
+  `;
+}
+
+function renderDragonBattleHud(progress) {
+  const results = progress.results || {};
+  const teamWon = progress.winner === "team";
+  const dragonWon = progress.winner === "dragon";
+  const battleState = teamWon ? "is-victory" : dragonWon ? "is-defeat" : progress.isRolling ? "is-rolling" : "is-ready";
+  const cards = state.players
+    .map((participant) => {
+      const result = results[participant.id];
+      const isRolling = participant.id === progress.rollingPlayerId;
+      const isComplete = result !== undefined;
+      return `
+        <div class="final-battle-side enemy-battle-side player vs-battle-card dragon-battle-card ${isRolling ? "is-rolling" : ""} ${isComplete ? "is-complete" : ""}" style="--player-color: ${participant.color}">
+          <span class="enemy-battle-portrait player-portrait">
+            <img src="${participant.token}" alt="" aria-hidden="true">
+          </span>
+          <span class="enemy-battle-name">${participant.name}</span>
+          ${playerBattleStrengthBadge(participant)}
+          <small>${isRolling ? "Бросает" : isComplete ? "Вклад" : "Ждет"}</small>
+          <strong>${isComplete ? result : "?"}</strong>
+        </div>
+      `;
+    })
+    .join("");
+  ui.finalBattleHud.hidden = false;
+  ui.finalBattleHud.className = `final-battle-hud enemy-battle-hud vs-battle-hud unity-battle-hud dragon-battle-hud ${battleState}`;
+  ui.finalBattleHud.innerHTML = `
+    <div class="enemy-battle-panel vs-battle-panel unity-battle-panel dragon-battle-panel">
+      <div class="vs-battle-header unity-battle-header">
+        <div class="vs-battle-title">
+          <span>Дракон</span>
+          <strong>Командная битва</strong>
+        </div>
+        <div class="vs-battle-emblem">Σ</div>
+        <div class="vs-battle-pot">
+          <span>Цель: сила ${progress.target}</span>
+          <strong>${progress.teamTotal || 0} / ${progress.target}</strong>
+        </div>
+      </div>
+      <div class="vs-battle-grid unity-battle-grid dragon-battle-grid">${cards}</div>
+      <div class="final-battle-result enemy-battle-result ${progress.outcome ? "is-visible" : ""}">
+        ${iconizeHtml(progress.outcome || `Команда собирает силу против Дракона ${progress.target}`)}
+      </div>
     </div>
   `;
 }
@@ -6466,47 +6788,68 @@ function renderEnemyBattleHud(progress) {
   const playerWon = progress.winner === "player";
   const enemyWon = progress.winner === "enemy";
   const battleState = playerWon ? "is-victory" : enemyWon ? "is-defeat" : progress.isRolling ? "is-rolling" : "is-ready";
+  const resultText = progress.outcome || "Брось кубики, чтобы определить силу игрока";
+  const monsterWeapon = progress.isFinalBoss ? legendaryWeaponHeldByMonster() : null;
   ui.finalBattleHud.hidden = false;
   ui.finalBattleHud.className = `final-battle-hud enemy-battle-hud ${battleState}`;
   ui.finalBattleHud.innerHTML = `
     <div class="enemy-battle-panel">
       <div class="enemy-battle-duel">
-        <div class="final-battle-side enemy-battle-side player ${playerWon ? "is-winning" : ""}" style="--player-color: ${player?.color || "#65bdc2"}">
+        <div class="final-battle-side enemy-battle-side player ${playerWon ? "is-winning" : ""} ${enemyWon ? "is-losing" : ""}" style="--player-color: ${player?.color || "#65bdc2"}">
           <span class="enemy-battle-portrait player-portrait">
             ${player ? `<img src="${player.token}" alt="" aria-hidden="true">` : ""}
           </span>
           <span class="enemy-battle-name">${player?.name || "Игрок"}</span>
           ${player ? playerBattleStrengthBadge(player) : ""}
-          <small>Итог броска</small>
-          <strong>${progress.playerForce || "?"}</strong>
+          <span class="enemy-battle-score">
+            <small>Итог броска</small>
+            <strong>${progress.playerForce ?? "?"}</strong>
+          </span>
         </div>
         <div class="enemy-battle-center">
           <div class="final-battle-vs">VS</div>
         </div>
-        <div class="final-battle-side enemy-battle-side monster ${enemyWon ? "is-winning" : ""}">
+        <div class="final-battle-side enemy-battle-side monster ${enemyWon ? "is-winning" : ""} ${playerWon ? "is-losing" : ""}">
           <span class="enemy-battle-portrait">
             <img src="${enemyIcon}" alt="" aria-hidden="true">
           </span>
           <span class="enemy-battle-name">${enemyLabel}</span>
-          <small>Порог победы</small>
-          <strong>${progress.enemyForce}</strong>
+          ${legendaryWeaponStatusMarkup(monsterWeapon, { compact: true })}
+          <span class="enemy-battle-score">
+            <small>Порог победы</small>
+            <strong>${progress.enemyForce}</strong>
+          </span>
         </div>
       </div>
       <div class="final-battle-result enemy-battle-result ${progress.winner ? "is-visible" : ""}">
-        ${iconizeHtml(progress.outcome || "Брось кубики, чтобы определить силу игрока")}
+        <span class="enemy-battle-result-copy">${iconizeHtml(resultText)}</span>
       </div>
     </div>
   `;
 }
 
+function legendaryWeaponStatusMarkup(weapon, { compact = false } = {}) {
+  if (!weapon?.card) return "";
+  const statusText = legendaryWeaponStatusText(weapon);
+  return `
+    <span class="legendary-weapon-status${compact ? " is-compact" : ""}" title="${escapeHtml(`${weapon.card.title}: ${cardDisplayText(weapon.card)}`)}">
+      <img src="${escapeHtml(weapon.card.icon || doomScytheIconSrc)}" alt="" aria-hidden="true">
+      <b>${escapeHtml(weapon.card.title || "Легендарное оружие")}</b>
+      <small>${escapeHtml(statusText)}</small>
+    </span>
+  `;
+}
+
 function playerBattleStrengthBadge(player, { showName = false } = {}) {
   const name = showName ? `${player.name} ` : "";
-  return `<span class="battle-strength-badge" title="Сила игрока">${name}${battleForceText(playerBattleBonus(player))}</span>`;
+  const amount = playerBattleBonus(player);
+  return `<span class="battle-strength-badge" title="Сила игрока">${name}${strengthIcon()}<b>${amount >= 0 ? "+" : ""}${amount}</b></span>`;
 }
 
 function playerBattleStrengthText(player, { showName = false } = {}) {
   const name = showName ? `${player.name} ` : "";
-  return `<span class="battle-strength-text" title="Сила игрока">${name}${battleForceText(playerBattleBonus(player))}</span>`;
+  const amount = playerBattleBonus(player);
+  return `<span class="battle-strength-text" title="Сила игрока">${name}${strengthIcon()}<b>${amount >= 0 ? "+" : ""}${amount}</b></span>`;
 }
 
 function renderChoiceDialog({ bodyHtml = "", buttonsClass = "", kind, kicker, title, summary }) {
@@ -6939,7 +7282,7 @@ async function resolveLanding(player, { fieldEffects = true, forwardTriggers = n
       await resolveVsField(player);
     }
 
-    if (allowForwardTriggers && player.position === landedPosition) {
+    if (!state.finished && allowForwardTriggers && player.position === landedPosition) {
       await resolveLandSteal(player);
     }
   } finally {
@@ -6971,23 +7314,23 @@ async function resolveBigRest(player) {
   const choice = await chooseCardAction({
     buttonsClass: "big-rest-buttons",
     choices: bigRestChoices(),
-    kicker: "Большой привал",
+    kicker: "Привал",
     kind: "big-rest",
     playerId: player.id,
     summary: `${playerChoiceBadge(player)} может восстановиться, потренироваться или ускориться перед финальным рывком.`,
-    title: "Большой привал. Выбери, как подготовиться к дороге.",
+    title: "Привал. Выбери, как подготовиться к дороге.",
   });
 
   let message = "";
   if (choice === "train") {
     addBattleBonus(player, 1);
-    message = `${playerName(player)} использует <strong>Большой привал</strong>: тренируется и получает <strong>+1 силе</strong>.`;
+    message = `${playerName(player)} использует <strong>Привал</strong>: тренируется и получает <strong>+1 силе</strong>.`;
   } else if (choice === "speed") {
     addStepBonus(player, 2);
-    message = `${playerName(player)} использует <strong>Большой привал</strong>: ускоряется и получает <strong>+2 к шагам</strong>.`;
+    message = `${playerName(player)} использует <strong>Привал</strong>: ускоряется и получает <strong>+2 к шагам</strong>.`;
   } else {
     addCoins(player, 10);
-    message = `${playerName(player)} использует <strong>Большой привал</strong>: восстанавливается и получает <strong>${coinAmount(10)}</strong>.`;
+    message = `${playerName(player)} использует <strong>Привал</strong>: восстанавливается и получает <strong>${coinAmount(10)}</strong>.`;
   }
 
   render();
@@ -7205,26 +7548,39 @@ async function resolveAntiBadFieldReplacement(player) {
 async function resolveEnemyBattle(player) {
   const door = doorByEnemyCell(player.position);
   if (!door || isDoorOpenForPlayer(door, player)) return false;
-  let requiredStrength = effectiveMonsterStrength(door);
+  if (!(await ensureFinalMonsterLegendaryWeapon(player, door))) return false;
+  const monsterWeapon = door.isFinalBoss ? legendaryWeaponHeldByMonster() : null;
+  const legendaryStrength = monsterLegendaryStrengthBonus(door, player);
+  let requiredStrength = effectiveMonsterStrength(door) + legendaryStrength.total;
+  const requiredRollStrength = Math.max(0, requiredStrength - playerCombatBonus(player));
+
+  if (legendaryStrength.total > 0) {
+    log(
+      `<strong>${escapeHtml(monsterWeapon.card.title)}</strong> усиливает финального монстра на <strong>+${legendaryStrength.total}</strong>: ${escapeHtml(legendaryOpponentCoinStrengthText(legendaryStrength, { includeTotal: false }))}.`,
+      { toast: true },
+    );
+  }
 
   state.enemyBattleProgress = {
     enemyForce: requiredStrength,
-    outcome: `Нужно набрать силу ${monsterBattleStrengthText(door)}`,
+    outcome: `Нужно набрать силу ${requiredRollStrength}`,
     isFinalBoss: Boolean(door.isFinalBoss),
     playerForce: 0,
     playerId: player.id,
+    legendaryWeaponBonus: legendaryStrength.total,
+    legendaryWeaponBonusByOpponent: cloneData(legendaryStrength.opponents),
     winner: null,
   };
   render();
   await showActionPrompt(
-    `${playerName(player)} вступает в битву. Нужно набрать силу <strong>${monsterBattleStrengthText(door)}</strong>, чтобы ${door.isFinalBoss ? "стать боссом" : `открыть ${door.label}`}.`,
+    `${playerName(player)} вступает в битву. Нужно набрать силу <strong>${monsterBattleStrengthText(door, 0, legendaryStrength.total)}</strong>, чтобы ${door.isFinalBoss ? "стать боссом" : `открыть ${door.label}`}.`,
     { autoFor: player, buttonLabel: "В бой" },
   );
 
   const bribe = await resolveMonsterBribes(player, door, requiredStrength);
   requiredStrength += bribe.strengthBonus;
   if (bribe.strengthBonus > 0) {
-    const bribeMessage = `<strong>Подкуп монстра</strong> усиливает монстра на <strong>+${bribe.strengthBonus}</strong>. Цель: <strong>${monsterBattleStrengthText(door, bribe.strengthBonus)}</strong>.`;
+    const bribeMessage = `<strong>Подкуп монстра</strong> усиливает монстра на <strong>+${bribe.strengthBonus}</strong>. Цель: <strong>${monsterBattleStrengthText(door, bribe.strengthBonus, legendaryStrength.total)}</strong>.`;
     state.enemyBattleProgress = {
       ...state.enemyBattleProgress,
       enemyForce: requiredStrength,
@@ -7236,11 +7592,14 @@ async function resolveEnemyBattle(player) {
   }
 
   const extraDice = await chooseExtraDie(player, true);
-  const shopStrengthBonus = await resolveShopMonsterStrengthBoosts(player, "битве с монстром");
+  const shopStrengthBonus = await resolveShopMonsterStrengthBoosts(player, "битве с монстром", { targetStrength: requiredStrength });
   const diceCount = totalDiceForPlayer(player, extraDice);
-  let rawRolls = rollDice(diceCount);
-  rawRolls = await maybeUseDiceControl(player, rawRolls, { mode: "monster", title: "Контроль кубика: битва с монстром" });
-  const sixesToOnes = consumeMonsterSixesToOnes(player, rawRolls, "битве с монстром");
+  const rawRolls = rollDice(diceCount);
+  const scytheResult = door.isFinalBoss && legendaryWeaponHeldByMonster()
+    ? applyDoomScytheToOpponentRoll(player, rawRolls, "битве с финальным монстром", legendaryWeaponHeldByMonster())
+    : { adjustedRolls: [...rawRolls], changed: false, changedCount: 0, rawRolls: [...rawRolls] };
+  const controlledRolls = await maybeUseDiceControl(player, scytheResult.adjustedRolls, { mode: "monster", title: "Контроль кубика: битва с монстром" });
+  const sixesToOnes = consumeMonsterSixesToOnes(player, controlledRolls, "битве с монстром");
   const rolls = sixesToOnes.rolls;
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const baseBonus = playerCombatBonus(player);
@@ -7269,7 +7628,15 @@ async function resolveEnemyBattle(player) {
   await animateDice(rolls, { bonus, player, isEnemyBattle: true });
 
   const damage = Math.max(0, rolled + bonus);
-  recordMonsterBattle(player, door, damage, damage >= requiredStrength);
+  recordMonsterBattle(player, door, damage, damage >= requiredStrength, {
+    finalRolls: rolls,
+    legendaryWeaponBonus: legendaryStrength.total,
+    legendaryWeaponBonusByOpponent: cloneData(legendaryStrength.opponents),
+    legendaryWeapon: door.isFinalBoss ? legendaryWeaponSnapshot() : null,
+    rawRolls,
+    requiredForce: requiredStrength,
+    weaponAdjustedRolls: scytheResult.adjustedRolls,
+  });
   state.dice = damage;
   state.isAnimating = false;
 
@@ -7280,6 +7647,7 @@ async function resolveEnemyBattle(player) {
       return resolveEnemyBattle(player);
     }
 
+    if (door.isFinalBoss) transferLegendaryWeaponToPlayer(player);
     notifyOtherPlayerMonsterVictory(player);
 
     state.enemyBattleProgress = {
@@ -7289,8 +7657,13 @@ async function resolveEnemyBattle(player) {
       outcome: door.isFinalBoss ? `${player.name} побеждает и становится боссом` : `${player.name} побеждает и получает +1 кубик`,
       playerForce: damage,
       playerId: player.id,
+      rawRolls,
       rolled,
       rolls,
+      legendaryWeaponBonus: legendaryStrength.total,
+      legendaryWeaponBonusByOpponent: cloneData(legendaryStrength.opponents),
+      weaponAdjustedRolls: scytheResult.adjustedRolls,
+      weaponChangedCount: scytheResult.changedCount,
       winner: "player",
     };
     door.openedBy.push(player.id);
@@ -7341,8 +7714,13 @@ async function resolveEnemyBattle(player) {
     outcome: `Враг побеждает. ${player.name} возвращается на старт. Награда за поражение: ${defeatReward}`,
     playerForce: damage,
     playerId: player.id,
+    rawRolls,
     rolled,
     rolls,
+    legendaryWeaponBonus: legendaryStrength.total,
+    legendaryWeaponBonusByOpponent: cloneData(legendaryStrength.opponents),
+    weaponAdjustedRolls: scytheResult.adjustedRolls,
+    weaponChangedCount: scytheResult.changedCount,
     winner: "enemy",
   };
   render();
@@ -7362,7 +7740,48 @@ async function resolveEnemyBattle(player) {
   hideMonsterDefeatBanner();
   clearEnemyBattleHud();
   log(`${playerName(player)} получает <strong>${battleForceText(defeatStrength)}</strong> за поражение монстру.`, { toast: true });
-  return { isFinalBoss: Boolean(door.isFinalBoss), resolved: true, winner: "enemy" };
+  const dragonAwakened = await recordDragonMonsterDefeat(player, door);
+  return { dragonAwakened, isFinalBoss: Boolean(door.isFinalBoss), resolved: true, winner: "enemy" };
+}
+
+async function recordDragonMonsterDefeat(player, door) {
+  const dragon = state?.dragon;
+  if (!dragonIsEnabled() || !dragon || dragon.status !== "sleeping" || state.finished) return false;
+
+  const token = {
+    color: player.color,
+    doorId: door?.id || null,
+    isFinalBoss: Boolean(door?.isFinalBoss),
+    playerId: player.id,
+    playerName: player.name,
+    recordedAt: Date.now(),
+  };
+  dragon.tokens.push(token);
+  dragon.lastAddedSegment = Math.min(dragonSegmentCount - 1, dragon.prefill + dragon.tokens.length - 1);
+  syncDragonHistory();
+  render();
+  log(`${playerName(player)} добавляет жетон поражения Дракону: <strong>${dragonProgress(dragon)} / ${dragonSegmentCount}</strong>.`, { toast: true });
+
+  window.clearTimeout(dragonSegmentPulseTimer);
+  dragonSegmentPulseTimer = window.setTimeout(() => {
+    if (state?.dragon !== dragon) return;
+    dragon.lastAddedSegment = null;
+    dragonSegmentPulseTimer = null;
+    renderDragonOverlay();
+  }, 620);
+
+  if (dragonProgress(dragon) < dragonSegmentCount) return false;
+
+  const resetToken = transientUiResetToken;
+  dragon.initiatorId = player.id;
+  dragon.status = "awakening";
+  syncDragonHistory();
+  render();
+  log(`<strong>Дракон пробуждается.</strong> Счетчик заполнен: ${dragonSegmentCount} / ${dragonSegmentCount}.`, { toast: true });
+  await sleep(dragonWakeEmphasisMs);
+  if (resetToken !== transientUiResetToken || state?.dragon !== dragon) return true;
+  await resolveDragonBattle(player, { resetToken });
+  return true;
 }
 
 async function resolveMonsterBribes(player, door, baseStrength) {
@@ -7449,7 +7868,7 @@ async function resolveMonsterBribes(player, door, baseStrength) {
   return { payments, strengthBonus };
 }
 
-async function resolveShopMonsterStrengthBoosts(player, contextLabel) {
+async function resolveShopMonsterStrengthBoosts(player, contextLabel, { targetStrength = null } = {}) {
   let bonus = 0;
   const cards = activeShopEffectItems(player, "monster-strength-plus3");
   for (const card of cards) {
@@ -7458,7 +7877,7 @@ async function resolveShopMonsterStrengthBoosts(player, contextLabel) {
     const amount = Math.max(1, Number(effect.amount) || 3);
     if (player.coins < cost) continue;
     const shouldPay = isBot(player)
-      ? chooseBotMonsterStrengthBoost(player, cost, amount)
+      ? chooseBotMonsterStrengthBoost(player, cost, amount, targetStrength)
       : await chooseShopMonsterStrengthBoost(player, card, cost, amount, contextLabel);
     if (!shouldPay || player.coins < cost) continue;
     addCoins(player, -cost);
@@ -7471,12 +7890,12 @@ async function resolveShopMonsterStrengthBoosts(player, contextLabel) {
   return bonus;
 }
 
-function chooseBotMonsterStrengthBoost(player, cost, amount) {
+function chooseBotMonsterStrengthBoost(player, cost, amount, targetStrength = null) {
   const door = doorByEnemyCell(player.position);
-  if (!door) return false;
+  const target = Number.isFinite(targetStrength) ? targetStrength : (door ? effectiveMonsterStrength(door) : null);
+  if (!Number.isFinite(target)) return false;
   const coinsAfter = player.coins - cost;
   if (coinsAfter < 3) return false;
-  const target = effectiveMonsterStrength(door);
   const dice = totalDiceForPlayer(player);
   const before = estimateWinChance(dice, playerMonsterBattleBonus(player), target);
   const after = estimateWinChance(dice, playerMonsterBattleBonus(player) + amount, target);
@@ -7524,8 +7943,8 @@ async function resolveChaosPortal(player) {
     kicker: "Портал хаоса",
     outcomes: [
       { label: "1-2", effect: "назад к монстру/порталу" },
-      { label: "3-4", effect: "к Лавке Джо" },
-      { label: "5", effect: "к Хорошо" },
+      { label: "3-4", effect: "назад к Лавке Джо" },
+      { label: "5", effect: "назад к Привалу" },
       { label: "6", effect: "вперед к монстру/порталу" },
     ],
     participants: [playerChoiceBadge(player)],
@@ -7538,13 +7957,7 @@ async function resolveChaosPortal(player) {
   state.isAnimating = false;
 
   const roll = rolls[0];
-  const result = roll <= 2
-    ? options.find((option) => option.id === "monster")
-    : roll <= 4
-      ? options.find((option) => option.id === "shop")
-      : roll === 5
-        ? options.find((option) => option.id === "good")
-        : options.find((option) => option.id === "forward-monster");
+  const result = chaosPortalDestinationForRoll(options, roll);
 
   const destination = result || options.find((option) => option.id === "monster") || {
     cell: startCell,
@@ -7564,8 +7977,8 @@ async function resolveChaosPortal(player) {
       kicker: "Портал хаоса",
       outcomes: [
         { label: "1-2", effect: "назад к монстру/порталу" },
-        { label: "3-4", effect: "к Лавке Джо" },
-        { label: "5", effect: "к Хорошо" },
+        { label: "3-4", effect: "назад к Лавке Джо" },
+        { label: "5", effect: "назад к Привалу" },
         { label: "6", effect: "вперед к монстру/порталу" },
       ],
       participants: [playerChoiceBadge(player)],
@@ -7579,6 +7992,11 @@ async function resolveChaosPortal(player) {
   clearChaosPortalTargetPreview();
   await teleportFromChaosPortal(player, destination);
   await resolvePortalBadDraw(player, "Портал хаоса");
+}
+
+function chaosPortalDestinationForRoll(options, roll) {
+  const optionId = roll <= 2 ? "monster" : roll <= 4 ? "shop" : roll === 5 ? "rest" : "forward-monster";
+  return options.find((option) => option.id === optionId) || null;
 }
 
 function setChaosPortalTargetPreview(destination, roll) {
@@ -7599,8 +8017,8 @@ function clearChaosPortalTargetPreview() {
 
 function chaosPortalTargetPreviewLabel(roll, destination) {
   if (roll <= 2) return "назад";
-  if (roll <= 4) return "Лавка";
-  if (roll === 5) return "Хорошо";
+  if (roll <= 4) return "назад: Лавка";
+  if (roll === 5) return "назад: Привал";
   return destination?.label === "Портал" ? "Портал" : "вперед";
 }
 
@@ -7608,7 +8026,7 @@ function chaosPortalPromptMarkup(player, options) {
   const optionById = Object.fromEntries(options.map((option) => [option.id, option]));
   const monster = optionById.monster || { cell: startCell, label: "Старт" };
   const shop = optionById.shop || { cell: startCell };
-  const good = optionById.good || { cell: startCell };
+  const rest = optionById.rest || { cell: startCell };
   const forwardMonster = optionById["forward-monster"] || { cell: startCell, label: "Старт" };
 
   return rollEventPromptMarkup({
@@ -7618,22 +8036,22 @@ function chaosPortalPromptMarkup(player, options) {
     rules: [
       {
         roll: "1-2",
-        effect: `назад к монстру/порталу: <strong>${monster.label}</strong> (${cellLabel(monster.cell)})`,
+        effect: `Назад к монстру/порталу: <strong>${monster.label}</strong> (${cellLabel(monster.cell)})`,
       },
       {
         roll: "3-4",
-        effect: `к Лавке Джо: <strong>${cellLabel(shop.cell)}</strong>`,
+        effect: `Назад к Лавке Джо: <strong>${shop.label || "Лавка Джо"}</strong> (${cellLabel(shop.cell)})`,
       },
       {
         roll: "5",
-        effect: `к Хорошо: <strong>${cellLabel(good.cell)}</strong>`,
+        effect: `Назад к Привалу: <strong>${rest.label || "Привал"}</strong> (${cellLabel(rest.cell)})`,
       },
       {
         roll: "6",
-        effect: `вперед к монстру/порталу: <strong>${forwardMonster.label}</strong> (${cellLabel(forwardMonster.cell)})`,
+        effect: `Вперед к монстру/порталу: <strong>${forwardMonster.label}</strong> (${cellLabel(forwardMonster.cell)})`,
       },
     ],
-    footer: "Прыжок мгновенный: клетки между порталом и целью не срабатывают.",
+    footer: "Эффект поля срабатывает, даже при движении назад. Клетки между порталом и целью не срабатывают.",
   });
 }
 
@@ -7642,20 +8060,27 @@ function chaosPortalOptions(player) {
   const monster = nearestMonsterOrPortalOption(currentCell, "backward");
   return [
     monster,
-    {
-      cell: nearestEventCell(currentCell, "shop") || startCell,
+    nearestDirectionalEventOption(currentCell, "shop", "backward", {
       id: "shop",
       label: "Лавка Джо",
-      note: "3-4: к ближайшей лавке",
-    },
-    {
-      cell: nearestEventCell(currentCell, "good") || startCell,
-      id: "good",
-      label: "Хорошо",
-      note: "5: к ближайшему Хорошо",
-    },
+      note: "3-4: назад к ближайшей Лавке Джо",
+      noTargetNote: "3-4: Лавки Джо сзади нет",
+    }),
+    nearestDirectionalEventOption(currentCell, "big-rest", "backward", {
+      id: "rest",
+      label: "Привал",
+      note: "5: назад к ближайшему Привалу",
+      noTargetNote: "5: Привала сзади нет",
+    }),
     nearestMonsterOrPortalOption(currentCell, "forward"),
   ];
+}
+
+function nearestDirectionalEventOption(cell, eventType, direction, { id, label, note, noTargetNote }) {
+  const targetCell = nearestEventCellInDirection(cell, eventType, direction);
+  return targetCell
+    ? { cell: targetCell, id, label, note }
+    : { cell: startCell, id, label: "Старт", note: noTargetNote };
 }
 
 function nearestMonsterOrPortalOption(cell, direction) {
@@ -7690,25 +8115,19 @@ function nearestMonsterOrPortalOption(cell, direction) {
   };
 }
 
-function nearestForwardEventCell(cell, eventType) {
+function nearestEventCellInDirection(cell, eventType, direction) {
   const current = routeIndex.get(cell) ?? 0;
+  const isForward = direction === "forward";
   return routePath
-    .filter((candidate) => cellEvents[candidate] === eventType && (routeIndex.get(candidate) ?? -1) > current)
-    .sort((a, b) => (routeIndex.get(a) ?? 0) - (routeIndex.get(b) ?? 0))[0] || null;
-}
-
-function nearestEventCell(cell, eventType) {
-  const current = routeIndex.get(cell) ?? 0;
-  return routePath
-    .filter((candidate) => cellEvents[candidate] === eventType)
+    .filter((candidate) => {
+      if (cellEvents[candidate] !== eventType) return false;
+      const progress = routeIndex.get(candidate) ?? -1;
+      return isForward ? progress > current : progress < current;
+    })
     .sort((a, b) => {
       const aProgress = routeIndex.get(a) ?? 0;
       const bProgress = routeIndex.get(b) ?? 0;
-      const distance = Math.abs(aProgress - current) - Math.abs(bProgress - current);
-      if (distance !== 0) return distance;
-      const aForward = aProgress > current ? 0 : 1;
-      const bForward = bProgress > current ? 0 : 1;
-      return aForward - bForward || aProgress - bProgress;
+      return isForward ? aProgress - bProgress : bProgress - aProgress;
     })[0] || null;
 }
 
@@ -7752,13 +8171,19 @@ async function teleportFromChaosPortal(player, destination) {
     return;
   }
 
+  const movedByOpenPortal = await resolvePortalAtCurrentCell(player, { remaining: 0 });
+  if (movedByOpenPortal) {
+    await resolveLanding(player, { movement: "teleport", forwardTriggers: false });
+    return;
+  }
+
   await resolveLanding(player, { movement: "teleport", forwardTriggers: false });
 }
 
 function chaosPortalRollLabel(roll) {
   if (roll <= 2) return "назад к монстру/порталу";
-  if (roll <= 4) return "к Лавке Джо";
-  if (roll === 5) return "к Хорошо";
+  if (roll <= 4) return "назад к Лавке Джо";
+  if (roll === 5) return "назад к Привалу";
   return "вперед к монстру/порталу";
 }
 
@@ -8085,6 +8510,288 @@ async function resolveVsField(player) {
   render();
 }
 
+async function resolveDragonBattle(initiator, { resetToken = transientUiResetToken } = {}) {
+  const dragon = state?.dragon;
+  if (!dragon || state.finished || dragon.status !== "awakening") return;
+
+  const order = auctionBidderOrder(initiator);
+  const persistentStrength = dragonPersistentStrength();
+  dragon.status = "battle";
+  dragon.initiatorId = initiator.id;
+  dragon.strength = cloneData(persistentStrength);
+  state.dragonBattleProgress = {
+    initiatorId: initiator.id,
+    isRolling: false,
+    outcome: "Дракон проснулся. Команда готовится к битве",
+    results: {},
+    rollingPlayerId: null,
+    target: persistentStrength.total,
+    teamTotal: 0,
+    winner: null,
+  };
+  syncDragonHistory();
+  render();
+
+  const bribes = await resolveMonsterBribes(initiator, null, persistentStrength.total);
+  if (resetToken !== transientUiResetToken || state?.dragon !== dragon) return;
+  const reactiveModifiers = (bribes.payments || []).map((payment, index) => ({
+    amount: payment.increase,
+    id: payment.source === "good" ? `feed-monster-${index}` : `monster-bribe-${index}`,
+    label: payment.source === "good" ? "Еда монстру" : "Подкуп монстра",
+    playerId: payment.player?.id ?? null,
+  }));
+  const strength = {
+    base: persistentStrength.base,
+    modifiers: [...persistentStrength.modifiers, ...reactiveModifiers],
+    total: persistentStrength.total + Math.max(0, Number(bribes.strengthBonus) || 0),
+  };
+  dragon.strength = strength;
+  state.dragonBattleProgress.target = strength.total;
+  const strengthParts = strength.modifiers.map((item) => `${item.label} +${item.amount}`);
+  log(
+    `<strong>Сила Дракона: ${strength.total}</strong> = база ${strength.base}${strengthParts.length ? ` + ${strengthParts.join(" + ")}` : ""}.`,
+    { toast: true },
+  );
+  syncDragonHistory();
+  render();
+
+  const results = [];
+  for (const contender of order) {
+    if (resetToken !== transientUiResetToken || state?.dragon !== dragon) return;
+    state.dragonBattleProgress = {
+      ...state.dragonBattleProgress,
+      isRolling: true,
+      outcome: `${playerName(contender)} готовится атаковать Дракона`,
+      rollingPlayerId: contender.id,
+    };
+    render();
+    const rollContext = {
+      criterion: `Сумма сил всех игроков должна быть не меньше ${strength.total}.`,
+      kicker: "Дракон",
+      outcomes: [
+        { label: `≥ ${strength.total}`, effect: "команда побеждает" },
+        { label: `< ${strength.total}`, effect: "Дракон побеждает" },
+      ],
+      participants: order.map(playerChoiceBadge),
+      reason: `${playerName(contender)} добавляет свою силу к общему результату.`,
+      title: "Битва с Драконом",
+    };
+    await showActionPrompt(`${playerName(contender)} вступает в командную битву с Драконом.`, {
+      autoFor: contender,
+      buttonLabel: "В бой",
+      rollContext,
+    });
+    if (resetToken !== transientUiResetToken || state?.dragon !== dragon) return;
+
+    const result = await rollPlayerMonsterBattlePower(contender, true, {
+      allowShopBoosts: true,
+      contextLabel: "битве с Драконом",
+      label: `Дракон - ${contender.name}`,
+      targetStrength: strength.total,
+    });
+    results.push(result);
+    const teamTotal = results.reduce((sum, item) => sum + item.total, 0);
+    state.dragonBattleProgress = {
+      ...state.dragonBattleProgress,
+      isRolling: false,
+      outcome: `${playerName(contender)} добавляет <strong>${result.total}</strong>. Команда: <strong>${teamTotal}</strong> / ${strength.total}`,
+      results: {
+        ...state.dragonBattleProgress.results,
+        [contender.id]: result.total,
+      },
+      rollingPlayerId: null,
+      teamTotal,
+    };
+    render();
+    log(
+      `${playerName(contender)} против Дракона: ${formatRoll(result.rolls)}${monsterBattleBonusFormulaText(result.baseBonus, result.rageBonus, result.cursePenalty, result.total, result.badPenalty, result.strengthBonus, result.heroSwordBonus, result.shopStrengthBonus)}. Вклад: <strong>${result.total}</strong>.`,
+    );
+  }
+
+  if (resetToken !== transientUiResetToken || state?.dragon !== dragon) return;
+  const teamTotal = results.reduce((sum, result) => sum + result.total, 0);
+  const teamWon = teamTotal >= strength.total;
+  const positionBonuses = finalPositionBonuses(state.players);
+  const scores = teamWon
+    ? state.players.map((player) => {
+        const contribution = results.find((result) => result.player.id === player.id)?.total || 0;
+        return finalBattleScore(player, contribution, positionBonuses.get(player.id) || 1);
+      })
+    : [];
+  let winner = null;
+  let tieRolls = [];
+
+  if (teamWon) {
+    const highestScore = Math.max(...scores.map((score) => score.total));
+    const leaders = state.players.filter((player) => scores.some((score) => score.playerId === player.id && score.total === highestScore));
+    if (leaders.length > 1) {
+      const tie = await resolveDragonScoreTie(leaders, { dragon, resetToken });
+      if (resetToken !== transientUiResetToken || state?.dragon !== dragon) return;
+      winner = tie.winner;
+      tieRolls = tie.rounds;
+    } else {
+      winner = leaders[0] || state.players[0];
+    }
+  }
+
+  const finalSummary = buildDragonFinalSummary({
+    initiator,
+    results,
+    scores,
+    strength,
+    teamTotal,
+    teamWon,
+    tieRolls,
+    winner,
+  });
+  const finalMessage = teamWon
+    ? `Игроки победили Дракона: <strong>${teamTotal}</strong> против ${strength.total}. По очкам побеждает ${playerName(winner)}.`
+    : "Дракон победил. Все игроки проиграли";
+  state.dragonBattleProgress = {
+    ...state.dragonBattleProgress,
+    isRolling: false,
+    outcome: finalMessage,
+    rollingPlayerId: null,
+    teamTotal,
+    winner: teamWon ? "team" : "dragon",
+    winnerId: winner?.id ?? null,
+  };
+  render();
+  if (teamWon) {
+    log(
+      `<strong>Итоговые очки после битвы с Драконом.</strong> ${scores
+        .map((score) => `${playerName(state.players.find((player) => player.id === score.playerId))}: ${escapeHtml(finalScoreFormulaText(score, { damageLabel: "урон Дракону" }))}`)
+        .join("; ")}.`,
+    );
+  }
+  log(`<strong>${plainText(finalMessage)}</strong>`, { toast: true });
+  await showActionPrompt(finalMessage, { autoFor: winner || initiator });
+  if (resetToken !== transientUiResetToken || state?.dragon !== dragon) return;
+
+  dragon.outcome = teamWon ? "players-defeated-dragon" : "dragon-won";
+  dragon.scores = scores;
+  dragon.status = teamWon ? "players-won" : "dragon-won";
+  dragon.teamTotal = teamTotal;
+  dragon.tieRolls = tieRolls;
+  dragon.winnerId = winner?.id ?? null;
+  state.finalBattle = {
+    bossForce: strength.total,
+    bossId: null,
+    bossRolls: [],
+    bossWon: !teamWon,
+    commonLoss: !teamWon,
+    finalSummary,
+    kind: "dragon",
+    playersForce: teamTotal,
+    scores,
+    winnerId: winner?.id ?? null,
+  };
+  state.finished = true;
+  state.dragonBattleProgress = null;
+  state.isAnimating = false;
+  state.dice = null;
+  if (state.history) {
+    state.history.finalSummary = finalSummary;
+    state.history.finishedAt = Date.now();
+  }
+  syncDragonHistory();
+  render();
+}
+
+async function resolveDragonScoreTie(candidates, { dragon, resetToken }) {
+  let tied = [...candidates];
+  const rounds = [];
+  let round = 1;
+  while (tied.length > 1) {
+    const results = [];
+    for (const contender of tied) {
+      const context = {
+        criterion: "Только чистый 1d6. Бонусы и контроль кубика не применяются.",
+        kicker: "Дракон",
+        outcomes: [{ label: "Максимум", effect: "победитель по очкам" }],
+        participants: tied.map(playerChoiceBadge),
+        reason: "Ничья по итоговым очкам.",
+        title: round > 1 ? `Переброс лидеров ${round}` : "Ничья за победу",
+      };
+      await showActionPrompt(`${playerName(contender)} бросает чистый кубик.`, {
+        autoFor: contender,
+        buttonLabel: "Бросить кубик",
+        rollContext: context,
+      });
+      if (resetToken !== transientUiResetToken || state?.dragon !== dragon) return { rounds, winner: null };
+      const roll = rollDice(1)[0];
+      await animateDice([roll], { label: "Ничья за победу", player: contender });
+      results.push({ player: contender, roll });
+    }
+    const maximum = Math.max(...results.map((result) => result.roll));
+    const leaders = results.filter((result) => result.roll === maximum).map((result) => result.player);
+    rounds.push({
+      leaders: leaders.map((player) => player.id),
+      results: results.map((result) => ({ playerId: result.player.id, roll: result.roll })),
+      round,
+    });
+    const rollText = results.map((result) => `${playerName(result.player)}: <strong>${result.roll}</strong>`).join(", ");
+    log(`Ничья по очкам, чистый 1d6${round > 1 ? ` (раунд ${round})` : ""}: ${rollText}.`);
+    tied = leaders;
+    round += 1;
+  }
+  return { rounds, winner: tied[0] || null };
+}
+
+function buildDragonFinalSummary({ initiator, results, scores, strength, teamTotal, teamWon, tieRolls, winner }) {
+  const resultById = new Map(results.map((result) => [result.player.id, result]));
+  const scoreById = new Map(scores.map((score) => [score.playerId, score]));
+  return {
+    bossForce: strength.total,
+    bossId: null,
+    bossWon: !teamWon,
+    commonLoss: !teamWon,
+    dragon: {
+      baseStrength: strength.base,
+      initiatorId: initiator.id,
+      modifiers: cloneData(strength.modifiers),
+      progress: dragonSegmentCount,
+      strength: strength.total,
+      tieRolls: cloneData(tieRolls),
+      tokens: cloneData(state.dragon.tokens),
+    },
+    kind: "dragon",
+    outcome: teamWon ? "players-defeated-dragon" : "dragon-won",
+    playersForce: teamTotal,
+    players: state.players.map((player) => {
+      const result = resultById.get(player.id);
+      const score = scoreById.get(player.id);
+      return {
+        color: player.color,
+        force: {
+          bonus: result?.bonus || 0,
+          rolled: result?.rolled || 0,
+          rolls: result ? [result.rolls] : [],
+          total: result?.total || 0,
+        },
+        id: player.id,
+        name: player.name,
+        role: "player",
+        score: score ? {
+          coins: score.coins,
+          damage: score.damage,
+          damageToBoss: score.damageToBoss,
+          position: score.position,
+          shop: score.shop,
+          steps: score.steps,
+          total: score.total,
+        } : null,
+        scoreFormula: score ? finalScoreFormulaText(score, { damageLabel: "урон Дракону" }) : "",
+        winner: Boolean(winner && player.id === winner.id),
+      };
+    }),
+    winnerId: winner?.id ?? null,
+    winnerName: winner?.name || "",
+    winnerRole: winner ? "player" : "",
+    winnerScore: winner ? (scoreById.get(winner.id)?.total ?? 0) : "",
+  };
+}
+
 async function resolveFinalBattle(boss, animate = true) {
   const challengers = state.players.filter((player) => player.id !== boss.id);
   state.isAnimating = animate;
@@ -8110,6 +8817,21 @@ async function resolveFinalBattle(boss, animate = true) {
   }
 
   const challengerResults = [];
+  const bossLegendaryWeapon = legendaryWeaponHeldByPlayer(boss);
+  const bossLegendaryStrength = legendaryOpponentCoinStrength(bossLegendaryWeapon, challengers);
+  state.finalBattleProgress.legendaryWeaponBonus = bossLegendaryStrength.total;
+  state.finalBattleProgress.legendaryWeaponBonusByOpponent = cloneData(bossLegendaryStrength.opponents);
+  if (bossLegendaryWeapon?.card) {
+    log(
+      `У босса ${playerName(boss)} есть <strong>${escapeHtml(bossLegendaryWeapon.card.title)}</strong>: ${escapeHtml(cardDisplayText(bossLegendaryWeapon.card))}.`,
+    );
+  }
+  if (bossLegendaryStrength.total > 0) {
+    log(
+      `<strong>${escapeHtml(bossLegendaryWeapon.card.title)}</strong> даёт боссу <strong>+${bossLegendaryStrength.total}</strong>: ${escapeHtml(legendaryOpponentCoinStrengthText(bossLegendaryStrength, { includeTotal: false }))}.`,
+      { toast: true },
+    );
+  }
   for (const challenger of challengers) {
     setFinalBattleRoller(challenger, false);
     if (animate) {
@@ -8118,7 +8840,7 @@ async function resolveFinalBattle(boss, animate = true) {
         buttonLabel: "В бой",
       });
     }
-    const result = await rollFinalBattlePower(challenger, animate);
+    const result = await rollFinalBattlePower(challenger, animate, { opponentLegendaryWeapon: bossLegendaryWeapon });
     challengerResults.push(result);
     state.finalBattleProgress.playersForce += result.total;
     setFinalBattleRoller(null);
@@ -8133,25 +8855,9 @@ async function resolveFinalBattle(boss, animate = true) {
   log(`Итоговая сила игроков: <strong>${playersForce}</strong>.`);
 
   const bossRollResults = [];
-  const bossOpponentBonusPerPlayer = 3;
-  const bossOpponentBonus = challengers.length * 3;
-  const bossOpponentBonusLabel = bossOpponentBonus > 0 ? `+${bossOpponentBonus}` : String(bossOpponentBonus);
-  const bossOpponentBonusBreakdown = bossOpponentBonus ? ` (+${bossOpponentBonusPerPlayer} за каждого противника, противников: ${challengers.length})` : "";
-  setFinalBattleRoller(null);
-  if (animate) {
-    await showActionPrompt(
-      `Босс ${playerName(boss)} добавляет стартовый бонус: <strong>${bossOpponentBonusLabel}</strong>${bossOpponentBonusBreakdown}.`,
-      {
-        autoFor: boss,
-        buttonLabel: "Добавить бонус",
-      },
-    );
-  }
-  state.finalBattleProgress.bossForce = bossOpponentBonus;
-  state.finalBattleProgress.bossBonusApplied = true;
-  render();
-  log(`Босс ${playerName(boss)} получает стартовый бонус: <strong>${bossOpponentBonusLabel}</strong>${bossOpponentBonusBreakdown}.`);
-  if (animate) await sleep(400);
+  const bossOpponentBonusPerPlayer = 0;
+  const bossOpponentBonus = 0;
+  state.finalBattleProgress.bossForce = bossLegendaryStrength.total;
   for (let index = 0; index < challengers.length; index += 1) {
     setFinalBattleRoller(boss, false);
     if (animate) {
@@ -8177,10 +8883,10 @@ async function resolveFinalBattle(boss, animate = true) {
   const bossHeroSwordBonus = bossRollResults.reduce((sum, result) => sum + (result.heroSwordBonus || 0), 0);
   const bossPlayerBattlePotionBonus = bossRollResults.reduce((sum, result) => sum + (result.playerBattlePotionBonus || 0), 0);
   const bossRollTotal = bossRollResults.reduce((sum, result) => sum + result.total, 0);
-  const bossForce = bossOpponentBonus + bossRollTotal;
+  const bossForce = bossRollTotal + bossLegendaryStrength.total;
   state.finalBattleProgress.bossForce = bossForce;
   const bossForceBreakdown = [
-    bossOpponentBonus ? `${bossOpponentBonusLabel} противники (+${bossOpponentBonusPerPlayer} каждый)` : "",
+    bossLegendaryWeapon?.card ? legendaryWeaponForceBreakdownText(bossLegendaryWeapon, bossLegendaryStrength) : "",
     bossRolled ? `${bossRolled} кубики` : "",
     bossBonus ? `${bossBonus} обычные бонусы` : "",
     bossPlayerBattlePotionBonus ? `${bossPlayerBattlePotionBonus} Зелье дуэли` : "",
@@ -8204,6 +8910,8 @@ async function resolveFinalBattle(boss, animate = true) {
     bossCursePenalty,
     bossForce,
     bossHeroSwordBonus,
+    bossLegendaryBonus: bossLegendaryStrength.total,
+    bossLegendaryBonusByOpponent: cloneData(bossLegendaryStrength.opponents),
     bossOpponentBonus,
     bossOpponentBonusPerPlayer,
     bossPlayerBattlePotionBonus,
@@ -8220,6 +8928,9 @@ async function resolveFinalBattle(boss, animate = true) {
     bossForce,
     bossRolls: bossRollResults.map((result) => result.rolls),
     finalSummary,
+    legendaryWeaponBonus: bossLegendaryStrength.total,
+    legendaryWeaponBonusByOpponent: cloneData(bossLegendaryStrength.opponents),
+    legendaryWeapon: legendaryWeaponSnapshot(),
     bossWon,
     playersForce,
     scores,
@@ -8234,12 +8945,6 @@ async function resolveFinalBattle(boss, animate = true) {
   state.finalBattleProgress = null;
   state.dice = null;
 
-  log(
-    `<strong>Итоговые очки.</strong> ${scores
-      .map((score) => `${playerName(state.players.find((player) => player.id === score.playerId))}: ${escapeHtml(finalScoreFormulaText(score))}`)
-      .join("; ")}.`,
-  );
-
   if (bossWon) {
     log(`<strong>Финальная битва завершена.</strong> Босс ${playerName(boss)} побеждает: ${bossForce} против ${playersForce}.`);
     if (animate) {
@@ -8248,6 +8953,11 @@ async function resolveFinalBattle(boss, animate = true) {
       });
     }
   } else {
+    log(
+      `<strong>Итоговые очки.</strong> ${scores
+        .map((score) => `${playerName(state.players.find((player) => player.id === score.playerId))}: ${escapeHtml(finalScoreFormulaText(score))}`)
+        .join("; ")}.`,
+    );
     const scoreText = scores
       .filter((score) => challengers.some((player) => player.id === score.playerId))
       .map((score) => `${state.players.find((player) => player.id === score.playerId)?.name}: ${score.total}`)
@@ -8279,6 +8989,8 @@ function buildFinalBattleSummary({
   bossCursePenalty = 0,
   bossForce,
   bossHeroSwordBonus = 0,
+  bossLegendaryBonus = 0,
+  bossLegendaryBonusByOpponent = [],
   bossOpponentBonus,
   bossOpponentBonusPerPlayer = 0,
   bossPlayerBattlePotionBonus = 0,
@@ -8296,6 +9008,7 @@ function buildFinalBattleSummary({
     bossForce,
     bossId: boss.id,
     bossWon,
+    legendaryWeapon: legendaryWeaponSnapshot(),
     outcome: bossWon ? "boss-won" : "players-won",
     playersForce,
     players: state.players.map((player) => {
@@ -8307,18 +9020,29 @@ function buildFinalBattleSummary({
         force: isBoss
           ? {
               bonus: bossBonus + bossCursePenalty + bossHeroSwordBonus + bossPlayerBattlePotionBonus,
+              legendaryBonus: bossLegendaryBonus,
+              legendaryBonusByOpponent: cloneData(bossLegendaryBonusByOpponent),
               opponentBonus: bossOpponentBonus,
               opponentBonusPerPlayer: bossOpponentBonusPerPlayer,
+              legendaryWeapon: legendaryWeaponSnapshot(),
               rolled: bossRolled,
+              rawRolls: bossRollResults.map((result) => result.rawRolls || result.rolls),
               rolls: bossRollResults.map((result) => result.rolls),
+              weaponAdjustedRolls: bossRollResults.map((result) => result.weaponAdjustedRolls || result.rawRolls || result.rolls),
               total: bossForce,
             }
           : {
               bonus: challengerResult?.bonus || 0,
+              legendaryBonus: 0,
+              legendaryBonusByOpponent: [],
               opponentBonus: 0,
               opponentBonusPerPlayer: 0,
+              legendaryWeapon: challengerResult?.legendaryWeapon || null,
               rolled: challengerResult?.rolled || 0,
+              rawRolls: challengerResult ? [challengerResult.rawRolls] : [],
               rolls: challengerResult ? [challengerResult.rolls] : [],
+              weaponAdjustedRolls: challengerResult ? [challengerResult.weaponAdjustedRolls] : [],
+              weaponChangedCount: challengerResult?.weaponChangedCount || 0,
               total: challengerResult?.total || 0,
             },
         id: player.id,
@@ -8344,15 +9068,19 @@ function buildFinalBattleSummary({
   };
 }
 
-async function rollFinalBattlePower(player, animate, { label = "" } = {}) {
+async function rollFinalBattlePower(player, animate, { label = "", opponentLegendaryWeapon = null } = {}) {
   setFinalBattleRoller(player, Boolean(animate));
-  return rollPlayerBattlePower(player, animate, { label, isFinalBattle: true });
+  return rollPlayerBattlePower(player, animate, { label, isFinalBattle: true, opponentLegendaryWeapon });
 }
 
-async function rollPlayerBattlePower(player, animate, { label = "", isFinalBattle = false } = {}) {
+async function rollPlayerBattlePower(player, animate, { label = "", isFinalBattle = false, opponentLegendaryWeapon = null } = {}) {
   const diceCount = totalDiceForPlayer(player);
-  let rolls = rollDice(diceCount);
-  rolls = await maybeUseDiceControl(player, rolls, { mode: "battle", title: "Контроль кубика: бросок силы" });
+  const rawRolls = rollDice(diceCount);
+  const scytheResult = opponentLegendaryWeapon
+    ? applyDoomScytheToOpponentRoll(player, rawRolls, "финальной битве", opponentLegendaryWeapon)
+    : { adjustedRolls: [...rawRolls], changed: false, changedCount: 0, rawRolls: [...rawRolls] };
+  const weaponAdjustedRolls = [...scytheResult.adjustedRolls];
+  const rolls = await maybeUseDiceControl(player, weaponAdjustedRolls, { mode: "battle", title: "Контроль кубика: бросок силы" });
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const baseBonus = playerCombatBonus(player);
   const playerBattlePotionBonus = await choosePlayerBattlePotion(player, isFinalBattle ? "финальной битве" : "битве с игроком");
@@ -8372,28 +9100,50 @@ async function rollPlayerBattlePower(player, animate, { label = "", isFinalBattl
   const total = Math.max(0, rolled + bonus);
   state.dice = total;
   render();
-  return { baseBonus, bonus, cursePenalty: curse.penalty, heroSwordBonus, player, playerBattlePotionBonus, rolled, rolls, total };
+  return {
+    baseBonus,
+    bonus,
+    cursePenalty: curse.penalty,
+    heroSwordBonus,
+    legendaryWeapon: opponentLegendaryWeapon ? legendaryWeaponSnapshot() : null,
+    player,
+    playerBattlePotionBonus,
+    rawRolls,
+    rolled,
+    rolls,
+    total,
+    weaponAdjustedRolls,
+    weaponChangedCount: scytheResult.changedCount,
+  };
 }
 
-async function rollPlayerMonsterBattlePower(player, animate, { label = "" } = {}) {
+async function rollPlayerMonsterBattlePower(player, animate, {
+  allowShopBoosts = false,
+  contextLabel = "Сплочении",
+  label = "",
+  targetStrength = null,
+} = {}) {
   const diceCount = totalDiceForPlayer(player);
   let rawRolls = rollDice(diceCount);
-  rawRolls = await maybeUseDiceControl(player, rawRolls, { mode: "monster", title: "Контроль кубика: Сплочение" });
-  const sixesToOnes = consumeMonsterSixesToOnes(player, rawRolls, "Сплочении");
+  rawRolls = await maybeUseDiceControl(player, rawRolls, { mode: "monster", title: `Контроль кубика: ${contextLabel}` });
+  const sixesToOnes = consumeMonsterSixesToOnes(player, rawRolls, contextLabel);
   const rolls = sixesToOnes.rolls;
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const baseBonus = playerCombatBonus(player);
-  const strengthBonus = await chooseStrengthPotion(player, "Сплочении");
+  const strengthBonus = await chooseStrengthPotion(player, contextLabel);
+  const shopStrengthBonus = allowShopBoosts
+    ? await resolveShopMonsterStrengthBoosts(player, contextLabel, { targetStrength })
+    : 0;
   const rageBonus = consumeNextMonsterBattleBonus(player);
   const curse = consumeNextBattlePenalty(player);
-  const badPenalty = consumeSelfMonsterMinus(player, "Сплочении");
+  const badPenalty = consumeSelfMonsterMinus(player, contextLabel);
   const heroSwordBonus = heroSwordCombatBonus(player, rolls);
-  const bonus = baseBonus + strengthBonus + rageBonus + curse.penalty + badPenalty + heroSwordBonus;
+  const bonus = baseBonus + strengthBonus + shopStrengthBonus + rageBonus + curse.penalty + badPenalty + heroSwordBonus;
   if (rageBonus > 0) {
-    log(`${playerName(player)} использует <strong>Зелье ярости</strong> в событии <strong>Сплочение</strong>: <strong>+${rageBonus}</strong>. Зелье сгорает.`);
+    log(`${playerName(player)} использует <strong>Зелье ярости</strong> в ${contextLabel}: <strong>+${rageBonus}</strong>. Зелье сгорает.`);
   }
   if (curse.penalty < 0) {
-    log(`${playerName(player)} сбрасывает <strong>Сглаз</strong> в событии <strong>Сплочение</strong> (${curse.cards.length}): <strong>${curse.penalty}</strong>.`, {
+    log(`${playerName(player)} сбрасывает <strong>Сглаз</strong> в ${contextLabel} (${curse.cards.length}): <strong>${curse.penalty}</strong>.`, {
       toast: true,
     });
   }
@@ -8405,7 +9155,20 @@ async function rollPlayerMonsterBattlePower(player, animate, { label = "" } = {}
   const total = Math.max(0, rolled + bonus);
   state.dice = total;
   render();
-  return { badPenalty, baseBonus, bonus, cursePenalty: curse.penalty, heroSwordBonus, player, rageBonus, rolled, rolls, strengthBonus, total };
+  return {
+    badPenalty,
+    baseBonus,
+    bonus,
+    cursePenalty: curse.penalty,
+    heroSwordBonus,
+    player,
+    rageBonus,
+    rolled,
+    rolls,
+    shopStrengthBonus,
+    strengthBonus,
+    total,
+  };
 }
 
 function finalBonusText(baseBonus, cursePenalty, total, heroSwordBonus = 0, playerBattlePotionBonus = 0) {
@@ -8980,6 +9743,35 @@ async function revealGoodCard(player, card) {
   clearPhoneCardPreview();
 }
 
+async function revealLegendaryWeaponCard(player, card) {
+  const resetToken = transientUiResetToken;
+  setPhoneCardPreview(null, "Легендарное оружие", card, false);
+  const backPrompt = showActionPrompt(cardFaceStageMarkup(legendaryCardMarkup(card, { revealed: false })), {
+    autoFor: player,
+    buttonLabel: "Открыть",
+  });
+  const backResolver = actionPromptResolver;
+  wireLegendaryCardClick(backResolver);
+  if (ui.autoRevealCards?.checked) {
+    window.setTimeout(() => {
+      if (actionPromptResolver === backResolver) backResolver?.();
+    }, 200);
+  }
+  await backPrompt;
+  if (resetToken !== transientUiResetToken) return false;
+
+  setPhoneCardPreview(null, "Легендарное оружие", card, true);
+  const facePrompt = showActionPrompt(cardFaceStageMarkup(legendaryCardMarkup(card, { revealed: true })), {
+    autoFor: player,
+    buttonLabel: "В бой",
+  });
+  wireLegendaryCardClick(actionPromptResolver);
+  await facePrompt;
+  if (resetToken !== transientUiResetToken) return false;
+  clearPhoneCardPreview();
+  return true;
+}
+
 function wireGoodCardClick(resolver) {
   wireCardRevealClick(".good-card-preview", resolver);
 }
@@ -8998,6 +9790,10 @@ function wireEventCardClick(resolver) {
 
 function wireShopCardClick(resolver) {
   wireCardRevealClick(".shop-card-preview", resolver);
+}
+
+function wireLegendaryCardClick(resolver) {
+  wireCardRevealClick(".legendary-card-preview", resolver);
 }
 
 function wireCardRevealClick(selector, resolver) {
@@ -9021,7 +9817,31 @@ function cardFaceMarkupForDeck(deckId, card, { revealed }) {
   if (deckId === "shop") return shopCardsMarkup([card], { revealed });
   if (deckId === "tadam") return tadamCardMarkup(card, { revealed });
   if (deckId === "event") return eventCardMarkup(card, { revealed });
+  if (deckId === "legendary") return legendaryCardMarkup(card, { revealed });
   return "";
+}
+
+function legendaryCardMarkup(card, { revealed }) {
+  const description = cardBodyText(card);
+  const title = cardFaceTitleText(card, "Легендарное оружие");
+  const textClass = `legendary-card-text ${cardFaceTextDensityClass(description, title)} ${cardFaceDescriptionDensityClass(description)} ${cardFaceTitleDensityClass(title)}`.trim();
+  const icon = card?.icon
+    ? `<img class="legendary-card-weapon-icon" src="${escapeHtml(card.icon)}" alt="" aria-hidden="true">`
+    : "";
+  const cardText = revealed
+    ? `
+      <span class="${textClass}">
+        ${cardFaceTextMarkup(card, "legendary", { fallbackTitle: "Легендарное оружие", icon })}
+      </span>
+    `
+    : "";
+  return `
+    <article class="legendary-card-reveal ${revealed ? "is-revealed" : "is-hidden"}">
+      <button class="legendary-card-preview" type="button" aria-label="${revealed ? "Принять легендарное оружие" : "Открыть легендарное оружие"}">
+        ${cardText}
+      </button>
+    </article>
+  `;
 }
 
 function goodCardMarkup(player, card, { revealed }) {
@@ -13961,9 +14781,9 @@ function tileTitle(cell) {
     "all-or-nothing": `Все или ничего — ${allOrNothingRuleText}`,
     bad: "Плохо",
     "very-bad": 'Очень Плохо — возьми 3 карты "Плохо"',
-    "big-rest": "Большой привал — выбери: восстановиться +10 монет; потренироваться +1 силе; ускориться +2 к шагам",
+    "big-rest": "Привал — выбери: восстановиться +10 монет; потренироваться +1 силе; ускориться +2 к шагам",
     "black-market": "Черный рынок — поменяй 1 карту Лавка Джо на +2 к силе; 2 карты на 30 монет; 3 карты на +10 к силе в следующем бою с монстром и 30 шагов вперед",
-    "chaos-portal": "Портал хаоса — 1-2: назад к ближайшему монстру/порталу; 3-4: к ближайшей Лавке Джо; 5: к ближайшему Хорошо; 6: вперед к ближайшему монстру/порталу",
+    "chaos-portal": `Портал хаоса — ${chaosPortalRuleText}`,
     "dice-fortune": `Кубик удачи — кинь кубик ${diceFortuneDiceCount} раз, получи ${diceFortuneCoinReward} монет за каждую 6, походи на ${diceFortuneBackwardStepPenalty} шагов назад за каждую 1`,
     enemy: "Враг — Сразись с врагом",
     event: "Событие",
@@ -13987,9 +14807,9 @@ function fieldEffectText(cell) {
     "all-or-nothing": ["Все или ничего", allOrNothingRuleText],
     bad: ["Плохо", "Тяни карту Плохо"],
     "very-bad": ["Очень Плохо", 'Возьми 3 карты "Плохо"'],
-    "big-rest": ["Большой привал", "Выбери: восстановиться +10 монет; потренироваться +1 силе; ускориться +2 к шагам"],
+    "big-rest": ["Привал", "Выбери: восстановиться +10 монет; потренироваться +1 силе; ускориться +2 к шагам"],
     "black-market": ["Черный рынок", "Поменяй Лавки Джо: 1 = +2 к силе; 2 = 30 монет; 3 = +10 к силе в следующем бою с монстром и 30 шагов"],
-    "chaos-portal": ["Портал хаоса", "1-2: назад к монстру/порталу; 3-4: к Лавке; 5: к Хорошо; 6: вперед к монстру/порталу"],
+    "chaos-portal": ["Портал хаоса", chaosPortalRuleText],
     "dice-fortune": ["Кубик удачи", `6 бросков: 6 = +${diceFortuneCoinReward} монет, 1 = -${diceFortuneBackwardStepPenalty} шагов`],
     enemy: ["Враг", "Сразись с врагом"],
     event: ["Событие", "Тяни карту Событие"],
@@ -14703,16 +15523,168 @@ function consumeSelfMonsterMinus(player, contextLabel) {
   return penalty;
 }
 
+function legendaryWeaponSnapshot() {
+  const weapon = state?.legendaryWeapon;
+  if (!weapon?.card) return null;
+  return {
+    card: phoneCardSnapshot(weapon.card, "Легендарное оружие"),
+    description: plainText(cardDisplayText(weapon.card)),
+    effectType: weapon.card.effect?.type || "",
+    icon: weapon.card.icon || doomScytheIconSrc,
+    id: weapon.card.id || "",
+    owner: weapon.owner || "monster",
+    ownerId: weapon.ownerId ?? null,
+    shortTitle: plainText(weapon.card.shortTitle || legendaryWeaponStatusText(weapon)),
+    title: plainText(weapon.card.title || "Легендарное оружие"),
+  };
+}
+
+function legendaryWeaponHeldByMonster() {
+  return state?.legendaryWeapon?.owner === "monster" ? state.legendaryWeapon : null;
+}
+
+function legendaryWeaponHeldByPlayer(player) {
+  const weapon = state?.legendaryWeapon;
+  if (!weapon || weapon.owner !== "player" || weapon.ownerId !== player?.id) return null;
+  return weapon;
+}
+
+function isDoomScytheWeapon(weapon = state?.legendaryWeapon) {
+  return weapon?.card?.effect?.type === "legendary-opponent-sixes-to-ones";
+}
+
+function isGoldenExecutionerWeapon(weapon = state?.legendaryWeapon) {
+  return weapon?.card?.effect?.type === "legendary-opponent-coins-strength";
+}
+
+function legendaryWeaponStatusText(weapon = state?.legendaryWeapon) {
+  if (!weapon?.card) return "";
+  if (isDoomScytheWeapon(weapon)) return "6 → 1 у противников";
+  if (isGoldenExecutionerWeapon(weapon)) return "10 монет = +1 к силе";
+  return plainText(weapon.card.shortTitle || cardDisplayText(weapon.card));
+}
+
+function legendaryOpponentCoinStrength(weapon, opponents = []) {
+  if (!isGoldenExecutionerWeapon(weapon)) {
+    return { amount: 0, coinsPerStrength: 10, opponents: [], total: 0 };
+  }
+  const amount = Math.max(0, Number(weapon.card.effect?.amount) || 1);
+  const coinsPerStrength = Math.max(1, Number(weapon.card.effect?.coinsPerStrength) || 10);
+  const opponentResults = (opponents || []).filter(Boolean).map((opponent) => {
+    const coins = Math.max(0, Number(opponent.coins) || 0);
+    const fullSets = Math.floor(coins / coinsPerStrength);
+    return {
+      bonus: fullSets * amount,
+      coins,
+      fullSets,
+      name: opponent.name || `Игрок ${opponent.id}`,
+      playerId: opponent.id,
+    };
+  });
+  return {
+    amount,
+    coinsPerStrength,
+    opponents: opponentResults,
+    total: opponentResults.reduce((sum, item) => sum + item.bonus, 0),
+  };
+}
+
+function legendaryOpponentCoinStrengthText(result, { includeTotal = true } = {}) {
+  if (!result?.opponents?.length) return includeTotal ? "+0" : "";
+  const details = result.opponents
+    .map((item) => `${item.name}: ${item.coins} монет → +${item.bonus}`)
+    .join(", ");
+  return includeTotal ? `+${result.total} (${details})` : details;
+}
+
+function legendaryWeaponForceBreakdownText(weapon, coinStrength = null) {
+  if (!weapon?.card) return "";
+  if (isDoomScytheWeapon(weapon)) return `${weapon.card.title}: 6→1 у противников`;
+  if (isGoldenExecutionerWeapon(weapon)) {
+    const result = coinStrength || legendaryOpponentCoinStrength(weapon, []);
+    return `${weapon.card.title}: ${legendaryOpponentCoinStrengthText(result)}`;
+  }
+  return `${weapon.card.title}: ${cardDisplayText(weapon.card)}`;
+}
+
+function monsterLegendaryStrengthBonus(door, player) {
+  if (!door?.isFinalBoss) return legendaryOpponentCoinStrength(null, []);
+  return legendaryOpponentCoinStrength(legendaryWeaponHeldByMonster(), [player]);
+}
+
+function monsterBattleTargetStrength(door, player) {
+  return effectiveMonsterStrength(door) + monsterLegendaryStrengthBonus(door, player).total;
+}
+
+function convertSixesToOnes(rolls) {
+  const rawRolls = Array.isArray(rolls) ? [...rolls] : [];
+  const adjustedRolls = rawRolls.map((value) => (value === 6 ? 1 : value));
+  const changedCount = adjustedRolls.reduce((count, value, index) => count + (value !== rawRolls[index] ? 1 : 0), 0);
+  return { adjustedRolls, changed: changedCount > 0, changedCount, rawRolls };
+}
+
+function applyDoomScytheToOpponentRoll(player, rolls, contextLabel, weapon = state?.legendaryWeapon) {
+  const converted = convertSixesToOnes(rolls);
+  if (!isDoomScytheWeapon(weapon)) {
+    return { ...converted, adjustedRolls: [...converted.rawRolls], changed: false, changedCount: 0 };
+  }
+  if (converted.changed) {
+    log(
+      `<strong>Коса Рока</strong> в ${contextLabel}: [${converted.rawRolls.join(", ")}] → [${converted.adjustedRolls.join(", ")}].`,
+      { toast: true },
+    );
+  }
+  return converted;
+}
+
+async function ensureFinalMonsterLegendaryWeapon(player, door) {
+  if (!door?.isFinalBoss || state.legendaryWeapon?.card) return true;
+  const card = drawCardFromDeck("legendary");
+  if (!card) {
+    log("В колоде <strong>Легендарное оружие</strong> нет доступных карт.", { toast: true });
+    return true;
+  }
+
+  const resetToken = transientUiResetToken;
+  const weapon = {
+    card,
+    owner: "monster",
+    ownerId: null,
+    revealedAt: Date.now(),
+  };
+  state.legendaryWeapon = weapon;
+  render();
+  log(
+    `Финальный монстр получает <strong>${escapeHtml(card.title || "Легендарное оружие")}</strong>: ${escapeHtml(cardDisplayText(card))}.`,
+    { toast: true },
+  );
+  const revealed = await revealLegendaryWeaponCard(player, card);
+  return Boolean(revealed && resetToken === transientUiResetToken && state.legendaryWeapon === weapon);
+}
+
+function transferLegendaryWeaponToPlayer(player) {
+  const weapon = legendaryWeaponHeldByMonster();
+  if (!weapon?.card || !player) return null;
+  weapon.owner = "player";
+  weapon.ownerId = player.id;
+  weapon.transferredAt = Date.now();
+  log(
+    `${playerName(player)} забирает у финального монстра <strong>${escapeHtml(weapon.card.title || "Легендарное оружие")}</strong>. В финальной битве действует эффект: ${escapeHtml(cardDisplayText(weapon.card))}.`,
+    { toast: true },
+  );
+  render();
+  return weapon;
+}
+
 function consumeMonsterSixesToOnes(player, rolls, contextLabel) {
   const card = consumePendingBadCard(player, "monster-sixes-to-ones");
   if (!card) return { rolls };
-  const adjustedRolls = rolls.map((value) => (value === 6 ? 1 : value));
-  const changed = adjustedRolls.some((value, index) => value !== rolls[index]);
-  const detail = changed ? `${formatRoll(rolls)} -> ${formatRoll(adjustedRolls)}` : "шестерок не было";
+  const converted = convertSixesToOnes(rolls);
+  const detail = converted.changed ? `${formatRoll(converted.rawRolls)} -> ${formatRoll(converted.adjustedRolls)}` : "шестерок не было";
   log(`${playerName(player)} сбрасывает ${cardNameStrong(pendingBadCardLabel(card))} в ${contextLabel}: ${detail}.`, {
     toast: true,
   });
-  return { rolls: adjustedRolls };
+  return { rolls: converted.adjustedRolls };
 }
 
 async function resolveMonsterRematch(player, door, rolls, bonusText) {
@@ -14971,6 +15943,7 @@ function deckLabel(id) {
     bad: "Плохо",
     event: "Событие",
     good: "Хорошо",
+    legendary: "Легендарное оружие",
     shop: "Лавка Джо",
     tadam: "ТАДАМ!",
   };
@@ -15895,6 +16868,7 @@ function snapshotAutoPlaytestControls() {
     autoRevealCards: ui.autoRevealCards ? ui.autoRevealCards.checked : false,
     botCount: ui.botCount?.value || "0",
     botSpeed: ui.botSpeed?.value || "standard",
+    disableDragon: dragonDisabledSetting(),
     hidePlayers: ui.hidePlayers ? ui.hidePlayers.checked : false,
     playerCount: ui.playerCount?.value || "2",
     randomFirstPlayer: ui.randomFirstPlayer ? ui.randomFirstPlayer.checked : false,
@@ -15909,6 +16883,11 @@ function restoreAutoPlaytestControls(snapshot) {
   if (ui.botCount) ui.botCount.value = snapshot.botCount;
   if (ui.botSpeed) ui.botSpeed.value = snapshot.botSpeed;
   if (ui.autoRevealCards) ui.autoRevealCards.checked = snapshot.autoRevealCards;
+  if (ui.disableDragon) {
+    ui.disableDragon.checked = snapshot.disableDragon === undefined
+      ? true
+      : Boolean(snapshot.disableDragon);
+  }
   if (ui.hidePlayers) ui.hidePlayers.checked = snapshot.hidePlayers;
   if (ui.randomFirstPlayer) ui.randomFirstPlayer.checked = snapshot.randomFirstPlayer;
   if (ui.showWalkPath) ui.showWalkPath.checked = snapshot.showWalkPath;
@@ -16331,6 +17310,12 @@ ui.phoneRoomCardsText?.addEventListener("change", () => {
 });
 ui.hidePlayers?.addEventListener("change", () => {
   renderTokens();
+});
+ui.disableDragon?.addEventListener("change", () => {
+  if (!state?.dragon) return;
+  state.dragon.disabled = Boolean(ui.disableDragon.checked);
+  syncDragonHistory();
+  render();
 });
 scoreStripEl?.addEventListener("click", (event) => {
   const button = event.target instanceof Element ? event.target.closest("[data-player-shop-id]") : null;

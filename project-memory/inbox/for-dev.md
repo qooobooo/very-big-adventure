@@ -4,6 +4,129 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- DONE DRAGON DEFAULT OFF VERIFICATION 2026-07-31 20:05:
+  - Ownership: `GD 1` / `Dev 2` verification only; Dev 1's narrow implementation was preserved unchanged. QA was not requested.
+  - Source PASS: the checkbox defaults checked, missing-field fallbacks default to disabled, New Game consumes the current checkbox value, and the host cache key is `20260731-0001`.
+  - In-app Browser PASS: fresh load checked + hidden; uncheck visible; `Новая игра` preserved unchecked + visible; re-check hidden. Console warnings/errors `0`.
+  - Checks PASS: `node --check src/game.js`, `node --check src/controller.js`, and `git diff --check`. No gameplay/data/assets/PnP changes, commit, or push.
+
+- DONE DRAGON DEFAULT OFF 2026-07-31 20:05:
+  - Owner: `Dev 1`; GD owner: `GD 1`; QA was not requested.
+  - Fresh HTML now checks `Выключить дракона`, so Dragon starts disabled and its overlay remains hidden.
+  - New Game, collected settings, autorun snapshots, missing DOM, and old snapshots without `disableDragon` share a disabled-by-default fallback. Explicit `false` after the user unchecks the setting is preserved, so New Game keeps Dragon enabled.
+  - Existing progress/state, live disable/re-enable, reset, battle/scoring, autorun behavior, balance, art/layout, cards, PnP, CSV, and Sheets are unchanged.
+  - Checks PASS: `node --check src/game.js`, `node --check src/controller.js`, focused source assertions, and `git diff --check`.
+  - Browser smoke was attempted but Chromium launch is blocked by `MachPortRendezvousServer ... Permission denied (1100)`. Temporary harness/server cleanup completed. No commit or push.
+
+- DONE SOLO DRAGON 10 OPEN SLOTS 2026-07-28 01:45:
+  - Requested by: user via `GD 3`.
+  - Ownership:
+    - GD owner: `GD 3` (`019fa578-6094-7b82-ab09-c996e9d9e74f`) — rule contract, acceptance, and user handback.
+    - Implementation owner: `Dev 3` (`019ea281-57e5-7233-9ee0-5450bead106a`) — the only code owner for this change.
+    - Other Dev/GD roles, Art / UI, and QA are not owners.
+  - Contract:
+    - In Solo (`gameMode === "solo"`, including one human or one bot), the Dragon counter has exactly `10` open slots available for player defeat tokens.
+    - Preserve the existing physical `32`-segment counter: Solo starts with `22` neutral prefilled segments and `10` empty segments.
+    - The tenth Solo defeat token fills segment `32` and immediately triggers the existing Dragon awakening/battle flow. Nine tokens must not trigger it.
+    - For `2/3/4` participants, preserve the existing prefill and open-slot counts exactly: `16/16`, `8/24`, `0/32`.
+    - Derive this from authoritative participant count/game mode at New Game. Human and bot Solo use the same Dragon capacity.
+  - Guardrails:
+    - Do not change Dragon strength, token-award conditions, battle/final scoring, cards, VS, rewards, routes, Google Sheets, controller protocol, or the 32-segment visual geometry.
+    - Preserve existing Dragon disable/reset/history/save/phone/autorun paths; only their already-derived prefill/progress data may reflect the Solo value.
+    - Preserve the shared dirty tree and all concurrent work. Do not commit or push.
+  - Acceptance:
+    - Solo New Game with Dragon enabled: `prefill = 22`, `tokens = 0`, progress `22/32`, and visually exactly `10` empty slots.
+    - Adding tokens 1-9 advances normally without awakening; token 10 fills the counter and enters the existing awakening/battle path once.
+    - Solo with one bot has the same prefill/capacity.
+    - Switching to `2`, `3`, or `4` players and starting a new game restores existing prefill/open-slot behavior without regression.
+    - Dragon disabled remains hidden/inactive, and re-enable/reset remains coherent.
+  - Required checks:
+    - Focused deterministic/static assertions for Solo `22 + 10 = 32`, ninth-versus-tenth trigger, and unchanged `2/3/4` thresholds.
+    - `node --check src/game.js`; `node --check src/controller.js` only if touched; `git diff --check`.
+    - Browser smoke on desktop and `390x844`: Solo counter shows 22 neutral + 10 empty, no overlap/overflow, and console warnings/errors `0`.
+  - Handback:
+    - Mark this item DONE; update `project-memory/updates.md` and `project-memory/inbox/for-gd.md`; send direct final handback to `GD 3`.
+  - Completion:
+    - `dragonInitialPrefill(1)` now returns `22`; existing values remain `2 -> 16`, `3 -> 8`, `4 -> 0`.
+    - Deterministic threshold PASS: Solo token 9 is `31/32` and does not awaken; token 10 is `32/32` and enters the unchanged awakening guard.
+    - Browser PASS: human and bot Solo both show `22/32`, 22 neutral segments, and exactly 10 empty; multiplayer restore, disable/re-enable/reset, desktop, and `390x844` all pass with console warnings/errors `0` and no overflow.
+    - `node --check src/game.js` and `git diff --check` PASS. No controller, geometry, strength, battle, scoring, card, Sheet, commit, or push changes.
+
+- DONE DOOM SCYTHE LEGENDARY WEAPON 2026-07-28 00:58:
+  - Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+  - Added separate finite `legendary` deck and one `doom-scythe` / `Коса Рока`, count `1`, exact text `Все 6 противников превращаются в 1`, dedicated icon/theme, local CSV row, and live frozen-header `Cards Config/legendary` tab.
+  - The first final-monster attempt reveals one weapon. It stays with the monster through losses, Second Chance, and Monster Rematch, then transfers only after definitive victory and affects the new boss's opponents in the final battle.
+  - Processing is raw dice -> Scythe `6→1` -> Dice Control -> existing modifiers -> Hero Sword/final force. Weapon-holder dice are unaffected.
+  - Removed the old boss `+3 per opponent` popup/log/math while retaining zero-valued compatibility fields. Added host/phone card reveal and persistent status plus raw/adjusted/final dice and ownership to History/save snapshots.
+  - Browser, connected-phone, responsive `390x844`, reset, final battle, no-score boss-win popup, console, deterministic conversion/order, syntax, and diff checks PASS. No commit or push.
+
+- DONE SOLO MODE 2026-07-28 00:45 - Allow a one-participant game:
+  - Requested by: user via `GD 3`.
+  - Ownership:
+    - GD owner: `GD 3` (`019fa578-6094-7b82-ab09-c996e9d9e74f`) — exact contract and user handback.
+    - Implementation owner: `Dev 3` — all runtime/UI/history changes, cache-key updates, checks, and final direct handback.
+    - `Dev 1` remains exclusively occupied by Dragon gameplay; `Dev 2`, other GD roles, Art / UI, and QA are not owners of this task.
+  - Scope:
+    - Add `<option value="1">Соло</option>` to `#playerCount`; keep `2` selected by default and preserve existing `2/3/4` options.
+    - Starting a game with exactly one participant sets canonical `gameMode: "solo"`; `2-4` participants set `gameMode: "multiplayer"`.
+    - A one-participant game is solo whether the participant is human or bot. `#botCount` must offer `0/1` for Solo through the existing clamp/sync flow.
+    - Store `gameMode` in started/current game settings and therefore in the existing history snapshot. Add one shared future-facing helper for checking solo mode, with safe fallback to `playerCount === 1` for older data/state without the new field.
+    - The selection applies through the existing `Новая игра` flow. Do not add a separate Solo badge.
+  - Rule guardrails:
+    - Do not add any special Solo rules yet.
+    - Do not change Dragon rules/prefill, final battle, cards, VS, rewards, balance, score math, routes, Google Sheets, or the controller protocol.
+    - Existing effects without another player must retain their current no-op/fallback behavior. If one uncovered branch would crash or hang on an empty target list, add only a neutral safe exit with existing-style feedback; do not add compensation, substitute targets, rewards, or penalties.
+    - Preserve the complete dirty tree and Dev 1's in-progress Dragon work. Keep edits narrow around the player selector, mode/settings helper, history serialization, and required host cache key.
+  - Acceptance:
+    - Human Solo: exactly one player is created, `gameMode === "solo"`, one completed turn cycles back to that player and advances the round without error.
+    - Bot Solo: exactly one bot is created and completes a turn without deadlock.
+    - A representative other-player-only effect exits safely without a new compensation.
+    - `2`, `3`, and `4` still produce `gameMode === "multiplayer"` with unchanged roster/bot behavior.
+    - History snapshot contains `settings.startedWith.playerCount = 1` and `settings.startedWith.gameMode = "solo"`; no Sheet schema write/change is required.
+  - Required checks:
+    - `node --check src/game.js`.
+    - `node --check src/controller.js` only if touched; avoid touching it unless required.
+    - `git diff --check`.
+    - Focused static/runtime assertions for option/default/mode derivation/bot cap/history snapshot and unchanged multiplayer mode.
+    - Browser smoke on desktop and `390x844`: human Solo start/turn, one-bot Solo progress, return to `2` players, clean console, no selector overflow. If a branch is blocked by the environment, report the exact limitation without overstating it.
+  - Handback:
+    - Mark this item DONE, add concise results to `project-memory/updates.md` and `project-memory/inbox/for-gd.md`, then send the final context handback directly to active `GD 3` thread `019fa578-6094-7b82-ab09-c996e9d9e74f`.
+    - Do not commit or push unless the user separately requests it.
+  - Completion:
+    - Added Solo while keeping `2` as the default; existing bot synchronization exposes `0/1` bots for one participant.
+    - Added canonical/fallback `gameMode` derivation and stored it in new-game state plus current/started settings used by History snapshots.
+    - Browser PASS: human Solo completed a turn and cycled to the same player, one-bot Solo progressed without deadlock, a no-target player effect exited safely without compensation, and returning to two players restored the normal roster/bot range.
+    - Responsive PASS at `390x844`: `Соло` is fully visible, settings fit without horizontal overflow (`scrollWidth = clientWidth = 390`), and console warnings/errors are empty.
+    - Syntax/static/diff checks PASS. `src/controller.js` and gameplay rules were not changed; no commit or push.
+
+- DONE DRAGON GAMEPLAY 2026-07-28 00:52 - Dragon counter and alternate ending:
+  - Owner: `Dev 1`; GD owner: `GD 1`; QA was not requested.
+  - Added the unchecked-by-default `Выключить дракона` setting, authoritative 32-segment Dragon state, neutral prefill (`2 -> 16`, `3 -> 8`, `4 -> 0`), live disable/restore, New Game reset, history/save/phone/autorun snapshots, and the sleeping-Dragon field2 UI from the Art / UI contract.
+  - A final board-monster loss now adds one player-colored token only after second-chance/rematch handling and ordinary defeat resolution. Event/card/VS/team/Dragon battles do not use this hook. Segment 32 immediately starts the Dragon ending and blocks stale landing continuation.
+  - Dragon strength is `35 * playerCount` plus current generic monster modifiers. All players attack in initiator-first table order through shared monster-battle power; equality is a win.
+  - Team-win scoring reuses `finalBattleScore()` with doubled personal Dragon contribution as damage. Tied score leaders roll clean `1d6` without bonuses/control until unique. Team loss finishes with no winner and exact copy `Дракон победил. Все игроки проиграли`.
+  - Final popup/history/save data records base/modifiers/target, initiator, token ownership, every contribution, score components, total, tie rounds, and common-loss state.
+  - Browser PASS: desktop/mobile/fullscreen layout, disable/re-enable/reset, real field-monster token, exact 16-token wake, human common loss, autorun enabled/disabled, phone-room Dragon snapshot, console `0`.
+  - Checks PASS: `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, focused deterministic/static contracts, and `git diff --check`.
+  - Team-win/tie and connected-phone live action were not separately forced in browser; shared paths passed deterministic/source verification. No card config/CSV/Sheet changes, commit, or push.
+
+- DONE BOSS WIN POPUP HIDE SCORE BREAKDOWN 2026-07-27 22:57:
+  - Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+  - When `finalBattle.bossWon` is true, the final winner popup no longer renders `.winner-score-formula`.
+  - `Победил - ...!` and `Босс победил: игроки ..., босс ...` remain visible.
+  - Players-win popup still shows the winning player's score formula.
+  - Final score math, winner selection, History/statistics, and saved snapshots are unchanged.
+  - Syntax/static/diff checks PASS; host cache key is `20260727-2257`.
+
+- DONE REST RENAME + CHAOS PORTAL RULE 2026-07-27 22:55:
+  - Owner: `Dev 1`; GD owner: `GD 1`; QA was not requested.
+  - All active player-facing `Большой привал` labels are now `Привал`; the internal `big-rest` id and effect are unchanged.
+  - `Портал хаоса` now resolves 1-2 backward to nearest monster/open portal, 3-4 backward to nearest Joe Shop, 5 backward to nearest Rest, and 6 forward to nearest monster/open portal.
+  - Destination cells resolve their normal landing effect even after backward teleport; open portals use current authoritative door/portal state. Missing directional targets keep the safe existing fallback to Start.
+  - Host/reference/preview/result/phone roll-context copy is synchronized with the new rule.
+  - Deterministic all-band checks, browser backward-Shop landing, Rest prompt smoke, syntax/static/diff checks, and host/controller console check PASS. Connected-phone E2E was not forced; shared snapshot/action wiring was source-verified.
+  - No commit or push was made.
+
 - DONE TRAVELER COMPASS ARTIFACT 2026-07-27 06:17 - Add Event artifact `Компас Странника`:
   - Owner: `Dev 1`; GD owner: `GD 1`; QA was not requested.
   - Added `traveler-compass`, count `1`, artifact icon `./assets/icons/artifact_traveler_compass_512.png`, and the exact approved description without a final period.

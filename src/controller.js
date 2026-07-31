@@ -407,6 +407,7 @@ function renderBigButtonPlayerCard(player, activeText, statusAlert = "") {
       </div>
       <div class="controller-shop-cards controller-big-shop-cards"><small>Лавка Джо</small><div>${shopCards}</div></div>
       ${artifacts}
+      ${controllerLegendaryWeaponMarkup()}
       ${controllerCardPreviewMarkup(controller.snapshot?.cardPreview, player.id)}
       ${player.nextMonsterBattleBonus ? `<div class="controller-rage controller-big-rage">Зелье ярости +${player.nextMonsterBattleBonus}</div>` : ""}
       ${controllerNextBattlePenaltyMarkup(player.nextBattlePenalty)}
@@ -439,6 +440,7 @@ function renderPlayerCard(player, activeText, statusAlert = "") {
     ${controllerNextBattlePenaltyMarkup(player.nextBattlePenalty)}
     ${controllerNextBadExtraDrawMarkup(player.nextBadExtraDraw)}
     ${artifacts}
+    ${controllerLegendaryWeaponMarkup()}
     <div class="controller-shop-cards"><small>Лавка Джо</small><div>${cards}</div></div>
     ${controllerCardPreviewMarkup(controller.snapshot?.cardPreview, player.id)}
   `;
@@ -477,6 +479,25 @@ function controllerArtifactsMarkup(artifacts = []) {
   `;
 }
 
+function controllerLegendaryWeaponMarkup() {
+  const weapon = controller.snapshot?.legendaryWeapon;
+  if (!weapon?.id) return "";
+  const owner = weapon.owner === "player"
+    ? controller.snapshot?.players?.find((player) => player.id === weapon.ownerId)
+    : null;
+  const ownerLabel = owner ? `У босса — ${owner.name}` : "У финального монстра";
+  return `
+    <div class="controller-legendary-weapon" title="${escapeAttribute(`${weapon.title}: ${weapon.description}`)}">
+      <img src="${escapeAttribute(weapon.icon)}" alt="" aria-hidden="true">
+      <span>
+        <small>${escapeHtml(ownerLabel)}</small>
+        <b>${escapeHtml(weapon.title || "Легендарное оружие")}</b>
+        <em>${escapeHtml(weapon.shortTitle || weapon.description || "Легендарное оружие")}</em>
+      </span>
+    </div>
+  `;
+}
+
 function controllerShopCardsMarkup(items = []) {
   if (!items.length) return '<span class="controller-shop-card empty-card">нет карт</span>';
   if (!phoneCardsAsText()) {
@@ -502,7 +523,9 @@ function controllerShopCardsMarkup(items = []) {
 
 function controllerCardPreviewMarkup(preview, playerId) {
   if (!preview || (preview.playerId !== null && preview.playerId !== playerId)) return "";
-  if (!phoneCardsAsText()) {
+  const deckClass = controllerCardPreviewClass(preview.deck);
+  const showFullCard = deckClass === "legendary" || !phoneCardsAsText();
+  if (showFullCard) {
     return `
       <article class="controller-card-preview controller-card-preview-face">
         ${controllerPhoneCardFaceMarkup(preview, {
@@ -512,7 +535,6 @@ function controllerCardPreviewMarkup(preview, playerId) {
       </article>
     `;
   }
-  const deckClass = controllerCardPreviewClass(preview.deck);
   const title = preview.revealed ? preview.title || "Карта" : `Карта ${preview.deck || ""}`.trim();
   const body = preview.revealed
     ? preview.description || preview.title || "Карта открыта."
@@ -544,14 +566,15 @@ function controllerCardFaceMarkupForDeck(deckClass, card, { revealed }) {
   if (deckClass === "bad") return controllerSingleCardFaceMarkup("bad", "Плохо", card, { revealed });
   if (deckClass === "tadam") return controllerSingleCardFaceMarkup("tadam", "ТАДАМ", card, { revealed });
   if (deckClass === "event") return controllerSingleCardFaceMarkup("event", "Событие", card, { revealed });
+  if (deckClass === "legendary") return controllerSingleCardFaceMarkup("legendary", "Легендарное оружие", card, { revealed });
   return controllerShopCardFaceMarkup(card, { revealed });
 }
 
 function controllerSingleCardFaceMarkup(deckClass, fallbackTitle, card, { revealed }) {
   const description = controllerCardBodyText(card);
   const title = controllerCardFaceTitleText(card, fallbackTitle);
-  const icon = deckClass === "event" && card?.icon
-    ? `<img class="event-card-artifact-icon" src="${escapeAttribute(card.icon)}" alt="" aria-hidden="true">`
+  const icon = (deckClass === "event" || deckClass === "legendary") && card?.icon
+    ? `<img class="${deckClass}-card-artifact-icon" src="${escapeAttribute(card.icon)}" alt="" aria-hidden="true">`
     : "";
   const iconClass = icon ? "has-card-face-icon" : "";
   const densityClass = deckClass === "event"
@@ -769,6 +792,7 @@ function controllerCardPreviewClass(deck) {
   if (normalized.includes("плох")) return "bad";
   if (normalized.includes("тадам")) return "tadam";
   if (normalized.includes("событ")) return "event";
+  if (normalized.includes("легендар")) return "legendary";
   if (normalized.includes("лавк")) return "shop";
   return "card";
 }

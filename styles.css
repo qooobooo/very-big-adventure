@@ -31,6 +31,328 @@
   font-family: var(--font-standard);
 }
 
+/* Legendary weapon: dedicated card, persistent holder status, and phone parity. */
+.reference-toggle-icon-legendary {
+  width: 27px;
+  height: 27px;
+  filter:
+    drop-shadow(0 0 5px rgba(194, 73, 255, 0.55))
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+.reference-card-item.is-display-only {
+  cursor: default;
+}
+
+.legendary-card-reveal {
+  --reveal-card-width: var(--card-face-width);
+  width: var(--reveal-card-width);
+}
+
+.legendary-card-preview {
+  --legendary-violet: #8f3fea;
+  --legendary-red: #d4384f;
+  --legendary-card-background:
+    radial-gradient(circle at 50% 34%, rgba(190, 63, 255, 0.28), transparent 31%),
+    radial-gradient(circle at 22% 84%, rgba(225, 41, 69, 0.2), transparent 35%),
+    linear-gradient(145deg, #221226 0%, #100f19 47%, #2b1119 100%);
+  position: relative;
+  width: 100%;
+  aspect-ratio: 63 / 88;
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  border: 2px solid rgba(255, 211, 97, 0.88);
+  border-radius: 12px;
+  color: #fff3ce;
+  background: var(--legendary-card-background);
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.5),
+    0 0 0 2px rgba(76, 26, 87, 0.82),
+    0 0 22px rgba(160, 58, 220, 0.28),
+    inset 0 0 0 4px rgba(255, 220, 108, 0.12);
+  cursor: pointer;
+  transform-origin: center;
+  transition: box-shadow 160ms ease, transform 160ms ease;
+}
+
+.legendary-card-preview::before {
+  content: "";
+  position: absolute;
+  inset: 5.5%;
+  border: 1px solid rgba(255, 216, 111, 0.46);
+  border-radius: 9px;
+  background:
+    linear-gradient(135deg, rgba(255, 232, 151, 0.1), transparent 22% 76%, rgba(255, 220, 112, 0.08)),
+    repeating-linear-gradient(135deg, transparent 0 14px, rgba(155, 64, 197, 0.045) 14px 15px);
+  pointer-events: none;
+}
+
+.legendary-card-reveal.is-hidden .legendary-card-preview {
+  --legendary-card-background: url("./assets/cards/legendary_back.png?v=20260728-0542") center / cover no-repeat;
+}
+
+.legendary-card-reveal.is-hidden .legendary-card-preview::before,
+.legendary-card-reveal.is-hidden .legendary-card-preview::after {
+  display: none;
+}
+
+button.legendary-card-preview:hover:not(:disabled),
+button.legendary-card-preview:focus-visible {
+  outline: none;
+  border-color: rgba(255, 236, 166, 0.54);
+  background: var(--legendary-card-background);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.42),
+    0 0 0 2px rgba(255, 244, 198, 0.96);
+  transform: none;
+}
+
+.legendary-card-text {
+  --card-face-icon-row: clamp(74px, 13vw, 110px);
+  position: absolute;
+  inset: 10% 9% 8%;
+  z-index: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-items: center;
+  justify-items: center;
+  gap: clamp(5px, 0.8vw, 10px);
+  text-align: center;
+}
+
+.legendary-card-title {
+  align-self: start;
+  color: #ffe39a;
+  font-size: clamp(0.75rem, 1.45vw, 1.06rem);
+  font-weight: 950;
+  letter-spacing: 0.055em;
+  line-height: 1.02;
+  text-shadow: 0 2px 3px #000, 0 0 10px rgba(217, 75, 255, 0.64);
+  text-transform: uppercase;
+}
+
+.legendary-card-icon {
+  width: var(--card-face-icon-row);
+  height: var(--card-face-icon-row);
+  display: grid;
+  place-items: center;
+  align-self: center;
+}
+
+.legendary-card-weapon-icon,
+.legendary-card-artifact-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 6px 7px rgba(0, 0, 0, 0.68))
+    drop-shadow(0 0 12px rgba(200, 69, 255, 0.5));
+}
+
+.legendary-card-description {
+  align-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff2d2;
+  font-size: clamp(0.62rem, 1.18vw, 0.88rem);
+  font-weight: 900;
+  line-height: 1.12;
+  text-shadow: 0 2px 3px #000;
+  text-wrap: pretty;
+}
+
+.event-toast.action-prompt:has(.legendary-card-reveal) {
+  top: 50%;
+  width: min(1220px, calc(100% - 36px));
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  justify-items: center;
+  transform: translate(-50%, calc(-50% - 8px));
+}
+
+.event-toast.action-prompt.visible:has(.legendary-card-reveal) {
+  transform: translate(-50%, -50%);
+}
+
+.event-toast.action-prompt.fading:has(.legendary-card-reveal) {
+  transform: translate(-50%, calc(-50% - 8px));
+}
+
+.event-toast.action-prompt:has(.legendary-card-reveal) .event-toast-copy {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.legendary-weapon-status {
+  width: fit-content;
+  max-width: 100%;
+  display: grid !important;
+  grid-template-columns: 26px minmax(0, auto);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0 6px !important;
+  margin: 6px 0 2px;
+  padding: 4px 8px 4px 5px;
+  border: 1px solid rgba(229, 171, 71, 0.62);
+  border-radius: 999px;
+  color: #ffe6a7 !important;
+  background:
+    radial-gradient(circle at 13px 50%, rgba(169, 57, 232, 0.35), transparent 25px),
+    rgba(29, 15, 31, 0.8);
+  box-shadow: 0 0 14px rgba(152, 52, 205, 0.22), inset 0 1px rgba(255, 236, 164, 0.12);
+  text-align: left;
+  text-transform: none !important;
+  white-space: normal !important;
+}
+
+.legendary-weapon-status img {
+  grid-row: 1 / 3;
+  width: 26px !important;
+  height: 26px !important;
+  object-fit: contain;
+}
+
+.legendary-weapon-status b,
+.legendary-weapon-status small {
+  min-width: 0;
+  overflow: hidden;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legendary-weapon-status b {
+  color: #ffe099;
+  font-size: 0.68rem;
+  font-weight: 950;
+}
+
+.legendary-weapon-status small {
+  margin: 0;
+  color: rgba(255, 235, 210, 0.72);
+  font-size: 0.55rem;
+  font-weight: 850;
+}
+
+.controller-legendary-weapon {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px 7px 7px;
+  border: 1px solid rgba(240, 193, 80, 0.56);
+  border-radius: 10px;
+  color: #fff0cf;
+  background:
+    radial-gradient(circle at 24px 50%, rgba(177, 54, 229, 0.32), transparent 48px),
+    linear-gradient(135deg, rgba(61, 23, 70, 0.86), rgba(35, 18, 25, 0.9));
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24), inset 0 1px rgba(255, 235, 163, 0.13);
+}
+
+.controller-legendary-weapon > img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(203, 70, 255, 0.48));
+}
+
+.controller-legendary-weapon > span {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.controller-legendary-weapon small,
+.controller-legendary-weapon b,
+.controller-legendary-weapon em {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.controller-legendary-weapon small {
+  color: #cdb6d6;
+  font-size: 0.64rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.controller-legendary-weapon b {
+  color: #ffe19a;
+  font-size: 0.92rem;
+  font-weight: 950;
+}
+
+.controller-legendary-weapon em {
+  color: #f1dce9;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.controller-card-preview-legendary {
+  --controller-card-accent: #bd60ee;
+}
+
+.controller-card-face-stage .legendary-card-reveal,
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-face-stage.is-preview .legendary-card-reveal {
+  width: var(--reveal-card-width);
+}
+
+.controller-card-face-stage .legendary-card-preview,
+.controller-player-panel.has-card-preview:has(.controller-card-preview-face) .controller-card-face-stage.is-preview .legendary-card-preview {
+  width: var(--reveal-card-width);
+  height: auto;
+  pointer-events: none;
+}
+
+.controller-card-preview-face .legendary-card-text {
+  --card-face-icon-row: clamp(92px, 35cqw, 150px);
+}
+
+.controller-card-preview-face .legendary-card-title {
+  font-size: clamp(0.94rem, 6.4cqw, 1.56rem);
+}
+
+.controller-card-preview-face .legendary-card-description {
+  font-size: clamp(0.78rem, 5.1cqw, 1.22rem);
+}
+
+@media (max-width: 640px) {
+  .legendary-card-reveal {
+    --reveal-card-width: var(--card-face-width);
+  }
+
+  .event-toast.action-prompt:has(.legendary-card-reveal) {
+    position: fixed;
+    top: 50%;
+    bottom: auto;
+    left: 50%;
+    z-index: 80;
+    width: auto;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+    justify-items: center;
+    transform: translate(-50%, -50%);
+  }
+
+  .event-toast.action-prompt:has(.legendary-card-reveal) .event-toast-copy {
+    max-height: 100%;
+    overflow: auto;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -4522,10 +4844,10 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 }
 
 .enemy-battle-panel {
-  width: min(820px, 100%);
+  width: min(840px, 100%);
   display: grid;
-  gap: 9px;
-  padding: 11px;
+  gap: 10px;
+  padding: 12px;
   border: 1px solid rgba(255, 220, 130, 0.62);
   border-radius: 8px;
   background:
@@ -4539,20 +4861,29 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 
 .enemy-battle-duel {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(92px, 0.5fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(64px, 0.28fr) minmax(0, 1fr);
   align-items: stretch;
-  gap: 8px;
+  gap: 10px;
 }
 
 .enemy-battle-hud .final-battle-side {
+  position: relative;
   min-height: 118px;
   display: grid;
   align-content: center;
   justify-items: center;
-  padding: 8px 10px;
+  padding: 10px 12px;
+  overflow: hidden;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.1)),
     rgba(18, 24, 21, 0.74);
+}
+
+.enemy-battle-side.is-losing {
+  border-color: rgba(255, 238, 194, 0.24);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(0, 0, 0, 0.14)),
+    rgba(16, 21, 18, 0.78);
 }
 
 .enemy-battle-side.is-winning {
@@ -4660,6 +4991,34 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.battle-strength-badge .strength-icon,
+.battle-strength-text .strength-icon {
+  flex: 0 0 auto;
+  width: 1.55em;
+  height: 1.55em;
+  margin: -0.34em 0 -0.3em;
+  object-fit: contain;
+  vertical-align: -0.32em;
+  filter:
+    drop-shadow(0 1px 1px rgba(0, 0, 0, 0.52))
+    drop-shadow(0 0 5px rgba(255, 215, 125, 0.2));
+}
+
+.enemy-battle-hud .battle-strength-badge {
+  gap: 4px;
+  color: #f4ead0;
+  font-size: clamp(0.56rem, 1.22vw, 0.68rem);
+  line-height: 1;
+}
+
+.battle-strength-badge b,
+.battle-strength-text b {
+  color: #fff0bd;
+  font: inherit;
+  font-weight: 950;
+  line-height: 1;
 }
 
 .battle-strength-list {
@@ -4772,7 +5131,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 }
 
 .enemy-battle-side.is-winning .enemy-battle-portrait::after {
-  animation: battle-winner-rays 980ms ease-out both;
+  display: none;
 }
 
 .enemy-battle-hud .enemy-battle-portrait img {
@@ -4820,6 +5179,10 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   justify-content: flex-end;
 }
 
+.enemy-battle-hud .enemy-battle-side.player > .enemy-battle-score {
+  justify-content: stretch;
+}
+
 .final-battle-side strong {
   display: block;
   margin-top: 2px;
@@ -4853,6 +5216,13 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   place-items: center;
   gap: 6px;
   padding: 5px 4px;
+  background: linear-gradient(
+    90deg,
+    transparent calc(50% - 1px),
+    rgba(255, 226, 155, 0.16) calc(50% - 1px),
+    rgba(255, 226, 155, 0.16) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
 }
 
 .enemy-battle-hud .final-battle-vs {
@@ -5169,22 +5539,6 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   }
 }
 
-@keyframes battle-winner-rays {
-  0% {
-    opacity: 0;
-    transform: rotate(0deg) scale(0.76);
-  }
-
-  25% {
-    opacity: 0.9;
-  }
-
-  100% {
-    opacity: 0;
-    transform: rotate(56deg) scale(1.18);
-  }
-}
-
 .final-battle-result {
   grid-column: 1 / -1;
   min-height: 34px;
@@ -5206,10 +5560,48 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 
 .enemy-battle-result {
   min-height: 40px;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
   padding: 8px 12px;
   border-color: rgba(255, 236, 166, 0.32);
   background: rgba(8, 12, 10, 0.48);
   font-size: clamp(0.76rem, 1.65vw, 0.94rem);
+  text-align: center;
+}
+
+.enemy-battle-result-copy {
+  min-width: 0;
+  align-self: center;
+  color: inherit;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+  justify-self: center;
+}
+
+.enemy-battle-hud .enemy-battle-score {
+  width: min(128px, 100%);
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  justify-content: stretch;
+  gap: 2px;
+  margin-top: 7px;
+  padding-top: 7px;
+  overflow: visible;
+  border-top: 1px solid rgba(255, 236, 166, 0.16);
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: normal;
+  text-align: center;
+  text-transform: none;
+  white-space: normal;
+}
+
+.enemy-battle-score small,
+.enemy-battle-score strong {
+  margin-top: 0;
 }
 
 .final-battle-result:not(.is-visible) {
@@ -5219,18 +5611,25 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 .enemy-battle-hud.is-victory .enemy-battle-result {
   border-color: rgba(173, 255, 117, 0.5);
   color: #e9ffd2;
+  background:
+    linear-gradient(90deg, rgba(126, 194, 78, 0.14), transparent 45%),
+    rgba(8, 12, 10, 0.56);
 }
 
 .enemy-battle-hud.is-defeat .enemy-battle-result {
   border-color: rgba(255, 139, 112, 0.48);
   color: #ffd9cd;
+  background:
+    linear-gradient(90deg, rgba(204, 78, 56, 0.15), transparent 45%),
+    rgba(8, 12, 10, 0.56);
 }
 
 @media (max-width: 720px) {
   .enemy-battle-hud {
     right: 12px;
     left: 12px;
-    top: calc(50% + 34px);
+    top: 50%;
+    transform: translateY(-50%);
   }
 
   .enemy-battle-panel {
@@ -5363,6 +5762,45 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   line-height: 1.35;
 }
 
+.winner-dragon-scores {
+  width: min(760px, 82vw);
+  max-height: min(44vh, 360px);
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 8px;
+  overflow: auto;
+  text-align: left;
+}
+
+.winner-dragon-scores > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 8px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--player-color);
+  border-radius: 5px;
+  background: rgba(10, 14, 12, 0.42);
+}
+
+.winner-dragon-scores b,
+.winner-dragon-scores span {
+  font-size: 0.76rem;
+}
+
+.winner-dragon-scores > div > small {
+  grid-column: 1 / -1;
+  margin-top: 0;
+  font-size: 0.68rem;
+  line-height: 1.25;
+}
+
+.winner-card .winner-dragon-ties {
+  max-width: 760px;
+  line-height: 1.3;
+}
+
 .winner-confetti {
   position: absolute;
   inset: 0;
@@ -5460,6 +5898,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
 
 .tile {
   position: relative;
+  z-index: 2;
   display: grid;
   place-items: center;
   min-width: 0;
@@ -5468,6 +5907,179 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   color: rgba(20, 25, 22, 0.42);
   font-size: clamp(0.8rem, 1.35vw, 1.28rem);
   text-shadow: none;
+}
+
+.dragon-overlay {
+  position: absolute;
+  z-index: 1;
+  top: 0.4%;
+  left: 52.7%;
+  width: 25.6%;
+  height: 12.2%;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 5px rgba(23, 9, 4, 0.28));
+}
+
+.dragon-overlay[hidden] {
+  display: none;
+}
+
+.dragon-figure {
+  position: absolute;
+  inset: 0;
+  background: url("./assets/icons/dragon_sleeping_1024.png") 67% center / 66% auto no-repeat;
+}
+
+.dragon-counter {
+  position: absolute;
+  z-index: 2;
+  inset: -2% -6% 0;
+}
+
+.dragon-segment {
+  position: absolute;
+  left: var(--dragon-x);
+  top: var(--dragon-y);
+  width: clamp(5px, 5.4%, 12px);
+  aspect-ratio: 1;
+  border: max(1px, 0.1vw) solid rgba(183, 139, 78, 0.74);
+  border-radius: 44%;
+  background: rgba(38, 32, 31, 0.88);
+  box-shadow:
+    inset 0 1px rgba(255, 242, 204, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.52);
+  translate: -50% -50%;
+}
+
+.dragon-segment.is-neutral {
+  border-color: rgba(231, 205, 132, 0.86);
+  background: #b1a069;
+}
+
+.dragon-segment.is-player {
+  border-color: rgba(255, 221, 147, 0.92);
+  background: var(--player-accent, #f3be52);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.44),
+    0 0 4px color-mix(in srgb, var(--player-accent, #f3be52) 78%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.58);
+}
+
+.dragon-segment.is-new {
+  animation: dragon-segment-pulse 520ms ease;
+}
+
+.dragon-status-pill {
+  position: absolute;
+  z-index: 3;
+  right: auto;
+  bottom: -2%;
+  left: -1%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  color: #fff1c6;
+  background: transparent;
+  font-family: var(--display-font);
+  font-size: clamp(0.64rem, 0.82vw, 0.82rem);
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow:
+    0 2px 2px rgba(0, 0, 0, 0.9),
+    0 0 4px rgba(0, 0, 0, 0.72);
+}
+
+.dragon-status-pill span {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.dragon-status-pill img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.84));
+}
+
+.dragon-overlay.is-full .dragon-segment {
+  border-color: rgba(255, 215, 129, 0.96);
+}
+
+.dragon-overlay.is-awakening .dragon-figure {
+  animation: dragon-wake-pulse 760ms ease-in-out 2;
+}
+
+@keyframes dragon-segment-pulse {
+  0%,
+  100% {
+    scale: 1;
+    filter: brightness(1);
+  }
+
+  48% {
+    scale: 1.35;
+    filter: brightness(1.42);
+  }
+}
+
+@keyframes dragon-wake-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(255, 96, 52, 0));
+  }
+
+  50% {
+    filter:
+      brightness(1.22)
+      drop-shadow(0 0 13px rgba(255, 98, 50, 0.78))
+      drop-shadow(0 0 22px rgba(255, 201, 91, 0.46));
+  }
+}
+
+@media (max-width: 540px) {
+  .dragon-overlay {
+    top: 0.4%;
+    left: 52.8%;
+    width: 25.8%;
+    height: 11.4%;
+  }
+
+  .dragon-counter {
+    inset: -3% -8% 0;
+  }
+
+  .dragon-figure {
+    background-position: 69% center;
+    background-size: 58% auto;
+  }
+
+  .dragon-segment {
+    width: 5px;
+  }
+
+  .dragon-status-pill {
+    right: auto;
+    bottom: -3%;
+    left: -2%;
+    padding: 0;
+    font-size: 0.58rem;
+  }
+
+  .dragon-status-pill img {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dragon-segment.is-new,
+  .dragon-overlay.is-awakening .dragon-figure {
+    animation: none;
+    filter: brightness(1.2);
+  }
 }
 
 .board[data-board-id="field2"] .tile-icon-image {
@@ -12167,17 +12779,24 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
   }
 
   .season-controls {
-    gap: 5px;
+    gap: 3px;
     grid-template-columns:
-      repeat(2, minmax(36px, 0.58fr))
-      minmax(196px, 196px)
-      minmax(78px, 1.15fr);
+      minmax(50px, 0.68fr)
+      minmax(40px, 0.55fr)
+      minmax(176px, 176px)
+      minmax(70px, 1fr);
   }
 
   .season-controls select {
     min-height: 29px;
     padding: 0 18px 0 7px;
     font-size: 0.72rem;
+  }
+
+  .season-controls #playerCount {
+    padding-right: 12px;
+    padding-left: 5px;
+    font-size: 0.68rem;
   }
 
   .season-controls button {
@@ -12187,15 +12806,15 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
   }
 
   .header-icon-actions {
-    grid-template-columns: repeat(5, 36px);
+    grid-template-columns: repeat(5, 32px);
     gap: 4px;
   }
 
   .header-icon-button,
   .season-controls .header-icon-button {
-    width: 36px;
-    height: 36px;
-    min-height: 36px;
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
   }
 }
 
@@ -12275,10 +12894,11 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
   }
 
   .enemy-battle-hud {
-    top: auto;
+    top: 50%;
     right: 6px;
-    bottom: 6px;
+    bottom: auto;
     left: 6px;
+    transform: translateY(-50%);
   }
 
   .enemy-battle-panel {
@@ -12709,6 +13329,14 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
 @media (max-height: 680px) {
   .controller-player-panel {
     --controller-bottom-action-height: 82px;
+  }
+}
+
+@media (max-width: 640px) {
+  .controller-player-panel.is-full-controller.has-card-preview .controller-player-card:has(.controller-card-preview-face) .controller-card-face-stage.is-preview:has(.legendary-card-reveal) {
+    --controller-preview-card-width: min(calc(100vw - 72px), 30svh, 280px);
+    --card-face-width: var(--controller-preview-card-width);
+    --reveal-card-width: var(--controller-preview-card-width);
   }
 }
 

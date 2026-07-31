@@ -4,6 +4,122 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-07-31 20:05 - Dev 2 direct context handback to `GD 1`: `DRAGON DEFAULT OFF VERIFICATION`
+  - Verification-only takeover completed; Dev 1's implementation was not rewritten.
+  - Source PASS: `#disableDragon` defaults checked, all requested missing-state fallbacks are disabled-by-default, New Game reads the current checkbox, and the host cache key is `20260731-0001`.
+  - In-app Browser PASS on `localhost:5173`: fresh load checked + overlay hidden; uncheck showed the overlay; `Новая игра` preserved unchecked + visible; re-check hid it. Console warnings/errors `0`.
+  - Checks PASS: `node --check src/game.js`, `node --check src/controller.js`, and `git diff --check`. Only project-memory records changed by Dev 2; no QA, commit, push, gameplay, data, assets, or PnP changes.
+
+- 2026-07-31 20:05 - Dev 1 direct context handback to `GD 1`: `DRAGON DEFAULT OFF`
+  - Root cause: the HTML checkbox and three JS fallback paths still defaulted `disableDragon` to `false`, which enabled Dragon on fresh/missing-state initialization.
+  - Fresh load now has `Выключить дракона` checked. A shared `dragonDisabledSetting()` defaults missing DOM to `true`; New Game, settings, and autorun snapshots use it; `createDragonState()` also defaults to disabled; legacy snapshots missing the field restore as disabled.
+  - Explicit `false` is preserved. After the user unchecks the setting, Dragon appears and New Game continues using that current selection instead of forcing the checkbox back on.
+  - Files: `index.html`, `src/game.js`, and project-memory records. Only the host JS cache key was bumped.
+  - PASS: `node --check src/game.js`, `node --check src/controller.js`, deterministic source assertions for all default/manual/New Game/snapshot paths, and `git diff --check`.
+  - Browser limitation: dedicated local server started successfully, but Playwright Chromium was blocked by macOS sandbox `MachPortRendezvousServer ... Permission denied (1100)`. No browser behavior was claimed; the harness was removed and server stopped.
+  - No gameplay/progress/reset/battle/scoring/autorun balance, visuals, cards, PnP, CSV/Sheet, QA, commit, or push changes.
+
+- 2026-07-28 02:19 - GD 2 context note: `GOLDEN EXECUTIONER LEGENDARY WEAPON`
+  - Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+  - Added `golden-executioner` / `Золотой Палач`, count `1`, to the finite legendary deck beside `Коса Рока`. Exact rule: `Владелец получает +1 к силе за каждые полные 10 монет у каждого противника`; there is no per-opponent cap.
+  - On the final monster the bonus is `floor(attacker coins / 10)`; after transfer the boss receives `sum(floor(challenger coins / 10))` once. Examples: 47 coins -> `+4`, 103 -> `+10`.
+  - Host/phone status, logs, History, snapshot/export, bot target evaluation, local CSV/config, and live `Cards Config/legendary!A3:O3` are synchronized. `Коса Рока` remains the only dice-transforming weapon; compatibility `opponentBonus` values remain `0`.
+  - Browser PASS: monster target `30 -> 31` against 10 coins, boss force `54 -> 55` against one 10-coin challenger, exact history/log details, both reference cards, `512x512` loaded icon, and console errors `0`. Deterministic/static/syntax/diff checks PASS. No QA, commit, or push; concurrent dirty-tree work was preserved.
+
+- 2026-07-28 01:52 - Dev 3 direct context handback to `GD 3`: `SOLO DRAGON 10 OPEN SLOTS`
+  - Root cause: the Dragon prefill helper clamped participant count to a minimum of two, so Solo inherited the two-player `16` prefill.
+  - `dragonInitialPrefill(1)` now returns `22`, preserving the physical 32-segment counter with exactly 10 empty slots. Multiplayer remains `2 -> 16`, `3 -> 8`, `4 -> 0`.
+  - Deterministic PASS: nine Solo tokens produce `31/32` and remain sleeping; the tenth produces `32/32` and reaches the unchanged awakening/battle path.
+  - Browser PASS: human and one-bot Solo both render progress `22/32`, 22 neutral segments, 0 player tokens, and 10 empty segments. Switching to 2/3/4 gives `16/8/0`; disable hides the overlay, re-enable + Solo New Game restores `22/32`.
+  - Desktop and `390x844` visual/dimension checks PASS with no overlap or horizontal overflow; console warnings/errors `0`.
+  - Checks PASS: `node --check src/game.js`, focused static assertions, and `git diff --check`. No Dragon strength/battle/scoring/token condition/card/Sheet/controller/geometry changes, QA, commit, or push.
+
+- 2026-07-28 01:41 - GD 2 context note: `DOOM SCYTHE TILE ICON HIDDEN`
+  - Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+  - Removed only the small legendary-weapon icon from the final-monster board tile and deleted its dead tile-only CSS.
+  - The legendary reveal card and battle/phone `Коса Рока` statuses remain unchanged; mechanics, data, assets, History, and Sheet were not touched.
+  - Real first-reveal/battle browser check, console check, `node --check src/game.js`, and `git diff --check` PASS.
+
+- 2026-07-28 01:27 - GD 2 context note: `LEGENDARY WEAPON CARD BACK`
+  - Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+  - Added universal `assets/cards/legendary_back.png`, `744x1039`: parchment/gold frame, obsidian-burgundy magic, and a central sword/axe/war-hammer arsenal crest suitable for future legendary weapons.
+  - Hidden host/phone legendary cards now use the finished back asset instead of the Scythe-specific CSS icon/text overlay; existing hover behavior is preserved.
+  - Real first-reveal browser visual and asset-load check, console check, dimensions, and `git diff --check` PASS. No gameplay/data/Sheet changes.
+
+- 2026-07-27 02:48 - Art / UI 1 direct handback to `GD 1`: `DRAGON VISUAL PHASE 3`
+  - Polished the already integrated `field2` Dragon overlay in `styles.css` only: reduced the overall footprint, softened the drop shadow, tightened segment spacing, and moved the progress/strength pill inside the Dragon composition so it reads as part of the board art instead of a detached HUD chip.
+  - Browser visual PASS in the in-app browser on desktop, `390x844`, and large `1920x1200`; checked authoritative prefills `16 / 32`, `8 / 32`, `0 / 32`, the hidden disabled state, live player-colored/new-token segments, and a live full counter during autorun.
+  - Hidden state is clean: the overlay node remains in DOM but is fully hidden with no visible artifact left on the board. Prompts and the battle HUD stayed clear in the checked states.
+  - Checks PASS: `git diff --check`. No JS changed, so `node --check src/game.js` was not required. No QA, commit, or push.
+
+- 2026-07-28 01:15 - Dev 3 direct context handback to `GD 3`: `SOLO MODE`
+  - Added `<option value="1">Соло</option>` while preserving default `2`; existing bot sync gives `0/1` choices for one participant.
+  - New games derive canonical `gameMode` (`solo` for one participant, otherwise `multiplayer`) through a shared helper that falls back to player count for older state. Current/started settings and the existing History snapshot now carry the mode.
+  - No special Solo rules were added. Other-player-only behavior keeps the existing safe no-target outcome; Dragon, final battle, cards, balance, score, routes, Sheets, and controller protocol are untouched.
+  - Browser PASS: human Solo completed a turn and cycled back, one bot progressed across multiple turns without deadlock, `Вынужденная щедрость` exited with no target and no compensation, and switching back to two players restored the normal roster and bot range.
+  - Desktop and `390x844` responsive PASS. Mobile `Соло` is fully readable, settings fit within the viewport (`scrollWidth = clientWidth = 390`), and console warnings/errors are `0`.
+  - Checks PASS: `node --check src/game.js`, `node --check src/controller.js`, focused static assertions, and `git diff --check`. No QA, commit, or push.
+
+- 2026-07-28 01:14 - GD 2 context note: `DOOM SCYTHE HOVER MATCH`
+  - Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+  - `Коса Рока` now preserves its normal dark red-violet card background on hover/focus and uses the same restrained light outline/no-lift feedback as the other card decks.
+  - Root cause was the generic gold `button:hover` background applying because the legendary hover rule did not explicitly restore its own background.
+  - Browser real-card visual/cache/console smoke, static CSS contract, and `git diff --check` PASS. Browser CUA did not expose synthetic `:hover`; no gameplay/data/asset/Sheet changes were made.
+
+- 2026-07-28 00:58 - GD 2 context note: `DOOM SCYTHE LEGENDARY WEAPON`
+  - Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+  - Added the finite `legendary` deck with one `doom-scythe` / `Коса Рока`, count `1`, exact text `Все 6 противников превращаются в 1`, and dedicated `512x512 RGBA` icon/theme.
+  - The first final-monster attempt draws/reveals the weapon once. It persists on the monster through losses, Second Chance, and Monster Rematch; definitive victory transfers it to the new boss before the final battle.
+  - Scythe order is raw roll -> `6→1` -> Dice Control -> existing modifiers. Hero Sword reads final dice; Bad `6→1` can convert a six restored by Control; the weapon holder's own dice are untouched.
+  - The old `+3 per opponent` boss rule, popup, log, and force term are gone. Compatibility `opponentBonus` fields remain zero.
+  - Host, connected phone, tile/HUD status, logs, History, save snapshot, local CSV, and live `Cards Config/legendary!A1:O2` are synchronized. The live tab has a frozen header row.
+  - Browser PASS includes full phone card even in text-card mode, `390x844` no overlap/overflow, transfer/final battle/reset, boss-win popup without score breakdown, and console `0`. Deterministic/static/syntax/diff checks PASS; natural browser dice did not separately force a six.
+  - No QA, commit, or push. Concurrent dirty-tree work was preserved.
+
+- 2026-07-28 00:52 - Dev 1 direct context handback to `GD 1`: `DRAGON GAMEPLAY`
+  - Root path: exactly one hook was added at the end of the real board-monster loss branch in `resolveEnemyBattle()`, after second-chance/rematch handling and after the existing return-to-Start, strength reward, prompt, and log. Event/card/VS/team/Dragon battles never enter it.
+  - Implemented the unchecked-by-default `Выключить дракона` setting, authoritative 32-segment state, neutral prefill (`2 players = 16`, `3 = 8`, `4 = 0`), live disable/restore, New Game reset, full history/save/phone/autorun serialization, and the field2 sleeping-Dragon overlay from `project-memory/dragon-visual-contract.md`.
+  - Segment 32 immediately short-circuits the ordinary turn and starts an initiator-first shared team battle. Dragon strength is `35 * playerCount` plus current generic modifiers: `Ярость монстров`, `Знамя Монстров`, `Еда монстру`, and `Подкуп монстра`.
+  - Every participant uses the shared monster-battle power path with owned dice and allowed bonuses. Equality wins. Dragon-win scoring reuses `finalBattleScore()` with doubled personal contribution as boss damage; top-score ties use clean `1d6` rerolls with no bonuses or dice control.
+  - Team loss has no winner and exact final copy `Дракон победил. Все игроки проиграли`. Final popup/history/export preserve base/modifiers/target, initiator, tokens, contributions, score components, totals, and tie rounds.
+  - Browser PASS: desktop, `390x844`, fullscreen, default prefill/strength, live disable/re-enable, New Game reset, real field-monster loss token, exact 16-token wake to 32, human common-loss ending, Dragon-enabled and disabled autorun completion, phone-room Dragon snapshot, and console warnings/errors `0`.
+  - Checks PASS: `node --check src/game.js`, `node --check src/controller.js`, `node --check server.js`, deterministic thresholds `16/24/32`, one post-second-chance hook, equality win, clean tie path, score/strength math, and `git diff --check`.
+  - Browser limitations: a Dragon team-win/tied-score reroll and a connected phone pressing the live `В бой` action were not separately forced; both shared paths were source/deterministically verified. Files: `index.html`, `src/game.js`, `styles.css`, Art / UI Dragon asset/contract, and project-memory records. No card config/CSV/Sheet changes, commit, or push.
+
+- 2026-07-27 23:58 - Art / UI 1 direct handback to `GD 1`: `DRAGON VISUAL PHASE 1`
+  - Created `assets/icons/dragon_sleeping_1024.png`: sleeping crimson fantasy Dragon, wide/low silhouette, `1024x1024 RGBA`, transparent background/corners, no baked text or counter.
+  - Placement contract targets the empty upper-central cave terrain above the inner horizontal `field2` route; the current `1440x1440` field preview uses visible bounds near `x=732 y=4 w=398 h=184` and covers no route tiles.
+  - Full Dev 1 contract is in `project-memory/dragon-visual-contract.md`: exactly 32 segments, neutral baseline, losing-player colors, numeric progress, shared strength icon/value, new-token pulse, full wake emphasis, disabled/hidden states, z-order/collision rules, and `390x844` compact layout.
+  - Ignored previews: `output/dragon_visual_phase1/dragon_field2_placement_preview.png`, `dragon_field2_counter_preview.png`, `dragon_counter_detail.png`, and `dragon_128px_readability.png`.
+  - Phase 1 only: no Dragon gameplay/state/settings/scoring/phone/cards/final-battle logic was implemented. QA was not requested.
+
+- 2026-07-27 22:57 - GD 2 context note: `BOSS WIN POPUP HIDE SCORE BREAKDOWN`
+  - Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+  - If the Boss wins, the final popup keeps its winner title and force comparison but omits the score-equation line.
+  - If the players win, the winning player's score equation remains visible.
+  - This is presentation-only: final score calculation, winner selection, History/statistics, and saved snapshots are unchanged.
+  - Checks PASS: `node --check src/game.js`, `node --check src/controller.js`, focused static contract, and `git diff --check`.
+
+- 2026-07-27 22:55 - Dev 1 direct context handback to `GD 1`: `REST RENAME + CHAOS PORTAL RULE`
+  - Root cause: Chaos Portal still used the prior mixed nearest-cell behavior for Shop/Good outcomes, and the Rest field retained the obsolete `Большой привал` copy across several shared UI sources.
+  - Renamed every active player-facing Rest label to `Привал` while keeping the internal `big-rest` id and effect unchanged.
+  - New roll contract: 1-2 nearest backward monster/open portal; 3-4 nearest backward Joe Shop; 5 nearest backward Rest; 6 nearest forward monster/open portal. Search follows current route order and door/open-portal state.
+  - Every destination now runs the normal landing resolver, including backward branches. Open portal destinations first use the authoritative portal resolver and then resolve the resulting landing. If a directional target does not exist, the preserved safe fallback is Start.
+  - Shared board tooltip/reference/current-field text, roll prompt/result, preview labels, Chronicle wording, and phone roll-context snapshot use the new copy.
+  - Browser PASS: actual Chaos roll 3-4 moved backward to Joe Shop and exposed its `Открыть` landing action; direct Rest landing opened the renamed Rest choice. Host/controller console errors `0`.
+  - Deterministic PASS for all four roll bands, direction/nearest selection, open-portal labels, and no-target fallback. `node --check src/game.js`, `node --check src/controller.js`, static stale-copy/phone assertions, and `git diff --check` PASS.
+  - Connected-phone E2E was not forced; shared snapshot/action flow was source-verified. Files: `src/game.js` plus project-memory handback files. No QA, commit, or push.
+
+- 2026-07-27 14:58 - Art / UI 1 direct context handback to `GD 1`: `PNP REFRESH - SHOP, EVENT, FIELD`
+  - Replaced `output/pnp/shop_cards/` from current `cardConfig.shop`: 20 unique cards, one each, exact id/order match, no obsolete PNGs; PDF is A4 color, 3 pages.
+  - Replaced `output/pnp/event_cards/` from current `cardConfig.event`: 24 unique cards, one each, exact id/order match, no obsolete PNGs; includes `Игра Джо`, `Аукцион Джо`, `Компас Странника`, and current red `Ярость монстров`; PDF is A4 color, 3 pages.
+  - Replaced `output/pnp/field_a4_2x2/` from the current field PNG supplied directly by the user: normalized `1440x1440` source, four ordered `720x720` quadrants, crop marks, A4 color PDF with 4 pages.
+  - Outputs include individual card/quadrant PNGs, contact sheets/previews, and rendered PDF page previews.
+  - Visual PASS: all 10 rendered A4 pages reviewed; text and inline icons stay inside card zones, artifact icons/layouts are correct, cards are arranged edge-to-edge, and field quadrants are ordered and clean.
+  - Static PASS: Shop/Event card PNGs are `744x1039 RGBA`; field reassembly is pixel-exact to the normalized source; all PDFs report A4 page size and expected page counts.
+  - Git-ignore proof: `.gitignore:6:output/`; `git status --short --ignored output/pnp` returns only `!! output/`; no `git add -f`, commit, or push; `git diff --check` PASS.
+  - Blockers: none. QA was not requested.
+
 - 2026-07-27 06:17 - Dev 1 direct context handback to `GD 1`: `TRAVELER COMPASS ARTIFACT`
   - Implemented Event artifact `traveler-compass` / `Компас Странника`, count `1`, with exact approved description and `./assets/icons/artifact_traveler_compass_512.png`.
   - Contest path: all players roll exactly `1d6` and add authoritative current strength plus step bonuses; tied leaders reroll through the generalized shared contest helper until one winner remains.

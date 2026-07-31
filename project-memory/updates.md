@@ -20,6 +20,513 @@ Open questions:
 - ...
 ```
 
+## 2026-07-31 20:05 - Dev 2
+
+Changed:
+- Completed verification-only takeover for `DRAGON DEFAULT OFF 2026-07-31`; preserved Dev 1's implementation without gameplay/code rewrites.
+- Confirmed the Dragon is disabled by default, can be enabled manually, keeps that choice through `Новая игра`, and can be disabled again live.
+
+Files:
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Source PASS: `#disableDragon` is checked in HTML; missing-control/state/settings fallbacks are `true`; New Game reads the current checkbox; the host cache key is `20260731-0001`.
+- In-app Browser PASS on `localhost:5173`: fresh load was checked + overlay hidden; unchecked was overlay visible; `Новая игра` preserved unchecked + visible; checked again hid the overlay. Console warnings/errors: `0`.
+- Checks PASS: `node --check src/game.js`, `node --check src/controller.js`, and `git diff --check`. No QA, commit, push, gameplay, data, asset, or PnP changes.
+
+Open questions:
+- None.
+
+## 2026-07-31 20:05 - Dev 1
+
+Changed:
+- Made `Выключить дракона` checked on a fresh load, so the Dragon feature and field overlay are disabled by default.
+- Added one authoritative default helper used by New Game, current game settings, and autorun control snapshots. Missing DOM and legacy snapshots without `disableDragon` now safely default to disabled, while an explicit user-selected `false` remains authoritative.
+- Changed the internal `createDragonState()` fallback to disabled and bumped only the host JS cache key.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Checks PASS: `node --check src/game.js`, `node --check src/controller.js`, focused deterministic source assertions for fresh/default/manual/snapshot/New Game paths, and `git diff --check`.
+- Browser automation was attempted once against a dedicated local server but Chromium was blocked by the macOS sandbox: `MachPortRendezvousServer ... Permission denied (1100)`. The temporary harness was removed and the test server was stopped.
+- Dragon progress, live disable/re-enable behavior, reset, battle/scoring, autorun, balance, visuals, cards, CSV/Sheets, and PnP were not changed. No QA, commit, or push.
+
+Open questions:
+- None.
+
+## 2026-07-28 02:32 - Art / UI 1
+
+Changed:
+- Replaced the Dragon strength chip with a bare strength icon and numeric value in the lower-left corner of the Dragon overlay.
+- Removed the indicator background, border, radius, padding, and shadow so it no longer reads as a chip.
+- Reduced and shifted the sleeping Dragon artwork to the right so the strength indicator does not cover the Dragon.
+- Bumped the stylesheet cache key; Dragon counter geometry, all 32 tokens, state, strength math, and gameplay were preserved.
+
+Files:
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser PASS at `1280x720`, `390x844`, and `1920x1200`: the strength icon/value is fully inside the board, clear of the Dragon art, the numeric progress remains hidden, all 32 segments are present, and horizontal overflow is `0`.
+- Computed style confirms transparent background, zero border/padding, and no box shadow; console warnings/errors are `0`.
+- `git diff --check` PASS. No Dragon mechanics, board geometry, JS logic, cards, controller behavior, commit, or push changes.
+
+Open questions:
+- None.
+
+## 2026-07-28 02:19 - GD 2
+
+Changed:
+- Added the second finite legendary weapon, `golden-executioner` / `Золотой Палач`, count `1`, with exact rule `Владелец получает +1 к силе за каждые полные 10 монет у каждого противника` and no per-opponent cap.
+- While held by the final monster, the weapon adds `floor(attacker coins / 10)` to that monster's target. After transfer, it adds `sum(floor(challenger coins / 10))` once to the boss's final-battle force.
+- Generalized legendary status, phone state, logs, History, snapshot/export, bot target estimation, and final force breakdown while preserving `Коса Рока` dice behavior and zero-valued compatibility `opponentBonus` fields.
+- Added a dedicated generated `512x512 RGBA` Golden Executioner icon and synchronized the local CSV/config plus live `Cards Config/legendary!A3:O3`.
+
+Files:
+- `assets/icons/legendary_golden_executioner_512.png`
+- `cards-google-sheet.csv`
+- `controller.html`
+- `index.html`
+- `src/cards.config.js`
+- `src/controller.js`
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+- No cap is intentional: 47 coins give `+4`, 103 give `+10`. The bonus uses the opponents' coin totals at the start of the corresponding battle.
+- Browser PASS: random Golden Executioner reveal; final-monster target `30 -> 31` against a 10-coin attacker; transferred boss force `54 -> 55` against one 10-coin challenger; exact History/log breakdown; two legendary reference cards; icon natural size `512x512`; console errors `0`.
+- Deterministic/static/syntax/diff checks PASS. Live Sheet readback found exactly one Golden Executioner row with the exact id/effect/text. Concurrent dirty-tree work was preserved; no commit or push.
+
+Open questions:
+- None.
+
+## 2026-07-28 02:10 - Art / UI 1
+
+Changed:
+- Corrected the Dragon overlay after the user found the token ring and strength badge clipping at the board edges.
+- Moved the complete overlay inside the board, flattened the 32-token oval, reduced the sleeping Dragon, and placed the strength badge inside the left side of the overlay.
+- Preserved token sizes and token-only progress: all 32 segments remain visible and the numeric `N / 32` label remains hidden.
+- Bumped the stylesheet cache key; preserved the newer concurrent host/game cache keys already present in the dirty tree.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Browser PASS at `1280x720`, `390x844`, `1440x1000`, and `1920x1200`: the full token ring and strength badge remain inside the board, all 32 segments are present, numeric progress is hidden, and horizontal overflow is `0`.
+- Measured top safety margins are approximately `7.3px` at `1280x720`, `4.7px` at `390x844`, and `12.1px` at `1920x1200`; console warnings/errors are `0`.
+- Checks PASS: `node --check src/game.js` and `git diff --check`. No gameplay, Dragon state/math, board geometry, cards, controller behavior, commit, or push changes.
+
+Open questions:
+- None.
+
+## 2026-07-28 01:52 - Dev 3
+
+Changed:
+- Updated the authoritative Dragon prefill table so Solo starts at `22/32`, leaving exactly 10 open slots for player defeat tokens.
+- Preserved multiplayer prefills exactly: two players `16`, three `8`, four `0`.
+- Updated the host game cache key; no visual geometry or Dragon battle rules changed.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Deterministic PASS: Solo token 9 gives `31/32` without awakening; token 10 gives `32/32` and reaches the existing awakening path.
+- Browser PASS: human/bot Solo `22/32` with 22 neutral and 10 empty segments; 2/3/4 restore `16/8/0`; disable hides the counter and re-enable + New Game restores `22/32`; desktop and `390x844` have no overflow and console warnings/errors `0`.
+- Checks PASS: `node --check src/game.js`, focused static assertions, and `git diff --check`. No QA, commit, or push.
+
+Open questions:
+- None.
+
+## 2026-07-28 01:45 - GD 3
+
+Changed:
+- Defined the first Solo-specific Dragon rule: the existing 32-segment counter starts with 22 neutral segments, leaving exactly 10 open slots for defeat tokens.
+- Assigned implementation and verification exclusively to free `Dev 3`.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Ownership: GD owner `GD 3`; implementation owner `Dev 3`; QA was not requested.
+- The tenth Solo token wakes the Dragon; multiplayer prefills, Dragon strength, battle/scoring, cards, controller protocol, and visual geometry remain unchanged.
+- Shared dirty-tree work must be preserved; `GD 3` changed no gameplay code during dispatch.
+
+Open questions:
+- None.
+
+## 2026-07-28 01:41 - GD 2
+
+Changed:
+- Removed the small legendary-weapon icon from the final-monster board tile after `Коса Рока` is revealed.
+- Removed the now-unused tile-only CSS rules while preserving the legendary card reveal and battle/phone weapon statuses.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+- Real first-reveal browser check PASS: `.legendary-weapon-tile-status` count is `0`, the reveal card remains visible, and the enemy battle HUD still shows `Коса Рока — 6 → 1 у противников`.
+- Console warnings/errors are `0`; `node --check src/game.js` and `git diff --check` PASS. No mechanics, card data, assets, History, Sheet, or concurrent shared work changed.
+
+Open questions:
+- None.
+
+## 2026-07-28 01:40 - Art / UI 1
+
+Changed:
+- Reworked the `field2` Dragon overlay into a clean 32-token oval counter around a smaller sleeping Dragon.
+- Removed the visible numeric progress (`N / 32`); progress is now communicated only by the neutral/player-colored tokens, while Dragon strength remains a separate compact sword badge.
+- Added a narrow-screen composition that keeps all 32 tokens visible, shifts the smaller Dragon away from the strength badge, and avoids horizontal overflow.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- The progress text remains hidden in the DOM for existing state updates and the overlay `aria-label` still exposes progress and strength for accessibility.
+- Browser PASS at `1440x1000` and `390x844`: exactly 32 segments, no visible numeric progress, no horizontal overflow, and no console warnings/errors.
+- `node --check src/game.js` and `git diff --check` pass. No Dragon mechanics, token ownership, strength math, wake logic, board geometry, or card data changed.
+
+Open questions:
+- None.
+
+## 2026-07-28 01:27 - GD 2
+
+Changed:
+- Created the finished universal card back for the `Легендарное оружие` deck: an antique-gold sword, axe, and war hammer arsenal crest over an obsidian/burgundy magical field with a parchment frame.
+- Added the production asset `assets/cards/legendary_back.png` at the shared card-back size `744x1039` and connected it to the hidden legendary-card state on host and phone.
+- Removed the former CSS-only Scythe icon/text back overlay; the back is now weapon-agnostic for future legendary cards and keeps the existing restrained hover treatment.
+
+Files:
+- `assets/cards/legendary_back.png`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+- The asset was produced through the built-in image-generation workflow, then normalized to the same `744x1039` dimensions as current card backs.
+- Browser PASS on the real first-reveal popup at `1280x720`: exact asset URL loaded, full art/corners remained inside the card, pseudo overlays are absent, and console warnings/errors were `0`.
+- `git diff --check` and asset dimension checks PASS. No gameplay, card data, Sheet, or concurrent shared work changed.
+
+Open questions:
+- None.
+
+## 2026-07-28 01:15 - Dev 3
+
+Changed:
+- Added `Соло` to the player-count selector while retaining `2` as the default and the existing bot-count clamp (`0/1` in Solo).
+- Added shared `gameMode` derivation with legacy fallback from `playerCount`, stored it on new-game state, and included it in current/started settings already serialized by History.
+- Narrowly adjusted the mobile settings grid so the Solo selector and five quick-action icons fit at `390px` without clipping or horizontal overflow.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Browser PASS: human Solo turn, one-bot Solo progress, safe no-target effect, return to two players, desktop and `390x844`; mobile dimensions report `scrollWidth = clientWidth = 390`, selected text `Соло`, and console warnings/errors `0`.
+- Checks PASS: `node --check src/game.js`, `node --check src/controller.js`, focused static assertions, and `git diff --check`.
+
+## 2026-07-27 02:48 - Art / UI 1
+
+Changed:
+- Polished the integrated `field2` Dragon overlay after Dev 1 wiring so the sleeping Dragon, both 16-segment arcs, and the progress/strength pill sit tighter inside the upper cave zone and read more like one compact board element.
+- Moved the progress/strength pill inside the Dragon composition, reduced the overall footprint, softened the shadow, and tightened the counter spacing so the overlay feels subordinate to the route instead of floating as a separate HUD block.
+- Preserved the live state styling for neutral prefills, player-colored loss tokens, newest-token pulse, full-counter wake emphasis, and the clean hidden state when `Выключить дракона` is enabled.
+
+Files:
+- `styles.css`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Browser visual PASS in the in-app browser: default `2p` desktop, `390x844`, and large `1920x1200`; `3p` prefill `8 / 32`, `4p` prefill `0 / 32`, hidden disabled state, live player-colored token/new-token pulse, and live full counter (`32 / 32`, strength pill visible) during autorun.
+- The hidden state leaves no visible Dragon artifact on the board. Battle HUD and prompt overlays stayed clear during the checked states.
+- Checks PASS: `git diff --check`. `node --check src/game.js` was not needed because no JS changed.
+
+Open questions:
+- None. The `is-awakening` class itself was too brief to capture on a static frame, but the live full-state/wake transition path was observed during autorun and the reduced-motion CSS contract remains unchanged.
+- No special Solo rules, Dragon/final/card/balance/score/Sheet/controller changes, commit, or push.
+
+Open questions:
+- None.
+
+## 2026-07-28 01:14 - GD 2
+
+Changed:
+- Matched `Коса Рока` hover/focus feedback to the existing Good/Bad/TADAM/Event card contract.
+- The generic gold button hover can no longer replace the legendary card's dark red-violet background; hover now keeps the card artwork, uses the standard thin light outline, and does not lift or flood-light the card.
+
+Files:
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+- Browser PASS on the real hidden legendary-card state at `1280x720`: fresh cache key loaded, card background/icon/layout remained correct, and console warnings/errors were `0`.
+- Static CSS contract and `git diff --check` PASS. Browser CUA did not expose a synthetic `:hover` state, so the exact hover override was additionally verified from the loaded stylesheet contract.
+- No gameplay, card data, asset, Sheet, or shared concurrent work was changed.
+
+Open questions:
+- None.
+
+## 2026-07-28 00:58 - GD 2
+
+Changed:
+- Implemented the separate finite `legendary` deck and its first one-copy card `doom-scythe` / `Коса Рока` with exact text `Все 6 противников превращаются в 1`.
+- The first final-monster attempt now draws and publicly reveals one legendary weapon. The weapon remains on the monster through losses, Second Chance, and Monster Rematch; only the definitive winner receives it before the final battle.
+- While the Scythe is held by the monster or boss, each opponent's raw sixes become real ones before Dice Control. Existing Bad `6→1` applies after Control, Hero Sword reads the final dice, and the weapon holder's own dice remain unchanged.
+- Removed the final boss's former `+3 per opponent` prompt, log, formula term, and force bonus. Compatibility snapshot fields remain present with value `0`.
+- Added host/phone full-card reveal, final-monster tile/HUD status, final-boss phone/HUD status, roll transformations in logs/History, weapon ownership and raw/adjusted/final dice in snapshots, and a dedicated legendary visual theme/icon.
+- Synced local CSV and live `Cards Config/legendary!A1:O2`, including frozen header row.
+
+Files:
+- `src/game.js`
+- `src/controller.js`
+- `src/cards.config.js`
+- `styles.css`
+- `index.html`
+- `controller.html`
+- `cards-google-sheet.csv`
+- `assets/icons/legendary_doom_scythe_512.png`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+- Deterministic/static PASS: `[6,2,6] -> [1,2,1]`, exact processing order, transfer after the rematch guard, zero boss opponent bonus, config/CSV/icon contract, syntax checks, and `git diff --check`.
+- Browser PASS: first reveal, persistent monster/boss status, definitive transfer, final battle, boss-win popup without score breakdown, New Game reset, connected phone actions, forced full legendary card in text-card mode, `390x844` no overlap/overflow, and host/controller console warnings/errors `0`.
+- The browser smoke used natural random dice and did not separately force a six; exact six conversion and modifier ordering were verified by the deterministic extracted helper/source contract.
+- Shared concurrent Dragon, Solo, coordination, and other dirty-tree changes were preserved; no commit or push was made.
+
+Open questions:
+- None.
+
+## 2026-07-28 00:52 - Dev 1
+
+Changed:
+- Completed the full Dragon alternate-ending slice: authoritative 32-segment state, neutral prefill, live disable/restore/reset setting, board-monster defeat hook, field2 sleeping-Dragon overlay, shared team battle, Dragon win scoring/tie-break, common-loss ending, persistence, phone snapshot, and autorun support.
+- Board-monster losses add exactly one player-colored token only after second-chance/rematch paths are exhausted and the normal defeat return/reward/prompt completes. Filling segment 32 immediately starts the Dragon ending and prevents stale landing continuation.
+- Dragon strength uses `35 * playerCount` plus current generic monster modifiers (`Ярость монстров`, `Знамя Монстров`, `Еда монстру`, `Подкуп монстра`). Team equality wins; a team win reuses `finalBattleScore()` with doubled personal Dragon contribution as damage, while tied score leaders use clean `1d6` rerolls without bonuses or dice control.
+- Added full Dragon result data to final popup/history/save/export snapshots. A Dragon loss has no winner and uses the exact message `Дракон победил. Все игроки проиграли`.
+
+Files:
+- `index.html`
+- `src/game.js`
+- `styles.css`
+- `assets/icons/dragon_sleeping_1024.png` (provided by Art / UI 1)
+- `project-memory/dragon-visual-contract.md` (provided by Art / UI 1)
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Browser PASS: desktop, `390x844`, fullscreen, default prefill/strength, live disable/re-enable, New Game reset, one real field-monster defeat, exact 16-token wake sequence, human Dragon common loss, enabled/disabled autorun completion, and Dragon data in the phone room snapshot. Console warnings/errors were `0`.
+- Static/deterministic PASS: 2/3/4-player wake thresholds `16/24/32`, one defeat hook after second chance, equality win, clean tie-roll path, per-player score math, generic strength modifiers, syntax checks, and `git diff --check`.
+- The shared dirty tree also contains Dev 3 Solo Mode work; it was preserved and remains owned by Dev 3. No Dragon card-config, CSV, Google Sheet, commit, or push work was performed.
+- A Dragon team win/tied-score reroll and a connected phone pressing the live `В бой` action were not separately forced in browser; their shared runtime paths were source/deterministically verified.
+
+Open questions:
+- None.
+
+## 2026-07-28 00:45 - GD 3
+
+Changed:
+- Defined and dispatched `SOLO MODE`: the player-count selector gains `Соло` with value `1`, and a one-participant game records canonical `gameMode: "solo"` while `2-4` remain `"multiplayer"`.
+- Assigned the complete implementation and verification exclusively to free `Dev 3`; `Dev 1` remains on Dragon gameplay.
+
+Files:
+- `project-memory/inbox/for-dev.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Ownership: GD owner `GD 3`; implementation owner `Dev 3`; QA was not requested.
+- Solo includes either one human or one bot. No separate Solo rules, badge, balance changes, Google Sheet changes, or controller protocol changes are in scope.
+- Existing dirty-tree work must be preserved; no game code was changed by `GD 3` during dispatch.
+
+Open questions:
+- None.
+
+## 2026-07-28 00:26 - Important
+
+Changed:
+- Created and onboarded a new visible Codex task `GD 3` for additional game-design work by explicit assignment.
+- Added `GD 3` to active-role lists, shared GD inbox routing, onboarding/news/replacement prompts, and coordination rules.
+- Extended the existing ownership rule to all three GD roles: every task must name exactly one GD owner, and direct handbacks go to that owner's active Codex task.
+
+Files:
+- `AGENTS.md`
+- `project-memory/README.md`
+- `project-memory/handoff.md`
+- `project-memory/updates.md`
+- `project-memory/prompts/new-chat.md`
+- `project-memory/prompts/read-news.md`
+- `project-memory/prompts/next-chat.md`
+
+Notes for others:
+- `GD 3` thread id: `019fa578-6094-7b82-ab09-c996e9d9e74f`.
+- `GD 1` remains the main continuation of the former `GD`; `GD 2` and `GD 3` are additional roles that take only explicitly assigned work.
+- All three GD roles share `project-memory/inbox/for-gd.md`.
+- No game code, visual assets, or local Codex `.jsonl` files were changed by this coordination update.
+
+Open questions:
+- None.
+
+## 2026-07-27 23:58 - Art / UI 1
+
+Changed:
+- Created the Phase 1 sleeping Dragon visual asset for the empty upper-central cave terrain on `field2`.
+- Defined the Dev 1 visual contract for the 32-segment counter, neutral player-count baseline, losing-player colors, progress/strength badge, pulse/full/disabled/hidden states, and desktop/mobile layouts.
+- Built ignored placement, counter, detail, and `128px` readability previews against the current supplied field image.
+- Finalized the earlier enemy-battle popup follow-up: every bottom result state now contains only its main centered copy; `Бой`, `Бросок`, `Победа`, and `Поражение` kickers are removed.
+
+Files:
+- `assets/icons/dragon_sleeping_1024.png`
+- `project-memory/dragon-visual-contract.md`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Dragon work is visual/specification only. No Dragon gameplay, state, settings, scoring, cards, phone behavior, or final battle logic was added.
+- Asset is `1024x1024 RGBA`; transparent corners and alpha bounds were verified. The placement preview keeps the Dragon and all counter pieces clear of route tiles.
+- Generated previews stay under ignored `output/dragon_visual_phase1/`.
+
+Open questions:
+- None. GD 1 can dispatch the implementation phase to Dev 1 using `project-memory/dragon-visual-contract.md`.
+
+## 2026-07-27 23:15 - Art / UI 1
+
+Changed:
+- Replaced the textual `СИЛА` label in enemy-battle player badges with the shared strength sword icon and a compact signed value.
+- Reworked the enemy-battle popup hierarchy: balanced opponent panels, clearer roll totals, centered result copy, and restrained winner/loser emphasis.
+- Removed winner portrait rays and the short top accent strips that looked like stray strokes escaping the participant frames.
+- Removed all result kickers (`Бой`, `Бросок`, `Победа`, `Поражение`) and centered the main requirement/result copy across the full strip in every battle state.
+- Changed the idle battle requirement to show the minimum raw roll after baseline player combat strength: `max(0, monster strength - player strength)`.
+- Centered the battle popup inside the board on narrow screens so the result strip stays visible above the controls.
+
+Files:
+- `src/game.js`
+- `styles.css`
+- `index.html`
+- `project-memory/updates.md`
+
+Notes for others:
+- Presentation only; combat math, rewards, turn flow, text meaning, and battle resolution are unchanged.
+- Browser smoke passed through a real field-2 enemy battle on desktop and `390x844`; strength icon rendered, result text had no overflow, and winner rays were absent.
+- Static checks passed: `node --check src/game.js` and `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-27 22:57 - GD 2
+
+Changed:
+- Hid the winner score formula from the final winner popup when the Boss wins.
+- Preserved the popup title and final-force line, and preserved the score formula when the players defeat the Boss.
+
+Files:
+- `src/game.js`
+- `index.html`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Ownership: GD owner and implementation owner `GD 2` by direct user request; QA was not requested.
+- Scope is popup presentation only. Final score calculation, winner selection, History/statistics, and saved snapshots are unchanged.
+- Checks PASS: `node --check src/game.js`, `node --check src/controller.js`, focused static contract, and `git diff --check`.
+
+Open questions:
+- None.
+
+## 2026-07-27 22:55 - Dev 1
+
+Changed:
+- Renamed the player-facing field `Большой привал` to `Привал` across the board icon, tooltip/reference/current-field text, prompt, history label, and chronicle messages while preserving the internal `big-rest` id and gameplay.
+- Updated `Портал хаоса`: 1-2 now goes backward to the nearest monster/open portal, 3-4 backward to the nearest ordinary Joe Shop, 5 backward to the nearest Rest, and 6 forward to the nearest monster/open portal.
+- Kept the existing safe no-target fallback to Start and routed every destination through the normal landing resolver; an open portal destination also uses the authoritative portal resolver before resolving its resulting landing.
+- Updated shared host/phone roll context, destination preview, result copy, current-field text, and reference rules.
+
+Files:
+- `src/game.js`
+- `project-memory/updates.md`
+- `project-memory/inbox/for-dev.md`
+- `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Owner: `Dev 1`; GD owner: `GD 1`; QA was not requested.
+- Deterministic checks cover all four roll bands, direction/nearest selection, open-portal labels, and no-target fallback.
+- Browser PASS: a real 3-4 roll moved backward to Joe Shop and exposed the Shop landing action; direct Rest landing opened the renamed Rest choice. Host/controller pages had console errors `0`.
+- Syntax checks, static assertions, stale-copy audit, and `git diff --check` PASS. A fully connected phone-room roll was not forced; shared phone snapshot/action context was source-verified.
+- No commit or push was made.
+
+Open questions:
+- None.
+
+## 2026-07-27 14:58 - Art / UI 1
+
+Changed:
+- Rebuilt the print-ready `Лавка Джо` set from the current `cardConfig.shop`: 20 unique cards, one copy each, with no missing or obsolete ids.
+- Rebuilt the print-ready `Событие` set from the current `cardConfig.event`: 24 unique cards, including `Игра Джо`, `Аукцион Джо`, `Компас Странника`, and the current red `Ярость монстров`.
+- Replaced the field PnP with the current PNG supplied directly by the user, split into four ordered A4 quadrants with crop marks.
+- Regenerated individual PNGs, contact sheets/previews, color A4 PDFs, and rendered PDF page previews for all three sets.
+
+Files:
+- `output/pnp/shop_cards/` (ignored generated output)
+- `output/pnp/event_cards/` (ignored generated output)
+- `output/pnp/field_a4_2x2/` (ignored generated output)
+- `project-memory/inbox/for-ui.md`
+- `project-memory/inbox/for-gd.md`
+- `project-memory/updates.md`
+
+Notes for others:
+- Shop/Event id order exactly matches the current config: 20 Shop and 24 Event cards; all individual card PNGs are `744x1039 RGBA`.
+- PDFs are A4 color: 3 Shop pages, 3 Event pages, and 4 field pages.
+- All 10 rendered PDF pages were visually reviewed; card text/icons/artifacts and field crop/order are clean.
+- Field quadrants reassemble pixel-for-pixel to the normalized `1440x1440` source.
+- `output/` remains ignored; Git reports only `!! output/`; no generated PnP was added to Git.
+- QA was not requested.
+
+Open questions:
+- None.
+
 ## 2026-07-27 06:17 - Dev 1
 
 Changed:

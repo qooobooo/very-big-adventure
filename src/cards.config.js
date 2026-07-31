@@ -659,6 +659,26 @@ export const cardConfig = {
       effect: { type: "event-joe-auction" },
     },
   ],
+  legendary: [
+    {
+      id: "doom-scythe",
+      count: 1,
+      title: "Коса Рока",
+      shortTitle: "6 → 1",
+      description: "Все 6 противников превращаются в 1",
+      icon: "./assets/icons/legendary_doom_scythe_512.png",
+      effect: { type: "legendary-opponent-sixes-to-ones" },
+    },
+    {
+      id: "golden-executioner",
+      count: 1,
+      title: "Золотой Палач",
+      shortTitle: "10 монет = +1",
+      description: "Владелец получает +1 к силе за каждые полные 10 монет у каждого противника",
+      icon: "./assets/icons/legendary_golden_executioner_512.png",
+      effect: { type: "legendary-opponent-coins-strength", amount: 1, coinsPerStrength: 10 },
+    },
+  ],
   shop: [
     {
       id: "battle-plus",

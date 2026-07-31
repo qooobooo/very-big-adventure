@@ -1,6 +1,6 @@
 # Project Handoff
 
-Last updated: 2026-07-27 by Important.
+Last updated: 2026-07-28 by Important.
 
 ## Очень Большая Бродилка
 
@@ -14,6 +14,7 @@ Active chats:
 - `Dev 3`: additional implementation chat.
 - `GD 1`: main game-design chat and direct continuation of the former `GD`; game design, contracts, rules, balance, and implementation-ready specs for Dev roles.
 - `GD 2`: additional game-design chat for parallel work by explicit assignment.
+- `GD 3`: third game-design chat for additional parallel work by explicit assignment.
 - `Art / UI 1`: visual assets and UI direction.
 - `Art / UI 2`: additional visual assets and UI direction.
 - `Art / UI 3`: additional visual assets and UI direction.
@@ -22,7 +23,7 @@ Active chats:
 
 Current shape: a local web prototype of a board-game race with players, dice, seals, route cells, good/bad cards, green/red fields, TADAM cards, and Joe's Shop.
 
-GD coordination: `GD 1` and `GD 2` share `project-memory/inbox/for-gd.md`. Every task must name one GD owner explicitly; direct handbacks go to that owner's active Codex thread.
+GD coordination: `GD 1`, `GD 2`, and `GD 3` share `project-memory/inbox/for-gd.md`. Every task must name one GD owner explicitly; direct handbacks go to that owner's active Codex thread.
 
 Key files:
 
@@ -43,7 +44,7 @@ Current important state:
   - If the current mode may be insufficient, say `Лучше переключить чат на High/Extra High`.
   - Do not reveal long chain-of-thought; for complex answers, add `Проверка рисков и допущений`.
 - Required task lifecycle for implementation/design tasks:
-  1. For planning/executing multi-role work, the assigned GD owner (`GD 1` or `GD 2`) routes tasks through specialists by default: Dev for implementation, Art / UI for visual assets/UI polish, and QA only when the user explicitly asks.
+  1. For planning/executing multi-role work, the assigned GD owner (`GD 1`, `GD 2`, or `GD 3`) routes tasks through specialists by default: Dev for implementation, Art / UI for visual assets/UI polish, and QA only when the user explicitly asks.
   2. The assigned GD owner should not directly implement cross-role plans unless the user explicitly asks that GD to do the implementation personally or the change is an urgent tiny documentation/memory edit.
   3. GD plans and multi-role tasks must include explicit `Ownership`: which role/chat owns each part of the work, including which GD owns the task.
   4. If a task is split into waves, every wave must have an assigned owner before it is sent to development.
@@ -81,6 +82,7 @@ Only these chats are active in this project memory right now:
 - `Dev 3`
 - `GD 1`
 - `GD 2`
+- `GD 3`
 - `Important`
 - `Art / UI 1`
 - `Art / UI 2`
