@@ -4,6 +4,20 @@ For tasks related to "Очень Большая Бродилка" for `Dev 1`, `
 
 ## Open Items
 
+- DONE WEAPONS SETTING 2026-09-22 - Optional legendary weapons / classic boss bonus:
+  - Requested by user via GD 1. Ownership: GD owner `GD 1` (`01a0c649-89f9-7f80-90e0-e7a1f7711230`); implementation owner dedicated Dev executor `weapons_main` in this task. No QA requested.
+  - Work only in `/Users/qooobooo/Game Dev/Very Big Adventure/very-big-adventure-main`, branch `main`, isolated from the dirty RND checkout. Do not switch or write the RND tree, commit, or push.
+  - Add a Settings checkbox with exact visible label `Оружие`, unchecked on a fresh load. Missing/legacy settings default to false. Preserve the explicit setting through New Game and the existing settings/history/autorun control snapshot paths.
+  - Enabled: preserve existing legendary draw/reveal, persistence on the final monster, transfer to the boss and actual Scythe/Golden Executioner effects. Classic +3-per-opponent bonus is zero.
+  - Disabled: no legendary weapon is drawn, revealed, held, transferred, applied or shown as an active weapon on host/phone. The boss in the final PvP battle receives exactly `3 * challengers.length`, once, in addition to normal rolls/modifiers; this does not strengthen board monsters or Dragon. Solo has zero challengers, so +0. For 2/3/4 players the bonus is +3/+6/+9.
+  - Keep displayed force/formulas/HUD/logs and final History/phone data consistent with actual math, using the existing opponentBonus / opponentBonusPerPlayer fields. Ensure rule switching cannot change an already resolving battle halfway through; choose a small explicit safe UI boundary. Do not silently make the checkbox next-game-only. When switching off at a safe point, old weapon state/effects must not leak.
+  - Card definitions, counts, effects, CSV, canonical Google Sheets, Dragon defaults and unrelated balance stay unchanged. Reference card library can remain an informational catalog.
+  - Required checks: syntax for changed JS, diff whitespace; targeted deterministic checks for default/toggle, disabled reveal/effects, enabled existing weapons, +0/+3/+6/+9 exactly once, history/snapshot alignment. Focused browser check of checkbox/default and both modes if available; report actual limits. No broad runs or Google Sheets exports.
+  - Handback: mark task DONE, add concise updates and GD inbox context in this main checkout, report exact files/checks/limitations. GD 1 will notify active RND after implementation with a scoped transfer artifact; do not include old RND/Shop changes or commit/push.
+  - Completion (2026-09-22 02:39): checkbox and authoritative `state.weaponsEnabled` implemented; default false and New Game/settings/History/autorun snapshots aligned. Legendary draw/ownership/effects/snapshot are gated. Classic final boss bonus is +0/+3/+6/+9 for 1/2/3/4 players, added exactly once, with consistent HUD/logs/History and phone data.
+  - Safe boundary: locked during movement, choices/prompts and unresolved battles; off between actions clears weapon ownership and returns its copy only to legendary discard, without other deck reshuffles. Re-enable resumes normal reveal on the next final-monster attempt. Historical completed summary and started settings are preserved.
+  - Checks PASS: syntax, whitespace, 8/8 deterministic production-function tests; browser checkbox default/off/on/New Game plus console 0. Real browser battles, connected-phone E2E and mobile were not run; math/snapshots use deterministic harness. No QA, commit/push or edits in RND.
+
 - DONE DRAGON DEFAULT OFF VERIFICATION 2026-07-31 20:05:
   - Ownership: `GD 1` / `Dev 2` verification only; Dev 1's narrow implementation was preserved unchanged. QA was not requested.
   - Source PASS: the checkbox defaults checked, missing-field fallbacks default to disabled, New Game consumes the current checkbox value, and the host cache key is `20260731-0001`.

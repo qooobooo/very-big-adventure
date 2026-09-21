@@ -46,6 +46,7 @@ const ui = {
   copyPhoneRoomUrlBtn: document.querySelector("#copyPhoneRoomUrlBtn"),
   createPhoneRoomBtn: document.querySelector("#createPhoneRoomBtn"),
   disableDragon: document.querySelector("#disableDragon"),
+  weaponsEnabled: document.querySelector("#weaponsEnabled"),
   diceCount: document.querySelector("#diceCount"),
   diceValue: document.querySelector("#diceValue"),
   eventToast: document.querySelector("#eventToast"),
@@ -656,6 +657,7 @@ function newGame() {
     finished: false,
     gameMode: isSoloGame(gameSettings) ? "solo" : "multiplayer",
     gameSettings,
+    weaponsEnabled: gameSettings.weaponsEnabled,
     botTurnPlayerId: null,
     isAnimating: false,
     landingCell: null,
@@ -936,6 +938,7 @@ function collectGameSettings() {
     botSpeed: ui.botSpeed?.value || "standard",
     diceCount: Number(ui.diceCount?.value) || 1,
     disableDragon: dragonDisabledSetting(),
+    weaponsEnabled: weaponsEnabledSetting(),
     exactMoveAmount: exactMoveControlAmount(),
     fontStyle: selectedFontStyle(),
     gameMode: gameModeFrom({ playerCount }),
@@ -2439,6 +2442,7 @@ function runBotAction() {
 }
 
 function render() {
+  syncWeaponsSettingControl();
   renderBoard();
   renderScores();
   renderModifierPlayerStatus();
@@ -3325,6 +3329,9 @@ function phoneGameSnapshot() {
     eventMonsterRage: monsterRageBonus(),
     finished: Boolean(state.finished),
     legendaryWeapon: legendaryWeaponSnapshot(),
+    weaponsEnabled: legendaryWeaponsEnabled(),
+    finalBattle: state.finalBattle?.finalSummary || null,
+    finalBattleProgress: state.finalBattleProgress ? cloneData(state.finalBattleProgress) : null,
     players: state.players.map(phonePlayerSnapshot),
     rollContext: actionPromptRollContextSnapshot(),
     round: state.round,
@@ -6620,6 +6627,7 @@ function renderFinalBattleHud() {
     <div class="final-battle-side boss ${isBossRolling ? "is-rolling" : ""}" style="--player-color: ${boss?.color || "#ff7d5d"}">
       <span>Босс${boss ? ` - ${boss.name}` : ""}</span>
       ${legendaryWeaponStatusMarkup(bossWeapon, { compact: true })}
+      ${progress.opponentBonus ? `<span>+${progress.opponentBonus}: по ${progress.opponentBonusPerPlayer} за противника</span>` : ""}
       ${boss ? playerBattleStrengthText(boss) : ""}
       <strong>${bossDisplayForce}</strong>
     </div>
@@ -8794,12 +8802,16 @@ function buildDragonFinalSummary({ initiator, results, scores, strength, teamTot
 
 async function resolveFinalBattle(boss, animate = true) {
   const challengers = state.players.filter((player) => player.id !== boss.id);
+  const bossOpponentBonusPerPlayer = legendaryWeaponsEnabled() ? 0 : 3;
+  const bossOpponentBonus = bossOpponentBonusPerPlayer * challengers.length;
   state.isAnimating = animate;
   state.movingPlayerId = null;
   state.dice = null;
   state.finalBattleProgress = {
     bossBonusApplied: false,
     bossForce: 0,
+    opponentBonus: bossOpponentBonus,
+    opponentBonusPerPlayer: bossOpponentBonusPerPlayer,
     bossId: boss.id,
     bossRollsStarted: false,
     isRolling: false,
@@ -8855,9 +8867,11 @@ async function resolveFinalBattle(boss, animate = true) {
   log(`Итоговая сила игроков: <strong>${playersForce}</strong>.`);
 
   const bossRollResults = [];
-  const bossOpponentBonusPerPlayer = 0;
-  const bossOpponentBonus = 0;
-  state.finalBattleProgress.bossForce = bossLegendaryStrength.total;
+  if (bossOpponentBonus) {
+    log(`Босс получает <strong>+${bossOpponentBonus}</strong> к итоговой силе: по ${bossOpponentBonusPerPlayer} за каждого из ${challengers.length} противников.`);
+  }
+  state.finalBattleProgress.bossBonusApplied = true;
+  state.finalBattleProgress.bossForce = bossOpponentBonus + bossLegendaryStrength.total;
   for (let index = 0; index < challengers.length; index += 1) {
     setFinalBattleRoller(boss, false);
     if (animate) {
@@ -8883,9 +8897,10 @@ async function resolveFinalBattle(boss, animate = true) {
   const bossHeroSwordBonus = bossRollResults.reduce((sum, result) => sum + (result.heroSwordBonus || 0), 0);
   const bossPlayerBattlePotionBonus = bossRollResults.reduce((sum, result) => sum + (result.playerBattlePotionBonus || 0), 0);
   const bossRollTotal = bossRollResults.reduce((sum, result) => sum + result.total, 0);
-  const bossForce = bossRollTotal + bossLegendaryStrength.total;
+  const bossForce = bossRollTotal + bossOpponentBonus + bossLegendaryStrength.total;
   state.finalBattleProgress.bossForce = bossForce;
   const bossForceBreakdown = [
+    bossOpponentBonus ? `${bossOpponentBonus} за противников (+${bossOpponentBonusPerPlayer} каждый)` : "",
     bossLegendaryWeapon?.card ? legendaryWeaponForceBreakdownText(bossLegendaryWeapon, bossLegendaryStrength) : "",
     bossRolled ? `${bossRolled} кубики` : "",
     bossBonus ? `${bossBonus} обычные бонусы` : "",
@@ -8927,6 +8942,9 @@ async function resolveFinalBattle(boss, animate = true) {
     bossId: boss.id,
     bossForce,
     bossRolls: bossRollResults.map((result) => result.rolls),
+    opponentBonus: bossOpponentBonus,
+    opponentBonusPerPlayer: bossOpponentBonusPerPlayer,
+    weaponsEnabled: legendaryWeaponsEnabled(),
     finalSummary,
     legendaryWeaponBonus: bossLegendaryStrength.total,
     legendaryWeaponBonusByOpponent: cloneData(bossLegendaryStrength.opponents),
@@ -9008,6 +9026,7 @@ function buildFinalBattleSummary({
     bossForce,
     bossId: boss.id,
     bossWon,
+    weaponsEnabled: legendaryWeaponsEnabled(),
     legendaryWeapon: legendaryWeaponSnapshot(),
     outcome: bossWon ? "boss-won" : "players-won",
     playersForce,
@@ -15523,7 +15542,55 @@ function consumeSelfMonsterMinus(player, contextLabel) {
   return penalty;
 }
 
+function weaponsEnabledSetting() {
+  return Boolean(ui.weaponsEnabled?.checked);
+}
+
+function legendaryWeaponsEnabled() {
+  return Boolean(state?.weaponsEnabled);
+}
+
+function weaponsSettingLocked() {
+  return Boolean(movementActionInProgress || state?.isAnimating || actionPromptResolver
+    || state?.enemyBattleProgress || state?.finalBattleProgress || state?.dragonBattleProgress
+    || state?.vsBattleProgress || state?.unityBattleProgress || state?.pendingChoice
+    || state?.pendingCardChoice || state?.pendingDiceControl || state?.pendingMoveDieReroll
+    || state?.pendingMoveOneFarther || state?.pendingPreRoll || state?.pendingShop || state?.pendingShopClaim);
+}
+
+function syncWeaponsSettingControl() {
+  if (!ui.weaponsEnabled) return;
+  const locked = weaponsSettingLocked();
+  ui.weaponsEnabled.disabled = locked;
+  const hint = locked
+    ? "Оружие можно переключить после завершения текущего действия или боя"
+    : "Включено: легендарное оружие. Выключено: босс получает +3 силы за каждого противника";
+  ui.weaponsEnabled.title = hint;
+  if (ui.weaponsEnabled.parentElement) ui.weaponsEnabled.parentElement.title = hint;
+}
+
+function applyWeaponsSetting() {
+  if (!state || !ui.weaponsEnabled) return;
+  if (weaponsSettingLocked()) {
+    ui.weaponsEnabled.checked = legendaryWeaponsEnabled();
+    syncWeaponsSettingControl();
+    return;
+  }
+  const enabled = weaponsEnabledSetting();
+  if (enabled === legendaryWeaponsEnabled()) return;
+  state.weaponsEnabled = enabled;
+  if (!enabled && state.legendaryWeapon) {
+    discardCardToDeck("legendary", state.legendaryWeapon.card);
+    state.legendaryWeapon = null;
+  }
+  log(enabled
+    ? "Оружие включено: финальный монстр получает легендарное оружие при следующем сражении. Босс не получает +3 за противников."
+    : "Оружие выключено: босс получает +3 силы за каждого противника в финальной битве.");
+  render();
+}
+
 function legendaryWeaponSnapshot() {
+  if (!legendaryWeaponsEnabled()) return null;
   const weapon = state?.legendaryWeapon;
   if (!weapon?.card) return null;
   return {
@@ -15540,21 +15607,23 @@ function legendaryWeaponSnapshot() {
 }
 
 function legendaryWeaponHeldByMonster() {
+  if (!legendaryWeaponsEnabled()) return null;
   return state?.legendaryWeapon?.owner === "monster" ? state.legendaryWeapon : null;
 }
 
 function legendaryWeaponHeldByPlayer(player) {
+  if (!legendaryWeaponsEnabled()) return null;
   const weapon = state?.legendaryWeapon;
   if (!weapon || weapon.owner !== "player" || weapon.ownerId !== player?.id) return null;
   return weapon;
 }
 
 function isDoomScytheWeapon(weapon = state?.legendaryWeapon) {
-  return weapon?.card?.effect?.type === "legendary-opponent-sixes-to-ones";
+  return legendaryWeaponsEnabled() && weapon?.card?.effect?.type === "legendary-opponent-sixes-to-ones";
 }
 
 function isGoldenExecutionerWeapon(weapon = state?.legendaryWeapon) {
-  return weapon?.card?.effect?.type === "legendary-opponent-coins-strength";
+  return legendaryWeaponsEnabled() && weapon?.card?.effect?.type === "legendary-opponent-coins-strength";
 }
 
 function legendaryWeaponStatusText(weapon = state?.legendaryWeapon) {
@@ -15638,7 +15707,7 @@ function applyDoomScytheToOpponentRoll(player, rolls, contextLabel, weapon = sta
 }
 
 async function ensureFinalMonsterLegendaryWeapon(player, door) {
-  if (!door?.isFinalBoss || state.legendaryWeapon?.card) return true;
+  if (!legendaryWeaponsEnabled() || !door?.isFinalBoss || state.legendaryWeapon?.card) return true;
   const card = drawCardFromDeck("legendary");
   if (!card) {
     log("В колоде <strong>Легендарное оружие</strong> нет доступных карт.", { toast: true });
@@ -16869,6 +16938,7 @@ function snapshotAutoPlaytestControls() {
     botCount: ui.botCount?.value || "0",
     botSpeed: ui.botSpeed?.value || "standard",
     disableDragon: dragonDisabledSetting(),
+    weaponsEnabled: weaponsEnabledSetting(),
     hidePlayers: ui.hidePlayers ? ui.hidePlayers.checked : false,
     playerCount: ui.playerCount?.value || "2",
     randomFirstPlayer: ui.randomFirstPlayer ? ui.randomFirstPlayer.checked : false,
@@ -16888,6 +16958,7 @@ function restoreAutoPlaytestControls(snapshot) {
       ? true
       : Boolean(snapshot.disableDragon);
   }
+  if (ui.weaponsEnabled) ui.weaponsEnabled.checked = Boolean(snapshot.weaponsEnabled);
   if (ui.hidePlayers) ui.hidePlayers.checked = snapshot.hidePlayers;
   if (ui.randomFirstPlayer) ui.randomFirstPlayer.checked = snapshot.randomFirstPlayer;
   if (ui.showWalkPath) ui.showWalkPath.checked = snapshot.showWalkPath;
@@ -17311,6 +17382,7 @@ ui.phoneRoomCardsText?.addEventListener("change", () => {
 ui.hidePlayers?.addEventListener("change", () => {
   renderTokens();
 });
+ui.weaponsEnabled?.addEventListener("change", applyWeaponsSetting);
 ui.disableDragon?.addEventListener("change", () => {
   if (!state?.dragon) return;
   state.dragon.disabled = Boolean(ui.disableDragon.checked);

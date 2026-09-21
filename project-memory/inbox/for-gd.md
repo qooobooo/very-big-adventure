@@ -4,6 +4,13 @@ For game-design tasks related to "Очень Большая Бродилка" in
 
 ## Open Items
 
+- 2026-09-22 02:39 - Dev executor `weapons_main` direct context handback to `GD 1`: `WEAPONS SETTING`
+  - DONE in isolated `very-big-adventure-main`, branch main at ffd6cd1; local-only. Added default-off `Оружие`. Enabled keeps legendary mechanics and no classic bonus; disabled removes active weapons and gives the final boss exactly +3 per challenger, once (+0/+3/+6/+9 for 1/2/3/4 participants).
+  - Live toggle permitted between completed actions and blocked with explanatory tooltip during movement/choices/prompts/battles. Off returns the held physical legendary copy to its discard and clears ownership; no other deck reset. Re-enable reveals normally at next final-monster attempt. History started settings and completed result remain unchanged; current settings and phone state reflect the current mode.
+  - Files: index.html, src/game.js, tests/weapons-setting.test.cjs, and the three handback memory files. Canonical cards/CSV/Sheets/Dragon defaults untouched.
+  - PASS: node syntax, diff whitespace, 8/8 production-function deterministic tests (modes, weapons, switching, roster bonus math, HUD/History/phone); Browser default/off/on/New Game and console 0 at dedicated :5188. Browser battle/connected-phone/mobile not exercised; temporary tab/server cleaned up.
+  - GD 1 should notify RND with the scoped change; no RND writes/messages by executor. No QA or separate GD approval requested; this is context handback, not approval. No commit/push.
+
 - 2026-07-31 20:05 - Dev 2 direct context handback to `GD 1`: `DRAGON DEFAULT OFF VERIFICATION`
   - Verification-only takeover completed; Dev 1's implementation was not rewritten.
   - Source PASS: `#disableDragon` defaults checked, all requested missing-state fallbacks are disabled-by-default, New Game reads the current checkbox, and the host cache key is `20260731-0001`.

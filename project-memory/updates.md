@@ -20,6 +20,27 @@ Open questions:
 - ...
 ```
 
+## 2026-09-22 02:39 - Dev executor weapons_main / GD 1
+
+Changed:
+- Implemented `Оружие` in Settings, unchecked on fresh/missing/legacy state. New Game and settings/History/autorun snapshots preserve the selected value.
+- Enabled preserves current legendary reveal, ownership transfer, Scythe and Golden Executioner effects. Disabled gates all active weapon paths and restores the final PvP boss bonus of exactly `3 * challengers.length` once; Solo/2/3/4 gives +0/+3/+6/+9. Board monsters and Dragon are unchanged.
+- Added matching boss HUD/log/history fields and phone final-battle/progress data. Completed final summaries retain their original mode and force after later toggles.
+- Live switching is allowed between completed actions; movement, pending choices/prompts and battles disable the checkbox with an explanatory tooltip. Switching off clears weapon ownership and returns its physical copy to legendary discard only. Re-enabling uses the usual next final-monster reveal. Started settings remain historical.
+
+Files:
+- `index.html`, `src/game.js`, `tests/weapons-setting.test.cjs`
+- `project-memory/updates.md`, `project-memory/inbox/for-dev.md`, `project-memory/inbox/for-gd.md`
+
+Notes for others:
+- Work is local/uncommitted in isolated `very-big-adventure-main`, branch `main`, based on `ffd6cd1`; RND checkout was not edited. GD owner GD 1 handles the requested direct transfer to RND.
+- PASS: `node --check src/game.js`, `git diff --check`, and `node --test tests/weapons-setting.test.cjs` (8/8). Harness runs production functions with deterministic roll/UI stubs, covers both weapon effects, disabled stale state, safe toggle, all roster sizes, bonus math once, HUD/History/phone agreement and frozen completed summary.
+- Browser PASS at isolated `localhost:5188`: fresh checkbox off, enabled remains enabled through New Game, live disable returns off, readable existing Settings layout; console warnings/errors 0. Browser battle/connected-phone E2E and mobile were not run. Temporary browser tab and owned server stopped.
+- Card definitions/CSV/Sheets, Dragon default, other balance and ignored outputs untouched. No QA, GD approval claim, commit or push.
+
+Open questions:
+- Main implementation is complete. GD 1 wrote RND inbox and directly sent the verified active RND task `01a0c620-81e8-7fc2-9a70-a3e42a972fcb` the scoped patch `output/handoffs/weapons-setting-main-2026-09-22.patch` and the PC-preview compatibility note. RND integration remains its owner's separate action; dispatch confirmed, integration not yet reported.
+
 ## 2026-07-31 20:05 - Dev 2
 
 Changed:
