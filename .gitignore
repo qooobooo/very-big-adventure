@@ -6,3 +6,6 @@ node_modules/
 output/
 outputs/
 tmp/
+
+# Local probe output and logs (tools/probe.py, tools/pipeline.py).
+Logs/

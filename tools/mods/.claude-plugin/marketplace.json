@@ -1,0 +1,14 @@
+{
+  "name": "vba",
+  "description": "Очень Большая Бродилка: Claude Code mods of the project",
+  "owner": {
+    "name": "qooobooo"
+  },
+  "plugins": [
+    {
+      "name": "vba-status",
+      "source": "./vba-status",
+      "description": "Очень Большая Бродилка: a band above the prompt with who works on what, versions and deliveries"
+    }
+  ]
+}
