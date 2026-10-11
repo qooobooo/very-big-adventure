@@ -3088,6 +3088,20 @@ function highlightedPlayerId() {
   return state.activePlayer;
 }
 
+// Планшет «Настольного»: стопка монет растёт ступенями, кубики — полоской из четырёх
+function scoreCoinTier(coins) {
+  const amount = Number(coins) || 0;
+  if (amount >= 150) return 3;
+  if (amount >= 50) return 2;
+  if (amount >= 10) return 1;
+  return 0;
+}
+
+function scoreDicePips(count) {
+  const pips = [1, 2, 3, 4].map((index) => `<i class="${index <= count ? "is-on" : ""}"></i>`).join("");
+  return `<i class="score-dice-pips" aria-hidden="true">${pips}</i>`;
+}
+
 function renderScores() {
   scoreStripEl.innerHTML = "";
   for (const player of state.players) {
@@ -3099,6 +3113,7 @@ function renderScores() {
     const pendingGoodStatus = pendingGoodStatusText(player, true);
     const eventStatus = eventStatusText(player, true);
     const stepBonus = playerStepBonus(player);
+    const diceCount = totalDiceForPlayer(player);
     const card = document.createElement("article");
     card.className = `score-card ${player.id === highlightedPlayerId() ? "active" : ""}`;
     card.style.setProperty("--player-color", player.color);
@@ -3121,10 +3136,10 @@ function renderScores() {
       </div>
       <span class="score-cell-ribbon">${iconizeHtml(tileTitle(player.position))}</span>
       <div class="score-stats">
-        <span title="Сила">${strengthAmount(battleBonus >= 0 ? `+${battleBonus}` : battleBonus)}</span>
-        <span title="Шаги">${stepsAmount(stepBonus >= 0 ? `+${stepBonus}` : stepBonus)}</span>
-        <span title="Монеты">${coinAmount(player.coins)}</span>
-        <span title="Кубики">${diceAmount(totalDiceForPlayer(player))}</span>
+        <span class="score-stat-strength" title="Сила">${strengthAmount(battleBonus >= 0 ? `+${battleBonus}` : battleBonus)}</span>
+        <span class="score-stat-steps" title="Шаги">${stepsAmount(stepBonus >= 0 ? `+${stepBonus}` : stepBonus)}</span>
+        <span class="score-stat-coins" title="Монеты" data-coin-tier="${scoreCoinTier(player.coins)}">${coinAmount(player.coins)}</span>
+        <span class="score-stat-dice ${diceCount > 4 ? "is-many" : ""}" title="Кубики">${diceAmount(diceCount)}${scoreDicePips(diceCount)}</span>
       </div>
       <div class="score-shop">
         <div class="score-shop-head">
@@ -5249,7 +5264,7 @@ function isPhoneLayout() {
 }
 
 function renderShopBadges(player) {
-  if (player.items.length === 0) return '<small>нет карт</small>';
+  if (player.items.length === 0) return '<small class="score-shop-empty">нет карт</small>';
   return groupedShopItems(player.items)
     .map(({ count, item }) => {
       const label = count > 1 ? `${shortShopTitle(item)} x${count}` : shortShopTitle(item);

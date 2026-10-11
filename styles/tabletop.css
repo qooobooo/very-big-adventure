@@ -2,10 +2,11 @@
   Настольный стиль, шаг 1 (Art / UI, 12 октября 2026): стол из сукна, доска с картонным краем,
   меню партии, ТАДАМ на сукне, шрифт заголовков.
   Всё ниже работает только при body[data-ui-style="tabletop"], классический стиль не меняется.
-  Единственное исключение — кнопка меню партии: в классическом стиле она скрыта.
+  Исключения — кнопка меню партии и полоска кубиков на планшете: в классическом стиле они скрыты.
 */
 
-.table-menu-toggle {
+.table-menu-toggle,
+.score-dice-pips {
   display: none;
 }
 
@@ -189,6 +190,280 @@ body[data-ui-style="tabletop"] .tadam-slot.is-filled:nth-child(2) {
 
 body[data-ui-style="tabletop"] .tadam-slot.is-filled:nth-child(3) {
   transform: rotate(-0.8deg);
+}
+
+/* В. Планшеты игроков: деревянная дощечка, жетон-портрет, имя на ленте, жетоны вместо цифр */
+body[data-ui-style="tabletop"] .side-panel > .score-strip {
+  padding: 4px 2px 6px;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+body[data-ui-style="tabletop"] .score-strip {
+  gap: 12px;
+}
+
+body[data-ui-style="tabletop"] .score-card {
+  overflow: visible;
+  padding: 9px 11px 9px;
+  border: 3px solid var(--board-edge);
+  border-radius: 10px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='60'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .5' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='160' height='60' filter='url(%23g)'/%3E%3C/svg%3E"),
+    radial-gradient(130% 150% at 25% 0%, #74492a, #55331c 55%, #3d2312);
+  box-shadow:
+    0 0 0 1px rgba(185, 141, 74, 0.6),
+    0 3px 0 1px var(--board-edge-under),
+    0 10px 16px rgba(0, 0, 0, 0.42);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+body[data-ui-style="tabletop"] .score-card::before {
+  inset: 5px;
+  width: auto;
+  border-radius: 6px;
+  background: rgba(24, 13, 6, 0.28);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 228, 170, 0.08);
+}
+
+body[data-ui-style="tabletop"] .score-card::after {
+  display: none;
+}
+
+body[data-ui-style="tabletop"] .score-card.active {
+  border-color: var(--board-edge);
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 1px rgba(255, 221, 148, 0.85),
+    0 0 0 4px color-mix(in srgb, var(--player-color) 55%, transparent),
+    0 3px 0 4px var(--board-edge-under),
+    0 16px 24px rgba(0, 0, 0, 0.5),
+    0 0 26px color-mix(in srgb, var(--player-color) 40%, transparent);
+}
+
+body[data-ui-style="tabletop"] .score-name {
+  gap: 9px;
+  margin-bottom: 7px;
+}
+
+/* Жетон-портрет с ободком цвета игрока */
+body[data-ui-style="tabletop"] .score-player-avatar {
+  position: relative;
+}
+
+body[data-ui-style="tabletop"] .score-player-avatar img {
+  width: 36px;
+  height: 36px;
+  padding: 3px;
+  border: 3px solid var(--player-color);
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f6e8c4, #cdb07a 70%, #9b7b45);
+  box-shadow: 0 2px 0 rgba(31, 18, 8, 0.9), 0 4px 6px rgba(0, 0, 0, 0.45);
+  filter: none;
+}
+
+body[data-ui-style="tabletop"] .score-bot-badge {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  min-height: 0;
+  padding: 2px 4px 1px;
+  border-radius: 3px;
+  color: #3a210c;
+  background: linear-gradient(180deg, #f1d58e, #b98a3e);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  font-size: 0.44rem;
+  text-shadow: none;
+  transform: translateX(-50%);
+}
+
+/* Имя на ленте цвета игрока */
+body[data-ui-style="tabletop"] .score-player-name {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+body[data-ui-style="tabletop"] .score-name strong {
+  padding: 3px 15px 2px;
+  color: #fff6e0;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--player-color) 80%, #fff3d6),
+    color-mix(in srgb, var(--player-color) 72%, #1a0d05));
+  clip-path: polygon(0 0, 100% 0, calc(100% - 7px) 50%, 100% 100%, 0 100%, 7px 50%);
+  text-shadow: 0 1px 2px rgba(20, 8, 2, 0.75);
+}
+
+/* Жетоны силы и шагов, стопка монет, полоска кубиков */
+body[data-ui-style="tabletop"] .score-stats {
+  gap: 4px;
+}
+
+body[data-ui-style="tabletop"] .score-stats > span {
+  justify-content: flex-start;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+body[data-ui-style="tabletop"] .score-stats b {
+  color: #fff3d8;
+  font-size: 0.98rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+body[data-ui-style="tabletop"] .score-stats .strength-amount,
+body[data-ui-style="tabletop"] .score-stats .steps-amount,
+body[data-ui-style="tabletop"] .score-stats .coin-amount {
+  flex-direction: row-reverse;
+  gap: 5px;
+}
+
+body[data-ui-style="tabletop"] .score-stats .strength-icon,
+body[data-ui-style="tabletop"] .score-stats .steps-icon {
+  width: 27px;
+  height: 27px;
+  padding: 2px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 30%, #fbe9b8, #d6a24d 58%, #8a561c);
+  box-shadow: 0 2px 0 #3a210c, inset 0 -2px 3px rgba(60, 30, 5, 0.45);
+  filter: drop-shadow(0 0 0.5px rgba(40, 20, 5, 0.9));
+}
+
+body[data-ui-style="tabletop"] .score-stat-coins .coin-icon {
+  display: none;
+}
+
+body[data-ui-style="tabletop"] .score-stat-coins::before {
+  --coin: url("../assets/icons/coin.png");
+  content: "";
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  background: var(--coin) center bottom / 22px 22px no-repeat;
+  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.55));
+}
+
+body[data-ui-style="tabletop"] .score-stat-coins[data-coin-tier="1"]::before {
+  height: 26px;
+  background:
+    var(--coin) center 0 / 22px 22px no-repeat,
+    var(--coin) center 4px / 22px 22px no-repeat;
+}
+
+body[data-ui-style="tabletop"] .score-stat-coins[data-coin-tier="2"]::before {
+  height: 30px;
+  background:
+    var(--coin) center 0 / 22px 22px no-repeat,
+    var(--coin) center 4px / 22px 22px no-repeat,
+    var(--coin) center 8px / 22px 22px no-repeat;
+}
+
+body[data-ui-style="tabletop"] .score-stat-coins[data-coin-tier="3"]::before {
+  width: 30px;
+  height: 30px;
+  background:
+    var(--coin) 8px 0 / 22px 22px no-repeat,
+    var(--coin) 0 4px / 22px 22px no-repeat,
+    var(--coin) 8px 8px / 22px 22px no-repeat,
+    var(--coin) 0 8px / 22px 22px no-repeat;
+}
+
+body[data-ui-style="tabletop"] .score-stat-dice:not(.is-many) .dice-amount {
+  display: none;
+}
+
+body[data-ui-style="tabletop"] .score-stat-dice:not(.is-many) .score-dice-pips {
+  display: inline-grid;
+  grid-template-columns: repeat(4, 11px);
+  gap: 3px;
+}
+
+body[data-ui-style="tabletop"] .score-dice-pips > i {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  background: rgba(10, 5, 2, 0.4);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255, 228, 170, 0.1);
+}
+
+body[data-ui-style="tabletop"] .score-dice-pips > i.is-on {
+  background: radial-gradient(circle, #2b1607 0 1.6px, transparent 2px), linear-gradient(180deg, #fffaf0, #e6d6b4);
+  box-shadow: 0 1px 0 #6b4a22, 0 2px 3px rgba(0, 0, 0, 0.45);
+}
+
+/* Карты Лавки веером */
+body[data-ui-style="tabletop"] .score-shop {
+  margin-top: 7px;
+  gap: 4px;
+}
+
+body[data-ui-style="tabletop"] .score-shop-head > span {
+  padding: 0;
+  color: rgba(240, 220, 168, 0.72);
+  background: none;
+  font-size: 0.56rem;
+}
+
+body[data-ui-style="tabletop"] .score-shop-view {
+  min-height: 20px;
+  border-color: rgba(255, 221, 148, 0.6);
+  color: #3a210c;
+  background: linear-gradient(180deg, #f1d58e, #c08f43);
+  box-shadow: 0 2px 0 #3a210c;
+}
+
+body[data-ui-style="tabletop"] .score-shop-view:hover:not(:disabled),
+body[data-ui-style="tabletop"] .score-shop-view:focus-visible {
+  border-color: rgba(255, 238, 190, 0.9);
+  color: #2a1607;
+  background: linear-gradient(180deg, #f8e2a6, #cf9d4f);
+}
+
+body[data-ui-style="tabletop"] .score-shop > div {
+  gap: 0;
+  padding-left: 4px;
+}
+
+body[data-ui-style="tabletop"] .score-shop small {
+  min-height: 22px;
+  margin-left: -4px;
+  padding: 3px 7px;
+  border: 1px solid #8a6a3a;
+  border-radius: 4px;
+  color: #3a2410;
+  background: linear-gradient(180deg, #f6e7c4, #dcc394);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4);
+  font-size: 0.62rem;
+  font-weight: 700;
+  transform: rotate(-3deg);
+}
+
+body[data-ui-style="tabletop"] .score-shop small:nth-child(even) {
+  transform: rotate(2.5deg) translateY(1px);
+}
+
+body[data-ui-style="tabletop"] .score-shop small:nth-child(3n) {
+  transform: rotate(-1deg) translateY(-1px);
+}
+
+body[data-ui-style="tabletop"] .score-shop small.shop-face-down {
+  border-style: solid;
+  border-color: #3c5a6a;
+  color: #e9f3f6;
+  background: url("../assets/cards/shop_back.png") center / cover, #24404c;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+
+body[data-ui-style="tabletop"] .score-shop small.score-shop-empty {
+  margin-left: 0;
+  border: 0;
+  color: rgba(240, 220, 168, 0.5);
+  background: rgba(10, 5, 2, 0.28);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+  font-weight: 600;
+  transform: none;
 }
 
 /* Ж. Сказочный шрифт для заголовков и имён, меньше заглавных букв в подписях */
