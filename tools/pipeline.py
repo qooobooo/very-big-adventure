@@ -731,12 +731,14 @@ def cmd_board(args):
     foreign = git('rev-list', '--count', '--no-merges', f'origin/{BASE}..origin/{SHARED}', cwd=MAIN, check=False)
     installed = (read_json(INSTALLED) or {}).get('version') or version_at(git('rev-parse', 'HEAD', cwd=MAIN))
     detached = not git('symbolic-ref', '--quiet', 'HEAD', cwd=MAIN, check=False)
-    print(json.dumps({'base': BASE, 'shared': SHARED, 'installed': installed, 'rolled_back': detached,
+    # 'project' and 'team' (not 'chats'): The Village's own status mod, installed on this Mac too, reads the same
+    # command in any folder; this shape keeps each band to its own project.
+    print(json.dumps({'project': 'vba', 'base': BASE, 'shared': SHARED, 'installed': installed, 'rolled_back': detached,
                       'shared_version': tag('origin/' + SHARED),
                       'unpublished': int(unpublished) if unpublished.isdigit() else None,
                       'foreign': int(foreign) if foreign.isdigit() else None,
                       'queue': lock_state('queue'), 'app': lock_state(), 'server': bool(listener()),
-                      'chats': [dict(name=name, **board.get(name, {})) for name in names]}, ensure_ascii=False))
+                      'team': [dict(name=name, **board.get(name, {})) for name in names]}, ensure_ascii=False))
     return 0
 
 

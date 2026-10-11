@@ -2,7 +2,8 @@
 // the prompt, who works on what, dev's installed version against main, deliveries and the user's :5173 server. Data:
 // `python3 tools/pipeline.py board --json`, run against the session's folder every 15 s; a session opened in the
 // parent folder reads the main folder (very-big-adventure-main). PM keeps the board (`board --set/--free`).
-// Draws nothing outside a checkout of the project or when the script fails.
+// Draws nothing outside a checkout of the project or when the script fails; data of another project's board
+// (The Village's mod and this one read the same command) is told apart by `project`.
 
 let snapshot = null
 
@@ -52,7 +53,7 @@ function rows(s) {
   if (s.queue !== 'free' || s.app !== 'free') head.push({ text: '  ⟳ доставка', color: 'suggestion', bold: true })
   head.push(s.server ? { text: '  ▶ :5173', color: 'success' } : { text: '  ■ :5173', color: 'inactive' })
   const out = [head]
-  const busy = s.chats.filter((c) => c.task)
+  const busy = s.team.filter((c) => c.task)
   const width = Math.max(0, ...busy.map((c) => shortName(c.name).length))
   for (const c of busy) {
     const min = minutesSince(c.since)
@@ -66,7 +67,7 @@ function rows(s) {
     }
     out.push(row)
   }
-  const free = s.chats.filter((c) => !c.task).map((c) => shortName(c.name))
+  const free = s.team.filter((c) => !c.task).map((c) => shortName(c.name))
   if (free.length) out.push([{ text: (busy.length ? '○ свободны  ' : '○ все свободны  ') + free.join(' · '), color: 'inactive' }])
   return out
 }
@@ -79,7 +80,7 @@ export function register(on) {
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (!snapshot || !Array.isArray(snapshot.chats)) return next(e)
+    if (!snapshot || snapshot.project !== 'vba' || !Array.isArray(snapshot.team)) return next(e)
     const { Box, Text } = $.ui.resolve(e)
     const lines = rows(snapshot).map((row) =>
       Text({
