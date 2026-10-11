@@ -1,6 +1,6 @@
 {
   "name": "vba-status",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Очень Большая Бродилка: a band above the prompt with who works on what, versions, deliveries and the :5173 server (tools/pipeline.py board --json)",
   "author": { "name": "qooobooo" }
 }

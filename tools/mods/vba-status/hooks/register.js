@@ -6,6 +6,7 @@
 // (The Village's mod and this one read the same command) is told apart by `project`.
 
 let snapshot = null
+let drawnKey = ''
 
 const FALLBACK = 'cd very-big-adventure-main 2>/dev/null && python3 tools/pipeline.py board --json'
 
@@ -17,6 +18,10 @@ async function refresh($) {
   } catch {
     snapshot = null
   }
+  // Redraw only when something shown changed (the board, or a minute passed), so the animations run on unbroken.
+  const key = JSON.stringify(snapshot) + Math.floor(Date.now() / 60000)
+  if (key === drawnKey) return
+  drawnKey = key
   $.ui.invalidate('ui.render')
 }
 
@@ -40,7 +45,7 @@ function timeBar(min) {
   return '■'.repeat(full) + '□'.repeat(6 - full)
 }
 
-// Rows of segments {text, color?, bg?, bold?, dim?}: the versions, one row per busy chat, the free ones.
+// Terminal look. Rows of segments {text, color?, bg?, bold?, dim?}: the versions, one row per busy chat, the free ones.
 function rows(s) {
   const head = [
     { text: ' ' + s.base + ' ' + (s.installed || '—') + ' ', bg: 'claude', color: 'inverseText', bold: true },
@@ -72,6 +77,126 @@ function rows(s) {
   return out
 }
 
+// Desktop look (The Village's card, user's choice, 11 Oct 2026): one opaque SVG card, readable whatever scheme the
+// frame reports, drawn in a sandboxed frame so CSS and SMIL animate. Calm on purpose: a slow breathing halo on each
+// busy chat, a soft sheen across its time bar, a pulsing dot while a delivery runs; nothing blinks.
+const CHAT_HUES = { GD: '#5B8DEF', 'Art / UI': '#A77BE0' }
+const W = 640
+const SHOWN_W = 750
+
+function altText(s) {
+  const busy = s.team.filter((c) => c.task).map((c) => c.name + ': ' + c.task)
+  return s.base + ' ' + (s.installed || '—') + ', ' + s.shared + ' ' + (s.shared_version || '—') +
+    (busy.length ? '; ' + busy.join('; ') : '; все свободны')
+}
+
+function esc(text) {
+  return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function hue(name) {
+  return CHAT_HUES[name] || '#8A8F98'
+}
+
+// A pill: rounded rect plus label; returns [svg, width]. Width from a rough 7 px per character at 12 px.
+function pill(x, y, label, cls, extra = '') {
+  const w = Math.round(label.length * 6.9) + 20 + (extra ? 12 : 0)
+  const dot = extra ? `<circle cx="${x + 11}" cy="${y + 11}" r="3.2" class="${cls}-dot">${extra}</circle>` : ''
+  const tx = x + 10 + (extra ? 10 : 0)
+  return [`<rect x="${x}" y="${y}" width="${w}" height="22" rx="11" class="${cls}"/>${dot}<text x="${tx}" y="${y + 15}" class="${cls}-t">${esc(label)}</text>`, w]
+}
+
+function card(s) {
+  const busy = s.team.filter((c) => c.task)
+  const free = s.team.filter((c) => !c.task)
+  const parts = []
+  let x = 14
+  for (const [label, cls, extra] of [
+    [s.base + '  ' + (s.installed || '—'), 'p-dev'],
+    [s.shared + '  ' + (s.shared_version || '—'), 'p-main'],
+    s.rolled_back ? ['⟲ откат', 'p-warn'] : null,
+    s.unpublished ? ['↑ ' + s.unpublished + ' не в ' + s.shared, 'p-warn'] : null,
+    s.foreign ? ['↓ ' + s.foreign + ' чужое', 'p-warn'] : null,
+    s.queue !== 'free' || s.app !== 'free'
+      ? ['доставка', 'p-live', '<animate attributeName="opacity" values="1;.25;1" dur="2.4s" repeatCount="indefinite"/>']
+      : null,
+    s.server ? ['▶ :5173', 'p-ok'] : ['■ :5173', 'p-main'],
+  ].filter(Boolean)) {
+    const [svg, w] = pill(x, 12, label, cls, extra)
+    parts.push(svg)
+    x += w + 8
+  }
+  let y = 46
+  busy.forEach((c, i) => {
+    const min = minutesSince(c.since)
+    const color = hue(c.name)
+    const cy = y + 14
+    const late = min !== null && min > 60
+    const fill = min === null ? 0 : Math.max(0.06, Math.min(1, min / 60))
+    const delay = (i * 0.7).toFixed(1)
+    parts.push(
+      `<circle cx="27" cy="${cy}" r="9" fill="${color}" opacity=".18"><animate attributeName="r" values="7;11;7" dur="3.6s" begin="${delay}s" repeatCount="indefinite"/><animate attributeName="opacity" values=".28;0;.28" dur="3.6s" begin="${delay}s" repeatCount="indefinite"/></circle>`,
+      `<circle cx="27" cy="${cy}" r="5" fill="${color}"/>`,
+      `<text x="42" y="${cy + 4.5}" class="name">${esc(c.name)}</text>`,
+      `<text x="118" y="${cy + 4.5}" class="task" clip-path="url(#taskclip)">${esc(clip(c.task, 54))}</text>`,
+    )
+    if (min !== null) {
+      const bx = W - 160
+      const bw = 92
+      const fw = Math.round(bw * fill)
+      const barColor = late ? 'var(--warn)' : color
+      parts.push(
+        `<rect x="${bx}" y="${cy - 3}" width="${bw}" height="6" rx="3" class="track"/>`,
+        `<rect x="${bx}" y="${cy - 3}" width="${fw}" height="6" rx="3" fill="${barColor}"/>`,
+        `<rect x="${bx}" y="${cy - 3}" width="${fw}" height="6" rx="3" fill="url(#sheen)"/>`,
+        `<text x="${W - 16}" y="${cy + 4.5}" class="time${late ? ' late' : ''}" text-anchor="end">${min} мин</text>`,
+      )
+    }
+    y += 30
+  })
+  if (busy.length) y += 4
+  const fy = y + 2
+  parts.push(`<text x="16" y="${fy + 15}" class="muted">${busy.length ? 'свободны' : 'все свободны'}</text>`)
+  let fx = busy.length ? 82 : 102
+  for (const c of free) {
+    const w = Math.round(c.name.length * 6.1) + 28
+    parts.push(
+      `<rect x="${fx}" y="${fy}" width="${w}" height="22" rx="11" class="p-free"/>`,
+      `<circle cx="${fx + 11}" cy="${fy + 11}" r="3" fill="${hue(c.name)}" opacity=".75"/>`,
+      `<text x="${fx + 19}" y="${fy + 15}" class="p-free-t">${esc(c.name)}</text>`,
+    )
+    fx += w + 6
+  }
+  const H = fy + 34
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+<style>
+:root{--fg:#1F2328;--muted:#6E7781;--card:#FFFFFF;--line:rgba(0,0,0,.08);--track:rgba(0,0,0,.07);--warn:#D4882B;--accent:#D97757;--ok:#2E9E6E}
+@media (prefers-color-scheme: dark){:root{--fg:#E6E8EB;--muted:#8B929B;--card:#30302E;--line:rgba(255,255,255,.08);--track:rgba(255,255,255,.08);--warn:#E8A44A;--ok:#4CC38A}}
+text{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;font-size:12px;fill:var(--fg)}
+.card{fill:var(--card);stroke:var(--line)}
+.p-dev{fill:var(--accent)} .p-dev-t{fill:#fff;font-weight:650;letter-spacing:.2px}
+.p-main{fill:none;stroke:var(--line);stroke-width:1.2} .p-main-t{fill:var(--muted);font-weight:600}
+.p-warn{fill:var(--warn);fill-opacity:.14} .p-warn-t{fill:var(--warn);font-weight:600}
+.p-live{fill:#5B8DEF;fill-opacity:.14} .p-live-t{fill:#5B8DEF;font-weight:600} .p-live-dot{fill:#5B8DEF}
+.p-ok{fill:var(--ok);fill-opacity:.14} .p-ok-t{fill:var(--ok);font-weight:600}
+.p-free{fill:none;stroke:var(--line)} .p-free-t{fill:var(--muted);font-size:11.5px}
+.name{font-weight:650} .task{fill:var(--fg);opacity:.82}
+.muted{fill:var(--muted);font-size:11.5px}
+.track{fill:var(--track)}
+.time{fill:var(--muted);font-variant-numeric:tabular-nums;font-size:11.5px} .late{fill:var(--warn);font-weight:600}
+</style>
+<defs>
+<clipPath id="taskclip"><rect x="118" y="0" width="${W - 160 - 118 - 14}" height="${H}"/></clipPath>
+<linearGradient id="sheen" x1="0" x2="1" gradientUnits="objectBoundingBox">
+<stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+<animateTransform attributeName="gradientTransform" type="translate" values="-1 0;1 0;1 0" keyTimes="0;.55;1" dur="5s" repeatCount="indefinite"/>
+</linearGradient>
+</defs>
+<rect x=".5" y=".5" width="${W - 1}" height="${H - 1}" rx="14" class="card"/>
+${parts.join('\n')}
+</svg>`
+}
+
 export function register(on) {
   on('session.start', async ($, e, next) => {
     refresh($)
@@ -81,7 +206,16 @@ export function register(on) {
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (!snapshot || snapshot.project !== 'vba' || !Array.isArray(snapshot.team)) return next(e)
-    const { Box, Text } = $.ui.resolve(e)
+    const { Box, Text, Svg } = $.ui.resolve(e)
+    const theirs = await next(e)
+    if (e.surface === 'desktop' && Svg) {
+      // Without a size the frame takes the default 150 px height and centres the card in empty space; draw it at the
+      // scale the band showed it (about 750 px wide) with the height that keeps its proportions.
+      const source = card(snapshot)
+      const height = Number(source.match(/height="(\d+)"/)[1])
+      const drawn = Svg({ alt: altText(snapshot), source, isInteractive: true, width: SHOWN_W, height: Math.round((height * SHOWN_W) / W) })
+      return theirs ? Box({ flexDirection: 'column', children: [drawn, theirs] }) : drawn
+    }
     const lines = rows(snapshot).map((row) =>
       Text({
         wrap: 'truncate-end',
@@ -95,7 +229,6 @@ export function register(on) {
         }),
       }),
     )
-    const theirs = await next(e)
     return Box({ flexDirection: 'column', children: theirs ? [...lines, theirs] : lines })
   })
 }
