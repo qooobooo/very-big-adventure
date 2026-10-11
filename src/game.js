@@ -16706,7 +16706,7 @@ function syncRollEventPromptViewport() {
   if (!ui.eventToast) return;
 
   const isRollEventPrompt = ui.eventToast.classList.contains("roll-event-prompt");
-  const needsViewportOffset = isRollEventPrompt && window.matchMedia("(max-width: 1180px)").matches;
+  const needsViewportOffset = isRollEventPrompt && window.matchMedia("(max-width: 1199px)").matches;
   if (!needsViewportOffset) {
     ui.eventToast.style.removeProperty("top");
     return;
