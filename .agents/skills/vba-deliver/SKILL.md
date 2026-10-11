@@ -9,7 +9,7 @@ description: Доставка готовой задачи «Очень Боль�
 
 ## Перед доставкой
 
-1. Работа идёт в своей папке `../very-big-adventure-<имя>`, не в основной `very-big-adventure-main` и не в `very-big-adventure` (там `rnd`, не трогать).
+1. Работа идёт в своей папке `../very-big-adventure-<имя>`, не в основной `very-big-adventure-main` и не в `very-big-adventure` (хранилище git).
    - Своей папки нет — `python3 tools/pipeline.py new <имя>`.
    - Перед работой: `git fetch && git merge --ff-only origin/dev`.
 2. Всё закоммичено, `git status` чистый. В конце сообщения коммита — строка соавторства, которую требует твоя среда.

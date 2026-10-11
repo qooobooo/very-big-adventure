@@ -57,8 +57,6 @@ PORT = 5173  # the user's game; probes never touch it (tools/probe.py takes a po
 PUSH = ['git', '-c', 'http.postBuffer=524288000', 'push']
 SHARED = 'main'  # shared: only `publish` writes it, through a pull request
 REPO = 'qooobooo/very-big-adventure'
-# rnd: the user's old RND work with uncommitted changes, left untouched until they decide (11 Oct 2026).
-PROTECTED = ('rnd',)
 
 
 def git(*args, cwd=None, check=True, capture=True):
@@ -597,7 +595,7 @@ def cmd_deliver(args):
         raise SystemExit('Deliver from your own worktree (python3 tools/pipeline.py new <name>); '
                          f'the main folder only mirrors origin/{BASE}')
     branch = git('branch', '--show-current')
-    if not branch or branch in (BASE, SHARED, *PROTECTED):
+    if not branch or branch in (BASE, SHARED):
         raise SystemExit('Check out your work branch in this worktree first (' + (branch or 'detached HEAD') + ' is not one)')
     if git('status', '--porcelain'):
         raise SystemExit('Commit your work first (git status is not clean):\n' + git('status', '--short'))
