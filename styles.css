@@ -517,7 +517,8 @@ h2 {
   align-items: end;
   display: grid;
   grid-template-columns:
-    repeat(2, minmax(54px, 0.56fr))
+    minmax(64px, 0.64fr)
+    minmax(54px, 0.56fr)
     minmax(232px, 232px)
     minmax(150px, 1.55fr);
   justify-content: stretch;
@@ -541,6 +542,12 @@ h2 {
 .season-controls select,
 .season-controls button {
   width: 100%;
+}
+
+/* Стрелку браузер рисует сам, около 20px внутри поля: с отступом 28px справа в узком поле не видно ни «2», ни «0» */
+.season-controls select {
+  padding-right: 2px;
+  padding-left: 6px;
 }
 
 .settings-toggle {
@@ -12789,12 +12796,12 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
 
   .season-controls select {
     min-height: 29px;
-    padding: 0 18px 0 7px;
+    padding: 0 2px 0 6px;
     font-size: 0.72rem;
   }
 
   .season-controls #playerCount {
-    padding-right: 12px;
+    padding-right: 2px;
     padding-left: 5px;
     font-size: 0.68rem;
   }
