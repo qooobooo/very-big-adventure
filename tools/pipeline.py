@@ -362,16 +362,18 @@ def lock_state(name='app'):
 
 # ---------------------------------------------------------------- main folder and the game server
 
-def sync_main():
-    """Fast-forward the main folder to origin/dev; a rolled-back (detached) main folder comes back to dev."""
+def sync_main(target=None):
+    """Fast-forward the main folder to origin/dev (or to `target`, a commit just pushed there); a rolled-back
+    (detached) main folder comes back to dev."""
+    target = target or 'origin/' + BASE
     branch = git('symbolic-ref', '--quiet', '--short', 'HEAD', cwd=MAIN, check=False)
-    if not branch and is_ancestor('HEAD', 'origin/' + BASE, cwd=MAIN):
+    if not branch and is_ancestor('HEAD', target, cwd=MAIN):
         git('switch', '-q', BASE, cwd=MAIN, check=False)
         branch = git('symbolic-ref', '--quiet', '--short', 'HEAD', cwd=MAIN, check=False)
     if branch != BASE:
         say('main folder not synced: it is on ' + (branch or 'a detached HEAD') + f', not {BASE}')
         return False
-    result = subprocess.run(['git', 'merge', '--ff-only', '-q', 'origin/' + BASE], cwd=MAIN, text=True, capture_output=True)
+    result = subprocess.run(['git', 'merge', '--ff-only', '-q', target], cwd=MAIN, text=True, capture_output=True)
     if result.returncode != 0:
         say('main folder not synced (local commits or uncommitted files there):\n' + result.stderr.strip())
         return False
@@ -678,8 +680,9 @@ def cmd_deliver(args):
                     timing['lock_hold_s'] += time.time() - lock.acquired
                     continue
                 previous = git('rev-parse', 'HEAD', cwd=MAIN)
-                git('fetch', '-q', 'origin')
-                synced = sync_main()
+                # No fetch here: right after a push GitHub may still serve the old dev, and a fetch winds origin/dev
+                # back to it (12 Oct 2026: 0.1.4 was pushed, the main folder stayed on 0.1.3). Sync to what we pushed.
+                synced = sync_main(commit)
                 if synced:
                     record_installed(git('rev-parse', 'HEAD', cwd=MAIN), version or version_at(commit), task, previous)
                 timing['lock_hold_s'] += time.time() - lock.acquired
@@ -896,8 +899,8 @@ def cmd_publish(args):
     forward = subprocess.run(PUSH + ['origin', f'{shared}:refs/heads/{BASE}'], cwd=ROOT, text=True, capture_output=True)
     if forward.returncode != 0:
         say(f'{BASE} moved meanwhile; the merge commit comes into {BASE} with the next merge-main')
-    git('fetch', '-q', 'origin')
-    sync_main()
+        git('fetch', '-q', 'origin')
+    sync_main()  # after a push no fetch: GitHub may still serve the old dev (see cmd_deliver)
     with (STATE / 'publishes.jsonl').open('a', encoding='utf-8') as log:
         log.write(json.dumps({'time': now().isoformat(timespec='seconds'), 'version': version, 'pr': pr,
                               'deliveries': len(rows), 'tag': tag}, ensure_ascii=False) + '\n')
