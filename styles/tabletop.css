@@ -2,11 +2,12 @@
   Настольный стиль, шаг 1 (Art / UI, 12 октября 2026): стол из сукна, доска с картонным краем,
   меню партии, ТАДАМ на сукне, шрифт заголовков.
   Всё ниже работает только при body[data-ui-style="tabletop"], классический стиль не меняется.
-  Исключения — кнопка меню партии и полоска кубиков на планшете: в классическом стиле они скрыты.
+  Исключения — кнопка меню партии, полоска кубиков на планшете и колоды на столе: в классическом стиле они скрыты.
 */
 
 .table-menu-toggle,
-.score-dice-pips {
+.score-dice-pips,
+.table-decks {
   display: none;
 }
 
@@ -464,6 +465,149 @@ body[data-ui-style="tabletop"] .score-shop small.score-shop-empty {
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
   font-weight: 600;
   transform: none;
+}
+
+/* Д. Колоды на столе: стопки рубашек, толщина и число — сколько карт осталось. Клик — справочник колоды */
+body[data-ui-style="tabletop"] .side-panel > .table-decks {
+  order: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: 12px 8px;
+  padding: 8px 2px 2px;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+body[data-ui-style="tabletop"] .side-panel:has(#settingsPanel:not([hidden])) > .table-decks {
+  order: 2;
+}
+
+body[data-ui-style="tabletop"] .table-deck {
+  position: relative;
+  width: 64px;
+  min-height: 0;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  color: rgba(240, 220, 168, 0.82);
+  background: none;
+  box-shadow: none;
+  cursor: pointer;
+  transition: transform 0.18s ease;
+}
+
+body[data-ui-style="tabletop"] .table-deck[hidden] {
+  display: none;
+}
+
+body[data-ui-style="tabletop"] .table-deck:hover:not(:disabled),
+body[data-ui-style="tabletop"] .table-deck:focus-visible {
+  border: 0;
+  color: #f0dca8;
+  background: none;
+  box-shadow: none;
+  outline: none;
+  transform: translateY(-3px);
+}
+
+body[data-ui-style="tabletop"] .table-deck-pile {
+  position: relative;
+  width: 46px;
+  height: 64px;
+  border-radius: 5px;
+  background: rgba(4, 12, 9, 0.3);
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.5);
+}
+
+body[data-ui-style="tabletop"] .table-deck-pile img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 5px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(255, 240, 200, 0.35);
+}
+
+body[data-ui-style="tabletop"] .table-deck[data-depth="0"] .table-deck-pile img {
+  opacity: 0.18;
+  box-shadow: none;
+}
+
+body[data-ui-style="tabletop"] .table-deck[data-depth="1"] .table-deck-pile {
+  box-shadow: 1px 2px 0 #cdb98e, 0 6px 8px rgba(0, 0, 0, 0.45);
+}
+
+body[data-ui-style="tabletop"] .table-deck[data-depth="2"] .table-deck-pile {
+  box-shadow: 1px 2px 0 #d9c69c, 2px 4px 0 #bba57a, 0 8px 10px rgba(0, 0, 0, 0.45);
+}
+
+body[data-ui-style="tabletop"] .table-deck[data-depth="3"] .table-deck-pile {
+  box-shadow: 1px 2px 0 #dcc9a0, 2px 4px 0 #c9b388, 3px 6px 0 #ad9469, 0 10px 12px rgba(0, 0, 0, 0.48);
+}
+
+body[data-ui-style="tabletop"] .table-deck-count {
+  position: absolute;
+  top: -7px;
+  right: 0;
+  min-width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  padding: 0 4px;
+  border-radius: 999px;
+  color: #2a1607;
+  background: radial-gradient(circle at 38% 30%, #fbe9b8, #d6a24d 62%, #8a561c);
+  box-shadow: 0 2px 0 #3a210c, 0 3px 5px rgba(0, 0, 0, 0.4);
+  font-size: 0.7rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+body[data-ui-style="tabletop"] .table-deck-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+body[data-ui-style="tabletop"] .table-deck.is-drawn .table-deck-pile img {
+  animation: table-deck-draw 0.7s ease-out;
+}
+
+@keyframes table-deck-draw {
+  0% {
+    transform: none;
+    opacity: 1;
+  }
+  55% {
+    transform: translate(26px, -34px) rotate(14deg);
+    opacity: 0;
+  }
+  56% {
+    transform: none;
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-ui-style="tabletop"] .table-deck.is-drawn .table-deck-pile img {
+    animation: none;
+  }
+}
+
+@media (max-width: 1199px) {
+  body[data-ui-style="tabletop"] .side-panel > .table-decks {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Ж. Сказочный шрифт для заголовков и имён, меньше заглавных букв в подписях */

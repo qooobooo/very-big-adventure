@@ -106,6 +106,7 @@ const ui = {
   settingsPanel: document.querySelector("#settingsPanel"),
   settingsToggle: document.querySelector("#settingsToggle"),
   tableMenuBtn: document.querySelector("#tableMenuBtn"),
+  tableDecks: document.querySelector("#tableDecks"),
   showWalkPath: document.querySelector("#showWalkPath"),
   startingCoins: document.querySelector("#startingCoins"),
   turnActions: document.querySelector("#turnActions"),
@@ -2490,6 +2491,7 @@ function render() {
   renderHistory();
   renderWinnerPopup();
   renderTadams();
+  renderTableDecks();
   renderPhoneRoomPanel();
   schedulePhoneSnapshot();
   scheduleBotAction();
@@ -14803,6 +14805,68 @@ async function resolveLandSteal(player) {
   }
 }
 
+// «Настольный»: колоды стопками рубашек с числом карт, клик открывает справочник колоды
+const tableDeckList = [
+  { id: "good", title: "Хорошо", back: "./assets/cards/good_back.png" },
+  { id: "bad", title: "Плохо", back: "./assets/cards/bad_back.png" },
+  { id: "tadam", title: "ТАДАМ", back: "./assets/cards/tadam_back.png" },
+  { id: "shop", title: "Лавка", back: "./assets/cards/shop_back.png" },
+  { id: "event", title: "События", back: "./assets/cards/event_back.png" },
+  { id: "legendary", title: "Оружие", back: "./assets/cards/legendary_back.png" },
+];
+const tableDeckCounts = new Map();
+
+function tableDeckDepth(count) {
+  if (count <= 0) return 0;
+  if (count <= 5) return 1;
+  if (count <= 15) return 2;
+  return 3;
+}
+
+function renderTableDecks() {
+  const container = ui.tableDecks;
+  if (!container || !state?.decks || selectedUiStyle() !== "tabletop") return;
+  for (const deck of tableDeckList) {
+    const pile = state.decks[deck.id];
+    const drawCount = pile?.draw?.length || 0;
+    const discardCount = pile?.discard?.length || 0;
+    let button = container.querySelector(`[data-table-deck="${deck.id}"]`);
+    if (!button) {
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "table-deck";
+      button.dataset.tableDeck = deck.id;
+      button.innerHTML = `
+        <span class="table-deck-pile"><img src="${deck.back}" alt="" aria-hidden="true"></span>
+        <b class="table-deck-count"></b>
+        <span class="table-deck-label">${deck.title}</span>
+      `;
+      container.append(button);
+    }
+    button.hidden = drawCount + discardCount === 0;
+    button.dataset.depth = String(tableDeckDepth(drawCount));
+    button.querySelector(".table-deck-count").textContent = String(drawCount);
+    const label = `${referenceDeckTitles[deck.id] || deck.title}: в колоде ${drawCount}, в сбросе ${discardCount}. Показать карты колоды`;
+    button.title = label;
+    button.setAttribute("aria-label", label);
+    const previous = tableDeckCounts.get(deck.id);
+    tableDeckCounts.set(deck.id, drawCount);
+    if (previous !== undefined && drawCount < previous) {
+      button.classList.remove("is-drawn");
+      void button.offsetWidth;
+      button.classList.add("is-drawn");
+    }
+  }
+}
+
+function openReferenceDeck(deckId) {
+  if (!referenceDeckTitles[deckId]) return;
+  referencePanelOpen = true;
+  visibleReferenceSections.add(deckId);
+  renderReferencePanel();
+  ui.referenceOutput?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function renderTadams() {
   tadamTableEl.innerHTML = "";
   const visibleCards = visibleTadamCards();
@@ -17286,6 +17350,7 @@ ui.monsterStrengthMode?.addEventListener("change", () => {
 ui.uiStyle?.addEventListener("change", () => {
   applyUiStyle();
   saveUiStyle();
+  renderTableDecks();
 });
 ui.fontStyle?.addEventListener("change", () => {
   applyFontStyle();
@@ -17343,6 +17408,13 @@ boardEl?.addEventListener("keydown", (event) => {
   resolveMoveOneFartherBoardKeyTarget(event);
   resolveGoldenMarkerSelectionBoardKeyTarget(event);
   resolveCardChoicePreviewBoardKeyTarget(event);
+});
+ui.tableDecks?.addEventListener("click", (event) => {
+  const button = event.target instanceof Element ? event.target.closest("[data-table-deck]") : null;
+  if (button) openReferenceDeck(button.dataset.tableDeck);
+});
+ui.tableDecks?.addEventListener("animationend", (event) => {
+  if (event.target instanceof Element) event.target.closest(".table-deck")?.classList.remove("is-drawn");
 });
 ui.referenceHeaderBtn?.addEventListener("click", () => {
   toggleReferencePanel();
