@@ -1,0 +1,223 @@
+/*
+  Настольный стиль, шаг 1 (Art / UI, 12 октября 2026): стол из сукна, доска с картонным краем,
+  меню партии, ТАДАМ на сукне, шрифт заголовков.
+  Всё ниже работает только при body[data-ui-style="tabletop"], классический стиль не меняется.
+  Единственное исключение — кнопка меню партии: в классическом стиле она скрыта.
+*/
+
+.table-menu-toggle {
+  display: none;
+}
+
+body[data-ui-style="tabletop"] {
+  --table-felt: #24463a;
+  --table-felt-light: #2e5848;
+  --table-felt-deep: #10221b;
+  --board-edge: #3e2613;
+  --board-edge-light: #b98d4a;
+  --board-edge-under: #1f1208;
+  --tabletop-display: "Ruslan Display", "Rubik", Georgia, serif;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .2 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(120% 95% at 38% 40%, var(--table-felt-light), var(--table-felt) 48%, var(--table-felt-deep));
+  background-attachment: fixed;
+}
+
+/* Тень по краям стола вместо диагональных полос */
+body[data-ui-style="tabletop"]::before,
+body[data-ui-style="tabletop"].is-game-fullscreen .app-shell::before {
+  background: radial-gradient(140% 110% at 45% 40%, transparent 52%, rgba(4, 10, 8, 0.55));
+  opacity: 1;
+}
+
+/* А. Доска лежит на столе: без панели вокруг, с картонным краем и тенью */
+body[data-ui-style="tabletop"] .board-panel {
+  overflow: visible;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+body[data-ui-style="tabletop"] .map-wrap {
+  padding: 12px 12px 20px;
+  background: none;
+}
+
+body[data-ui-style="tabletop"] .map-wrap::before {
+  display: none;
+}
+
+body[data-ui-style="tabletop"] .board {
+  border: 5px solid var(--board-edge);
+  border-radius: 6px;
+  background: var(--board-edge);
+  box-shadow:
+    0 0 0 1.5px var(--board-edge-light),
+    0 4px 0 1.5px var(--board-edge-under),
+    0 14px 22px rgba(0, 0, 0, 0.5),
+    0 2px 40px rgba(0, 0, 0, 0.25);
+}
+
+body[data-ui-style="tabletop"] .board-header {
+  border: 1px solid rgba(230, 178, 88, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 238, 190, 0.08);
+}
+
+@media (min-width: 1200px) {
+  body[data-ui-style="tabletop"] .board {
+    width: min(100%, calc(100dvh - 132px), 980px);
+  }
+}
+
+/* Б. Настройки партии в меню: во время игры видны только служебные кнопки */
+body[data-ui-style="tabletop"] .table-menu-toggle {
+  display: grid;
+}
+
+body[data-ui-style="tabletop"] .table-menu-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: block;
+  fill: none;
+  stroke: #d7aa52;
+  stroke-width: 1.45;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body[data-ui-style="tabletop"] .header-icon-actions {
+  grid-template-columns: repeat(6, var(--header-icon-size));
+}
+
+body[data-ui-style="tabletop"] .side-panel > .game-settings {
+  padding: 0;
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+}
+
+body[data-ui-style="tabletop"] .season-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr);
+  align-items: end;
+  gap: 10px;
+}
+
+body[data-ui-style="tabletop"] .season-controls > label,
+body[data-ui-style="tabletop"] .season-controls > #newGameBtn {
+  display: none;
+}
+
+body[data-ui-style="tabletop"] .season-controls > .header-icon-actions {
+  grid-column: 1 / -1;
+  justify-content: end;
+}
+
+body[data-ui-style="tabletop"] .side-panel > .game-settings.is-table-menu-open,
+body[data-ui-style="tabletop"] .side-panel > .game-settings:has(#settingsPanel:not([hidden])),
+body[data-ui-style="tabletop"] .side-panel > .game-settings:has(.phone-room-panel:not([hidden])) {
+  padding: 14px;
+  border-color: rgba(230, 178, 88, 0.36);
+  background: linear-gradient(180deg, rgba(74, 43, 25, 0.96), rgba(39, 23, 15, 0.96));
+  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 238, 190, 0.08);
+}
+
+body[data-ui-style="tabletop"] .game-settings.is-table-menu-open .season-controls > label {
+  display: grid;
+  grid-row: 1;
+}
+
+body[data-ui-style="tabletop"] .game-settings.is-table-menu-open .season-controls > #newGameBtn {
+  display: block;
+  grid-row: 1;
+  grid-column: 3;
+  min-height: 38px;
+}
+
+body[data-ui-style="tabletop"] .game-settings.is-table-menu-open .season-controls > .header-icon-actions {
+  grid-row: 2;
+}
+
+/* Г. ТАДАМ лежит прямо на сукне, пустые места — отпечатки карт */
+body[data-ui-style="tabletop"] .side-panel > .tadam-card {
+  padding: 4px 0 0;
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+}
+
+body[data-ui-style="tabletop"] .tadam-card .section-title h2 {
+  font-size: 1.4rem;
+  color: #f0dca8;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+body[data-ui-style="tabletop"] .tadam-card .section-title .pill {
+  border-color: rgba(240, 220, 168, 0.22);
+  color: #c9dccf;
+  background: rgba(6, 16, 12, 0.32);
+  box-shadow: none;
+}
+
+body[data-ui-style="tabletop"] .tadam-table {
+  gap: 14px;
+}
+
+body[data-ui-style="tabletop"] .tadam-slot.is-empty {
+  border: 0;
+  border-radius: 10px;
+  background: rgba(4, 12, 9, 0.24);
+  box-shadow:
+    inset 0 4px 10px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.07);
+}
+
+body[data-ui-style="tabletop"] .tadam-slot-empty {
+  display: none;
+}
+
+body[data-ui-style="tabletop"] .tadam-slot.is-filled:nth-child(1) {
+  transform: rotate(-1.6deg);
+}
+
+body[data-ui-style="tabletop"] .tadam-slot.is-filled:nth-child(2) {
+  transform: rotate(1.2deg);
+}
+
+body[data-ui-style="tabletop"] .tadam-slot.is-filled:nth-child(3) {
+  transform: rotate(-0.8deg);
+}
+
+/* Ж. Сказочный шрифт для заголовков и имён, меньше заглавных букв в подписях */
+body[data-ui-style="tabletop"] .section-title h2,
+body[data-ui-style="tabletop"] .score-name strong,
+body[data-ui-style="tabletop"] #infoHistoryTitle,
+body[data-ui-style="tabletop"] #playerShopTitle {
+  font-family: var(--tabletop-display);
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: 0.02em;
+}
+
+body[data-ui-style="tabletop"] .score-name strong {
+  font-size: 1.12rem;
+}
+
+body[data-ui-style="tabletop"] .field-effect span {
+  font-size: 0.74rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+body[data-ui-style="tabletop"] .action-empty {
+  display: block;
+  color: var(--faint);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+body[data-ui-style="tabletop"] .action-empty::first-letter {
+  text-transform: uppercase;
+}

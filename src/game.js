@@ -28,6 +28,7 @@ const autoPlaytestSheetTarget = {
 };
 const defaultUiStyle = "classic";
 const uiStyleValues = new Set(["tabletop", "classic"]);
+const uiStyleStorageKey = "vba-ui-style";
 const defaultFontStyle = "standard";
 const fontStyleValues = new Set(["standard", "adventure"]);
 const defaultPhoneRoomMode = "full";
@@ -104,6 +105,7 @@ const ui = {
   saveHistoryBtn: document.querySelector("#saveHistoryBtn"),
   settingsPanel: document.querySelector("#settingsPanel"),
   settingsToggle: document.querySelector("#settingsToggle"),
+  tableMenuBtn: document.querySelector("#tableMenuBtn"),
   showWalkPath: document.querySelector("#showWalkPath"),
   startingCoins: document.querySelector("#startingCoins"),
   turnActions: document.querySelector("#turnActions"),
@@ -421,6 +423,7 @@ const tileIcons = {
   start: '<img class="tile-icon-image tile-icon-start" src="./assets/icons/start_512.png" alt="Старт">',
 };
 
+restoreUiStyle();
 applyUiStyle();
 applyFontStyle();
 applyBoardConfig(ui.boardSelect?.value || "field2");
@@ -558,6 +561,39 @@ function applyUiStyle() {
   if (document.body) document.body.dataset.uiStyle = selectedUiStyle();
   syncSettingsToggleLabel();
   syncWideScoreStripPlacement();
+}
+
+function restoreUiStyle() {
+  try {
+    const saved = window.localStorage.getItem(uiStyleStorageKey);
+    if (ui.uiStyle && uiStyleValues.has(saved)) ui.uiStyle.value = saved;
+  } catch {
+    // Storage may be blocked; the default style still works.
+  }
+}
+
+function saveUiStyle() {
+  try {
+    window.localStorage.setItem(uiStyleStorageKey, selectedUiStyle());
+  } catch {
+    // Storage may be blocked; the choice lasts until reload.
+  }
+}
+
+function tableMenuSection() {
+  return ui.tableMenuBtn?.closest(".game-settings") || null;
+}
+
+function tableMenuOpen() {
+  return Boolean(tableMenuSection()?.classList.contains("is-table-menu-open"));
+}
+
+function setTableMenuOpen(open) {
+  const section = tableMenuSection();
+  if (!section) return;
+  section.classList.toggle("is-table-menu-open", open);
+  ui.tableMenuBtn.setAttribute("aria-expanded", String(open));
+  ui.tableMenuBtn.classList.toggle("active", open);
 }
 
 function applyFontStyle() {
@@ -17220,6 +17256,13 @@ function syncWideScoreStripPlacement() {
 }
 
 ui.newGameBtn.addEventListener("click", newGame);
+ui.newGameBtn.addEventListener("click", () => setTableMenuOpen(false));
+ui.tableMenuBtn?.addEventListener("click", () => setTableMenuOpen(!tableMenuOpen()));
+document.addEventListener("click", (event) => {
+  if (!tableMenuOpen()) return;
+  if (event.target instanceof Element && event.target.closest(".game-settings")) return;
+  setTableMenuOpen(false);
+});
 ui.boardSelect?.addEventListener("change", newGame);
 ui.monsterStrengthMode?.addEventListener("change", () => {
   renderBoard();
@@ -17227,6 +17270,7 @@ ui.monsterStrengthMode?.addEventListener("change", () => {
 });
 ui.uiStyle?.addEventListener("change", () => {
   applyUiStyle();
+  saveUiStyle();
 });
 ui.fontStyle?.addEventListener("change", () => {
   applyFontStyle();
@@ -17449,6 +17493,11 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && playerShopPopupOpen()) {
     event.preventDefault();
     closePlayerShopPopup();
+    return;
+  }
+  if (event.key === "Escape" && tableMenuOpen()) {
+    setTableMenuOpen(false);
+    ui.tableMenuBtn?.focus({ preventScroll: true });
     return;
   }
   if (event.key === "Enter" && playerShopPopupOpen()) {
