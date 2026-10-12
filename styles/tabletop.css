@@ -2001,6 +2001,51 @@ body[data-ui-style="tabletop"] :is(.score-battle-bonus, .score-curse-bonus, .sco
   }
 }
 
+/* М. Трек ярости монстров: общий для стола, сила монстра = база на поле + маркер. Маркер — красная фишка */
+body[data-ui-style="tabletop"] .monster-rage-indicator.is-rage-track {
+  --player-color: #c8402e;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 9px;
+  color: #f4d482;
+  background:
+    linear-gradient(180deg, rgba(255, 238, 190, 0.1), transparent 30%),
+    linear-gradient(180deg, #5a2a1a, #3a170d);
+  box-shadow:
+    inset 0 1px rgba(255, 238, 190, 0.2),
+    inset 0 -2px rgba(0, 0, 0, 0.3),
+    3px 6px 10px rgba(0, 0, 0, 0.45);
+  text-align: left;
+  text-transform: none;
+}
+
+body[data-ui-style="tabletop"] .rage-track-label {
+  font-family: var(--tabletop-display);
+  font-size: 0.86rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+body[data-ui-style="tabletop"] .rage-track-label b {
+  margin-left: 3px;
+  color: rgba(255, 236, 205, 0.55);
+  font-weight: 400;
+}
+
+body[data-ui-style="tabletop"] .monster-rage-indicator.is-raging .rage-track-label b {
+  color: #ff9a7a;
+}
+
+body[data-ui-style="tabletop"] .score-track[data-track="rage"] {
+  --track-icon: url("../assets/icons/enemy_512.png");
+}
+
 /* Ж. Сказочный шрифт для заголовков и имён, меньше заглавных букв в подписях */
 body[data-ui-style="tabletop"] .section-title h2,
 body[data-ui-style="tabletop"] .score-name strong,

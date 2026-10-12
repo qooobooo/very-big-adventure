@@ -5988,10 +5988,24 @@ function plainTextFromHtml(html) {
   return wrapper.textContent.replace(/\s+/g, " ").trim();
 }
 
+// Настольный стиль: трек ярости монстров виден всю партию, сила монстра — база плюс маркер ярости.
+// Деления 0–8, больше восьми — маркер идёт по кругу с биркой «+8». В классическом стиле — плашка при ярости
+const monsterRageTrackEnd = 8;
+
 function renderMonsterRageIndicator() {
   if (!ui.monsterRageIndicator) return;
   const rage = monsterRageBonus();
-  ui.monsterRageIndicator.hidden = rage <= 0;
+  const tabletop = document.body.dataset.uiStyle === "tabletop";
+  ui.monsterRageIndicator.hidden = rage <= 0 && !tabletop;
+  ui.monsterRageIndicator.classList.toggle("is-rage-track", tabletop);
+  ui.monsterRageIndicator.classList.toggle("is-raging", rage > 0);
+  if (tabletop) {
+    ui.monsterRageIndicator.innerHTML = `
+      <span class="rage-track-label">Ярость монстров <b>+${rage}</b></span>
+      ${scoreTrackMarkup("rage", "Ярость монстров", rage, { from: 0, to: monsterRageTrackEnd, signed: true })}
+    `;
+    return;
+  }
   ui.monsterRageIndicator.textContent = rage > 0 ? `Ярость монстров +${rage}` : "";
 }
 
@@ -17740,6 +17754,7 @@ ui.uiStyle?.addEventListener("change", () => {
   saveUiStyle();
   renderTableDecks();
   if (state) renderTableHost(currentPlayer());
+  if (state) renderMonsterRageIndicator();
   schedulePhoneSnapshot();
 });
 ui.fontStyle?.addEventListener("change", () => {
