@@ -63,7 +63,7 @@
 
 - **Числа баланса** (урон, цены, шаги, монеты и т. п.) — в конфиге `src/game.config.js`, не в коде (решение пользователя, 11 октября 2026). Перенос чисел из `game.js` — задача GD.
 - **Google Таблица `Cards Config`** — главный источник карт (вкладки `good`, `bad`, `tadam`, `shop`, `event`). `src/cards.config.js` и `cards-google-sheet.csv` держать синхронными с ней. Ссылки на таблицы — [правила дизайна и карт](docs/design/RULES.md).
-- Порядок колонок: `deck,id,title,shortTitle,effect_type,amount,steps,cost,dice,mode,target_deck,notes,count,description`.
+- Порядок колонок: `deck,id,title,shortTitle,effect_type,amount,steps,cost,dice,mode,target_deck,notes,count,description,artifact_desr,moment`. `moment` — только у карт Лавки, момент срабатывания для планшета игрока: `battle`, `move`, `shop`, `turn-start`, `reaction` (12 октября 2026). Текст с запятыми в CSV — в кавычках.
 - Имя карты — `title`, текст лица хорошей карты — `description`. В `title`, `shortTitle`, `description` нет точки в конце (внутренние точки можно). `notes` — как угодно, если не выводится на карту.
 - Меняешь числа в тексте карты — меняй и поля эффекта и логику, не только текст. Баланс молча не менять.
 
