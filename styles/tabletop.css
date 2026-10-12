@@ -2157,3 +2157,100 @@ body[data-ui-style="tabletop"] .action-empty {
 body[data-ui-style="tabletop"] .action-empty::first-letter {
   text-transform: uppercase;
 }
+
+/* О1. Правая колонка в масштабе концепта: колоды размером с карту над строкой ТАДАМ */
+body[data-ui-style="tabletop"] .side-panel > .table-decks {
+  order: 0;
+}
+
+body[data-ui-style="tabletop"] .table-deck {
+  width: 62px;
+}
+
+body[data-ui-style="tabletop"] .table-deck-pile,
+body[data-ui-style="tabletop"] .table-market-card {
+  width: 54px;
+  height: 76px;
+}
+
+/* Число карт — латунная монета в правом нижнем углу стопки */
+body[data-ui-style="tabletop"] .table-deck-count {
+  top: 58px;
+  right: -6px;
+}
+
+body[data-ui-style="tabletop"] .table-market-card > b {
+  font-size: 0.54rem;
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+
+body[data-ui-style="tabletop"] .table-market-card .shop-card-moment {
+  width: 17px;
+}
+
+/* ТАДАМ — одна строка: слева заголовок и «в игре N из 3», справа три отпечатка размером с карту */
+body[data-ui-style="tabletop"] .side-panel > .tadam-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 0 2px;
+}
+
+body[data-ui-style="tabletop"] .tadam-card .section-title {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  margin: 0;
+}
+
+body[data-ui-style="tabletop"] .tadam-card .section-title .pill {
+  display: none;
+}
+
+body[data-ui-style="tabletop"] .tadam-card .section-title::after {
+  content: "в игре 0 из 3";
+  color: rgba(240, 220, 168, 0.7);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+body[data-ui-style="tabletop"] .tadam-card[data-count="1"] .section-title::after {
+  content: "в игре 1 из 3";
+}
+
+body[data-ui-style="tabletop"] .tadam-card[data-count="2"] .section-title::after {
+  content: "в игре 2 из 3";
+}
+
+body[data-ui-style="tabletop"] .tadam-card[data-count="3"] .section-title::after {
+  content: "в игре 3 из 3";
+}
+
+body[data-ui-style="tabletop"] .tadam-table {
+  grid-template-columns: repeat(3, 104px);
+  gap: 12px;
+}
+
+body[data-ui-style="tabletop"] .tadam-slot.is-empty {
+  border-radius: 8px;
+}
+
+/* Карту ТАДАМ можно «взять в руки»: наведение увеличивает её поверх колонки */
+body[data-ui-style="tabletop"] .tadam-slot.is-filled {
+  z-index: 1;
+  transform-origin: 100% 100%;
+  transition: transform 0.18s ease;
+}
+
+body[data-ui-style="tabletop"] .tadam-slot.is-filled:hover {
+  z-index: 6;
+  transform: scale(1.9) rotate(0deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-ui-style="tabletop"] .tadam-slot.is-filled {
+    transition: none;
+  }
+}

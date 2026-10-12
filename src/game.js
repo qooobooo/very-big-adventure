@@ -15196,6 +15196,9 @@ function openReferenceDeck(deckId) {
 function renderTadams() {
   tadamTableEl.innerHTML = "";
   const visibleCards = visibleTadamCards();
+  // Настольный стиль подписывает строку ТАДАМ «в игре N из 3»
+  const tadamSection = tadamTableEl.closest(".tadam-card");
+  if (tadamSection) tadamSection.dataset.count = String(Math.min(3, visibleCards.length));
   const flashKeys = new Set(state.tadamFlashKeys || []);
   const flashStartedAt = state.tadamFlashStartedAt || {};
   const now = animationClockMs();
