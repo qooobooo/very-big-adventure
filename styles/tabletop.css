@@ -2866,3 +2866,71 @@ body[data-ui-style="tabletop"] .controller-big-button.is-roll {
   font-weight: 400;
   text-shadow: 0 1px 0 rgba(255, 244, 205, 0.6);
 }
+
+/* О8. Невысокий широкий экран (1280×800 и ниже 860px по высоте): колонка плотнее, чтобы лоток кубика не уходил за борт */
+@media (min-width: 1200px) and (max-height: 860px) {
+  body[data-ui-style="tabletop"] .side-panel {
+    gap: 6px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .table-host {
+    height: 34px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .table-host .table-host-line {
+    font-size: 1rem;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .game-settings:not(.is-table-menu-open, :has(#settingsPanel:not([hidden])), :has(.phone-room-panel:not([hidden]))) {
+    top: -5px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel .table-menu-toggle {
+    width: 40px;
+    height: 40px;
+  }
+
+  body[data-ui-style="tabletop"] .score-strip {
+    row-gap: 14px;
+  }
+
+  body[data-ui-style="tabletop"] .score-card {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  body[data-ui-style="tabletop"] .score-shop {
+    margin-top: 4px;
+  }
+
+  body[data-ui-style="tabletop"] .table-deck {
+    width: 52px;
+  }
+
+  body[data-ui-style="tabletop"] .table-deck-pile,
+  body[data-ui-style="tabletop"] .table-market-card {
+    width: 44px;
+    height: 62px;
+  }
+
+  body[data-ui-style="tabletop"] .table-deck-count {
+    top: 44px;
+  }
+
+  body[data-ui-style="tabletop"] .tadam-table {
+    grid-template-columns: repeat(3, 58px);
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .board-header {
+    padding: 7px 10px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel #diceValue {
+    width: 44px;
+    height: 44px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel #rollBtn {
+    height: 40px;
+  }
+}
