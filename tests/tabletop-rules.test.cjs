@@ -53,3 +53,21 @@ test('a bot auto-resolving the shop prompt buys its own pick instead of declinin
     assert.equal(await declined, null, name);
   }
 });
+
+test('every Лавка Джо card has one known trigger moment, in the config and in the sheet CSV', async () => {
+  const { cardConfig, shopCardMoments } = await import('../src/cards.config.js');
+  assert.deepEqual(Object.keys(shopCardMoments), ['turn-start', 'move', 'battle', 'shop', 'reaction']);
+  const csv = fs.readFileSync(path.join(__dirname, '../cards-google-sheet.csv'), 'utf8').trim().split('\n');
+  assert.ok(csv[0].endsWith(',moment'));
+  // moment is the last column; descriptions may hold quoted commas, so read it from the end of the line.
+  const sheet = new Map(csv.slice(1).map((line) => line.split(',')).filter((cells) => cells[0] === 'shop')
+    .map((cells) => [cells[1], cells.at(-1)]));
+  assert.equal(cardConfig.shop.length, 20);
+  for (const card of cardConfig.shop) {
+    assert.ok(shopCardMoments[card.moment], card.id);
+    assert.equal(sheet.get(card.id), card.moment, card.id);
+  }
+  const c = load(['shopCardMoment', 'shopCardMomentLabel'], { cardConfig, shopCardMoments });
+  assert.equal(c.shopCardMomentLabel({ id: 'others-loss-income' }), 'Реакция');
+  assert.equal(c.shopCardMoment(null), null);
+});

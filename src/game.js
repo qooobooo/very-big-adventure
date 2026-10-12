@@ -1,4 +1,4 @@
-import { cardConfig } from "./cards.config.js?v=20260728-0800";
+import { cardConfig, shopCardMoments } from "./cards.config.js?v=20261012-0320";
 import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260703-0118";
 
 const boardEl = document.querySelector("#board");
@@ -5659,6 +5659,15 @@ function activeShopSetBonus(player, cardId, field) {
   if (cards.length < 2) return 0;
   const otherCopies = cards.length - 1;
   return cards.reduce((sum, item) => sum + otherCopies * (Number(item.effect?.[field]) || 0), 0);
+}
+
+// Saved games may hold shop cards from before the moment field, so fall back to the config by id.
+function shopCardMoment(card) {
+  return card?.moment || cardConfig.shop.find((item) => item.id === card?.id)?.moment || null;
+}
+
+function shopCardMomentLabel(card) {
+  return shopCardMoments[shopCardMoment(card)] || "";
 }
 
 function faceDownShopItems(player) {
