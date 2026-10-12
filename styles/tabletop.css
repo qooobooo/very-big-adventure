@@ -2661,3 +2661,97 @@ body[data-ui-style="tabletop"] .tadam-table .tadam-slot.has-card-face:not(:hover
     width: min(100%, calc(100dvh - 76px), 980px);
   }
 }
+
+/* О6. Служебное — в латунном диске меню рядом с лентой ведущего. Закрытое меню — один диск,
+   открытое — пергаментная панель поверх колонки: игроки, боты, новая игра и служебные кнопки. Диск при этом стоит на месте */
+@media (min-width: 1200px) {
+  body[data-ui-style="tabletop"] .side-panel {
+    position: relative;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .table-host {
+    margin-right: 54px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .game-settings {
+    position: absolute;
+    top: -2px;
+    right: 0;
+    z-index: 20;
+    width: auto;
+    max-width: 100%;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .game-settings:not(.is-table-menu-open, :has(#settingsPanel:not([hidden])), :has(.phone-room-panel:not([hidden]))) .header-icon-actions > :not(.table-menu-toggle) {
+    display: none;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .game-settings:not(.is-table-menu-open, :has(#settingsPanel:not([hidden])), :has(.phone-room-panel:not([hidden]))) .header-icon-actions {
+    grid-template-columns: 44px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .game-settings:is(.is-table-menu-open, :has(#settingsPanel:not([hidden])), :has(.phone-room-panel:not([hidden]))) {
+    top: -10px;
+    right: -8px;
+    left: 0;
+    max-height: calc(100dvh - 40px);
+    overflow: auto;
+    padding: 8px 8px 14px 14px;
+    border: 1px solid #7d5c2e;
+    border-radius: 10px;
+    color: #3a2412;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .22 0 0 0 0 .08 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"),
+      radial-gradient(130% 120% at 28% 8%, #f8ecd2, #ecd6a7 58%, #dcbf86);
+    box-shadow: inset 0 0 16px rgba(128, 84, 32, 0.26), 4px 12px 24px rgba(0, 0, 0, 0.5);
+  }
+
+  /* В открытом меню кнопки идут первой строкой — диск остаётся в правом верхнем углу */
+  body[data-ui-style="tabletop"] .side-panel > .game-settings .season-controls > .header-icon-actions {
+    grid-row: 1;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .game-settings.is-table-menu-open .season-controls > label,
+  body[data-ui-style="tabletop"] .side-panel > .game-settings.is-table-menu-open .season-controls > #newGameBtn {
+    grid-row: 2;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .game-settings:is(.is-table-menu-open, :has(#settingsPanel:not([hidden])), :has(.phone-room-panel:not([hidden]))) .control-label-copy {
+    color: rgba(58, 36, 18, 0.75);
+  }
+
+  /* Латунный диск меню */
+  body[data-ui-style="tabletop"] .side-panel .table-menu-toggle {
+    width: 44px;
+    height: 44px;
+    border: 1px solid #6e4718;
+    border-radius: 50%;
+    background: radial-gradient(circle at 36% 30%, #fff0c0, #e2b357 46%, #a8772a 80%, #7a5420);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 250, 222, 0.8),
+      inset 0 -2px 3px rgba(94, 60, 20, 0.45),
+      2px 4px 0 rgba(58, 36, 14, 0.7),
+      4px 8px 12px rgba(0, 0, 0, 0.42);
+  }
+
+  body[data-ui-style="tabletop"] .side-panel .table-menu-toggle > .table-menu-icon {
+    display: none;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel .table-menu-toggle::before {
+    content: "";
+    width: 18px;
+    height: 14px;
+    margin: auto;
+    background:
+      linear-gradient(#4a2c0c, #4a2c0c) 0 0 / 100% 2.5px no-repeat,
+      linear-gradient(#4a2c0c, #4a2c0c) 0 50% / 100% 2.5px no-repeat,
+      linear-gradient(#4a2c0c, #4a2c0c) 0 100% / 100% 2.5px no-repeat;
+    border-radius: 1px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel .table-menu-toggle:hover,
+  body[data-ui-style="tabletop"] .side-panel .table-menu-toggle.active {
+    filter: brightness(1.07);
+  }
+}
