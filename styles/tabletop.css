@@ -2985,3 +2985,110 @@ body[data-ui-style="tabletop"] .controller-big-button.is-roll {
 body[data-ui-style="tabletop"] .tadam-slot.is-filled {
   cursor: pointer;
 }
+
+/* О11. Планшеты плотнее, как в концепте: «Лавка Джо», ряды карт и «Карты» — одной строкой,
+   треки тоньше, карман монет по высоте треков. У трёх игроков планшеты стоят в один ряд */
+@media (min-width: 1200px) {
+  body[data-ui-style="tabletop"] .score-card {
+    padding: 7px 9px 7px 11px;
+  }
+
+  body[data-ui-style="tabletop"] .score-name {
+    margin-bottom: 3px;
+  }
+
+  body[data-ui-style="tabletop"] .score-stats {
+    gap: 6px;
+  }
+
+  body[data-ui-style="tabletop"] .score-stats > .score-tracks {
+    gap: 2px;
+  }
+
+  body[data-ui-style="tabletop"] .score-card .score-track-groove {
+    height: 15px;
+  }
+
+  body[data-ui-style="tabletop"] .score-card .score-track-groove > i.is-on::before {
+    width: 13px;
+    height: 13px;
+  }
+
+  body[data-ui-style="tabletop"] .score-card .score-track-icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  body[data-ui-style="tabletop"] .score-card .score-track {
+    grid-template-columns: 15px minmax(0, 1fr) auto;
+    gap: 4px;
+  }
+
+  body[data-ui-style="tabletop"] .score-stats > .score-stat-coins {
+    min-width: 40px;
+    min-height: 0;
+    align-self: stretch;
+    padding: 2px 4px;
+  }
+
+  /* Строка Лавки: подпись слева, «нет карт» посередине, «Карты» справа. Ряды по моменту — под ней во всю ширину */
+  body[data-ui-style="tabletop"] .score-card .score-shop {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 6px;
+    row-gap: 3px;
+    margin-top: 5px;
+  }
+
+  body[data-ui-style="tabletop"] .score-card .score-shop-head {
+    display: contents;
+  }
+
+  body[data-ui-style="tabletop"] .score-card .score-shop-head > span {
+    grid-column: 1;
+    grid-row: 1;
+    max-width: 3.4em;
+    line-height: 1.05;
+    white-space: normal;
+  }
+
+  body[data-ui-style="tabletop"] .score-card .score-shop small.score-shop-empty {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  body[data-ui-style="tabletop"] .score-card .score-shop-view {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  body[data-ui-style="tabletop"] .score-card .score-shop > div:not(.score-shop-head, .score-moments) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  body[data-ui-style="tabletop"] .score-card .score-shop > .score-moments {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    gap: 3px;
+  }
+
+  /* Длинное имя мини-карты обрезается многоточием, полное — в подсказке */
+  body[data-ui-style="tabletop"] .score-card .score-moment-cards > small {
+    min-width: 0;
+    max-width: 100%;
+    min-height: 25px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Три игрока — три планшета в ряд, без одинокого третьего во втором ряду */
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(3):last-child) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 14px;
+  }
+}
