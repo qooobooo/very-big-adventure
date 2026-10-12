@@ -396,6 +396,56 @@ body[data-ui-style="tabletop"] .score-dice-pips > i.is-on {
   box-shadow: 0 1px 0 #6b4a22, 0 2px 3px rgba(0, 0, 0, 0.45);
 }
 
+/* На телефоне планшет ~180px: жетоны и ячейки мельче, монеты — одна, ряд остаётся в одну строку */
+@media (max-width: 680px) {
+  body[data-ui-style="tabletop"] .score-stats {
+    grid-template-columns: auto auto auto auto;
+    justify-content: space-between;
+    gap: 3px;
+  }
+
+  body[data-ui-style="tabletop"] .score-stats > span,
+  body[data-ui-style="tabletop"] .score-stats .strength-amount,
+  body[data-ui-style="tabletop"] .score-stats .steps-amount,
+  body[data-ui-style="tabletop"] .score-stats .coin-amount {
+    gap: 2px;
+  }
+
+  body[data-ui-style="tabletop"] .score-stats b {
+    font-size: 0.76rem;
+  }
+
+  body[data-ui-style="tabletop"] .score-stats .strength-icon,
+  body[data-ui-style="tabletop"] .score-stats .steps-icon {
+    width: 18px;
+    height: 18px;
+    padding: 1px;
+    box-shadow: 0 1px 0 #3a210c, inset 0 -1px 2px rgba(60, 30, 5, 0.45);
+  }
+
+  body[data-ui-style="tabletop"] .score-stat-coins::before,
+  body[data-ui-style="tabletop"] .score-stat-coins[data-coin-tier]::before {
+    width: 15px;
+    height: 15px;
+    background: var(--coin) center / 15px 15px no-repeat;
+  }
+
+  body[data-ui-style="tabletop"] .score-stat-dice:not(.is-many) .score-dice-pips {
+    grid-template-columns: repeat(4, 6px);
+    gap: 2px;
+  }
+
+  body[data-ui-style="tabletop"] .score-dice-pips > i {
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+  }
+
+  body[data-ui-style="tabletop"] .score-dice-pips > i.is-on {
+    background: linear-gradient(180deg, #fffaf0, #e6d6b4);
+  }
+}
+
 /* Карты Лавки веером */
 body[data-ui-style="tabletop"] .score-shop {
   margin-top: 7px;
@@ -818,6 +868,32 @@ body[data-ui-style="tabletop"] .table-host.is-new-turn {
   }
 }
 
+/* 1200–1319px: ряд под доской узкий, лента и действия делят его поровну, лента компактнее */
+@media (min-width: 1200px) and (max-width: 1319px) {
+  body[data-ui-style="tabletop"] .dice-panel {
+    grid-template-columns: 44px 44px minmax(0, 1.1fr) minmax(0, 1fr) 128px;
+  }
+
+  body[data-ui-style="tabletop"] .table-host {
+    padding: 4px 16px 4px 36px;
+  }
+
+  body[data-ui-style="tabletop"] .table-host::before {
+    left: 13px;
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
+  }
+
+  body[data-ui-style="tabletop"] .table-host-line {
+    font-size: 0.9rem;
+  }
+
+  body[data-ui-style="tabletop"] .table-host-cell {
+    font-size: 0.64rem;
+  }
+}
+
 /* Действий нет — плашка «нет действий» убирается, лента занимает её место */
 body[data-ui-style="tabletop"] .turn-actions:has(> .action-empty) {
   display: none;
@@ -859,15 +935,322 @@ body[data-ui-style="tabletop"] .dice-panel:has(> .turn-actions > .action-empty) 
   }
 }
 
-/* На телефоне ряд под доской раскладывается по областям сетки панели доски */
+/* На телефоне лента идёт рядом с лотком во всю ширину, действия — отдельной строкой над кнопкой */
 @media (max-width: 680px) {
+  body[data-ui-style="tabletop"] .board-panel {
+    grid-template-areas:
+      "map map map map"
+      "dice info field field"
+      "roll roll roll roll";
+  }
+
+  body[data-ui-style="tabletop"] .board-panel:has(.turn-actions > :not(.action-empty)) {
+    grid-template-areas:
+      "map map map map"
+      "dice info field field"
+      "actions actions actions actions"
+      "roll roll roll roll";
+  }
+
   body[data-ui-style="tabletop"] .table-host {
     grid-area: field;
     height: 58px;
   }
+}
 
-  body[data-ui-style="tabletop"] .dice-panel:has(> .turn-actions > .action-empty) > .table-host {
-    grid-column: field-start / actions-end;
+/* З. Попапы-предметы: Хроника — свиток, карты игрока — прилавок с вывеской, выбор — карта на столе */
+body[data-ui-style="tabletop"] .info-history-popup,
+body[data-ui-style="tabletop"] .player-shop-popup {
+  --parchment:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .22 0 0 0 0 .08 0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(120% 90% at 50% 40%, #f8ebc9, #ead39f 62%, #d8b77a);
+  --tabletop-ink: #3a2412;
+}
+
+/* Затемнение — тёплое, как свет лампы над столом */
+body[data-ui-style="tabletop"] :is(.info-history-backdrop, .player-shop-backdrop),
+body[data-ui-style="tabletop"] :is(button.info-history-backdrop, button.player-shop-backdrop):is(:hover:not(:disabled), :focus-visible, :active:not(:disabled)) {
+  background:
+    radial-gradient(60% 55% at 50% 45%, rgba(255, 196, 110, 0.1), transparent 70%),
+    rgba(12, 7, 3, 0.72);
+}
+
+/* Хроника: пергамент между двумя деревянными валиками */
+body[data-ui-style="tabletop"] .info-history-card {
+  overflow: visible;
+  margin: 14px 0;
+  padding: 20px clamp(18px, 2.4vw, 28px) 18px;
+  border: 0;
+  border-radius: 3px;
+  color: var(--tabletop-ink);
+  background: var(--parchment);
+  box-shadow:
+    inset 0 10px 14px -10px rgba(90, 52, 18, 0.55),
+    inset 0 -10px 14px -10px rgba(90, 52, 18, 0.55),
+    0 24px 60px rgba(0, 0, 0, 0.6);
+  backdrop-filter: none;
+}
+
+body[data-ui-style="tabletop"] .info-history-card::before,
+body[data-ui-style="tabletop"] .info-history-card::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  left: -16px;
+  right: -16px;
+  height: 22px;
+  border: 0;
+  border-radius: 11px;
+  background:
+    radial-gradient(circle at 8px 50%, #d9a85a 0 5px, transparent 6px),
+    radial-gradient(circle at calc(100% - 8px) 50%, #d9a85a 0 5px, transparent 6px),
+    linear-gradient(180deg, #9a6a3a, #6a4020 45%, #3e2410);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 220, 160, 0.35);
+  pointer-events: none;
+}
+
+body[data-ui-style="tabletop"] .info-history-card::before {
+  inset: auto -16px auto -16px;
+  top: -12px;
+}
+
+body[data-ui-style="tabletop"] .info-history-card::after {
+  bottom: -12px;
+}
+
+body[data-ui-style="tabletop"] .info-history-head {
+  border-bottom: 1px dashed rgba(90, 52, 18, 0.4);
+}
+
+body[data-ui-style="tabletop"] #infoHistoryTitle {
+  color: var(--tabletop-ink);
+  font-size: clamp(1.4rem, 2.2vw, 1.75rem);
+}
+
+body[data-ui-style="tabletop"] .info-history-action,
+body[data-ui-style="tabletop"] .info-history-action:is(:hover, :focus-visible, .active) {
+  border: 1px solid rgba(90, 52, 18, 0.55);
+  color: #2a1607;
+  background: linear-gradient(180deg, #f4d482, #c7832f);
+  box-shadow: 0 2px 0 rgba(90, 52, 18, 0.45), inset 0 1px 0 rgba(255, 248, 218, 0.45);
+  text-shadow: 0 1px 0 rgba(255, 241, 184, 0.5);
+}
+
+body[data-ui-style="tabletop"] .info-history-action:is(:hover, :focus-visible, .active) {
+  background: linear-gradient(180deg, #f8df9a, #d0923a);
+}
+
+/* Крестик — сургучная печать */
+body[data-ui-style="tabletop"] :is(.info-history-close, .player-shop-close),
+body[data-ui-style="tabletop"] :is(.info-history-close, .player-shop-close):is(:hover:not(:disabled), :focus-visible) {
+  border: 2px solid rgba(70, 12, 8, 0.7);
+  border-radius: 50%;
+  color: #fbe3c4;
+  background: radial-gradient(circle at 36% 30%, #d0574a, #9c2a20 58%, #6a1610);
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 200, 180, 0.4);
+}
+
+body[data-ui-style="tabletop"] :is(.info-history-close, .player-shop-close):is(:hover:not(:disabled), :focus-visible) {
+  background: radial-gradient(circle at 36% 30%, #e06a5c, #ad3328 58%, #761a12);
+}
+
+body[data-ui-style="tabletop"] .info-history-list-wrap {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+body[data-ui-style="tabletop"] .info-history-list-title {
+  border-bottom: 0;
+  color: rgba(58, 36, 18, 0.7);
+  letter-spacing: 0.04em;
+}
+
+body[data-ui-style="tabletop"] .info-history-log,
+body[data-ui-style="tabletop"] .info-history-log li,
+body[data-ui-style="tabletop"] .info-history-log li:first-child {
+  color: var(--tabletop-ink);
+}
+
+body[data-ui-style="tabletop"] .info-history-log li {
+  border-bottom: 1px dotted rgba(90, 52, 18, 0.35);
+}
+
+body[data-ui-style="tabletop"] .info-history-log li::marker {
+  color: rgba(90, 52, 18, 0.6);
+}
+
+body[data-ui-style="tabletop"] .info-history-log strong {
+  color: #5a2c0c;
+}
+
+body[data-ui-style="tabletop"] .info-history-log .player-name {
+  color: color-mix(in srgb, var(--player-color) 62%, #2a1607);
+  text-shadow: none;
+}
+
+/* Карты игрока: деревянный прилавок, сверху вывеска на верёвках */
+body[data-ui-style="tabletop"] .player-shop-card {
+  padding-top: 30px;
+  border: 3px solid var(--board-edge);
+  border-radius: 12px;
+  color: var(--ink);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='60'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .5' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='160' height='60' filter='url(%23g)'/%3E%3C/svg%3E"),
+    radial-gradient(130% 150% at 25% 0%, #74492a, #55331c 55%, #3d2312);
+  box-shadow:
+    0 0 0 1px rgba(185, 141, 74, 0.6),
+    0 4px 0 1px var(--board-edge-under),
+    0 24px 60px rgba(0, 0, 0, 0.6);
+  backdrop-filter: none;
+}
+
+body[data-ui-style="tabletop"] .player-shop-card::before {
+  inset: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(24, 13, 6, 0.22);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+body[data-ui-style="tabletop"] .player-shop-head {
+  position: relative;
+  justify-content: center;
+  padding: 0 52px 14px;
+  border-bottom: 0;
+}
+
+body[data-ui-style="tabletop"] .player-shop-head > div {
+  position: relative;
+  padding: 8px 26px 9px;
+  border: 3px solid #3a2110;
+  border-radius: 6px;
+  color: var(--tabletop-ink);
+  background: var(--parchment);
+  box-shadow: 0 4px 0 rgba(31, 18, 8, 0.8), 0 8px 12px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  transform: rotate(-1.2deg);
+}
+
+/* Верёвки вывески */
+body[data-ui-style="tabletop"] .player-shop-head > div::before,
+body[data-ui-style="tabletop"] .player-shop-head > div::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  width: 3px;
+  height: 22px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(180deg, #c9a46a 0 3px, #8d6a3a 3px 6px);
+}
+
+body[data-ui-style="tabletop"] .player-shop-head > div::before {
+  left: 18%;
+}
+
+body[data-ui-style="tabletop"] .player-shop-head > div::after {
+  right: 18%;
+}
+
+body[data-ui-style="tabletop"] .player-shop-kicker {
+  margin-bottom: 2px;
+  color: rgba(58, 36, 18, 0.72);
+  letter-spacing: 0.03em;
+  text-transform: none;
+}
+
+body[data-ui-style="tabletop"] #playerShopTitle {
+  color: var(--tabletop-ink);
+}
+
+body[data-ui-style="tabletop"] .player-shop-close {
+  position: absolute;
+  top: -12px;
+  right: 0;
+}
+
+/* Столешница прилавка: тёмная доска с кромкой, на ней карты */
+body[data-ui-style="tabletop"] .player-shop-body {
+  padding: 16px 12px 14px;
+  border-top: 5px solid #8d5e2e;
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.08) 22px, transparent 60px),
+    linear-gradient(180deg, #4a2a15, #3a2010);
+  box-shadow: inset 0 1px 0 rgba(255, 220, 160, 0.25);
+}
+
+body[data-ui-style="tabletop"] .player-shop-section + .player-shop-section {
+  border-top: 1px dashed rgba(230, 178, 88, 0.3);
+}
+
+body[data-ui-style="tabletop"] .player-shop-section h3 {
+  font-family: var(--tabletop-display);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+/* Подписи под картами — ценники на бечёвке */
+body[data-ui-style="tabletop"] .player-shop-card-label {
+  border: 1px solid rgba(90, 52, 18, 0.6);
+  border-radius: 3px 10px 10px 3px;
+  color: var(--tabletop-ink);
+  background: var(--parchment);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35);
+}
+
+body[data-ui-style="tabletop"] .player-shop-empty {
+  border: 2px dashed rgba(255, 236, 205, 0.18);
+  border-radius: 10px;
+  color: rgba(255, 236, 205, 0.72);
+  background: transparent;
+  font-style: italic;
+}
+
+/* Выбор: карта в рамке слоновой кости, заголовок — на ленте */
+body[data-ui-style="tabletop"] .choice-dialog {
+  border: 3px solid #e9cf94;
+  border-radius: 14px;
+  box-shadow:
+    inset 0 0 0 2px #3a2110,
+    inset 0 0 0 4px rgba(233, 207, 148, 0.35),
+    0 6px 0 rgba(31, 18, 8, 0.85),
+    0 26px 50px rgba(0, 0, 0, 0.55);
+}
+
+body[data-ui-style="tabletop"] .choice-kicker {
+  justify-self: start;
+  padding: 3px 16px 3px 12px;
+  color: var(--tabletop-ink, #3a2412);
+  background: linear-gradient(180deg, #f6e7c1, #e2c68c);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 50%, 100% 100%, 0 100%);
+  letter-spacing: 0.04em;
+}
+
+body[data-ui-style="tabletop"] .choice-dialog h3 {
+  font-family: var(--tabletop-display);
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 680px) {
+  body[data-ui-style="tabletop"] .info-history-card {
+    margin: 12px 0;
+  }
+
+  body[data-ui-style="tabletop"] .info-history-card::before,
+  body[data-ui-style="tabletop"] .info-history-card::after {
+    left: -8px;
+    right: -8px;
+  }
+
+  body[data-ui-style="tabletop"] .player-shop-head {
+    flex-wrap: nowrap;
+    padding: 0 44px 12px 0;
+    justify-content: flex-start;
   }
 }
 

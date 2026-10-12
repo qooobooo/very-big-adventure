@@ -14820,13 +14820,28 @@ function tableHostPhrase(player) {
   return bot ? `${name} бросает кубик` : `${name}, брось кубик`;
 }
 
+// Кто сейчас действует: владелец отложенного выбора, иначе игрок, чей ход
+function tableHostActor(player) {
+  const pending = [
+    state.pendingPreRoll,
+    state.pendingDiceControl,
+    state.pendingMoveDieReroll,
+    state.pendingMoveOneFarther,
+    state.pendingShop,
+    state.pendingShopClaim,
+    state.pendingCardChoice,
+    state.pendingChoice,
+  ].find((item) => item?.playerId != null);
+  return (pending && playerById(pending.playerId)) || player;
+}
+
 function renderTableHost(player) {
   const container = ui.tableHost;
   if (!container || !state?.players || !player || selectedUiStyle() !== "tabletop") return;
   if (!container.firstElementChild) {
     container.innerHTML = '<b class="table-host-line"></b><span class="table-host-cell"></span>';
   }
-  container.style.setProperty("--player-color", player.color);
+  container.style.setProperty("--player-color", tableHostActor(player).color);
   const phrase = tableHostPhrase(player);
   container.querySelector(".table-host-line").textContent = phrase;
   container.querySelector(".table-host-cell").innerHTML = ui.fieldEffect?.innerHTML || "";
