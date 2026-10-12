@@ -2568,3 +2568,66 @@ body[data-ui-style="tabletop"] .score-card .score-curse-bonus {
     font-size: 0.9rem;
   }
 }
+
+/* О4. Карты Лавки на планшете — мини-карты внахлёст: у каждой слева уменьшенное лицо Лавки, рядом короткое имя.
+   Наведение приподнимает карту из веера. Ряд остаётся низким, чтобы колонка влезала в экран */
+body[data-ui-style="tabletop"] .score-card .score-moment-cards > small {
+  position: relative;
+  min-height: 27px;
+  margin-left: -7px;
+  padding: 3px 8px 3px 25px;
+  border: 1px solid #8a6a3a;
+  border-radius: 4px;
+  background:
+    url("../assets/cards/shop_front.png") 3px 50% / 17px 23px no-repeat,
+    linear-gradient(180deg, #fbf1d8, #e6cf9e);
+  box-shadow: 1px 2px 2px rgba(60, 36, 14, 0.42), inset 0 1px 0 rgba(255, 252, 240, 0.8);
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+body[data-ui-style="tabletop"] .score-card .score-moment-cards > small:first-child {
+  margin-left: 0;
+}
+
+body[data-ui-style="tabletop"] .score-card .score-moment-cards > small.shop-face-down {
+  padding-left: 25px;
+  background:
+    url("../assets/cards/shop_back.png") 3px 50% / 17px 23px no-repeat,
+    linear-gradient(180deg, #34586a, #22404e);
+}
+
+body[data-ui-style="tabletop"] .score-card .score-moment-cards > small:hover {
+  z-index: 3;
+  transform: translateY(-4px) rotate(0deg);
+  box-shadow: 2px 6px 8px rgba(60, 36, 14, 0.45), inset 0 1px 0 rgba(255, 252, 240, 0.8);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-ui-style="tabletop"] .score-card .score-moment-cards > small {
+    transition: none;
+  }
+}
+
+@media (max-width: 680px) {
+  body[data-ui-style="tabletop"] .score-card .score-moment-cards > small {
+    min-height: 22px;
+    margin-left: -5px;
+    padding-left: 19px;
+    background-position: 2px 50%, 0 0;
+    background-size: 13px 18px, auto;
+  }
+}
+
+/* Карта ТАДАМ в отпечатке размером с колоду: видно только имя, текст — когда карту «берут в руки» наведением */
+body[data-ui-style="tabletop"] .tadam-table .tadam-slot.has-card-face .tadam-card-text {
+  --card-face-title-row: 10px;
+  --card-face-title-size: 6px;
+  --card-face-description-size: 3.4px;
+  --card-face-description-gap: 1px;
+  --card-face-description-line-height: 1.05;
+  gap: 1px;
+}
+
+body[data-ui-style="tabletop"] .tadam-table .tadam-slot.has-card-face:not(:hover) .card-face-description {
+  visibility: hidden;
+}
