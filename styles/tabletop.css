@@ -2229,8 +2229,8 @@ body[data-ui-style="tabletop"] .tadam-card[data-count="3"] .section-title::after
 }
 
 body[data-ui-style="tabletop"] .tadam-table {
-  grid-template-columns: repeat(3, 104px);
-  gap: 12px;
+  grid-template-columns: repeat(3, 72px);
+  gap: 10px;
 }
 
 body[data-ui-style="tabletop"] .tadam-slot.is-empty {
@@ -2246,11 +2246,163 @@ body[data-ui-style="tabletop"] .tadam-slot.is-filled {
 
 body[data-ui-style="tabletop"] .tadam-slot.is-filled:hover {
   z-index: 6;
-  transform: scale(1.9) rotate(0deg);
+  transform: scale(2.6) rotate(0deg);
 }
 
 @media (prefers-reduced-motion: reduce) {
   body[data-ui-style="tabletop"] .tadam-slot.is-filled {
     transition: none;
+  }
+}
+
+/* О2. Лента ведущего вверху правой колонки, кожаный лоток кубика внизу. Доска — во всю высоту */
+@media (min-width: 1200px) {
+  body[data-ui-style="tabletop"] .play-area {
+    align-items: stretch;
+  }
+
+  body[data-ui-style="tabletop"] .board {
+    width: min(100%, calc(100dvh - 64px), 980px);
+  }
+
+  body[data-ui-style="tabletop"] .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .table-host {
+    order: -1;
+    flex: none;
+    height: 44px;
+    padding: 4px 40px 4px 52px;
+    justify-items: center;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 16px) 50%, 100% 100%, 0 100%, 16px 50%);
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .table-host::before {
+    left: 24px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .table-host .table-host-line {
+    max-width: 100%;
+    font-size: 1.16rem;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .table-host .table-host-cell {
+    display: none;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .board-header {
+    order: 3;
+    flex: none;
+    height: auto;
+    min-height: 0;
+    margin-top: auto;
+    padding: 10px 12px;
+    border: 1px solid rgba(18, 9, 3, 0.85);
+    border-radius: 12px;
+    outline: 1.5px dashed rgba(236, 196, 132, 0.32);
+    outline-offset: -6px;
+    background:
+      radial-gradient(120% 160% at 25% 0%, rgba(255, 214, 150, 0.14), transparent 58%),
+      linear-gradient(180deg, #5c3721, #3d2313 70%, #331d10);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 226, 170, 0.16),
+      inset 0 -2px 6px rgba(0, 0, 0, 0.35),
+      4px 9px 16px rgba(0, 0, 0, 0.42);
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .board-header > .dice-panel {
+    height: auto;
+    grid-template-columns: 52px 40px minmax(0, 1fr) 148px;
+    grid-template-areas: "die hist cell roll";
+    align-items: center;
+    gap: 10px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .board-header > .dice-panel:has(> .turn-actions > :not(.action-empty)) {
+    grid-template-areas:
+      "die hist cell roll"
+      "actions actions actions actions";
+  }
+
+  body[data-ui-style="tabletop"] .side-panel #diceValue {
+    grid-area: die;
+    width: 52px;
+    height: 52px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel .info-history-button {
+    grid-area: hist;
+    width: 40px;
+    height: 40px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel .dice-panel > .field-effect {
+    grid-area: cell;
+    display: grid;
+    height: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel .field-effect span {
+    color: #f0d58d;
+    font-family: var(--tabletop-display);
+    font-size: 0.86rem;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    text-transform: none;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel .field-effect strong {
+    color: rgba(246, 231, 193, 0.86);
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel .turn-actions {
+    grid-area: actions;
+    height: auto;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel #rollBtn {
+    grid-area: roll;
+    height: 46px;
+    border: 1px solid #6e4718;
+    border-radius: 9px;
+    color: #3a2412;
+    background: linear-gradient(180deg, #f8df98, #e2b357 52%, #b8832f);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 250, 222, 0.8),
+      inset 0 -2px 0 rgba(110, 71, 24, 0.35),
+      0 3px 0 #5e3c14,
+      0 6px 10px rgba(0, 0, 0, 0.4);
+    font-family: var(--tabletop-display);
+    font-size: 1.08rem;
+    font-weight: 400;
+    text-shadow: 0 1px 0 rgba(255, 244, 205, 0.6);
+  }
+
+  body[data-ui-style="tabletop"] .side-panel #rollBtn:not(:disabled):hover {
+    filter: brightness(1.06);
+  }
+
+  body[data-ui-style="tabletop"] .side-panel #rollBtn:not(:disabled):active {
+    transform: translateY(2px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 250, 222, 0.8),
+      0 1px 0 #5e3c14,
+      0 3px 6px rgba(0, 0, 0, 0.4);
+  }
+
+  body[data-ui-style="tabletop"] .side-panel #rollBtn:disabled {
+    color: rgba(58, 36, 18, 0.7);
+    background: linear-gradient(180deg, #cdb88a, #a98a52 60%, #876638);
+    box-shadow: inset 0 1px 0 rgba(255, 244, 210, 0.45), 0 2px 0 #4a3010;
+    opacity: 0.78;
   }
 }

@@ -9,6 +9,9 @@ const tadamTableEl = document.querySelector("#tadamTable");
 const appShellEl = document.querySelector(".app-shell");
 const playAreaEl = document.querySelector(".play-area");
 const sidePanelEl = document.querySelector(".side-panel");
+const boardHeaderEl = document.querySelector(".board-header");
+const boardPanelEl = document.querySelector(".board-panel");
+const dicePanelEl = document.querySelector(".dice-panel");
 const wideLayoutQuery = window.matchMedia("(min-width: 1200px)");
 const phoneLayoutQuery = window.matchMedia("(max-width: 680px) and (hover: none) and (pointer: coarse)");
 const savedGamesStorageKey = "very-big-adventure.saved-games";
@@ -17757,8 +17760,23 @@ function shouldIgnoreEnterShortcut(event) {
   return target instanceof Element && Boolean(target.closest("input, select, textarea"));
 }
 
+// «Настольный» на широком экране: лента ведущего — вверху правой колонки, лоток кубика — внизу.
+// Доска под собой ничего не держит и получает всю высоту; в «Классическом» и на узком всё на месте
+
+function syncTabletopTrayPlacement() {
+  if (!boardHeaderEl || !boardPanelEl || !dicePanelEl || !sidePanelEl || !ui.tableHost) return;
+  if (wideLayoutQuery.matches && document.body?.dataset.uiStyle === "tabletop") {
+    if (ui.tableHost.parentElement !== sidePanelEl) sidePanelEl.prepend(ui.tableHost);
+    if (boardHeaderEl.parentElement !== sidePanelEl) sidePanelEl.append(boardHeaderEl);
+    return;
+  }
+  if (ui.tableHost.parentElement !== dicePanelEl) dicePanelEl.insertBefore(ui.tableHost, ui.turnActions || null);
+  if (boardHeaderEl.parentElement !== boardPanelEl) boardPanelEl.append(boardHeaderEl);
+}
+
 function syncWideScoreStripPlacement() {
   if (!scoreStripEl || !sidePanelEl || !appShellEl || !playAreaEl) return;
+  syncTabletopTrayPlacement();
   const rageIndicator = ui.monsterRageIndicator;
   const tadamSection = sidePanelEl.querySelector(".tadam-card");
 
