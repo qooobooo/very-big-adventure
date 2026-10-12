@@ -2755,3 +2755,114 @@ body[data-ui-style="tabletop"] .tadam-table .tadam-slot.has-card-face:not(:hover
     filter: brightness(1.07);
   }
 }
+
+/* О7. Пульт в той же бумаге: планшет игрока на телефоне — пергаментный лист на деревянной доске, как на ПК.
+   Сверху — лента ведущего («Твой ход» — латунная), имя цветом игрока, счётчики оттиснуты в бумаге, «Бросить» — латунная */
+body[data-ui-style="tabletop"] .controller-player-card {
+  --mat-ink: #3a2412;
+  --mat-dent: rgba(96, 60, 24, 0.16);
+  --mat-dent-shadow: inset 0 1px 2px rgba(60, 36, 14, 0.45), 0 1px 0 rgba(255, 250, 232, 0.65);
+  padding: 14px 14px 16px;
+  border: 1px solid #7d5c2e;
+  border-radius: 10px;
+  color: var(--mat-ink);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .22 0 0 0 0 .08 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(130% 120% at 28% 8%, #f8ecd2, #ecd6a7 58%, #dcbf86);
+  box-shadow:
+    inset 0 0 0 4px rgba(255, 250, 232, 0.18),
+    inset 0 0 18px rgba(128, 84, 32, 0.26),
+    1px 3px 0 rgba(70, 44, 18, 0.6),
+    4px 10px 16px rgba(0, 0, 0, 0.42);
+}
+
+body[data-ui-style="tabletop"] .controller-player-card:empty {
+  display: none;
+}
+
+/* Лента ведущего над листом */
+body[data-ui-style="tabletop"] .controller-player-card .controller-turn-badge {
+  justify-self: stretch;
+  padding: 7px 26px 6px;
+  border: 0;
+  border-radius: 0;
+  color: var(--mat-ink);
+  background: linear-gradient(180deg, #f6e7c1, #e6cd95 70%, #d6b77a);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%, 12px 50%);
+  filter: drop-shadow(1px 2px 2px rgba(60, 36, 14, 0.45));
+  font-family: var(--tabletop-display);
+  font-weight: 400;
+  text-align: center;
+}
+
+body[data-ui-style="tabletop"] .controller-player-card .controller-turn-badge.is-active {
+  color: #3a2412;
+  background: linear-gradient(180deg, #f8df98, #e2b357 52%, #b8832f);
+  box-shadow: none;
+}
+
+body[data-ui-style="tabletop"] .controller-player-card :is(.controller-player-head, .controller-big-identity) strong {
+  padding: 0;
+  color: color-mix(in srgb, var(--player-color, #b5452f) 78%, #1a0d05);
+  background: none;
+  clip-path: none;
+  font-size: 1.5rem;
+  text-shadow: 0 1px 0 rgba(255, 250, 232, 0.7);
+}
+
+body[data-ui-style="tabletop"] .controller-player-card :is(.controller-player-head, .controller-big-identity) small {
+  color: rgba(58, 36, 18, 0.72);
+}
+
+body[data-ui-style="tabletop"] .controller-player-card .controller-avatar {
+  box-shadow:
+    0 0 0 2px #d9a845,
+    0 0 0 3px rgba(70, 44, 18, 0.8),
+    2px 4px 0 rgba(31, 18, 8, 0.45),
+    3px 7px 10px rgba(0, 0, 0, 0.35);
+}
+
+body[data-ui-style="tabletop"] .controller-player-card :is(.controller-stat, .controller-big-stats span) {
+  border-color: rgba(110, 74, 32, 0.3);
+  background: var(--mat-dent);
+  box-shadow: var(--mat-dent-shadow);
+}
+
+body[data-ui-style="tabletop"] .controller-player-card :is(.controller-stat-grid, .controller-big-stats) b {
+  color: var(--mat-ink);
+  text-shadow: 0 1px 0 rgba(255, 250, 232, 0.6);
+}
+
+body[data-ui-style="tabletop"] .controller-player-card :is(.controller-stat-grid, .controller-big-stats) small {
+  color: rgba(58, 36, 18, 0.62);
+}
+
+body[data-ui-style="tabletop"] .controller-player-card :is(.controller-stat, .controller-big-stats span)::before {
+  filter: drop-shadow(1px 1px 0 rgba(60, 36, 14, 0.35));
+}
+
+body[data-ui-style="tabletop"] .controller-player-card :is(.controller-shop-cards, .controller-artifacts) > small {
+  color: #7a4a12;
+}
+
+body[data-ui-style="tabletop"] .controller-player-card .controller-shop-cards .empty-card {
+  border-color: rgba(96, 60, 24, 0.35);
+  color: rgba(58, 36, 18, 0.55);
+  background: var(--mat-dent);
+}
+
+/* «Бросить» — латунная, как в лотке на ПК */
+body[data-ui-style="tabletop"] .controller-player-panel.is-full-controller .controller-action.is-full-primary.is-roll,
+body[data-ui-style="tabletop"] .controller-big-button.is-roll {
+  --controller-button-bg: linear-gradient(180deg, #f8df98, #e2b357 52%, #b8832f);
+  --controller-button-shadow:
+    inset 0 1px 0 rgba(255, 250, 222, 0.8),
+    inset 0 -2px 0 rgba(110, 71, 24, 0.35),
+    0 4px 0 #5e3c14,
+    0 10px 18px rgba(0, 0, 0, 0.4);
+  border-color: #6e4718;
+  color: #3a2412;
+  font-family: var(--tabletop-display);
+  font-weight: 400;
+  text-shadow: 0 1px 0 rgba(255, 244, 205, 0.6);
+}
