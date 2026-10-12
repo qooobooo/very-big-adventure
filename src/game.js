@@ -107,6 +107,7 @@ const ui = {
   settingsToggle: document.querySelector("#settingsToggle"),
   tableMenuBtn: document.querySelector("#tableMenuBtn"),
   tableDecks: document.querySelector("#tableDecks"),
+  tableHost: document.querySelector("#tableHost"),
   showWalkPath: document.querySelector("#showWalkPath"),
   startingCoins: document.querySelector("#startingCoins"),
   turnActions: document.querySelector("#turnActions"),
@@ -5733,6 +5734,7 @@ function renderTurn() {
           Boolean(state.pendingShop) ||
           Boolean(state.pendingShopClaim))));
   renderInfoHistoryCurrentActionEntry();
+  renderTableHost(player);
 }
 
 function openInfoHistoryPopup() {
@@ -14805,6 +14807,79 @@ async function resolveLandSteal(player) {
   }
 }
 
+// «Настольный»: ведущий одной фразой говорит, чей ход и чего ждёт игра; под фразой — клетка игрока
+const tableHostPromptPhrases = {
+  "Бросить кубик": "бросай кубик",
+  "В бой": "в бой!",
+  "Открыть": "открывай карту",
+  "Применить": "применяй карту",
+};
+let tableHostPlayerId = null;
+
+function tableHostPhrase(player) {
+  const nameOf = (pending) => (pending?.playerId != null ? playerById(pending.playerId) : null)?.name || player?.name || "Игрок";
+  const name = player?.name || "Игрок";
+  const bot = isBot(player);
+  if (state.finished) {
+    const winner = findWinner();
+    return winner ? `Партия окончена. Победа — ${winner.name}!` : "Партия окончена";
+  }
+  if (state.finalBattleProgress) return "Финальная битва!";
+  if (state.dragonBattleProgress) return "Все против Дракона!";
+  if (state.unityBattleProgress) return "Сплочение: все против монстра";
+  if (state.vsBattleProgress) return "VS: все бьются за банк";
+  if (state.enemyBattleProgress) return `${name} сражается с врагом`;
+  if (actionPromptResolver) {
+    if (bot) return `${name} ходит`;
+    const phrase = tableHostPromptPhrases[actionPromptButtonLabel];
+    return phrase ? `${name}, ${phrase}` : `${name}, жми «${actionPromptButtonLabel}»`;
+  }
+  if (ui.diceValue?.classList.contains("rolling")) return `${name} бросает кубик`;
+  const preRoll = state.pendingPreRoll || state.pendingDiceControl;
+  if (preRoll) return isBotPlayerId(preRoll.playerId) ? `${nameOf(preRoll)} думает перед броском` : `${nameOf(preRoll)}, реши до броска`;
+  const postRoll = state.pendingMoveDieReroll || state.pendingMoveOneFarther;
+  if (postRoll) return isBotPlayerId(postRoll.playerId) ? `${nameOf(postRoll)} думает над броском` : `${nameOf(postRoll)}, реши, как идти`;
+  const shop = state.pendingShop || state.pendingShopClaim;
+  if (shop) return `${nameOf(shop)} у Лавки Джо`;
+  if (state.pendingCardChoice) return `${nameOf(state.pendingCardChoice)}: ${state.pendingCardChoice.title || "выбор карты"}`;
+  if (state.pendingChoice) {
+    const portal = state.pendingChoice.kind === "portal" || state.pendingChoice.kind === "chaos-portal";
+    return `${nameOf(state.pendingChoice)} выбирает ${portal ? "портал" : "путь"}`;
+  }
+  if (state.isAnimating) return `${name} идёт`;
+  return bot ? `${name} бросает кубик` : `${name}, брось кубик`;
+}
+
+function renderTableHost(player) {
+  const container = ui.tableHost;
+  if (!container || !state?.players || !player || selectedUiStyle() !== "tabletop") return;
+  if (!container.firstElementChild) {
+    container.innerHTML = '<b class="table-host-line"></b><span class="table-host-cell"></span>';
+  }
+  container.style.setProperty("--player-color", player.color);
+  const phrase = tableHostPhrase(player);
+  container.querySelector(".table-host-line").textContent = phrase;
+  container.querySelector(".table-host-cell").innerHTML = ui.fieldEffect?.innerHTML || "";
+  container.title = `${phrase}. ${ui.fieldEffect?.textContent.trim() || ""}`.trim();
+  if (tableHostPlayerId !== player.id) {
+    tableHostPlayerId = player.id;
+    container.classList.remove("is-new-turn");
+    void container.offsetWidth;
+    container.classList.add("is-new-turn");
+  }
+}
+
+// Грань кубика для лотка «Настольного»: 1–6 рисуются точками, «-» — пустая грань, суммы остаются числом
+function syncDiceFace() {
+  const value = ui.diceValue?.textContent.trim();
+  if (ui.diceValue) ui.diceValue.dataset.face = /^[1-6]$/.test(value) ? value : value === "-" || !value ? "0" : "";
+}
+
+if (ui.diceValue) {
+  new MutationObserver(syncDiceFace).observe(ui.diceValue, { childList: true, characterData: true, subtree: true });
+  syncDiceFace();
+}
+
 // «Настольный»: колоды стопками рубашек с числом карт, клик открывает справочник колоды
 const tableDeckList = [
   { id: "good", title: "Хорошо", back: "./assets/cards/good_back.png" },
@@ -17351,6 +17426,7 @@ ui.uiStyle?.addEventListener("change", () => {
   applyUiStyle();
   saveUiStyle();
   renderTableDecks();
+  if (state) renderTableHost(currentPlayer());
 });
 ui.fontStyle?.addEventListener("change", () => {
   applyFontStyle();
