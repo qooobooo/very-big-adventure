@@ -3109,3 +3109,12 @@ body[data-ui-style="tabletop"] .tadam-slot.is-filled {
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='2600' preserveAspectRatio='none'%3E%3Cfilter id='g' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.45 .004' numOctaves='3' seed='11'/%3E%3CfeColorMatrix values='0 0 0 0 .08 0 0 0 0 .04 0 0 0 0 .01 2.6 0 0 0 -1.05'/%3E%3C/filter%3E%3Crect width='11' height='2600' filter='url%28%23g%29'/%3E%3C/svg%3E") 100% -500px / 11px 2600px no-repeat;
   }
 }
+
+/* О13. Отпечатки ТАДАМ размером с карту концепта (~90 px), когда планшеты стоят в один ряд — у двух и трёх игроков.
+   У четырёх игроков планшеты в два ряда, отпечатки остаются мельче (72 px, на невысоком экране 58 px) */
+@media (min-width: 1200px) {
+  body[data-ui-style="tabletop"] .side-panel:not(:has(> .score-strip > .score-card:nth-child(4))) .tadam-table {
+    grid-template-columns: repeat(3, 90px);
+    gap: 12px;
+  }
+}
