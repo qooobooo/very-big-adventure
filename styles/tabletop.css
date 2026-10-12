@@ -717,6 +717,86 @@ body[data-ui-style="tabletop"] .table-deck.is-drawn .table-deck-pile img {
   }
 }
 
+/* Открытый рынок Лавки: две карты лицом вверх в лотке рядом с колодой Лавки */
+body[data-ui-style="tabletop"] .table-market {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+body[data-ui-style="tabletop"] .table-market[hidden] {
+  display: none;
+}
+
+body[data-ui-style="tabletop"] .table-market-cards {
+  display: flex;
+  gap: 5px;
+  padding: 3px;
+  border-radius: 7px;
+  background: rgba(4, 12, 9, 0.3);
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.5);
+}
+
+body[data-ui-style="tabletop"] .table-market-card {
+  position: relative;
+  width: 46px;
+  height: 64px;
+  display: grid;
+  align-items: end;
+  overflow: hidden;
+  border-radius: 5px;
+  background: url("../assets/cards/shop_front.png") center / cover no-repeat;
+  box-shadow: 0 0 0 1px rgba(255, 240, 200, 0.35), 2px 4px 6px rgba(0, 0, 0, 0.45);
+  cursor: help;
+}
+
+body[data-ui-style="tabletop"] .table-market-card.is-empty {
+  background: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 236, 205, 0.18);
+  cursor: default;
+}
+
+body[data-ui-style="tabletop"] .table-market-card > b {
+  margin: 0 3px 5px;
+  padding: 2px 1px;
+  border-radius: 3px;
+  color: #3a2412;
+  background: rgba(246, 231, 193, 0.92);
+  font-size: 0.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+body[data-ui-style="tabletop"] .table-market-card .shop-card-moment {
+  top: 4px;
+  left: 4px;
+  width: 15px;
+}
+
+body[data-ui-style="tabletop"] .table-market-card.is-new {
+  animation: table-market-lay 520ms ease-out;
+}
+
+@keyframes table-market-lay {
+  0% {
+    transform: perspective(300px) rotateY(90deg) translateY(-8px);
+    filter: brightness(0.6);
+  }
+  100% {
+    transform: none;
+    filter: none;
+  }
+}
+
+body[data-ui-style="tabletop"] .table-market-label {
+  color: rgba(240, 220, 168, 0.82);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 @media (max-width: 1199px) {
   body[data-ui-style="tabletop"] .side-panel > .table-decks {
     grid-column: 1 / -1;

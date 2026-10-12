@@ -15146,6 +15146,43 @@ function renderTableDecks() {
       button.classList.add("is-drawn");
     }
   }
+  renderTableMarket(container);
+}
+
+// Открытый рынок Лавки: лоток с картами рынка лицом вверх сразу за колодой Лавки. Новая карта ложится с переворотом
+let tableMarketKey = "";
+
+function renderTableMarket(container) {
+  let tray = container.querySelector(".table-market");
+  if (!tray) {
+    tray = document.createElement("div");
+    tray.className = "table-market";
+    container.querySelector('[data-table-deck="shop"]')?.after(tray);
+    if (!tray.isConnected) container.append(tray);
+  }
+  const cards = shopMarketEnabled() ? (state.shopMarket || []) : [];
+  tray.hidden = !shopMarketEnabled();
+  const key = cards.map((card) => card._copyId || card.id).join("|");
+  if (key === tableMarketKey && tray.childElementCount) return;
+  const previous = new Set(tableMarketKey.split("|"));
+  tableMarketKey = key;
+  const slots = Array.from({ length: shopMarketSize }, (_, index) => cards[index] || null);
+  tray.setAttribute("aria-label", cards.length ? `Рынок Лавки: ${cards.map((card) => plainText(card.title)).join(", ")}` : "Рынок Лавки пуст");
+  tray.innerHTML = `
+    <span class="table-market-cards">${slots.map((card) => card ? tableMarketCardMarkup(card, !previous.has(card._copyId || card.id)) : '<span class="table-market-card is-empty"></span>').join("")}</span>
+    <span class="table-market-label">Рынок</span>
+  `;
+}
+
+function tableMarketCardMarkup(card, fresh) {
+  const title = plainText(card.title || card.shortTitle || "Карта");
+  const hint = `${title}: ${plainText(cardDisplayText(card))}`;
+  return `
+    <span class="table-market-card${fresh && tableMotionAllowed() ? " is-new" : ""}" title="${escapeHtml(hint)}">
+      ${shopCardMomentMarkup(card)}
+      <b>${escapeHtml(plainText(card.shortTitle || card.title || "Карта"))}</b>
+    </span>
+  `;
 }
 
 function openReferenceDeck(deckId) {
