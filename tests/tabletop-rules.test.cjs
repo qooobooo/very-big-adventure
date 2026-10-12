@@ -90,13 +90,15 @@ test('every Лавка Джо card has one known trigger moment, in the config a
   for (const cells of rows) assert.equal(cells.length, header.length, cells[1]);
   for (const cells of rows) if (cells[0] !== 'shop') assert.equal(cells[moment], '', cells[1]);
   const sheet = new Map(rows.filter((cells) => cells[0] === 'shop').map((cells) => [cells[1], cells[moment]]));
-  assert.equal(cardConfig.shop.length, 20);
+  // Чужая расплата left the shop on the user's word (12 Oct 2026), to come back as an artifact.
+  assert.equal(cardConfig.shop.length, 19);
+  assert.ok(!cardConfig.shop.some((card) => card.id === 'others-loss-income'));
   for (const card of cardConfig.shop) {
     assert.ok(shopCardMoments[card.moment], card.id);
     assert.equal(sheet.get(card.id), card.moment, card.id);
   }
   const c = load(['shopCardMoment', 'shopCardMomentLabel'], { cardConfig, shopCardMoments });
-  assert.equal(c.shopCardMomentLabel({ id: 'others-loss-income' }), 'Реакция');
+  assert.equal(c.shopCardMomentLabel({ id: 'tadam-income' }), 'Реакция');
   assert.equal(c.shopCardMoment(null), null);
 });
 

@@ -795,14 +795,6 @@ export const cardConfig = {
       effect: { type: "event-income", amount: 3 },
     },
     {
-      id: "others-loss-income",
-      count: 2,
-      title: "Чужая расплата",
-      description: "Когда кто-то другой теряет монеты, не совершая покупку, получи 3 монет",
-      moment: "reaction",
-      effect: { type: "others-loss-income", amount: 3 },
-    },
-    {
       id: "monster-victory-income",
       count: 2,
       title: "Охотничья доля",
