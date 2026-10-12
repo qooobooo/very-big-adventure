@@ -685,6 +685,7 @@ function autoUpdate() {
     var book = SpreadsheetApp.getActive(), properties = PropertiesService.getDocumentProperties();
     var base = readBase_(book);
     if (!base) return; // the first «Взять из игры» stays yours
+    removeBackups_(book);
     var game = readGame_();
     if (game.mark === properties.getProperty('LAID_OUT_MARK') && properties.getProperty('LAID_OUT_WITH') === SCRIPT_VERSION) return;
     var shown = readSheets_(book);
@@ -706,6 +707,17 @@ function autoUpdate() {
   } finally {
     lock.releaseLock();
   }
+}
+
+// The user's word, 12 Oct 2026: the tabs kept aside at the first take («good (до синхронизации)» and the like) go
+// away. Done once, by the first update with this script; Google keeps them in the version history.
+function removeBackups_(book) {
+  var properties = PropertiesService.getDocumentProperties();
+  if (properties.getProperty('BACKUPS_REMOVED')) return;
+  book.getSheets().forEach(function (sheet) {
+    if (/ \(до синхронизации( \d+)?\)$/.test(sheet.getName())) book.deleteSheet(sheet);
+  });
+  properties.setProperty('BACKUPS_REMOVED', '1');
 }
 
 // ---------- Check and send ----------
@@ -797,7 +809,7 @@ function sendToGame() {
     layout_(book, game.table);
     saveBase_(book, game);
     ui.alert('Отправлено в игру',
-      sent.apply.length ? 'Изменено: ' + sent.apply.length + '. Карты ушли в ветку dev, игра на компьютере возьмёт их со следующей доставкой.'
+      sent.apply.length ? 'Изменено: ' + sent.apply.length + '. Карты ушли в ветку dev. Игра на компьютере подтянет их за минуту, увидишь после перезагрузки страницы.'
         : 'Ничего не отправлено: в игре уже эти значения. Таблица снова показывает игру.', ui.ButtonSet.OK);
   });
 }
