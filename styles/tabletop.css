@@ -2,12 +2,15 @@
   Настольный стиль, шаг 1 (Art / UI, 12 октября 2026): стол из сукна, доска с картонным краем,
   меню партии, ТАДАМ на сукне, шрифт заголовков.
   Всё ниже работает только при body[data-ui-style="tabletop"], классический стиль не меняется.
-  Исключения — кнопка меню партии, полоска кубиков на планшете, колоды на столе и лента ведущего:
-  в классическом стиле они скрыты.
+  Исключения — кнопка меню партии, полоска кубиков, треки и ряды карт на планшете, иконка момента на карте Лавки,
+  колоды на столе и лента ведущего: в классическом стиле они скрыты.
 */
 
 .table-menu-toggle,
 .score-dice-pips,
+.score-tracks,
+.score-moments,
+.shop-card-moment,
 .table-decks,
 .table-host {
   display: none;
@@ -1725,6 +1728,290 @@ body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed .shop-
 
   body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed button.shop-card-preview::after {
     display: none;
+  }
+}
+
+/* Л. Планшет с треками: сила, шаги и кубики — дорожки с маркером цвета игрока, монеты — стопка сбоку.
+   Карты Лавки лежат рядами по моменту срабатывания, у ряда — иконка момента; та же иконка — в углу лица карты */
+body[data-ui-style="tabletop"] .score-stats {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "tracks coins";
+  align-items: center;
+  gap: 8px;
+}
+
+body[data-ui-style="tabletop"] .score-stats > .score-stat-strength,
+body[data-ui-style="tabletop"] .score-stats > .score-stat-steps,
+body[data-ui-style="tabletop"] .score-stats > .score-stat-dice {
+  display: none;
+}
+
+body[data-ui-style="tabletop"] .score-stats > .score-tracks {
+  grid-area: tracks;
+  display: grid;
+  gap: 4px;
+}
+
+/* Монеты — стопка над числом, в кармане справа от треков */
+body[data-ui-style="tabletop"] .score-stats > .score-stat-coins {
+  grid-area: coins;
+  min-width: 46px;
+  min-height: 62px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 5px;
+  border-radius: 8px;
+  background: rgba(10, 5, 2, 0.32);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255, 228, 170, 0.1);
+}
+
+body[data-ui-style="tabletop"] .score-track {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 5px;
+}
+
+body[data-ui-style="tabletop"] .score-track-icon {
+  width: 18px;
+  height: 18px;
+  background: var(--track-icon) center / contain no-repeat;
+  filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.55));
+}
+
+body[data-ui-style="tabletop"] .score-track[data-track="strength"] {
+  --track-icon: url("../assets/icons/strength_sword_512.png");
+}
+
+body[data-ui-style="tabletop"] .score-track[data-track="steps"] {
+  --track-icon: url("../assets/icons/steps_512.png");
+}
+
+body[data-ui-style="tabletop"] .score-track[data-track="dice"] {
+  --track-icon: url("../assets/icons/dice.png");
+}
+
+/* Желобок с делениями, выжженными в доске; 0, 5 и 10 — ярче */
+body[data-ui-style="tabletop"] .score-track-groove {
+  display: grid;
+  grid-template-columns: repeat(var(--slots), minmax(0, 1fr));
+  height: 17px;
+  padding: 0 2px;
+  border-radius: 9px;
+  background: rgba(10, 5, 2, 0.42);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(255, 228, 170, 0.1);
+}
+
+body[data-ui-style="tabletop"] .score-track-groove > i {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+}
+
+body[data-ui-style="tabletop"] .score-track-groove > i::after {
+  content: attr(data-n);
+  position: relative;
+  color: rgba(240, 220, 168, 0.4);
+  font-size: 0.5rem;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1;
+}
+
+body[data-ui-style="tabletop"] .score-track:not([data-track="dice"]) .score-track-groove > i:is([data-n="0"], [data-n="5"], [data-n="10"])::after {
+  color: rgba(246, 226, 176, 0.72);
+}
+
+/* Маркер — деревянная фишка цвета игрока, тень от лампы вправо вниз */
+body[data-ui-style="tabletop"] .score-track-groove > i.is-on::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%,
+    color-mix(in srgb, var(--player-color) 45%, #fff6dc),
+    var(--player-color) 58%,
+    color-mix(in srgb, var(--player-color) 62%, #1a0d05));
+  box-shadow: 1px 2px 2px rgba(0, 0, 0, 0.6), inset 0 -1px 1px rgba(0, 0, 0, 0.35);
+  translate: -50% -50%;
+}
+
+body[data-ui-style="tabletop"] .score-track-groove > i.is-on::after {
+  color: #fff8e6;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.7);
+}
+
+/* Круг по треку и минус — латунная и красная бирки после желобка */
+body[data-ui-style="tabletop"] .score-track-tag {
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: #3a210c;
+  background: linear-gradient(180deg, #f1d58e, #c08f43);
+  box-shadow: 1px 1px 0 #3a210c;
+  font-size: 0.6rem;
+  line-height: 1.2;
+  text-shadow: none;
+}
+
+body[data-ui-style="tabletop"] .score-track-tag.is-negative {
+  color: #fff3e6;
+  background: linear-gradient(180deg, #c95a44, #8d2a1c);
+}
+
+/* Ряды карт Лавки по моменту. Пустой планшет — прежняя плашка «нет карт» */
+body[data-ui-style="tabletop"] .score-shop > .score-moments {
+  display: grid;
+  gap: 4px;
+  padding-left: 0;
+}
+
+body[data-ui-style="tabletop"] .score-shop > .score-moments:empty {
+  display: none;
+}
+
+body[data-ui-style="tabletop"] .score-shop > .score-moments:not(:empty) + div {
+  display: none;
+}
+
+body[data-ui-style="tabletop"] .score-moment-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+
+body[data-ui-style="tabletop"] .score-moment-cards {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 3px;
+  padding-left: 4px;
+}
+
+/* Иконка момента — латунная печать с выбитым знаком */
+body[data-ui-style="tabletop"] .moment-icon {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 30%, #fbe9b8, #d6a24d 58%, #8a561c);
+  box-shadow: 1px 2px 0 #3a210c, inset 0 -2px 3px rgba(60, 30, 5, 0.45);
+  font-style: normal;
+}
+
+body[data-ui-style="tabletop"] .moment-icon::before {
+  content: "";
+  position: absolute;
+  inset: 18%;
+  background: #3a1d08;
+  -webkit-mask: var(--moment-mask) center / contain no-repeat;
+  mask: var(--moment-mask) center / contain no-repeat;
+}
+
+body[data-ui-style="tabletop"] .moment-icon.is-empty {
+  background: rgba(10, 5, 2, 0.3);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Начало хода — восход */
+body[data-ui-style="tabletop"] .moment-icon[data-moment="turn-start"] {
+  --moment-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4.5 16.5a7.5 7.5 0 0 1 15 0z'/%3E%3Crect x='1.5' y='18' width='21' height='2.6' rx='1.3'/%3E%3Cpath d='M10.8 1.8h2.4v4.6h-2.4zM2.6 6.5l1.7-1.7 3.2 3.2-1.7 1.7zM16.5 8l3.2-3.2 1.7 1.7-3.2 3.2z'/%3E%3C/svg%3E");
+}
+
+/* Ход — двойная стрелка вперёд */
+body[data-ui-style="tabletop"] .moment-icon[data-moment="move"] {
+  --moment-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 4.5l7.5 7.5L2 19.5v-5L4.5 12 2 9.5zM12 4.5l7.5 7.5-7.5 7.5v-5l2.5-2.5L12 9.5z'/%3E%3C/svg%3E");
+}
+
+/* Бой — скрещённые мечи */
+body[data-ui-style="tabletop"] .moment-icon[data-moment="battle"] {
+  --moment-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-linecap='round'%3E%3Cpath d='M8 16L20.5 3.5M16 16L3.5 3.5' stroke-width='2.4'/%3E%3Cpath d='M5.5 13.5l5 5M18.5 13.5l-5 5' stroke-width='2.4'/%3E%3Cpath d='M8 16l-4 4M16 16l4 4' stroke-width='3'/%3E%3C/svg%3E");
+}
+
+/* Лавка — прилавок под навесом */
+body[data-ui-style="tabletop"] .moment-icon[data-moment="shop"] {
+  --moment-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2.5 3h19l1.5 6.2a2.75 2.75 0 0 1-5.5 0 2.75 2.75 0 0 1-5.5 0 2.75 2.75 0 0 1-5.5 0 2.75 2.75 0 0 1-5.5 0z'/%3E%3Cpath d='M3.5 12.5h2.2V19h4v-5h4.6v5h4v-6.5h2.2V21.5h-17z'/%3E%3C/svg%3E");
+}
+
+/* Реакция — молния: срабатывает от чужих действий */
+body[data-ui-style="tabletop"] .moment-icon[data-moment="reaction"] {
+  --moment-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 1.5L3.5 13.5h7L8.5 22.5l12-13h-7.2z'/%3E%3C/svg%3E");
+}
+
+/* Длинные метки статуса под именем переносятся, а не вылезают за край планшета */
+body[data-ui-style="tabletop"] :is(.score-battle-bonus, .score-curse-bonus, .score-event-badge, .score-rage-bonus) {
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  column-gap: 0.28em;
+  row-gap: 1px;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+/* Иконка на лице карты Лавки — печать в левом верхнем углу */
+body[data-ui-style="tabletop"] .shop-card-moment {
+  position: absolute;
+  top: 5%;
+  left: 7%;
+  z-index: 3;
+  width: clamp(16px, 17%, 34px);
+  height: auto;
+  aspect-ratio: 1;
+}
+
+@media (max-width: 680px) {
+  body[data-ui-style="tabletop"] .score-stats {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 5px;
+  }
+
+  body[data-ui-style="tabletop"] .score-stats > .score-stat-coins {
+    min-width: 34px;
+    min-height: 48px;
+    padding: 3px;
+  }
+
+  body[data-ui-style="tabletop"] .score-track {
+    grid-template-columns: 13px minmax(0, 1fr) auto;
+    gap: 3px;
+  }
+
+  body[data-ui-style="tabletop"] .score-track-icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  body[data-ui-style="tabletop"] .score-track-groove {
+    height: 12px;
+    padding: 0 1px;
+  }
+
+  body[data-ui-style="tabletop"] .score-track-groove > i::after {
+    font-size: 0.4rem;
+  }
+
+  body[data-ui-style="tabletop"] .score-track:not([data-track="dice"]) .score-track-groove > i:not([data-n="0"], [data-n="5"], [data-n="10"], .is-on)::after {
+    content: "·";
+  }
+
+  body[data-ui-style="tabletop"] .score-track-groove > i.is-on::before {
+    width: 11px;
+    height: 11px;
+  }
+
+  body[data-ui-style="tabletop"] .score-moment-row {
+    grid-template-columns: 17px minmax(0, 1fr);
+    gap: 3px;
+  }
+
+  body[data-ui-style="tabletop"] .score-moment-row > .moment-icon {
+    width: 17px;
+    height: 17px;
   }
 }
 

@@ -3146,12 +3146,18 @@ function renderScores() {
         <span class="score-stat-steps" title="Шаги">${stepsAmount(stepBonus >= 0 ? `+${stepBonus}` : stepBonus)}</span>
         <span class="score-stat-coins" title="Монеты" data-coin-tier="${scoreCoinTier(player.coins)}">${coinAmount(player.coins)}</span>
         <span class="score-stat-dice ${diceCount > 4 ? "is-many" : ""}" title="Кубики">${diceAmount(diceCount)}${scoreDicePips(diceCount)}</span>
+        <span class="score-tracks">
+          ${scoreTrackMarkup("strength", "Сила", battleBonus, { from: 0, to: 10, signed: true })}
+          ${scoreTrackMarkup("steps", "Шаги", stepBonus, { from: 0, to: 10, signed: true })}
+          ${scoreTrackMarkup("dice", "Кубики", diceCount, { from: 1, to: 6 })}
+        </span>
       </div>
       <div class="score-shop">
         <div class="score-shop-head">
           <span>Лавка Джо</span>
           <button class="score-shop-view" type="button" data-player-shop-id="${player.id}" aria-label="Показать карты Лавка Джо игрока ${escapeHtml(player.name)}" title="Показать карты Лавка Джо">Карты</button>
         </div>
+        <div class="score-moments">${renderShopMomentRows(player)}</div>
         <div>${renderShopBadges(player)}</div>
       </div>
     `;
@@ -5266,15 +5272,69 @@ function isPhoneLayout() {
 
 function renderShopBadges(player) {
   if (player.items.length === 0) return '<small class="score-shop-empty">нет карт</small>';
-  return groupedShopItems(player.items)
-    .map(({ count, item }) => {
-      const label = count > 1 ? `${shortShopTitle(item)} x${count}` : shortShopTitle(item);
-      const faceDown = isShopItemFaceDown(item);
-      const status = faceDown ? " лицом вниз" : "";
-      const title = count > 1 ? `${item.title} x${count}${status}` : `${item.title}${status}`;
-      return `<small class="${faceDown ? "shop-face-down" : ""}" title="${escapeHtml(title)}">${cardNameMarkup(label)}${faceDown ? " <em>↓</em>" : ""}</small>`;
-    })
+  return groupedShopItems(player.items).map(shopBadgeMarkup).join("");
+}
+
+function shopBadgeMarkup({ count, item }) {
+  const label = count > 1 ? `${shortShopTitle(item)} x${count}` : shortShopTitle(item);
+  const faceDown = isShopItemFaceDown(item);
+  const status = faceDown ? " лицом вниз" : "";
+  const title = count > 1 ? `${item.title} x${count}${status}` : `${item.title}${status}`;
+  return `<small class="${faceDown ? "shop-face-down" : ""}" title="${escapeHtml(title)}">${cardNameMarkup(label)}${faceDown ? " <em>↓</em>" : ""}</small>`;
+}
+
+// Настольный стиль: карты Лавки лежат на планшете рядами по моменту срабатывания, у ряда — иконка момента.
+// В классическом стиле ряды скрыты, там остаётся общий список карт
+function renderShopMomentRows(player) {
+  const groups = groupedShopItems(player.items || []);
+  if (!groups.length) return "";
+  const moments = Object.keys(shopCardMoments);
+  const rows = moments.map((moment) => [moment, groups.filter(({ item }) => shopCardMoment(item) === moment)]);
+  rows.push(["other", groups.filter(({ item }) => !moments.includes(shopCardMoment(item)))]);
+  return rows
+    .filter(([, rowGroups]) => rowGroups.length)
+    .map(([moment, rowGroups]) => `
+      <div class="score-moment-row">
+        ${shopMomentIconMarkup(moment)}
+        <span class="score-moment-cards">${rowGroups.map(shopBadgeMarkup).join("")}</span>
+      </div>
+    `)
     .join("");
+}
+
+function shopMomentIconMarkup(moment) {
+  const label = shopCardMoments[moment];
+  if (!label) return '<i class="moment-icon is-empty" aria-hidden="true"></i>';
+  return `<i class="moment-icon" data-moment="${moment}" title="Срабатывает: ${label}" aria-label="${label}" role="img"></i>`;
+}
+
+// Трек на планшете: ряд делений и маркер цвета игрока. Больше конца трека — маркер идёт по кругу, круги — бирка «+10»
+function scoreTrackMarkup(kind, label, value, { from = 0, to = 10, signed = false } = {}) {
+  const number = Number(value) || 0;
+  const span = to - from;
+  let extra = 0;
+  let position = clamp(number, from, to);
+  if (number > to) {
+    extra = from === 0 ? Math.floor((number - 1) / span) * span : number - to;
+    position = from === 0 ? number - extra : to;
+  }
+  const text = signed && number >= 0 ? `+${number}` : `${number}`;
+  const slots = [];
+  for (let n = from; n <= to; n += 1) {
+    slots.push(`<i data-n="${n}"${n === position ? ' class="is-on"' : ""}></i>`);
+  }
+  const tag = number < from
+    ? `<b class="score-track-tag is-negative">${number}</b>`
+    : extra
+      ? `<b class="score-track-tag">+${extra}</b>`
+      : "";
+  return `
+    <span class="score-track" data-track="${kind}" title="${label} ${text}" aria-label="${label} ${text}" role="img">
+      <i class="score-track-icon" aria-hidden="true"></i>
+      <span class="score-track-groove" style="--slots: ${slots.length}" aria-hidden="true">${slots.join("")}</span>
+      ${tag}
+    </span>
+  `;
 }
 
 function playerArtifactBadges(player) {
@@ -5666,6 +5726,13 @@ function shopCardMoment(card) {
 
 function shopCardMomentLabel(card) {
   return shopCardMoments[shopCardMoment(card)] || "";
+}
+
+// Иконка момента в углу лица карты Лавки. Видна только в настольном стиле
+function shopCardMomentMarkup(card) {
+  const moment = shopCardMoment(card);
+  const label = shopCardMoments[moment];
+  return label ? `<span class="shop-card-moment moment-icon" data-moment="${moment}" title="Срабатывает: ${label}" aria-hidden="true"></span>` : "";
 }
 
 function faceDownShopItems(player) {
@@ -10479,6 +10546,7 @@ function shopCardsMarkup(cards, { revealed, selectable = false, selectionId = nu
       return `
         <button class="shop-card-preview" type="button" ${selectable ? `data-shop-card-id="${escapeHtml(selectionId ? selectionId(card, index) : card.id)}"` : ""} aria-label="${revealed ? "Выбрать карту Лавка Джо" : "Открыть карту Лавка Джо"}">
           ${cardText}
+          ${revealed ? shopCardMomentMarkup(card) : ""}
         </button>
       `;
     })
