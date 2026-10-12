@@ -6,6 +6,8 @@ const scoreStripEl = document.querySelector("#scoreStrip");
 const gameLogEl = document.querySelector("#gameLog");
 const gameHistoryEl = document.querySelector("#gameHistory");
 const tadamTableEl = document.querySelector("#tadamTable");
+// «Настольный»: карта ТАДАМ, которую «взяли в руки» касанием (на сенсорном экране нет наведения)
+let tadamHeldKey = null;
 const appShellEl = document.querySelector(".app-shell");
 const playAreaEl = document.querySelector(".play-area");
 const sidePanelEl = document.querySelector(".side-panel");
@@ -15223,9 +15225,32 @@ function renderTadams() {
         title: card.title || "ТАДАМ",
       })
       : `<span class="tadam-slot-empty">${index + 1}</span>`;
+    if (card && key) item.dataset.tadamKey = key;
     tadamTableEl.append(item);
   }
+  syncTadamHeld();
 }
+
+// Касание карты ТАДАМ в «Настольном» увеличивает её, как наведение мышью; второе касание или касание мимо — кладёт обратно
+function syncTadamHeld() {
+  tadamTableEl?.querySelectorAll(".tadam-slot").forEach((slot) => {
+    slot.classList.toggle("is-held", Boolean(tadamHeldKey) && slot.dataset.tadamKey === tadamHeldKey);
+  });
+}
+
+tadamTableEl?.addEventListener("click", (event) => {
+  if (selectedUiStyle() !== "tabletop") return;
+  const slot = event.target instanceof Element ? event.target.closest(".tadam-slot.is-filled") : null;
+  const key = slot?.dataset.tadamKey || null;
+  tadamHeldKey = key && key !== tadamHeldKey ? key : null;
+  syncTadamHeld();
+});
+
+document.addEventListener("click", (event) => {
+  if (!tadamHeldKey || (event.target instanceof Element && event.target.closest("#tadamTable"))) return;
+  tadamHeldKey = null;
+  syncTadamHeld();
+});
 
 function visibleTadamCards() {
   return state.tadams.slice(-3).reverse();

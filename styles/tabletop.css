@@ -2244,7 +2244,7 @@ body[data-ui-style="tabletop"] .tadam-slot.is-filled {
   transition: transform 0.18s ease;
 }
 
-body[data-ui-style="tabletop"] .tadam-slot.is-filled:hover {
+body[data-ui-style="tabletop"] .tadam-slot.is-filled:is(:hover, .is-held) {
   z-index: 6;
   transform: scale(2.6) rotate(0deg);
 }
@@ -2622,13 +2622,13 @@ body[data-ui-style="tabletop"] .score-card .score-moment-cards > small:hover {
 body[data-ui-style="tabletop"] .tadam-table .tadam-slot.has-card-face .tadam-card-text {
   --card-face-title-row: 10px;
   --card-face-title-size: 6px;
-  --card-face-description-size: 3.4px;
+  --card-face-description-size: 3.8px;
   --card-face-description-gap: 1px;
   --card-face-description-line-height: 1.05;
   gap: 1px;
 }
 
-body[data-ui-style="tabletop"] .tadam-table .tadam-slot.has-card-face:not(:hover) .card-face-description {
+body[data-ui-style="tabletop"] .tadam-table .tadam-slot.has-card-face:not(:hover, .is-held) .card-face-description {
   visibility: hidden;
 }
 
@@ -2979,4 +2979,9 @@ body[data-ui-style="tabletop"] .controller-big-button.is-roll {
   body[data-ui-style="tabletop"] .side-panel > .game-settings :is(.settings-panel, .phone-room-panel) input[type="checkbox"] {
     accent-color: #9a6a22;
   }
+}
+
+/* О10. Карту ТАДАМ можно взять касанием: курсор подсказывает, что карта берётся в руки */
+body[data-ui-style="tabletop"] .tadam-slot.is-filled {
+  cursor: pointer;
 }
