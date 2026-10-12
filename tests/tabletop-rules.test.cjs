@@ -148,3 +148,104 @@ test('tools/autoplay.mjs still fits game.js: every statistics hook finds its pla
   assert.ok(!served.includes('script.google.com'));
   assert.doesNotThrow(() => new vm.Script(served.replace(/^(import|export) .*$/gm, '')));
 });
+
+function marketFixture({ ids = ['a', 'b', 'c', 'd', 'e', 'f'], coins = 20, privilege = false, coupon = false, picks = [] } = {}) {
+  const shown = [];
+  const draw = ids.map((id, index) => ({ id, title: id.toUpperCase(), _copyId: `shop:${id}:${index}`, _deckId: 'shop' })).reverse();
+  const player = { id: 0, name: 'Аня', coins, items: [] };
+  const c = load([
+    'resolveShopMarket', 'refillShopMarket', 'shopMarketEnabled', 'shopModeSetting', 'applyShopModeSetting',
+    'syncShopModeControl', 'drawCardsFromDeck', 'drawCardFromDeck', 'returnCardsToDraw', 'gameDeck',
+    'discardCardsToDeck', 'discardCardToDeck', 'canUseJoeCouponInShop', 'joeShopOfferCount', 'takeJoeCouponShopOffer',
+  ], {
+    state: { shopMode: 'market', shopMarket: [], decks: { shop: { draw, discard: [] } } },
+    ui: { shopMode: { value: 'market', parentElement: {} } },
+    shopMarketSize: 2, joeCouponShopChoiceId: 'coupon', botShopOfferChoices: new WeakMap(),
+    shuffleCards: (cards) => [...cards], deckLabel: String, isReferenceRuntimeCard: () => false,
+    joeShopCardCost: () => 5, hasActiveShopEffect: () => privilege, hasJoeCouponArtifact: () => coupon,
+    weaponsSettingLocked: () => false,
+    chooseRevealedShopCard: async (offer) => {
+      shown.push(Array.from(offer, (card) => card.id));
+      const pick = picks.shift();
+      return pick === 'coupon' ? 'coupon' : offer.find((card) => card.id === pick) || null;
+    },
+    claimShopCardsOneByOne: async (owner, cards) => cards.forEach((card) => owner.items.push(card)),
+    addCoins: (owner, amount) => { owner.coins += amount; }, ownedShopItem: (card) => card, recordShopCards() {},
+    log() {}, render() {}, playerName: (owner) => owner.name, playerChoiceBadge: () => '',
+    cardNameMarkup: String, cardNameStrong: String, coinAmount: String,
+  });
+  // Arrays made inside the vm have its own prototype, so copy them out before deepEqual.
+  const ids_ = (cards) => Array.from(cards, (card) => card.id);
+  const where = () => ({
+    market: ids_(c.state.shopMarket), draw: ids_(c.state.decks.shop.draw).reverse(), discard: ids_(c.state.decks.shop.discard),
+    items: ids_(player.items),
+  });
+  return { c, player, shown, where };
+}
+
+test('open market: 2 cards for the whole game, a bought one is replaced at once, the other stays', async () => {
+  const { c, player, shown, where } = marketFixture({ picks: ['b', null, 'a'] });
+  c.refillShopMarket();
+  assert.deepEqual(where().market, ['a', 'b']);
+  assert.equal(await c.resolveShopMarket(player), 0);
+  assert.deepEqual(shown.at(-1), ['a', 'b']);
+  assert.deepEqual(where(), { market: ['a', 'c'], draw: ['d', 'e', 'f'], discard: [], items: ['b'] });
+  assert.equal(player.coins, 15);
+  await c.resolveShopMarket(player);
+  assert.deepEqual(where(), { market: ['a', 'c'], draw: ['d', 'e', 'f'], discard: [], items: ['b'] });
+  await c.resolveShopMarket(player);
+  assert.deepEqual(where(), { market: ['c', 'd'], draw: ['e', 'f'], discard: [], items: ['b', 'a'] });
+});
+
+test('open market with Привилегия Джо: the third card comes from the deck and is discarded unless bought', async () => {
+  const { c, player, shown, where } = marketFixture({ privilege: true, picks: [null, 'd', 'a'] });
+  c.refillShopMarket();
+  await c.resolveShopMarket(player);
+  assert.deepEqual(shown.at(-1), ['a', 'b', 'c']);
+  assert.deepEqual(where(), { market: ['a', 'b'], draw: ['d', 'e', 'f'], discard: ['c'], items: [] });
+  await c.resolveShopMarket(player);
+  assert.deepEqual(where(), { market: ['a', 'b'], draw: ['e', 'f'], discard: ['c'], items: ['d'] });
+  await c.resolveShopMarket(player);
+  assert.deepEqual(shown.at(-1), ['a', 'b', 'e']);
+  assert.deepEqual(where(), { market: ['b', 'f'], draw: [], discard: ['c', 'e'], items: ['d', 'a'] });
+});
+
+test('open market: no money means no draw; the market never shows one card twice; Купон Джо takes all and refills', async () => {
+  const poor = marketFixture({ coins: 4, privilege: true });
+  poor.c.refillShopMarket();
+  assert.equal(await poor.c.resolveShopMarket(poor.player), 0);
+  assert.deepEqual(poor.shown, []);
+  assert.deepEqual(poor.where(), { market: ['a', 'b'], draw: ['c', 'd', 'e', 'f'], discard: [], items: [] });
+
+  const twins = marketFixture({ ids: ['a', 'a', 'b', 'c'] });
+  twins.c.refillShopMarket();
+  assert.deepEqual(twins.where().market, ['a', 'b']);
+  assert.deepEqual(twins.where().draw.sort(), ['a', 'c']);
+
+  const rich = marketFixture({ coupon: true, privilege: true, picks: ['coupon'] });
+  rich.c.refillShopMarket();
+  await rich.c.resolveShopMarket(rich.player);
+  assert.deepEqual(rich.where(), { market: ['d', 'e'], draw: ['f'], discard: [], items: ['a', 'b', 'c'] });
+  assert.equal(rich.player.coins, 10);
+});
+
+test('Лавка setting: market by default, classic puts the market into the discard, back to market lays out 2 cards', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  assert.match(html, /<select id="shopMode">\s*<option value="market" selected>Рынок<\/option>\s*<option value="classic">Классика<\/option>/);
+  assert.match(source, /shopMode: gameSettings\.shopMode,\s*shopMarket: \[\],/);
+  const { c, where } = marketFixture();
+  c.refillShopMarket();
+  c.ui.shopMode.value = 'classic';
+  c.applyShopModeSetting();
+  assert.equal(c.shopMarketEnabled(), false);
+  assert.deepEqual(where(), { market: [], draw: ['c', 'd', 'e', 'f'], discard: ['a', 'b'], items: [] });
+  c.ui.shopMode.value = 'market';
+  c.applyShopModeSetting();
+  assert.deepEqual(where().market, ['c', 'd']);
+  c.weaponsSettingLocked = () => true;
+  c.ui.shopMode.value = 'classic';
+  c.applyShopModeSetting();
+  assert.equal(c.ui.shopMode.value, 'market');
+  assert.equal(c.ui.shopMode.disabled, true);
+  assert.equal(c.shopMarketEnabled(), true);
+});

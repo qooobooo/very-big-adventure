@@ -16,7 +16,7 @@ const functions = [
   'applyDoomScytheToOpponentRoll', 'ensureFinalMonsterLegendaryWeapon', 'transferLegendaryWeaponToPlayer',
   'discardCardToDeck', 'resolveFinalBattle', 'setFinalBattleRoller', 'buildFinalBattleSummary',
   'finalHistoryOpponentBonusText', 'collectGameSettings', 'snapshotAutoPlaytestControls',
-  'restoreAutoPlaytestControls', 'phoneGameSnapshot', 'renderFinalBattleHud',
+  'restoreAutoPlaytestControls', 'phoneGameSnapshot', 'renderFinalBattleHud', 'shopModeSetting', 'shopMarketEnabled',
 ];
 function extract(name) {
   const start = source.search(new RegExp(`^(?:async )?function ${name}\\(`, 'm'));

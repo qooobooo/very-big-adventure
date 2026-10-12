@@ -48,6 +48,7 @@ const ui = {
   createPhoneRoomBtn: document.querySelector("#createPhoneRoomBtn"),
   disableDragon: document.querySelector("#disableDragon"),
   weaponsEnabled: document.querySelector("#weaponsEnabled"),
+  shopMode: document.querySelector("#shopMode"),
   diceCount: document.querySelector("#diceCount"),
   diceValue: document.querySelector("#diceValue"),
   eventToast: document.querySelector("#eventToast"),
@@ -394,6 +395,7 @@ const magicPickaxeIconSrc = "./assets/icons/artifact_magic_pickaxe_512.png?v=202
 const goldenHorseshoeIconSrc = "./assets/icons/artifact_golden_horseshoe_512.png";
 const travelerCompassIconSrc = "./assets/icons/artifact_traveler_compass_512.png";
 const joeCouponShopChoiceId = "__joe_coupon_all__";
+const shopMarketSize = 2;
 const finalEnemyIconSrc = "./assets/icons/final_enemy.png?v=20260525-0146";
 const doomScytheIconSrc = "./assets/icons/legendary_doom_scythe_512.png";
 const blackMarketIconSrc = "./assets/icons/black_market_ultra_simple_512.png?v=20260619-0138";
@@ -696,6 +698,8 @@ function newGame() {
     gameMode: isSoloGame(gameSettings) ? "solo" : "multiplayer",
     gameSettings,
     weaponsEnabled: gameSettings.weaponsEnabled,
+    shopMode: gameSettings.shopMode,
+    shopMarket: [],
     botTurnPlayerId: null,
     isAnimating: false,
     landingCell: null,
@@ -764,6 +768,7 @@ function newGame() {
   syncDragonHistory();
   state.players.forEach(recordOwnedDice);
   log("<strong>Игра началась!</strong>");
+  refillShopMarket();
   resolveRandomFirstPlayerStart();
 
   boardEl.dataset.ready = "false";
@@ -977,6 +982,7 @@ function collectGameSettings() {
     diceCount: Number(ui.diceCount?.value) || 1,
     disableDragon: dragonDisabledSetting(),
     weaponsEnabled: weaponsEnabledSetting(),
+    shopMode: shopModeSetting(),
     exactMoveAmount: exactMoveControlAmount(),
     fontStyle: selectedFontStyle(),
     gameMode: gameModeFrom({ playerCount }),
@@ -2481,6 +2487,7 @@ function runBotAction() {
 
 function render() {
   syncWeaponsSettingControl();
+  syncShopModeControl();
   renderBoard();
   renderScores();
   renderModifierPlayerStatus();
@@ -3405,6 +3412,8 @@ function phoneGameSnapshot() {
     finished: Boolean(state.finished),
     legendaryWeapon: legendaryWeaponSnapshot(),
     weaponsEnabled: legendaryWeaponsEnabled(),
+    shopMode: shopMarketEnabled() ? "market" : "classic",
+    shopMarket: shopMarketEnabled() ? (state.shopMarket || []).map((card) => phoneCardSnapshot(card, "Лавка Джо")) : [],
     finalBattle: state.finalBattle?.finalSummary || null,
     finalBattleProgress: state.finalBattleProgress ? cloneData(state.finalBattleProgress) : null,
     players: state.players.map(phonePlayerSnapshot),
@@ -13473,6 +13482,7 @@ function resolveEventIncomeRewards(card) {
 
 async function resolveShop(player) {
   await resolveFaceDownShopBuyback(player);
+  if (shopMarketEnabled()) return resolveShopMarket(player);
 
   let boughtCount = 0;
   let immediateStepBonus = 0;
@@ -13531,6 +13541,116 @@ async function resolveShop(player) {
   }
 
   return immediateStepBonus;
+}
+
+// Tabletop review, 12 Oct 2026 (the user's pick): one open market of 2 cards for the whole game instead of fresh cards
+// at every Лавка. Привилегия Джо draws a third card at the visit; unbought, it goes to the discard. A bought market card
+// is replaced from the deck at once, the others stay until someone buys them.
+async function resolveShopMarket(player) {
+  const market = refillShopMarket();
+  if (!market.length) {
+    log("<strong>Лавка Джо</strong>: на рынке нет карт.", { toast: true });
+    return 0;
+  }
+  const cost = joeShopCardCost(player);
+  if (player.coins < cost && !canUseJoeCouponInShop(player, market)) {
+    log(`На рынке Лавки Джо: ${market.map((card) => cardNameMarkup(card.title)).join(" / ")}. У ${playerName(player)} не хватает монет.`, {
+      toast: true,
+    });
+    return 0;
+  }
+
+  const drawCount = Math.max(0, joeShopOfferCount(player) - shopMarketSize);
+  const drawn = drawCount
+    ? drawCardsFromDeck("shop", drawCount, { uniqueIds: true, excludeIds: market.map((card) => card.id) })
+    : [];
+  if (drawn.length) {
+    log(`<strong>Привилегия Джо</strong>: ${playerName(player)} тянет с колоды ${drawn.map((card) => cardNameStrong(card.title)).join(" / ")}.`);
+  }
+  const offer = [...market, ...drawn];
+  const bought = await chooseRevealedShopCard(offer, player, { cost });
+  botShopOfferChoices.delete(offer);
+
+  if (bought === joeCouponShopChoiceId && canUseJoeCouponInShop(player, offer)) {
+    state.shopMarket = [];
+    const immediateStepBonus = await takeJoeCouponShopOffer(player, offer);
+    refillShopMarket();
+    render();
+    return immediateStepBonus;
+  }
+  if (!bought || bought === joeCouponShopChoiceId) {
+    discardCardsToDeck("shop", drawn);
+    log(`${playerName(player)} отказывается от карт Лавки Джо.${drawn.length ? " Вытянутая карта уходит в сброс." : ""}`, { toast: true });
+    return 0;
+  }
+
+  addCoins(player, -cost, { category: "purchase" });
+  player.items.push(ownedShopItem(bought));
+  recordShopCards(player);
+  log(`${playerName(player)} покупает в Лавке Джо за ${coinAmount(cost)}: <strong>${bought.title}</strong>`, { toast: true });
+  const marketIndex = state.shopMarket.indexOf(bought);
+  if (marketIndex >= 0) {
+    state.shopMarket.splice(marketIndex, 1);
+    refillShopMarket();
+  }
+  discardCardsToDeck("shop", drawn.filter((card) => card !== bought));
+  render();
+  return bought.effect?.type === "passive-step-bonus" ? Math.max(0, Number(bought.effect.steps) || 0) : 0;
+}
+
+function shopMarketEnabled() {
+  return state?.shopMode === "market";
+}
+
+// Tops the open market up to 2 cards with distinct ids (the shop prompt picks by id) and says what was laid out.
+function refillShopMarket() {
+  if (!state) return [];
+  if (!Array.isArray(state.shopMarket)) state.shopMarket = [];
+  if (!shopMarketEnabled()) return state.shopMarket;
+  const missing = shopMarketSize - state.shopMarket.length;
+  if (missing <= 0) return state.shopMarket;
+  const added = drawCardsFromDeck("shop", missing, { uniqueIds: true, excludeIds: state.shopMarket.map((card) => card.id) });
+  if (added.length) {
+    state.shopMarket.push(...added);
+    log(`На рынок Лавки Джо выложена ${added.length === 1 ? "карта" : "карты"}: ${added.map((card) => cardNameStrong(card.title)).join(" / ")}.`);
+  }
+  return state.shopMarket;
+}
+
+function shopModeSetting() {
+  return ui.shopMode?.value === "classic" ? "classic" : "market";
+}
+
+function syncShopModeControl() {
+  if (!ui.shopMode) return;
+  const locked = weaponsSettingLocked();
+  ui.shopMode.disabled = locked;
+  const hint = locked
+    ? "Лавку можно переключить после завершения текущего действия или боя"
+    : "Рынок: 2 открытые карты на всю партию, купленную сразу заменяет новая. Классика: в каждой Лавке новые карты с колоды";
+  ui.shopMode.title = hint;
+  if (ui.shopMode.parentElement) ui.shopMode.parentElement.title = hint;
+}
+
+function applyShopModeSetting() {
+  if (!state || !ui.shopMode) return;
+  if (weaponsSettingLocked()) {
+    ui.shopMode.value = shopMarketEnabled() ? "market" : "classic";
+    syncShopModeControl();
+    return;
+  }
+  const mode = shopModeSetting();
+  if ((mode === "market") === shopMarketEnabled()) return;
+  state.shopMode = mode;
+  if (mode === "classic") {
+    const cards = (state.shopMarket || []).splice(0);
+    discardCardsToDeck("shop", cards);
+    log(`Лавка: классика. ${cards.length ? "Карты рынка уходят в сброс, в" : "В"} каждой Лавке снова новые карты с колоды.`);
+  } else {
+    log("Лавка: рынок. 2 открытые карты лежат всю партию, купленную сразу заменяет новая.");
+    refillShopMarket();
+  }
+  render();
 }
 
 function canUseJoeCouponInShop(player, offer) {
@@ -16393,12 +16513,12 @@ function drawCardFromDeck(deckId) {
   return deck.draw.pop() || null;
 }
 
-function drawCardsFromDeck(deckId, count, { uniqueIds = false } = {}) {
+function drawCardsFromDeck(deckId, count, { uniqueIds = false, excludeIds = [] } = {}) {
   const deck = gameDeck(deckId);
   const available = deck.draw.length + deck.discard.length;
   const picked = [];
   const held = [];
-  const pickedIds = new Set();
+  const pickedIds = new Set(uniqueIds ? excludeIds : []);
   let attempts = 0;
 
   while (picked.length < count && attempts < available) {
@@ -17320,6 +17440,7 @@ function snapshotAutoPlaytestControls() {
     botSpeed: ui.botSpeed?.value || "standard",
     disableDragon: dragonDisabledSetting(),
     weaponsEnabled: weaponsEnabledSetting(),
+    shopMode: shopModeSetting(),
     hidePlayers: ui.hidePlayers ? ui.hidePlayers.checked : false,
     playerCount: ui.playerCount?.value || "2",
     randomFirstPlayer: ui.randomFirstPlayer ? ui.randomFirstPlayer.checked : false,
@@ -17340,6 +17461,7 @@ function restoreAutoPlaytestControls(snapshot) {
       : Boolean(snapshot.disableDragon);
   }
   if (ui.weaponsEnabled) ui.weaponsEnabled.checked = Boolean(snapshot.weaponsEnabled);
+  if (ui.shopMode) ui.shopMode.value = snapshot.shopMode === "classic" ? "classic" : "market";
   if (ui.hidePlayers) ui.hidePlayers.checked = snapshot.hidePlayers;
   if (ui.randomFirstPlayer) ui.randomFirstPlayer.checked = snapshot.randomFirstPlayer;
   if (ui.showWalkPath) ui.showWalkPath.checked = snapshot.showWalkPath;
@@ -17782,6 +17904,7 @@ ui.hidePlayers?.addEventListener("change", () => {
   renderTokens();
 });
 ui.weaponsEnabled?.addEventListener("change", applyWeaponsSetting);
+ui.shopMode?.addEventListener("change", applyShopModeSetting);
 ui.disableDragon?.addEventListener("change", () => {
   if (!state?.dragon) return;
   state.dragon.disabled = Boolean(ui.disableDragon.checked);
