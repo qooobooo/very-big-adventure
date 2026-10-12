@@ -2934,3 +2934,49 @@ body[data-ui-style="tabletop"] .controller-big-button.is-roll {
     height: 40px;
   }
 }
+
+
+/* О9. Открытое меню целиком из пергамента: панели «Телефоны» и «Настройки» лежат на том же листе,
+   строки и карточки оттиснуты в бумаге, поля и списки — светлая бумага с тёмными чернилами. Кнопки остаются деревянными */
+@media (min-width: 1200px) {
+  body[data-ui-style="tabletop"] .side-panel > .game-settings:is(.is-table-menu-open, :has(#settingsPanel:not([hidden])), :has(.phone-room-panel:not([hidden]))) {
+    --menu-ink: #3a2412;
+    --menu-dent: rgba(96, 60, 24, 0.12);
+    --menu-line: rgba(110, 74, 32, 0.32);
+    color-scheme: light;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .game-settings :is(.settings-panel, .phone-room-panel) {
+    border-color: var(--menu-line);
+    color: var(--menu-ink);
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .game-settings :is(.settings-panel, .phone-room-panel) :is(label, .cheat-toggle, .settings-select, .settings-action-pair, .exact-move-row, .modifier-preset-row, .modifier-player-status, .phone-room-link-card, .phone-room-code-card, .phone-room-settings, .phone-room-details) {
+    border-color: var(--menu-line);
+    background: var(--menu-dent);
+    box-shadow: inset 0 1px 2px rgba(60, 36, 14, 0.22);
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .game-settings :is(.settings-panel, .phone-room-panel) :not(button, button *, .pill, .pill *) {
+    color: var(--menu-ink);
+    text-shadow: none;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .game-settings :is(.settings-panel, .phone-room-panel) :is(small, .phone-room-status, .auto-playtest-status) {
+    color: rgba(58, 36, 18, 0.7);
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .game-settings :is(select, input:not([type="checkbox"], [type="radio"])) {
+    border: 1px solid #8a6a3a;
+    color: var(--menu-ink);
+    background-color: #fbf3df;
+    box-shadow: inset 0 1px 2px rgba(60, 36, 14, 0.3);
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .game-settings :is(.settings-panel, .phone-room-panel) input[type="checkbox"] {
+    accent-color: #9a6a22;
+  }
+}
