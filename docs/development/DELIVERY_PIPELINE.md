@@ -62,6 +62,7 @@ python3 tools/pipeline.py deliver --task dice-fix \
    - Если игра не открыта (нет соединений с :5173), скрипт перезапускает сервер сам.
    - Если открыта — не трогает и пишет в сообщении, что перезапустить после партии: `pipeline.py serve --restart`.
 8. **Таблица карт.** Если в `dev` поменялся `tools/cards-sheet/VbaCards.gs`, скрипт заливает его в Google Таблицу `Cards Config` через `clasp`. Сбой заливки доставку не останавливает. Script ID таблицы — в `.git/vba-pipeline/cards-sheet.json`, вручную — `pipeline.py sheet-push [--script-id ID]`. Подробно — `tools/cards-sheet/README.md`.
+   - Обратный путь: «Отправить в игру» в таблице — коммит в `dev` без доставки. Его в основную папку раз в минуту подтягивает `pipeline.py follow`. Он работает вместе с сервером :5173: его запускает `serve`, и останавливается он вместе с сервером. `follow` берёт только `dev`, сдвинутый в одних файлах карт, и не трогает откаченную основную папку и идущую доставку.
 
 Проверка (шаг 3) при правке `src/cards.config.js` или `cards-google-sheet.csv` ещё сверяет CSV с конфигом (`node tools/cards-sheet/cards-csv.mjs --check`).
 
@@ -165,6 +166,7 @@ python3 tools/probe.py autoplay --players 2,3,4 --games 20 --out Logs/probes/{ru
 | Уровни размышлений по задачам (пишет PM) | `effort.jsonl` |
 | Адреса чатов, доска | `chats.json`, `board.json` |
 | Сервер :5173, его лог | `server.json`, `server.log` |
+| Спутник сервера `follow` (правки из таблицы), его лог | `follow.json`, `follow.log` |
 | Публикации в `main` | `publishes.jsonl` |
 | Строки ежедневного отчёта | `metrics.jsonl` |
 | Script ID таблицы карт и что в неё залито | `cards-sheet.json` |

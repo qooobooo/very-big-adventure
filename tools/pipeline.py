@@ -14,6 +14,7 @@ details: docs/development/DELIVERY_PIPELINE.md.
     python3 tools/pipeline.py sync-main                # main folder to origin/dev (also back from a rollback)
     python3 tools/pipeline.py rollback [--to <commit>] # main folder to the previously installed delivery
     python3 tools/pipeline.py serve [--restart|--stop] # the user's game server on :5173 from the main folder
+    python3 tools/pipeline.py follow [--once]          # serve runs it: card edits from the sheet into the main folder
     python3 tools/pipeline.py merge-main               # bring the shared main (others' work) into this branch
     python3 tools/pipeline.py publish [--dry-run] [--notes file] [--probe ...]   # dev -> main by a pull request
     python3 tools/pipeline.py board [--set NAME TASK | --free NAME...] [--json]
@@ -87,6 +88,8 @@ CHATS = STATE / 'chats.json'  # chat name -> send_message id and zone, for deliv
 BOARD = STATE / 'board.json'  # chat name -> the task it is on, kept by PM (`board`), shown by the status mod
 INSTALLED = STATE / 'installed.json'  # what the main folder runs: version, commit, the previous one
 SERVER = STATE / 'server.json'  # the :5173 server started by `serve`
+FOLLOW = STATE / 'follow.json'  # its companion `follow`: card edits sent from the sheet reach the main folder
+FOLLOW_EVERY = 60  # seconds
 BASE = os.environ.get('VBA_BASE') or 'dev'
 
 
@@ -414,6 +417,55 @@ def start_server():
     write_json(SERVER, {'pid': process.pid, 'since': now().isoformat(timespec='seconds'),
                         'commit': git('rev-parse', '--short', 'HEAD', cwd=MAIN)})
     say(f'server :{PORT} started from {MAIN.name} (pid {process.pid}, log {STATE.name}/server.log)')
+    start_follow()
+
+
+def alive(pid):
+    try:
+        os.kill(pid, 0)
+        return True
+    except (ProcessLookupError, PermissionError, TypeError):
+        return False
+
+
+def start_follow():
+    """The companion of the :5173 server (PM, 12 Oct 2026): «Отправить в игру» in the cards sheet commits to dev
+    without a delivery, and the user should see the edit on reload, not after the next delivery. One per Mac; it
+    stops by itself with the server."""
+    if alive(read_json(FOLLOW, {}).get('pid')):
+        return
+    log = (STATE / 'follow.log').open('a', encoding='utf-8')
+    process = subprocess.Popen([sys.executable, str(MAIN / 'tools/pipeline.py'), 'follow'], cwd=MAIN,
+                               stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+    write_json(FOLLOW, {'pid': process.pid, 'since': now().isoformat(timespec='seconds')})
+
+
+def follow_once():
+    """Fast-forward the main folder when dev moved only in the cards (a sheet edit). Anything else comes with its
+    delivery; a rolled-back main folder and a running delivery are left alone."""
+    if git('symbolic-ref', '--quiet', '--short', 'HEAD', cwd=MAIN, check=False) != BASE or lock_state() != 'free':
+        return
+    if subprocess.run(['git', 'fetch', '-q', 'origin'], cwd=MAIN, capture_output=True).returncode != 0:
+        return
+    head = git('rev-parse', 'HEAD', cwd=MAIN)
+    target = git('rev-parse', 'origin/' + BASE, cwd=MAIN)
+    if head == target or not is_ancestor(head, target, cwd=MAIN):
+        return
+    if not set(git('diff', '--name-only', head, target, cwd=MAIN).splitlines()) <= set(CARD_FILES):
+        return
+    if sync_main(target):
+        record_installed(target, version_at(target), 'sheet', head)
+
+
+def cmd_follow(args):
+    while True:
+        try:
+            follow_once()
+        except (SystemExit, subprocess.SubprocessError, OSError) as exc:
+            say(f'follow: {exc}')
+        if args.once or listener() is None:
+            return 0
+        time.sleep(FOLLOW_EVERY)
 
 
 def stop_server(pid):
@@ -456,6 +508,7 @@ def cmd_serve(args):
             return 0
     elif pid:
         say(f'server :{PORT} already runs from {MAIN.name} (pid {pid})')
+        start_follow()
         return 0
     start_server()
     return 0
@@ -757,7 +810,10 @@ def cmd_deliver(args):
             say('DELIVERED ' + summary)
             if note:
                 say(note)
-            sheet_push(commit)
+            try:
+                sheet_push(commit)
+            except Exception as exc:  # the delivery is done; the sheet keeps its script
+                say(f'sheet: {exc}')
             print('\nSend it yourself to PM and to the chats whose zones or files this touches, not everyone '
                   '(addresses: python3 tools/pipeline.py chats):\n'
                   f'Доставлено в {BASE}{" и в основную папку" if synced else ""}: {summary}. '
@@ -1011,6 +1067,9 @@ def main():
     chat.add_argument('--set', nargs=2, metavar=('NAME', 'ID'))
     chat.add_argument('--zone')
     chat.set_defaults(run=cmd_chats)
+    follow = sub.add_parser('follow', help='serve runs it: sheet card edits on dev into the main folder')
+    follow.add_argument('--once', action='store_true', help='one look, then exit')
+    follow.set_defaults(run=cmd_follow)
     sheet = sub.add_parser('sheet-push', help='the cards sheet\'s script from dev into the sheet by clasp (deliver does it too)')
     sheet.add_argument('--script-id', help='the sheet\'s Script ID (Apps Script → Project Settings), kept on this Mac')
     sheet.add_argument('--force', action='store_true', help='push even when this version was pushed already')

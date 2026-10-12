@@ -65,7 +65,7 @@
 - **Числа баланса** (урон, цены, шаги, монеты и т. п.) — в конфиге `src/game.config.js`, не в коде (решение пользователя, 11 октября 2026). Перенос чисел из `game.js` — задача GD.
 - **Карты: источник — `src/cards.config.js` в `dev`** (задача PM, 12 октября 2026: таблица живёт сама, пользователь конфиги не набирает).
   - `cards-google-sheet.csv` — зеркало конфига. Поменял карты — `node tools/cards-sheet/cards-csv.mjs`, CSV в тот же коммит. `deliver` не пустит устаревший CSV. Руками в CSV — только `notes`.
-  - **Google Таблица `Cards Config`** сама берёт CSV из `dev` раз в 5 минут. Правки пользователя в ней приходят коммитом «Cards from the sheet: …» в `dev`, сразу в оба файла. Новые и удалённые карты — только в коде. Подробно — `tools/cards-sheet/README.md`, ссылки на таблицы — [правила дизайна и карт](docs/design/RULES.md).
+  - **Google Таблица `Cards Config`** сама берёт CSV из `dev` раз в 5 минут. Правки пользователя в ней приходят коммитом «Cards from the sheet: …» в `dev`, сразу в оба файла. В его игру на :5173 они попадают сами за минуту: вместе с сервером работает `pipeline.py follow`. Новые и удалённые карты — только в коде. Подробно — `tools/cards-sheet/README.md`, ссылки на таблицы — [правила дизайна и карт](docs/design/RULES.md).
 - Порядок колонок: `deck,id,title,shortTitle,effect_type,amount,steps,cost,dice,mode,target_deck,notes,count,description,artifact_desr,moment,effect_extra`.
   - `amount`, `steps`, `cost`, `dice`, `mode` — те же ключи `effect`, `target_deck` — `effect.deck`, `effect_extra` — остальные ключи `effect`: `ключ=число; ключ=число`.
   - `moment` — только у карт Лавки, момент срабатывания для планшета игрока: `battle`, `move`, `shop`, `turn-start`, `reaction` (12 октября 2026).
