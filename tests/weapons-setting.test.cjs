@@ -39,7 +39,10 @@ function fixture(enabled = false, count = 2) {
     finalPositionBonuses: ps => new Map(ps.map(p => [p.id, 1])),
     finalBattleScore: (p, damage, position) => ({ playerId: p.id, total: damage + position, damage, damageToBoss: damage, position, coins: 0, shop: 0, steps: 0 }),
     bestFinalScorePlayer: (_scores, ps) => ps[0], finalScoreFormulaText: () => 'score',
-    rollFinalBattlePower: async p => ({ player: p, rolls: [4], rawRolls: [4], weaponAdjustedRolls: [4], rolled: 4, baseBonus: 3, bonus: 3, total: 7 }),
+    rollFinalBattlePower: async (p, _animate, { withoutBaseBonus = false } = {}) => {
+      const baseBonus = withoutBaseBonus ? 0 : 3;
+      return { player: p, rolls: [4], rawRolls: [4], weaponAdjustedRolls: [4], rolled: 4, baseBonus, bonus: baseBonus, total: 4 + baseBonus };
+    },
     showActionPrompt: async () => {}, revealLegendaryWeaponCard: async () => true,
     drawCardFromDeck: () => { throw Error('unexpected weapon draw'); },
     effectiveMonsterStrength: () => 30,
@@ -144,15 +147,17 @@ test('live off clears ownership, conserves card/decks, preserves started setting
   assert.equal(c.state.decks.legendary.discard.length, 1);
 });
 
+// Tabletop review, 12 Oct 2026: the boss rolls once per challenger, adds its bonus (3 here) once and gets +10 for every
+// challenger after the first, in both weapon modes.
 for (const count of [1, 2, 3, 4]) {
-  test(`final battle ${count} players: classic +${3 * (count - 1)} exactly once; weapon mode no classic bonus; history/phone agree`, async () => {
+  test(`final battle ${count} players: boss bonus once, +${10 * Math.max(0, count - 2)} for challengers after the first; history/phone agree`, async () => {
     for (const enabled of [false, true]) {
       const c = fixture(enabled, count);
       if (enabled) c.state.legendaryWeapon = { card: gold, owner: 'player', ownerId: 0 };
       const opponents = c.state.players.slice(1);
-      const classic = enabled ? 0 : opponents.length * 3;
+      const classic = 10 * Math.max(0, opponents.length - 1);
       const legendary = enabled ? opponents.reduce((sum, p) => sum + Math.floor(p.coins / 10), 0) : 0;
-      const expected = opponents.length * 7 + classic + legendary;
+      const expected = opponents.length * 4 + (opponents.length ? 3 : 0) + classic + legendary;
       const observed = [];
       c.render = () => { if (c.state.finalBattleProgress) { c.renderFinalBattleHud(); observed.push({ progress: { ...c.state.finalBattleProgress }, html: c.ui.finalBattleHud.innerHTML }); } };
       await c.resolveFinalBattle(c.state.players[0], false);
@@ -162,7 +167,9 @@ for (const count of [1, 2, 3, 4]) {
       const bossForce = summary.players[0].force;
       assert.equal(bossForce.total, expected);
       assert.equal(bossForce.opponentBonus, classic);
-      assert.equal(bossForce.opponentBonusPerPlayer, enabled ? 0 : 3);
+      assert.equal(bossForce.opponentBonusPerExtra, 10);
+      assert.equal(bossForce.bonus, opponents.length ? 3 : 0);
+      assert.equal(summary.players[1]?.force.total ?? 7, 7);
       assert.equal(bossForce.legendaryBonus, legendary);
       assert.equal(c.state.history.finalSummary, summary);
       assert.equal(c.phoneGameSnapshot().finalBattle.bossForce, expected);
@@ -170,8 +177,8 @@ for (const count of [1, 2, 3, 4]) {
       assert.equal(observed.at(-1).progress.bossForce, expected);
       assert.equal(observed[0].progress.opponentBonus, classic);
       if (classic) {
-        assert.match(observed.at(-1).html, new RegExp(`\\+${classic}: по 3 за противника`));
-        assert.match(c.finalHistoryOpponentBonusText(bossForce), /\+3 каждый/);
+        assert.match(observed.at(-1).html, new RegExp(`\\+${classic}: по 10 за противника после первого`));
+        assert.match(c.finalHistoryOpponentBonusText(bossForce), /\+10 за каждого после первого/);
       }
       const frozenSummary = JSON.stringify(summary);
       c.ui.weaponsEnabled.checked = !enabled; c.applyWeaponsSetting();
@@ -180,3 +187,9 @@ for (const count of [1, 2, 3, 4]) {
     }
   });
 }
+
+test('history of games played before the change keeps «+3 каждый»', () => {
+  const c = fixture();
+  assert.equal(c.finalHistoryOpponentBonusText({ opponentBonus: 9, opponentBonusPerPlayer: 3 }), 'противники 9 (+3 каждый)');
+  assert.equal(c.finalHistoryOpponentBonusText({ opponentBonus: 20, opponentBonusPerExtra: 10 }), 'противники 20 (+10 за каждого после первого)');
+});
