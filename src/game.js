@@ -3060,8 +3060,11 @@ function renderTokens() {
     ];
     const [offsetX, offsetY] = offsets[stackIndex] || [0, 0];
 
+    const previousCell = token.dataset.cell;
+    token.dataset.cell = player.position;
     token.style.left = `${((col + 0.5) / boardCols) * 100}%`;
     token.style.top = `${((row + 0.5) / boardRows) * 100}%`;
+    if (previousCell && previousCell !== player.position) hopTableToken(token, previousCell, player.position);
     token.style.setProperty("--player-color", player.color);
     token.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
     token.title = player.name;
@@ -16626,6 +16629,117 @@ function showCoinFloat(player, amount) {
   float.innerHTML = `${sign}${coinAmount(Math.abs(amount))}`;
   token.append(float);
   window.setTimeout(() => float.remove(), 1200);
+  flyTableCoins(player, amount, token);
+}
+
+// Настольный стиль: мелочи двигаются как предметы на столе. В классическом и в быстрой автоигре ничего не происходит
+function tableMotionAllowed() {
+  return document.body.dataset.uiStyle === "tabletop"
+    && !fastModeActive()
+    && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+}
+
+const tableHopTimers = new WeakMap();
+
+// Фишка прыгает дугой на каждую клетку; дальний перенос (портал, возврат) — прыжок выше и дольше
+function hopTableToken(token, fromCell, toCell) {
+  if (!tableMotionAllowed()) return;
+  const [fromCol, fromRow] = parseCell(fromCell);
+  const [toCol, toRow] = parseCell(toCell);
+  const far = Math.abs(toCol - fromCol) + Math.abs(toRow - fromRow) > 1;
+  const duration = far ? 440 : 240;
+  token.style.setProperty("--table-hop-ms", `${duration}ms`);
+  token.style.setProperty("--table-hop-height", far ? "28px" : "13px");
+  token.classList.remove("is-table-hop");
+  void token.offsetWidth;
+  token.classList.add("is-table-hop");
+  window.clearTimeout(tableHopTimers.get(token));
+  tableHopTimers.set(token, window.setTimeout(() => token.classList.remove("is-table-hop"), duration + 40));
+}
+
+function tableCoinStack(player) {
+  const index = state.players.indexOf(player);
+  return scoreStripEl.children[index]?.querySelector(".score-stat-coins") || null;
+}
+
+function tableRectOnScreen(rect) {
+  return rect.width > 0
+    && rect.bottom > 0
+    && rect.right > 0
+    && rect.top < window.innerHeight
+    && rect.left < window.innerWidth;
+}
+
+// Монеты летят дугой с фишки на стопку планшета; при потере — слетают со стопки и падают
+function flyTableCoins(player, amount, token) {
+  if (!tableMotionAllowed() || !Element.prototype.animate) return;
+  const stack = tableCoinStack(player);
+  if (!stack) return;
+  const tokenRect = token.getBoundingClientRect();
+  const stackRect = stack.getBoundingClientRect();
+  if (!tableRectOnScreen(tokenRect) || !tableRectOnScreen(stackRect)) return;
+
+  const pawn = { x: tokenRect.left + tokenRect.width / 2, y: tokenRect.top + tokenRect.height / 2 };
+  const pile = { x: stackRect.left + 11, y: stackRect.top + stackRect.height / 2 };
+  const count = clamp(Math.round(Math.abs(amount) / 10), 1, 6);
+  const gain = amount > 0;
+  let landed = 0;
+
+  for (let index = 0; index < count; index += 1) {
+    const coin = document.createElement("img");
+    coin.className = "table-coin-flight";
+    coin.src = coinIconSrc;
+    coin.alt = "";
+    coin.setAttribute("aria-hidden", "true");
+    document.body.append(coin);
+
+    const spread = (index - (count - 1) / 2) * 6;
+    const keyframes = gain
+      ? tableCoinArcFrames({ x: pawn.x + spread, y: pawn.y - 14 }, pile)
+      : tableCoinDropFrames({ x: pile.x + spread, y: pile.y });
+    const flight = coin.animate(keyframes, {
+      duration: gain ? 680 : 560,
+      delay: 140 + index * 85,
+      easing: gain ? "cubic-bezier(0.45, 0.05, 0.4, 1)" : "cubic-bezier(0.3, 0, 0.7, 1)",
+      fill: "both",
+    });
+    flight.onfinish = () => {
+      coin.remove();
+      landed += 1;
+      if (!gain || landed !== count) return;
+      const current = tableCoinStack(player);
+      if (!current) return;
+      current.classList.remove("is-coin-landed");
+      void current.offsetWidth;
+      current.classList.add("is-coin-landed");
+    };
+    flight.oncancel = () => coin.remove();
+  }
+}
+
+function tableCoinArcFrames(from, to) {
+  const lift = Math.min(150, 60 + Math.hypot(to.x - from.x, to.y - from.y) * 0.2);
+  const control = { x: (from.x + to.x) / 2, y: Math.min(from.y, to.y) - lift };
+  const frames = [];
+  for (let step = 0; step <= 12; step += 1) {
+    const t = step / 12;
+    const x = (1 - t) ** 2 * from.x + 2 * (1 - t) * t * control.x + t ** 2 * to.x;
+    const y = (1 - t) ** 2 * from.y + 2 * (1 - t) * t * control.y + t ** 2 * to.y;
+    const scale = 0.8 + Math.sin(Math.PI * t) * 0.45 - t * 0.1;
+    frames.push({
+      transform: `translate(${x}px, ${y}px) rotate(${t * 540}deg) scale(${scale})`,
+      opacity: step === 0 ? 0 : 1,
+    });
+  }
+  return frames;
+}
+
+function tableCoinDropFrames(from) {
+  return [
+    { transform: `translate(${from.x}px, ${from.y}px) scale(1)`, opacity: 1 },
+    { transform: `translate(${from.x + 6}px, ${from.y - 18}px) rotate(120deg) scale(1.05)`, opacity: 1, offset: 0.35 },
+    { transform: `translate(${from.x + 12}px, ${from.y + 34}px) rotate(300deg) scale(0.8)`, opacity: 0 },
+  ];
 }
 
 function showDiceFloat(player, amount) {

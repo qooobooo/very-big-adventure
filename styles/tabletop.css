@@ -23,14 +23,16 @@ body[data-ui-style="tabletop"] {
   --tabletop-display: "Ruslan Display", "Rubik", Georgia, serif;
   background:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .2 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"),
-    radial-gradient(120% 95% at 38% 40%, var(--table-felt-light), var(--table-felt) 48%, var(--table-felt-deep));
+    radial-gradient(120% 95% at 30% 24%, var(--table-felt-light), var(--table-felt) 48%, var(--table-felt-deep));
   background-attachment: fixed;
 }
 
-/* Тень по краям стола вместо диагональных полос */
+/* Тень по краям стола вместо диагональных полос. К: свет — одна тёплая лампа слева сверху, тени предметов падают вправо вниз */
 body[data-ui-style="tabletop"]::before,
 body[data-ui-style="tabletop"].is-game-fullscreen .app-shell::before {
-  background: radial-gradient(140% 110% at 45% 40%, transparent 52%, rgba(4, 10, 8, 0.55));
+  background:
+    radial-gradient(48% 42% at 28% 14%, rgba(255, 214, 150, 0.11), transparent 72%),
+    radial-gradient(140% 110% at 36% 26%, transparent 50%, rgba(4, 10, 8, 0.6));
   opacity: 1;
 }
 
@@ -58,15 +60,15 @@ body[data-ui-style="tabletop"] .board {
   background: var(--board-edge);
   box-shadow:
     0 0 0 1.5px var(--board-edge-light),
-    0 4px 0 1.5px var(--board-edge-under),
-    0 14px 22px rgba(0, 0, 0, 0.5),
-    0 2px 40px rgba(0, 0, 0, 0.25);
+    2px 4px 0 1.5px var(--board-edge-under),
+    7px 15px 22px rgba(0, 0, 0, 0.5),
+    6px 4px 40px rgba(0, 0, 0, 0.25);
 }
 
 body[data-ui-style="tabletop"] .board-header {
   border: 1px solid rgba(230, 178, 88, 0.3);
   border-radius: 8px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 238, 190, 0.08);
+  box-shadow: 3px 8px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 238, 190, 0.08);
 }
 
 @media (min-width: 1200px) {
@@ -126,7 +128,7 @@ body[data-ui-style="tabletop"] .side-panel > .game-settings:has(.phone-room-pane
   padding: 14px;
   border-color: rgba(230, 178, 88, 0.36);
   background: linear-gradient(180deg, rgba(74, 43, 25, 0.96), rgba(39, 23, 15, 0.96));
-  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 238, 190, 0.08);
+  box-shadow: 5px 12px 22px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 238, 190, 0.08);
 }
 
 body[data-ui-style="tabletop"] .game-settings.is-table-menu-open .season-controls > label {
@@ -217,8 +219,8 @@ body[data-ui-style="tabletop"] .score-card {
     radial-gradient(130% 150% at 25% 0%, #74492a, #55331c 55%, #3d2312);
   box-shadow:
     0 0 0 1px rgba(185, 141, 74, 0.6),
-    0 3px 0 1px var(--board-edge-under),
-    0 10px 16px rgba(0, 0, 0, 0.42);
+    1px 3px 0 1px var(--board-edge-under),
+    4px 10px 16px rgba(0, 0, 0, 0.42);
   transition: transform 0.22s ease, box-shadow 0.22s ease;
 }
 
@@ -240,8 +242,8 @@ body[data-ui-style="tabletop"] .score-card.active {
   box-shadow:
     0 0 0 1px rgba(255, 221, 148, 0.85),
     0 0 0 4px color-mix(in srgb, var(--player-color) 55%, transparent),
-    0 3px 0 4px var(--board-edge-under),
-    0 16px 24px rgba(0, 0, 0, 0.5),
+    1px 3px 0 4px var(--board-edge-under),
+    6px 16px 24px rgba(0, 0, 0, 0.5),
     0 0 26px color-mix(in srgb, var(--player-color) 40%, transparent);
 }
 
@@ -262,7 +264,7 @@ body[data-ui-style="tabletop"] .score-player-avatar img {
   border: 3px solid var(--player-color);
   border-radius: 50%;
   background: radial-gradient(circle at 40% 35%, #f6e8c4, #cdb07a 70%, #9b7b45);
-  box-shadow: 0 2px 0 rgba(31, 18, 8, 0.9), 0 4px 6px rgba(0, 0, 0, 0.45);
+  box-shadow: 1px 2px 0 rgba(31, 18, 8, 0.9), 2px 4px 6px rgba(0, 0, 0, 0.45);
   filter: none;
 }
 
@@ -591,15 +593,15 @@ body[data-ui-style="tabletop"] .table-deck[data-depth="0"] .table-deck-pile img 
 }
 
 body[data-ui-style="tabletop"] .table-deck[data-depth="1"] .table-deck-pile {
-  box-shadow: 1px 2px 0 #cdb98e, 0 6px 8px rgba(0, 0, 0, 0.45);
+  box-shadow: 1px 2px 0 #cdb98e, 3px 6px 8px rgba(0, 0, 0, 0.45);
 }
 
 body[data-ui-style="tabletop"] .table-deck[data-depth="2"] .table-deck-pile {
-  box-shadow: 1px 2px 0 #d9c69c, 2px 4px 0 #bba57a, 0 8px 10px rgba(0, 0, 0, 0.45);
+  box-shadow: 1px 2px 0 #d9c69c, 2px 4px 0 #bba57a, 3px 8px 10px rgba(0, 0, 0, 0.45);
 }
 
 body[data-ui-style="tabletop"] .table-deck[data-depth="3"] .table-deck-pile {
-  box-shadow: 1px 2px 0 #dcc9a0, 2px 4px 0 #c9b388, 3px 6px 0 #ad9469, 0 10px 12px rgba(0, 0, 0, 0.48);
+  box-shadow: 1px 2px 0 #dcc9a0, 2px 4px 0 #c9b388, 3px 6px 0 #ad9469, 4px 10px 12px rgba(0, 0, 0, 0.48);
 }
 
 body[data-ui-style="tabletop"] .table-deck-count {
@@ -614,7 +616,7 @@ body[data-ui-style="tabletop"] .table-deck-count {
   border-radius: 999px;
   color: #2a1607;
   background: radial-gradient(circle at 38% 30%, #fbe9b8, #d6a24d 62%, #8a561c);
-  box-shadow: 0 2px 0 #3a210c, 0 3px 5px rgba(0, 0, 0, 0.4);
+  box-shadow: 1px 2px 0 #3a210c, 2px 3px 5px rgba(0, 0, 0, 0.4);
   font-size: 0.7rem;
   font-weight: 900;
   line-height: 1;
@@ -717,7 +719,7 @@ body[data-ui-style="tabletop"] #diceValue::before {
   box-shadow:
     inset -2px -2px 0 rgba(130, 96, 52, 0.28),
     inset 1px 1px 0 rgba(255, 255, 255, 0.8),
-    0 3px 4px rgba(0, 0, 0, 0.5);
+    2px 3px 4px rgba(0, 0, 0, 0.5);
   transform: rotate(-8deg);
 }
 
@@ -790,7 +792,7 @@ body[data-ui-style="tabletop"] .table-host {
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .22 0 0 0 0 .08 0 0 0 .2 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"),
     linear-gradient(180deg, #f6e7c1, #e6cd95 70%, #d6b77a);
   clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%, 12px 50%);
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(2px 3px 4px rgba(0, 0, 0, 0.35));
 }
 
 /* Печать игрока, чей ход */
@@ -987,7 +989,7 @@ body[data-ui-style="tabletop"] .info-history-card {
   box-shadow:
     inset 0 10px 14px -10px rgba(90, 52, 18, 0.55),
     inset 0 -10px 14px -10px rgba(90, 52, 18, 0.55),
-    0 24px 60px rgba(0, 0, 0, 0.6);
+    10px 24px 60px rgba(0, 0, 0, 0.6);
   backdrop-filter: none;
 }
 
@@ -1100,8 +1102,8 @@ body[data-ui-style="tabletop"] .player-shop-card {
     radial-gradient(130% 150% at 25% 0%, #74492a, #55331c 55%, #3d2312);
   box-shadow:
     0 0 0 1px rgba(185, 141, 74, 0.6),
-    0 4px 0 1px var(--board-edge-under),
-    0 24px 60px rgba(0, 0, 0, 0.6);
+    1px 4px 0 1px var(--board-edge-under),
+    10px 24px 60px rgba(0, 0, 0, 0.6);
   backdrop-filter: none;
 }
 
@@ -1127,7 +1129,7 @@ body[data-ui-style="tabletop"] .player-shop-head > div {
   border-radius: 6px;
   color: var(--tabletop-ink);
   background: var(--parchment);
-  box-shadow: 0 4px 0 rgba(31, 18, 8, 0.8), 0 8px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 1px 4px 0 rgba(31, 18, 8, 0.8), 4px 9px 12px rgba(0, 0, 0, 0.4);
   text-align: center;
   transform: rotate(-1.2deg);
 }
@@ -1216,8 +1218,8 @@ body[data-ui-style="tabletop"] .choice-dialog {
   box-shadow:
     inset 0 0 0 2px #3a2110,
     inset 0 0 0 4px rgba(233, 207, 148, 0.35),
-    0 6px 0 rgba(31, 18, 8, 0.85),
-    0 26px 50px rgba(0, 0, 0, 0.55);
+    1px 6px 0 rgba(31, 18, 8, 0.85),
+    10px 26px 50px rgba(0, 0, 0, 0.55);
 }
 
 body[data-ui-style="tabletop"] .choice-kicker {
@@ -1457,6 +1459,273 @@ body[data-ui-style="tabletop"] .controller-big-button.is-idle {
     linear-gradient(180deg, rgba(255, 238, 190, 0.06), transparent 18%),
     linear-gradient(180deg, #3a2a1f, #2a1d14 72%, #1f150e);
   --controller-button-disabled-bg: var(--controller-button-bg);
+}
+
+/* К. Физика мелочей: фишка прыгает с клетки на клетку, монеты летят на планшет, карта переворачивается. Свет — одна лампа слева сверху */
+
+/* Фишка стоит на доске: круглая тень от лампы лежит на клетке и не прыгает вместе с фишкой */
+body[data-ui-style="tabletop"] .map-token {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--player-color) 14%, transparent);
+}
+
+body[data-ui-style="tabletop"] .map-token.active {
+  box-shadow:
+    0 0 0 2px rgba(255, 247, 212, 0.76),
+    0 0 0 6px color-mix(in srgb, var(--player-color) 24%, transparent);
+}
+
+body[data-ui-style="tabletop"] .map-token::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: -1;
+  width: 96%;
+  height: 96%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.28) 62%, transparent);
+  translate: calc(-50% + 4px) calc(-50% + 6px);
+  pointer-events: none;
+}
+
+body[data-ui-style="tabletop"] .map-token-image {
+  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.45));
+}
+
+/* Вместо постоянного подпрыгивания: фишка того, чей ход, чуть приподнята и покачивается, тень под ней дышит */
+body[data-ui-style="tabletop"] .map-token.turn-active:not(.moving),
+body[data-ui-style="tabletop"] .map-token.moving {
+  animation: none;
+}
+
+body[data-ui-style="tabletop"] .map-token.turn-active:not(.moving) .map-token-image {
+  animation: table-pawn-lift 1500ms ease-in-out infinite alternate;
+}
+
+body[data-ui-style="tabletop"] .map-token.turn-active:not(.moving)::after {
+  animation: table-pawn-lift-shadow 1500ms ease-in-out infinite alternate;
+}
+
+/* Шаг — прыжок дугой: фишка взлетает, тень сжимается, на приземлении фишка чуть приплющивается */
+body[data-ui-style="tabletop"] .map-token.is-table-hop .map-token-image {
+  animation: table-pawn-hop var(--table-hop-ms, 240ms) linear both;
+}
+
+body[data-ui-style="tabletop"] .map-token.is-table-hop::after {
+  animation: table-pawn-hop-shadow var(--table-hop-ms, 240ms) linear both;
+}
+
+@keyframes table-pawn-lift {
+  from {
+    translate: 0 -1px;
+  }
+
+  to {
+    translate: 0 -6px;
+  }
+}
+
+@keyframes table-pawn-lift-shadow {
+  from {
+    scale: 0.94;
+    opacity: 0.95;
+  }
+
+  to {
+    scale: 0.8;
+    opacity: 0.7;
+  }
+}
+
+@keyframes table-pawn-hop {
+  0% {
+    transform: translateY(0) scale(1, 1);
+    animation-timing-function: cubic-bezier(0.25, 0.7, 0.5, 1);
+  }
+
+  48% {
+    transform: translateY(calc(var(--table-hop-height, 13px) * -1)) scale(0.96, 1.05);
+    animation-timing-function: cubic-bezier(0.5, 0, 0.85, 0.45);
+  }
+
+  84% {
+    transform: translateY(0) scale(1.08, 0.9);
+    animation-timing-function: ease-out;
+  }
+
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+
+@keyframes table-pawn-hop-shadow {
+  0%,
+  100% {
+    scale: 1;
+    opacity: 1;
+  }
+
+  48% {
+    scale: 0.66;
+    opacity: 0.5;
+  }
+
+  84% {
+    scale: 1.04;
+    opacity: 1;
+  }
+}
+
+/* Монеты летят дугой с фишки на планшет. Сами монеты создаёт game.js, только в настольном стиле */
+body[data-ui-style="tabletop"] .table-coin-flight {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 95;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  pointer-events: none;
+  filter: drop-shadow(3px 5px 3px rgba(0, 0, 0, 0.45));
+  will-change: transform, opacity;
+}
+
+/* Монета упала на стопку — стопка вздрагивает */
+body[data-ui-style="tabletop"] .score-stat-coins.is-coin-landed::before {
+  animation: table-coin-clink 320ms ease-out;
+}
+
+@keyframes table-coin-clink {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+
+  30% {
+    translate: 0 2px;
+    scale: 1.12 0.9;
+  }
+
+  60% {
+    translate: 0 -2px;
+    scale: 0.97 1.05;
+  }
+}
+
+/* Карта переворачивается: рубашка уходит, лицо приходит, карта на миг приподнимается над столом */
+body[data-ui-style="tabletop"] .event-toast :is(.good-card-reveal, .bad-card-reveal, .tadam-card-reveal, .event-card-reveal, .legendary-card-reveal).is-revealed {
+  position: relative;
+  transform-style: preserve-3d;
+  animation: table-card-flip 620ms cubic-bezier(0.3, 0.7, 0.25, 1) both;
+}
+
+body[data-ui-style="tabletop"] .event-toast :is(.good-card-reveal, .bad-card-reveal, .tadam-card-reveal, .event-card-reveal, .legendary-card-reveal).is-revealed > button {
+  backface-visibility: hidden;
+}
+
+body[data-ui-style="tabletop"] .event-toast :is(.good-card-reveal, .bad-card-reveal, .tadam-card-reveal, .event-card-reveal, .legendary-card-reveal).is-revealed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: var(--table-card-back) center / cover no-repeat;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.42);
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+  pointer-events: none;
+}
+
+body[data-ui-style="tabletop"] .event-toast .good-card-reveal {
+  --table-card-back: url("../assets/cards/good_back.png?v=20260524-1658");
+}
+
+body[data-ui-style="tabletop"] .event-toast .bad-card-reveal {
+  --table-card-back: url("../assets/cards/bad_back.png?v=20260524-2322");
+}
+
+body[data-ui-style="tabletop"] .event-toast .tadam-card-reveal {
+  --table-card-back: url("../assets/cards/tadam_back.png?v=20260524-2340");
+}
+
+body[data-ui-style="tabletop"] .event-toast .event-card-reveal {
+  --table-card-back: url("../assets/cards/event_back.png?v=20260607-0372");
+}
+
+body[data-ui-style="tabletop"] .event-toast .legendary-card-reveal {
+  --table-card-back: url("../assets/cards/legendary_back.png?v=20260728-0542");
+}
+
+/* Карты Лавки идут рядом, переворачиваются по одной: рубашка — накладка, которая исчезает на ребре */
+body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed button.shop-card-preview {
+  animation: table-card-flip 620ms cubic-bezier(0.3, 0.7, 0.25, 1) both;
+}
+
+body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed button.shop-card-preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  border-radius: inherit;
+  background: url("../assets/cards/shop_back.png?v=20260524-1738") center / cover no-repeat;
+  transform: scaleX(-1);
+  pointer-events: none;
+  animation: table-card-back-away 620ms cubic-bezier(0.3, 0.7, 0.25, 1) both;
+}
+
+body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed .shop-card-row > :nth-child(2) button.shop-card-preview,
+body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed .shop-card-row > button.shop-card-preview:nth-child(2),
+body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed .shop-card-row > :nth-child(2) button.shop-card-preview::after,
+body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed .shop-card-row > button.shop-card-preview:nth-child(2)::after {
+  animation-delay: 120ms;
+}
+
+body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed .shop-card-row > :nth-child(n + 3) button.shop-card-preview,
+body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed .shop-card-row > button.shop-card-preview:nth-child(n + 3),
+body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed .shop-card-row > :nth-child(n + 3) button.shop-card-preview::after,
+body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed .shop-card-row > button.shop-card-preview:nth-child(n + 3)::after {
+  animation-delay: 240ms;
+}
+
+@keyframes table-card-flip {
+  0% {
+    transform: perspective(1100px) rotateY(180deg);
+  }
+
+  45% {
+    transform: perspective(1100px) translateY(-16px) rotateY(96deg) scale(1.06);
+  }
+
+  100% {
+    transform: perspective(1100px) rotateY(0deg);
+  }
+}
+
+@keyframes table-card-back-away {
+  0%,
+  44% {
+    opacity: 1;
+  }
+
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-ui-style="tabletop"] .map-token.turn-active:not(.moving) .map-token-image,
+  body[data-ui-style="tabletop"] .map-token.turn-active:not(.moving)::after,
+  body[data-ui-style="tabletop"] .score-stat-coins.is-coin-landed::before,
+  body[data-ui-style="tabletop"] .event-toast :is(.good-card-reveal, .bad-card-reveal, .tadam-card-reveal, .event-card-reveal, .legendary-card-reveal).is-revealed,
+  body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed button.shop-card-preview,
+  body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed button.shop-card-preview::after {
+    animation: none;
+  }
+
+  body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed button.shop-card-preview::after {
+    display: none;
+  }
 }
 
 /* Ж. Сказочный шрифт для заголовков и имён, меньше заглавных букв в подписях */
