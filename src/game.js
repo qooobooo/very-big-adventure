@@ -3095,12 +3095,20 @@ function highlightedPlayerId() {
 }
 
 // Планшет «Настольного»: стопка монет растёт ступенями, кубики — полоской из четырёх
-function scoreCoinTier(coins) {
-  const amount = Number(coins) || 0;
-  if (amount >= 150) return 3;
-  if (amount >= 50) return 2;
-  if (amount >= 10) return 1;
-  return 0;
+// Настольный стиль: монеты в кармане планшета — стопки жетонов 10, 5 и 1, точная сумма числом под ними.
+// Стопка выше 6 жетонов не растёт. В классическом стиле жетоны скрыты
+const scoreCoinTokenValues = [10, 5, 1];
+const scoreCoinStackLimit = 6;
+
+function scoreCoinTokensMarkup(coins) {
+  let rest = Math.max(0, Math.floor(Number(coins) || 0));
+  const stacks = scoreCoinTokenValues.map((value) => {
+    const count = Math.floor(rest / value);
+    rest -= count * value;
+    const tokens = Array.from({ length: Math.min(count, scoreCoinStackLimit) }, (_, index) => `<i style="--i: ${index}"></i>`).join("");
+    return `<span class="score-coin-stack${count ? "" : " is-empty"}" data-coin="${value}">${tokens}</span>`;
+  });
+  return `<span class="score-coin-tokens" aria-hidden="true">${stacks.join("")}</span>`;
 }
 
 function scoreDicePips(count) {
@@ -3144,7 +3152,7 @@ function renderScores() {
       <div class="score-stats">
         <span class="score-stat-strength" title="Сила">${strengthAmount(battleBonus >= 0 ? `+${battleBonus}` : battleBonus)}</span>
         <span class="score-stat-steps" title="Шаги">${stepsAmount(stepBonus >= 0 ? `+${stepBonus}` : stepBonus)}</span>
-        <span class="score-stat-coins" title="Монеты" data-coin-tier="${scoreCoinTier(player.coins)}">${coinAmount(player.coins)}</span>
+        <span class="score-stat-coins" title="Монеты">${scoreCoinTokensMarkup(player.coins)}${coinAmount(player.coins)}</span>
         <span class="score-stat-dice ${diceCount > 4 ? "is-many" : ""}" title="Кубики">${diceAmount(diceCount)}${scoreDicePips(diceCount)}</span>
         <span class="score-tracks">
           ${scoreTrackMarkup("strength", "Сила", battleBonus, { from: 0, to: 10, signed: true })}

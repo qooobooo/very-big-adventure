@@ -2,13 +2,14 @@
   Настольный стиль, шаг 1 (Art / UI, 12 октября 2026): стол из сукна, доска с картонным краем,
   меню партии, ТАДАМ на сукне, шрифт заголовков.
   Всё ниже работает только при body[data-ui-style="tabletop"], классический стиль не меняется.
-  Исключения — кнопка меню партии, полоска кубиков, треки на планшете, колоды на столе и лента ведущего:
+  Исключения — кнопка меню партии, полоска кубиков, треки и жетоны монет на планшете, колоды на столе и лента ведущего:
   в классическом стиле они скрыты. Печати моментов Лавки общие для обоих стилей — styles/moments.css.
 */
 
 .table-menu-toggle,
 .score-dice-pips,
 .score-tracks,
+.score-coin-tokens,
 .table-decks,
 .table-host {
   display: none;
@@ -341,39 +342,79 @@ body[data-ui-style="tabletop"] .score-stat-coins .coin-icon {
   display: none;
 }
 
-body[data-ui-style="tabletop"] .score-stat-coins::before {
-  --coin: url("../assets/icons/coin.png");
+/* Монеты — жетоны номиналом 10, 5 и 1: три стопки, у верхнего жетона выбит номинал. Пустой номинал — гнездо */
+body[data-ui-style="tabletop"] .score-coin-tokens {
+  display: grid;
+  grid-template-columns: repeat(3, 12px);
+  align-items: end;
+  gap: 1px;
+  height: 28px;
+}
+
+body[data-ui-style="tabletop"] .score-coin-stack {
+  position: relative;
+  width: 12px;
+  height: 100%;
+}
+
+body[data-ui-style="tabletop"] .score-coin-stack > i {
+  position: absolute;
+  left: 0;
+  bottom: calc(var(--i) * 3px);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--token-face);
+  box-shadow:
+    0 1px 0 var(--token-edge),
+    1px 2px 1px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.3);
+  font-style: normal;
+}
+
+body[data-ui-style="tabletop"] .score-coin-stack > i:last-child::after {
+  content: var(--token-value);
+  position: absolute;
+  inset: 0;
+  color: var(--token-ink);
+  font-size: 6.5px;
+  font-weight: 900;
+  line-height: 12px;
+  letter-spacing: -0.04em;
+  text-align: center;
+}
+
+body[data-ui-style="tabletop"] .score-coin-stack.is-empty::before {
   content: "";
-  flex: 0 0 auto;
-  width: 22px;
-  height: 22px;
-  background: var(--coin) center bottom / 22px 22px no-repeat;
-  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.55));
+  position: absolute;
+  left: 1px;
+  bottom: 1px;
+  width: 10px;
+  height: 10px;
+  border: 1px dashed rgba(255, 228, 170, 0.22);
+  border-radius: 50%;
 }
 
-body[data-ui-style="tabletop"] .score-stat-coins[data-coin-tier="1"]::before {
-  height: 26px;
-  background:
-    var(--coin) center 0 / 22px 22px no-repeat,
-    var(--coin) center 4px / 22px 22px no-repeat;
+body[data-ui-style="tabletop"] .score-coin-stack[data-coin="10"] {
+  --token-value: "10";
+  --token-face: radial-gradient(circle at 35% 30%, #fff3c4, #e2ac40 55%, #94600f);
+  --token-edge: #5e3b08;
+  --token-ink: #4a2c05;
 }
 
-body[data-ui-style="tabletop"] .score-stat-coins[data-coin-tier="2"]::before {
-  height: 30px;
-  background:
-    var(--coin) center 0 / 22px 22px no-repeat,
-    var(--coin) center 4px / 22px 22px no-repeat,
-    var(--coin) center 8px / 22px 22px no-repeat;
+body[data-ui-style="tabletop"] .score-coin-stack[data-coin="5"] {
+  --token-value: "5";
+  --token-face: radial-gradient(circle at 35% 30%, #ffffff, #c8ced6 55%, #737c88);
+  --token-edge: #3c434c;
+  --token-ink: #2c323a;
 }
 
-body[data-ui-style="tabletop"] .score-stat-coins[data-coin-tier="3"]::before {
-  width: 30px;
-  height: 30px;
-  background:
-    var(--coin) 8px 0 / 22px 22px no-repeat,
-    var(--coin) 0 4px / 22px 22px no-repeat,
-    var(--coin) 8px 8px / 22px 22px no-repeat,
-    var(--coin) 0 8px / 22px 22px no-repeat;
+body[data-ui-style="tabletop"] .score-coin-stack[data-coin="1"] {
+  --token-value: "1";
+  --token-face: radial-gradient(circle at 35% 30%, #ffd9bd, #c67b45 55%, #7a3f1c);
+  --token-edge: #4a230c;
+  --token-ink: #3a1a06;
 }
 
 body[data-ui-style="tabletop"] .score-stat-dice:not(.is-many) .dice-amount {
@@ -426,11 +467,28 @@ body[data-ui-style="tabletop"] .score-dice-pips > i.is-on {
     box-shadow: 0 1px 0 #3a210c, inset 0 -1px 2px rgba(60, 30, 5, 0.45);
   }
 
-  body[data-ui-style="tabletop"] .score-stat-coins::before,
-  body[data-ui-style="tabletop"] .score-stat-coins[data-coin-tier]::before {
-    width: 15px;
-    height: 15px;
-    background: var(--coin) center / 15px 15px no-repeat;
+  body[data-ui-style="tabletop"] .score-coin-tokens {
+    grid-template-columns: repeat(3, 9px);
+    height: 19px;
+  }
+
+  body[data-ui-style="tabletop"] .score-coin-stack {
+    width: 9px;
+  }
+
+  body[data-ui-style="tabletop"] .score-coin-stack > i {
+    bottom: calc(var(--i) * 2px);
+    width: 9px;
+    height: 9px;
+  }
+
+  body[data-ui-style="tabletop"] .score-coin-stack > i:last-child::after {
+    content: none;
+  }
+
+  body[data-ui-style="tabletop"] .score-coin-stack.is-empty::before {
+    width: 7px;
+    height: 7px;
   }
 
   body[data-ui-style="tabletop"] .score-stat-dice:not(.is-many) .score-dice-pips {
@@ -1592,7 +1650,7 @@ body[data-ui-style="tabletop"] .table-coin-flight {
 }
 
 /* Монета упала на стопку — стопка вздрагивает */
-body[data-ui-style="tabletop"] .score-stat-coins.is-coin-landed::before {
+body[data-ui-style="tabletop"] .score-stat-coins.is-coin-landed .score-coin-tokens {
   animation: table-coin-clink 320ms ease-out;
 }
 
@@ -1717,7 +1775,7 @@ body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed .shop-
 @media (prefers-reduced-motion: reduce) {
   body[data-ui-style="tabletop"] .map-token.turn-active:not(.moving) .map-token-image,
   body[data-ui-style="tabletop"] .map-token.turn-active:not(.moving)::after,
-  body[data-ui-style="tabletop"] .score-stat-coins.is-coin-landed::before,
+  body[data-ui-style="tabletop"] .score-stat-coins.is-coin-landed .score-coin-tokens,
   body[data-ui-style="tabletop"] .event-toast :is(.good-card-reveal, .bad-card-reveal, .tadam-card-reveal, .event-card-reveal, .legendary-card-reveal).is-revealed,
   body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed button.shop-card-preview,
   body[data-ui-style="tabletop"] .event-toast .shop-card-reveal.is-revealed button.shop-card-preview::after {
