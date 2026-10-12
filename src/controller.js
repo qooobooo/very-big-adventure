@@ -296,6 +296,8 @@ function render() {
   ui.playerPanel?.classList.remove("has-giant-action", "has-compact-action");
   document.body.classList.toggle("has-controller-player", Boolean(player));
   document.body.dataset.controllerMode = mode;
+  // Стиль большого экрана: «Настольный» перекрашивает пульт в дерево и латунь
+  document.body.dataset.uiStyle = snapshot?.uiStyle === "tabletop" ? "tabletop" : "classic";
 
   if (!room) {
     setControllerState("join");

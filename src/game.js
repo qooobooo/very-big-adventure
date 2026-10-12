@@ -3391,6 +3391,7 @@ function phoneGameSnapshot() {
     round: state.round,
     shakeEnabled: phoneRoom.shakeEnabled,
     turnLabel: actionPromptResolver ? actionPromptButtonLabel : ui.rollBtn?.textContent?.trim() || "Бросить",
+    uiStyle: selectedUiStyle(),
     updatedAt: Date.now(),
   };
 }
@@ -17412,6 +17413,7 @@ ui.uiStyle?.addEventListener("change", () => {
   saveUiStyle();
   renderTableDecks();
   if (state) renderTableHost(currentPlayer());
+  schedulePhoneSnapshot();
 });
 ui.fontStyle?.addEventListener("change", () => {
   applyFontStyle();
