@@ -4717,9 +4717,7 @@ function renderFinalHistoryPlayer(player) {
         <div><dt>Очки</dt><dd>${hasScore ? score.total : "—"}</dd></div>
         <div><dt>Монеты</dt><dd>${hasScore ? score.coins : "—"}</dd></div>
         <div><dt>Лавки</dt><dd>${hasScore ? score.shop : "—"}</dd></div>
-        <div><dt>Урон</dt><dd>${hasScore ? score.damage : "—"}</dd></div>
-        <div><dt>Шаги</dt><dd>${hasScore ? finalScorePointsText(score.steps) : "—"}</dd></div>
-        <div><dt>Позиция</dt><dd>${hasScore ? score.position : "—"}</dd></div>
+        <div><dt>Урон</dt><dd>${hasScore ? score.damageToBoss ?? "—" : "—"}</dd></div>
         <div><dt>Сила</dt><dd>${forceText}</dd></div>
       </dl>
       <p class="history-final-score-text">${scoreFormula}</p>
@@ -4732,15 +4730,11 @@ function finalScoreFormulaText(score = {}, { damageLabel = "урон боссу"
   const total = score.total ?? 0;
   const coins = score.coins ?? 0;
   const shop = score.shop ?? 0;
-  const damage = score.damage ?? 0;
-  const steps = score.steps ?? 0;
-  const position = score.position ?? 0;
-  return `${total} = ${coins} монеты + ${shop} Лавка Джо + ${damage} ${damageLabel} + ${steps} за шаги + ${position} позиция`;
-}
-
-function finalScorePointsText(points = 0) {
-  const value = Number(points) || 0;
-  return `${value > 0 ? "+" : ""}${value} очков`;
+  // Games saved before the short count also scored damage, steps and position.
+  if (score.damage === undefined && score.steps === undefined && score.position === undefined) {
+    return `${total} = ${coins} монеты + ${shop} Лавка Джо`;
+  }
+  return `${total} = ${coins} монеты + ${shop} Лавка Джо + ${score.damage ?? 0} ${damageLabel} + ${score.steps ?? 0} за шаги + ${score.position ?? 0} позиция`;
 }
 
 function finalHistorySummaryForSnapshot() {
@@ -7952,7 +7946,7 @@ async function resolveShopMonsterStrengthBoosts(player, contextLabel, { targetSt
       ? chooseBotMonsterStrengthBoost(player, cost, amount, targetStrength)
       : await chooseShopMonsterStrengthBoost(player, card, cost, amount, contextLabel);
     if (!shouldPay || player.coins < cost) continue;
-    addCoins(player, -cost);
+    addCoins(player, -cost, { category: "purchase" });
     bonus += amount;
     log(`${playerName(player)} платит <strong>${coinAmount(cost)}</strong> по <strong>Лавке Джо</strong>: <strong>+${amount}</strong> силы в ${contextLabel}.`, {
       toast: true,
@@ -8683,11 +8677,10 @@ async function resolveDragonBattle(initiator, { resetToken = transientUiResetTok
   if (resetToken !== transientUiResetToken || state?.dragon !== dragon) return;
   const teamTotal = results.reduce((sum, result) => sum + result.total, 0);
   const teamWon = teamTotal >= strength.total;
-  const positionBonuses = finalPositionBonuses(state.players);
   const scores = teamWon
     ? state.players.map((player) => {
         const contribution = results.find((result) => result.player.id === player.id)?.total || 0;
-        return finalBattleScore(player, contribution, positionBonuses.get(player.id) || 1);
+        return finalBattleScore(player, contribution);
       })
     : [];
   let winner = null;
@@ -8846,11 +8839,8 @@ function buildDragonFinalSummary({ initiator, results, scores, strength, teamTot
         role: "player",
         score: score ? {
           coins: score.coins,
-          damage: score.damage,
           damageToBoss: score.damageToBoss,
-          position: score.position,
           shop: score.shop,
-          steps: score.steps,
           total: score.total,
         } : null,
         scoreFormula: score ? finalScoreFormulaText(score, { damageLabel: "урон Дракону" }) : "",
@@ -8977,10 +8967,9 @@ async function resolveFinalBattle(boss, animate = true) {
   );
 
   const bossWon = bossForce >= playersForce;
-  const positionBonuses = finalPositionBonuses(state.players);
   const scores = state.players.map((player) => {
     const damage = challengerResults.find((result) => result.player.id === player.id)?.total || 0;
-    return finalBattleScore(player, damage, positionBonuses.get(player.id) || 1);
+    return finalBattleScore(player, damage);
   });
   const winner = bossWon ? boss : bestFinalScorePlayer(scores, challengers);
   const finalSummary = buildFinalBattleSummary({
@@ -9133,11 +9122,8 @@ function buildFinalBattleSummary({
         role: isBoss ? "boss" : "player",
         score: {
           coins: score.coins,
-          damage: score.damage,
           damageToBoss: score.damageToBoss,
-          position: score.position,
           shop: score.shop,
-          steps: score.steps,
           total: score.total,
         },
         scoreFormula: finalScoreFormulaText(score),
@@ -9258,20 +9244,16 @@ function finalBonusText(baseBonus, cursePenalty, total, heroSwordBonus = 0, play
   return combatBonusFormulaText(baseBonus, cursePenalty, total, heroSwordBonus, playerBattlePotionBonus);
 }
 
-function finalBattleScore(player, damageToBoss, position = 1) {
+// Short tabletop count: coins plus 5 per Лавка Джо card (tabletop review, 12 Oct 2026). Damage to the boss only breaks ties.
+function finalBattleScore(player, damageToBoss) {
   const coins = player.coins;
   const shop = activeShopItems(player).length * 5;
-  const damage = damageToBoss * 2;
-  const steps = Number(playerStepBonus(player)) || 0;
   return {
     coins,
-    damage,
     damageToBoss,
     playerId: player.id,
-    position,
     shop,
-    steps,
-    total: coins + shop + damage + steps + position,
+    total: coins + shop,
   };
 }
 
@@ -9279,34 +9261,8 @@ function bestFinalScorePlayer(scores, candidates) {
   const candidateIds = new Set(candidates.map((player) => player.id));
   const winnerScore = scores
     .filter((score) => candidateIds.has(score.playerId))
-    .sort((a, b) => b.total - a.total || b.position - a.position || b.coins - a.coins || b.shop - a.shop)[0];
+    .sort((a, b) => b.total - a.total || b.damageToBoss - a.damageToBoss || b.coins - a.coins || b.shop - a.shop)[0];
   return state.players.find((player) => player.id === winnerScore?.playerId) || candidates[0] || state.players[0];
-}
-
-function finalPositionBonuses(players) {
-  const rankedGroups = [...players]
-    .map((player) => ({
-      distance: finalDistance(player),
-      player,
-    }))
-    .sort((a, b) => a.distance - b.distance || a.player.id - b.player.id)
-    .reduce((groups, item) => {
-      const group = groups[groups.length - 1];
-      if (group && group.distance === item.distance) {
-        group.players.push(item.player);
-      } else {
-        groups.push({ distance: item.distance, players: [item.player] });
-      }
-      return groups;
-    }, []);
-
-  const bonusesByRank = [6, 3, 1];
-  const result = new Map();
-  rankedGroups.forEach((group, index) => {
-    const bonus = bonusesByRank[index] || 1;
-    group.players.forEach((player) => result.set(player.id, bonus));
-  });
-  return result;
 }
 
 function finalDistance(player) {
@@ -9388,7 +9344,7 @@ async function resolveTurnShopBuy(player, type, config) {
       : await chooseTurnShopBuy(player, card, cost, config.label);
     card[config.usedKey] = state.turns;
     if (!shouldPay || player.coins < cost) continue;
-    addCoins(player, -cost);
+    addCoins(player, -cost, { category: "purchase" });
     config.add(player, amount);
     log(`${playerName(player)} платит <strong>${coinAmount(cost)}</strong> в <strong>Лавке Джо</strong> и получает <strong>${config.label}</strong>.`, {
       toast: true,
@@ -9442,7 +9398,7 @@ async function resolvePreRollShopStepBoosts(player, animate) {
     const useBoost = await chooseSinglePreRollShopStepBoost(player, card, index, cards.length);
     if (!useBoost || player.coins < cost) continue;
     const steps = Math.max(1, Number(effect.steps) || 5);
-    addCoins(player, -cost);
+    addCoins(player, -cost, { category: "purchase" });
     player.turnStepBonus = (Number(player.turnStepBonus) || 0) + steps;
     showDiceFloat(player, steps);
     log(`${playerName(player)} платит <strong>${coinAmount(cost)}</strong> по <strong>Лавке Джо</strong>: <strong>+${steps}</strong> шагов на этот ход.`, {
@@ -9480,7 +9436,7 @@ async function resolveMoveDieRerolls(player, rolls, animate) {
     const dieIndex = Number(choice);
     if (!Number.isInteger(dieIndex) || dieIndex < 0 || dieIndex >= currentRolls.length || player.coins < cost) continue;
 
-    addCoins(player, -cost);
+    addCoins(player, -cost, { category: "purchase" });
     card._moveDieRerollUsedAt = state.turns;
     const oldValue = currentRolls[dieIndex];
     const newValue = d6();
@@ -10337,6 +10293,7 @@ function chooseShopCardFromFace(offer, player = null, { cost = 5 } = {}) {
         ? joeCouponShopChoiceId
         : offer.find((item) => item.id === cardId) || null;
       if (selectedButton) markSelectedShopCard(selectedButton);
+      // Fast autoplay skips the highlight: it counts every waiting frame as an action and aborts the game at the limit.
       window.setTimeout(() => {
         actionPromptResolver = null;
         actionPromptButtonLabel = "Далее";
@@ -10346,7 +10303,7 @@ function chooseShopCardFromFace(offer, player = null, { cost = 5 } = {}) {
         hideEventToast({ quick: true });
         render();
         resolve(card);
-      }, selectedButton ? 260 : 0);
+      }, selectedButton && !fastModeActive() ? 260 : 0);
     };
     unsubscribeReset = onTransientReset(resetToken, () => {
       if (completed) return;
@@ -10425,6 +10382,7 @@ function chooseRevealedShopCard(offer, player = null, { cost = 5 } = {}) {
         ? joeCouponShopChoiceId
         : offer.find((item) => item.id === cardId) || null;
       if (selectedButton) markSelectedShopCard(selectedButton);
+      // Fast autoplay skips the highlight: it counts every waiting frame as an action and aborts the game at the limit.
       window.setTimeout(() => {
         actionPromptResolver = null;
         actionPromptButtonLabel = "Далее";
@@ -10434,7 +10392,7 @@ function chooseRevealedShopCard(offer, player = null, { cost = 5 } = {}) {
         hideEventToast({ quick: true });
         render();
         resolve(card);
-      }, selectedButton ? 260 : 0);
+      }, selectedButton && !fastModeActive() ? 260 : 0);
     };
     unsubscribeReset = onTransientReset(resetToken, () => {
       if (completed) return;
@@ -14425,6 +14383,7 @@ function applyCoinDelta(player, amount, { category = "system" } = {}) {
   const delta = player.coins - before;
   recordCoinDelta(player, delta);
   if (delta !== 0) showCoinFloat(player, delta);
+  // Purchases do not feed Чужая расплата; paying for your own card's effect is one too (tabletop review, 12 Oct 2026).
   if (delta < 0 && category !== "purchase") notifyOtherPlayerCoinLoss(player);
   return delta;
 }
@@ -16232,7 +16191,7 @@ async function chooseExtraDie(player, animate) {
     const useExtraDie = await chooseSingleExtraDie(player, card, index, cards.length);
     if (!useExtraDie) break;
 
-    addCoins(player, -effect.cost);
+    addCoins(player, -effect.cost, { category: "purchase" });
     totalDice += effect.dice;
     log(`${playerName(player)} платит <strong>${effect.cost} монеты</strong> за дополнительный кубик.`);
   }

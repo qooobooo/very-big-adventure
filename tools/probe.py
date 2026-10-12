@@ -4,11 +4,15 @@
     python3 tools/probe.py test tests/<file>.test.mjs [more files] [--out Logs/probes/{run}]
     python3 tools/probe.py shot --out Logs/probes/{run} [--path "/?seed=1"] [--size 1600x900] [--mobile]
                                 [--wait "<js expr>"] [--eval "<js>"]... [--name frame] [--timeout 20]
+    python3 tools/probe.py autoplay [--players 2,3,4] [--games 20] [--seed 7] [--variant file.mjs] [--set "<js>"]
+                                    [--out Logs/probes/{run}]
 
 Prints PASS … or FAIL … as the last line; the full output stays in the --out folder (read it only on a failure,
 with a narrow grep). `shot` starts the game's server from this worktree on a port of its own (never the user's
 :5173), takes a headless Chrome frame (tools/shot.mjs) and stops the server. A timeout is retried once: false
 failures come from a loaded machine (The Village's experience), only a second one counts as a regression.
+`autoplay` plays bot games with the game's own autoplay for balance numbers (tools/autoplay.mjs): each player count
+on its own free port (never :5173), /api answered locally, Google blocked; summary.txt and p<N>.json land in --out.
 Each run is logged to the activity journal (tools/activity.py) for the «Проверки до доставки» line.
 """
 import argparse
@@ -105,6 +109,19 @@ def cmd_shot(args, out):
         server_log.close()
 
 
+def cmd_autoplay(args, out):
+    command = ['node', 'tools/autoplay.mjs', '--players', args.players, '--games', str(args.games), '--out', str(out),
+               '--timeout', str(args.timeout)]
+    for name in ('seed', 'variant', 'set'):
+        if getattr(args, name) is not None:
+            command += [f'--{name}', str(getattr(args, name))]
+    result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True)
+    (out / 'autoplay.log').write_text(result.stdout + result.stderr, encoding='utf-8')
+    lines = (result.stdout + result.stderr).strip().splitlines()
+    print('\n'.join(lines[:-1]))
+    return result.returncode == 0, lines[-1] if lines else f'FAIL autoplay: exit {result.returncode}'
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest='kind', required=True)
@@ -120,12 +137,22 @@ def main():
     shot.add_argument('--eval', action='append', default=[])
     shot.add_argument('--name', default='frame')
     shot.add_argument('--timeout', type=int, default=20)
+    autoplay = sub.add_parser('autoplay', help="bot games of the game's own autoplay with balance numbers")
+    autoplay.add_argument('--out')
+    autoplay.add_argument('--players', default='2,3,4')
+    autoplay.add_argument('--games', type=int, default=20)
+    autoplay.add_argument('--seed', type=int)
+    autoplay.add_argument('--variant')
+    autoplay.add_argument('--set')
+    autoplay.add_argument('--timeout', type=int, default=1200)
     args = parser.parse_args()
     out = ROOT / (args.out or f'Logs/probes/{stamp()}-{args.kind}')
     out.mkdir(parents=True, exist_ok=True)
     started = time.time()
-    ok, line = (cmd_test if args.kind == 'test' else cmd_shot)(args, out)
-    log_activity(f"{args.kind} {' '.join(getattr(args, 'files', [])) or args.path}", started, ok)
+    ok, line = {'test': cmd_test, 'shot': cmd_shot, 'autoplay': cmd_autoplay}[args.kind](args, out)
+    subject = {'test': lambda: ' '.join(args.files), 'shot': lambda: args.path,
+               'autoplay': lambda: f'p{args.players} x{args.games}'}[args.kind]()
+    log_activity(f'{args.kind} {subject}', started, ok)
     print(line, flush=True)
     return 0 if ok else 1
 
