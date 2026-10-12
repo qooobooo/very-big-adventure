@@ -2406,3 +2406,165 @@ body[data-ui-style="tabletop"] .tadam-slot.is-filled:hover {
     opacity: 0.78;
   }
 }
+
+/* О3. Планшеты из бумаги: светлый пергамент с напечатанной рамкой, крупный жетон-портрет заходит за угол,
+   имя — шрифтом стола цветом игрока. Активный планшет приподнят и обведён золотом */
+body[data-ui-style="tabletop"] .score-strip {
+  column-gap: 18px;
+  row-gap: 18px;
+}
+
+body[data-ui-style="tabletop"] .side-panel > .score-strip {
+  padding: 10px 2px 6px 12px;
+}
+
+body[data-ui-style="tabletop"] .score-card {
+  --mat-ink: #3a2412;
+  --mat-dent: rgba(96, 60, 24, 0.16);
+  --mat-dent-shadow: inset 0 1px 2px rgba(60, 36, 14, 0.45), 0 1px 0 rgba(255, 250, 232, 0.65);
+  padding: 9px 11px 9px 12px;
+  border: 1px solid #7d5c2e;
+  border-radius: 8px;
+  color: var(--mat-ink);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .22 0 0 0 0 .08 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(130% 120% at 28% 8%, #f8ecd2, #ecd6a7 58%, #dcbf86);
+  box-shadow:
+    inset 0 0 16px rgba(128, 84, 32, 0.26),
+    1px 3px 0 rgba(70, 44, 18, 0.6),
+    4px 10px 16px rgba(0, 0, 0, 0.42);
+}
+
+/* Напечатанная рамка по краю листа */
+body[data-ui-style="tabletop"] .score-card::before {
+  inset: 4px;
+  border: 1px solid rgba(110, 74, 32, 0.38);
+  border-radius: 5px;
+  background: none;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+body[data-ui-style="tabletop"] .score-card.active {
+  border-color: #a8772a;
+  transform: translateY(-5px);
+  box-shadow:
+    inset 0 0 16px rgba(128, 84, 32, 0.2),
+    0 0 0 2px #e6bc5c,
+    0 0 0 3px rgba(94, 60, 20, 0.7),
+    3px 6px 0 rgba(70, 44, 18, 0.5),
+    7px 18px 26px rgba(0, 0, 0, 0.5),
+    0 0 26px rgba(244, 204, 112, 0.42);
+}
+
+/* Крупный жетон-портрет заходит за левый верхний угол листа */
+body[data-ui-style="tabletop"] .score-name {
+  align-items: center;
+  margin: -21px 0 6px -23px;
+}
+
+body[data-ui-style="tabletop"] .score-player-avatar img {
+  width: 54px;
+  height: 54px;
+  padding: 4px;
+  border-width: 3px;
+  box-shadow:
+    0 0 0 2px #d9a845,
+    0 0 0 3px rgba(70, 44, 18, 0.8),
+    2px 4px 0 rgba(31, 18, 8, 0.55),
+    3px 7px 10px rgba(0, 0, 0, 0.45);
+}
+
+body[data-ui-style="tabletop"] .score-player-name {
+  padding-top: 18px;
+}
+
+body[data-ui-style="tabletop"] .score-name strong {
+  padding: 0;
+  color: color-mix(in srgb, var(--player-color) 78%, #1a0d05);
+  background: none;
+  clip-path: none;
+  font-size: 1.12rem;
+  text-shadow: 0 1px 0 rgba(255, 250, 232, 0.7);
+}
+
+/* Треки, карман монет и Лавка — оттиснуты в бумаге */
+body[data-ui-style="tabletop"] .score-card .score-track-groove,
+body[data-ui-style="tabletop"] .score-stats > .score-stat-coins {
+  background: var(--mat-dent);
+  box-shadow: var(--mat-dent-shadow);
+}
+
+body[data-ui-style="tabletop"] .score-card .score-track-icon {
+  filter: drop-shadow(1px 1px 0 rgba(60, 36, 14, 0.35));
+}
+
+body[data-ui-style="tabletop"] .score-card .score-track-groove > i::after {
+  color: rgba(58, 36, 18, 0.45);
+}
+
+/* Цифры — только на 0, 5 и 10 (и на маркере), остальные деления — точки */
+body[data-ui-style="tabletop"] .score-card .score-track:not([data-track="dice"]) .score-track-groove > i:not([data-n="0"], [data-n="5"], [data-n="10"], .is-on)::after {
+  content: "·";
+  font-size: 0.8rem;
+}
+
+body[data-ui-style="tabletop"] .score-card .score-track:not([data-track="dice"]) .score-track-groove > i:is([data-n="0"], [data-n="5"], [data-n="10"])::after {
+  color: rgba(58, 36, 18, 0.78);
+}
+
+body[data-ui-style="tabletop"] .score-stats b {
+  color: var(--mat-ink);
+  text-shadow: 0 1px 0 rgba(255, 250, 232, 0.6);
+}
+
+body[data-ui-style="tabletop"] .score-coin-stack.is-empty::before {
+  border-color: rgba(96, 60, 24, 0.38);
+}
+
+body[data-ui-style="tabletop"] .score-shop-head > span {
+  color: rgba(58, 36, 18, 0.72);
+}
+
+body[data-ui-style="tabletop"] .score-shop small.score-shop-empty {
+  color: rgba(58, 36, 18, 0.55);
+  background: var(--mat-dent);
+  box-shadow: var(--mat-dent-shadow);
+}
+
+body[data-ui-style="tabletop"] .score-shop small:not(.shop-face-down, .score-shop-empty) {
+  box-shadow: 1px 2px 2px rgba(60, 36, 14, 0.4);
+}
+
+/* Метки статуса под именем — оттиски на бумаге; сглаз и штрафы — красной краской */
+body[data-ui-style="tabletop"] .score-card :is(.score-battle-bonus, .score-rage-bonus, .score-event-badge, .score-artifact-badge) {
+  border: 1px solid rgba(110, 74, 32, 0.45);
+  color: var(--mat-ink);
+  background: rgba(255, 250, 232, 0.55);
+}
+
+body[data-ui-style="tabletop"] .score-card .score-curse-bonus {
+  border: 1px solid rgba(141, 42, 28, 0.5);
+  color: #8d2a1c;
+  background: rgba(255, 236, 226, 0.55);
+}
+
+@media (max-width: 680px) {
+  body[data-ui-style="tabletop"] .score-name {
+    margin: -12px 0 4px -12px;
+  }
+
+  body[data-ui-style="tabletop"] .score-player-avatar img {
+    width: 38px;
+    height: 38px;
+    padding: 2px;
+  }
+
+  body[data-ui-style="tabletop"] .score-player-name {
+    padding-top: 10px;
+  }
+
+  body[data-ui-style="tabletop"] .score-name strong {
+    font-size: 0.9rem;
+  }
+}
