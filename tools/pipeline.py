@@ -19,6 +19,7 @@ details: docs/development/DELIVERY_PIPELINE.md.
     python3 tools/pipeline.py board [--set NAME TASK | --free NAME...] [--json]
     python3 tools/pipeline.py chats [--set NAME ID --zone ZONE]
     python3 tools/pipeline.py effort --chat NAME --task TEXT --level medium|high|xhigh --why TEXT
+    python3 tools/pipeline.py sheet-push [--script-id ID] [--force]   # the cards sheet's script by clasp (deliver does it)
 
 deliver, from a worktree with everything committed on its branch:
 fetch -> squash the branch onto origin/dev (one commit; a merged origin/main stays a second parent)
@@ -575,13 +576,70 @@ def tidy_probe_output(label):
 
 
 def check(files):
-    """The build of a game without a build: node --check of every changed script (seconds)."""
+    """The build of a game without a build: node --check of every changed script (seconds). A change in the cards also
+    needs the CSV the config makes: the «Cards Config» sheet reads the CSV (tools/cards-sheet/README.md)."""
     scripts = [f for f in files if f.endswith(('.js', '.mjs', '.cjs')) and (ROOT / f).exists()]
     for script in scripts:
         result = subprocess.run(['node', '--check', script], cwd=ROOT, text=True, capture_output=True)
         if result.returncode != 0:
             raise SystemExit(f'node --check {script} failed, nothing was pushed or installed:\n' + result.stderr.strip()[-2000:])
     say(f'check: node --check of {len(scripts)} script(s) passed')
+    if any(f in CARD_FILES for f in files):
+        result = subprocess.run(['node', CARDS_CSV_TOOL, '--check'], cwd=ROOT, text=True, capture_output=True)
+        if result.returncode != 0:
+            raise SystemExit('The cards CSV is stale, nothing was pushed or installed:\n'
+                             + (result.stderr or result.stdout).strip()[-2000:])
+        say('check: cards-google-sheet.csv matches src/cards.config.js')
+
+
+CARD_FILES = ('src/cards.config.js', 'cards-google-sheet.csv')
+CARDS_CSV_TOOL = 'tools/cards-sheet/cards-csv.mjs'
+SHEET_SCRIPT = 'tools/cards-sheet/VbaCards.gs'
+SHEET_MANIFEST = 'tools/cards-sheet/appsscript.json'
+# The user's «Cards Config» sheet: {"scriptId": …, "pushed": <commit>}; the Script ID stays on this Mac, out of the
+# shared repository.
+SHEET_STATE = STATE / 'cards-sheet.json'
+
+
+def sheet_push(ref, force=False):
+    """The cards sheet's Apps Script at ref (dev) into the user's sheet by clasp, when it changed (PM task, 12 Oct 2026:
+    nobody pastes it by hand; as The Village does). Never stops a delivery: on any trouble it says so and the sheet keeps
+    its script."""
+    if not SHEET_STATE.exists():
+        return
+    state = json.loads(SHEET_STATE.read_text(encoding='utf-8'))
+    version = git('log', '-1', '--format=%h', ref, '--', SHEET_SCRIPT)
+    if not version or (state.get('pushed') == version and not force):
+        return
+    clasp = shutil.which('clasp') or str(Path.home() / '.npm-global/bin/clasp')
+    if not Path(clasp).exists():
+        say('sheet: clasp is not installed; the sheet keeps its script')
+        return
+    code = git('show', f'{ref}:{SHEET_SCRIPT}').replace("var SCRIPT_VERSION = 'repo';", f"var SCRIPT_VERSION = '{version}';", 1)
+    with tempfile.TemporaryDirectory() as folder:
+        root = Path(folder)
+        (root / '.clasp.json').write_text(json.dumps({'scriptId': state['scriptId'], 'rootDir': ''}), encoding='utf-8')
+        (root / 'appsscript.json').write_text(git('show', f'{ref}:{SHEET_MANIFEST}') + '\n', encoding='utf-8')
+        (root / 'VbaCards.js').write_text(code + '\n', encoding='utf-8')
+        result = subprocess.run([clasp, 'push', '--force'], cwd=root, text=True, capture_output=True)
+    if result.returncode != 0:
+        say('sheet: clasp push failed, the sheet keeps its script: ' + (result.stderr or result.stdout).strip()[-400:])
+        return
+    state.update(pushed=version, time=now().isoformat(timespec='seconds'))
+    SHEET_STATE.write_text(json.dumps(state, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
+    say(f'sheet: script {version} pushed into the cards sheet')
+
+
+def cmd_sheet_push(args):
+    if args.script_id:
+        state = json.loads(SHEET_STATE.read_text(encoding='utf-8')) if SHEET_STATE.exists() else {}
+        state['scriptId'] = args.script_id
+        SHEET_STATE.write_text(json.dumps(state, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
+    if not SHEET_STATE.exists():
+        raise SystemExit('No Script ID yet: python3 tools/pipeline.py sheet-push --script-id <the sheet\'s Script ID>')
+    git('fetch', '-q', 'origin')
+    sheet_push('origin/' + BASE, force=args.force or bool(args.script_id))
+    return 0
 
 
 def work_summary(started):
@@ -699,6 +757,7 @@ def cmd_deliver(args):
             say('DELIVERED ' + summary)
             if note:
                 say(note)
+            sheet_push(commit)
             print('\nSend it yourself to PM and to the chats whose zones or files this touches, not everyone '
                   '(addresses: python3 tools/pipeline.py chats):\n'
                   f'Доставлено в {BASE}{" и в основную папку" if synced else ""}: {summary}. '
@@ -952,6 +1011,10 @@ def main():
     chat.add_argument('--set', nargs=2, metavar=('NAME', 'ID'))
     chat.add_argument('--zone')
     chat.set_defaults(run=cmd_chats)
+    sheet = sub.add_parser('sheet-push', help='the cards sheet\'s script from dev into the sheet by clasp (deliver does it too)')
+    sheet.add_argument('--script-id', help='the sheet\'s Script ID (Apps Script → Project Settings), kept on this Mac')
+    sheet.add_argument('--force', action='store_true', help='push even when this version was pushed already')
+    sheet.set_defaults(run=cmd_sheet_push)
     effort = sub.add_parser('effort', help='PM: log the reasoning level given to a chat for a task')
     effort.add_argument('--chat', required=True)
     effort.add_argument('--task', required=True)

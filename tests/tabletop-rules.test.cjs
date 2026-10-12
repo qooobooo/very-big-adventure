@@ -84,11 +84,12 @@ test('every Лавка Джо card has one known trigger moment, in the config a
   assert.deepEqual(Object.keys(shopCardMoments), ['turn-start', 'move', 'battle', 'shop', 'reaction']);
   const [header, ...rows] = fs.readFileSync(path.join(__dirname, '../cards-google-sheet.csv'), 'utf8').trim().split('\n')
     .map(csvCells);
-  assert.equal(header.at(-1), 'moment');
+  const moment = header.indexOf('moment');
+  assert.ok(moment > 0);
   // A description with unquoted commas spills into later columns, moment among them.
   for (const cells of rows) assert.equal(cells.length, header.length, cells[1]);
-  for (const cells of rows) if (cells[0] !== 'shop') assert.equal(cells.at(-1), '', cells[1]);
-  const sheet = new Map(rows.filter((cells) => cells[0] === 'shop').map((cells) => [cells[1], cells.at(-1)]));
+  for (const cells of rows) if (cells[0] !== 'shop') assert.equal(cells[moment], '', cells[1]);
+  const sheet = new Map(rows.filter((cells) => cells[0] === 'shop').map((cells) => [cells[1], cells[moment]]));
   assert.equal(cardConfig.shop.length, 20);
   for (const card of cardConfig.shop) {
     assert.ok(shopCardMoments[card.moment], card.id);

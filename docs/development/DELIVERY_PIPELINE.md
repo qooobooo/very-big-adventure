@@ -61,6 +61,9 @@ python3 tools/pipeline.py deliver --task dice-fix \
    - Статику сервер читает с диска на каждый запрос, поэтому перезапуск нужен, только если менялся `server.js`.
    - Если игра не открыта (нет соединений с :5173), скрипт перезапускает сервер сам.
    - Если открыта — не трогает и пишет в сообщении, что перезапустить после партии: `pipeline.py serve --restart`.
+8. **Таблица карт.** Если в `dev` поменялся `tools/cards-sheet/VbaCards.gs`, скрипт заливает его в Google Таблицу `Cards Config` через `clasp`. Сбой заливки доставку не останавливает. Script ID таблицы — в `.git/vba-pipeline/cards-sheet.json`, вручную — `pipeline.py sheet-push [--script-id ID]`. Подробно — `tools/cards-sheet/README.md`.
+
+Проверка (шаг 3) при правке `src/cards.config.js` или `cards-google-sheet.csv` ещё сверяет CSV с конфигом (`node tools/cards-sheet/cards-csv.mjs --check`).
 
 Параметры:
 
@@ -164,3 +167,4 @@ python3 tools/probe.py autoplay --players 2,3,4 --games 20 --out Logs/probes/{ru
 | Сервер :5173, его лог | `server.json`, `server.log` |
 | Публикации в `main` | `publishes.jsonl` |
 | Строки ежедневного отчёта | `metrics.jsonl` |
+| Script ID таблицы карт и что в неё залито | `cards-sheet.json` |

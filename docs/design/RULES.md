@@ -36,8 +36,8 @@
 ## Shared Google Sheets
 
 - `Cards Config`: `https://docs.google.com/spreadsheets/d/1dv8cOcoY9P1WZOw2UQ-prUccte2BprZMp0DFCSL0pME/edit`
-  - Tabs: `good`, `bad`, `tadam`, `shop`, `event`.
-  - Canonical card-edit source; keep it synced with `src/cards.config.js` and `cards-google-sheet.csv`.
+  - Tabs: one per deck (`good`, `bad`, `tadam`, `event`, `legendary`, `shop`), laid out by the sheet's own script.
+  - Since 12 Oct 2026 (PM task) the source is `src/cards.config.js` in `dev`; `cards-google-sheet.csv` is its mirror (`node tools/cards-sheet/cards-csv.mjs`). The sheet takes the CSV from `dev` by itself and sends the user's edits back as a commit to `dev`: `tools/cards-sheet/README.md`.
 - `Games Log`: `https://docs.google.com/spreadsheets/d/1uC1xUk52IbpHfm9tNtHT2_cmFSNQIKCkct88TsqmmV8/edit`
   - Tabs: `Games`, `Players`.
   - Used by the game-history save/export flow and stats/reporting work.
@@ -50,7 +50,7 @@
   - If an effect can use any owned `Лавка Джо` card, write simply `карта Лавки Джо` / `карты Лавки Джо`.
   - If a mechanic excludes face-up or face-down cards, the UI text, disabled reasons, logs, and actual behavior must all say that clearly.
   - When unsure whether face state is part of the rule or just leftover implementation wording, ask GD/user before changing the rule.
-- Apply this to `Cards Config` player-facing fields such as `title`, `shortTitle`, and `description`, and keep Google Sheet, `src/cards.config.js`, and `cards-google-sheet.csv` aligned.
+- Apply this to `Cards Config` player-facing fields such as `title`, `shortTitle`, and `description` (the sheet's «Проверить» flags a final period).
 - Internal config notes may keep normal punctuation unless they are displayed on a card.
 
 ## Card Face Layout
