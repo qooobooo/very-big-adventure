@@ -10350,7 +10350,8 @@ function chooseShopCardFromFace(offer, player = null, { cost = 5 } = {}) {
       resolve(null);
     });
 
-    actionPromptResolver = () => finish(null);
+    // A bot's generic auto-resolve must not beat its own pick and decline the shop in fast mode.
+    actionPromptResolver = isBot(player) ? () => finishBotShopCardChoice(player, offer, finish) : () => finish(null);
     actionPromptChoiceResolver = (cardId) => finish(cardId === "decline" ? null : cardId);
     ui.eventToast.querySelectorAll("[data-shop-card-id]").forEach((button) => {
       button.addEventListener("click", () => finish(button.dataset.shopCardId, { selectedButton: button }));
@@ -10437,7 +10438,8 @@ function chooseRevealedShopCard(offer, player = null, { cost = 5 } = {}) {
       resolve(null);
     });
 
-    actionPromptResolver = () => finish(null);
+    // A bot's generic auto-resolve must not beat its own pick and decline the shop in fast mode.
+    actionPromptResolver = isBot(player) ? () => finishBotShopCardChoice(player, offer, finish) : () => finish(null);
     actionPromptChoiceResolver = (cardId) => finish(cardId === "decline" ? null : cardId);
     ui.eventToast.querySelectorAll("[data-shop-card-id]").forEach((button) => {
       button.addEventListener("click", () => finish(button.dataset.shopCardId, { selectedButton: button }));
