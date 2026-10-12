@@ -2,8 +2,8 @@
   Настольный стиль, шаг 1 (Art / UI, 12 октября 2026): стол из сукна, доска с картонным краем,
   меню партии, ТАДАМ на сукне, шрифт заголовков.
   Всё ниже работает только при body[data-ui-style="tabletop"], классический стиль не меняется.
-  Исключения — кнопка меню партии, полоска кубиков, треки и ряды карт на планшете, иконка момента на карте Лавки,
-  колоды на столе и лента ведущего: в классическом стиле они скрыты.
+  Исключения — кнопка меню партии, полоска кубиков, треки и ряды карт на планшете, иконка момента на карте Лавки
+  и на пульте, колоды на столе и лента ведущего: в классическом стиле они скрыты.
 */
 
 .table-menu-toggle,
@@ -11,6 +11,7 @@
 .score-tracks,
 .score-moments,
 .shop-card-moment,
+.controller-shop-moment,
 .table-decks,
 .table-host {
   display: none;
@@ -1951,6 +1952,24 @@ body[data-ui-style="tabletop"] :is(.score-battle-bonus, .score-curse-bonus, .sco
   row-gap: 1px;
   white-space: normal;
   line-height: 1.2;
+}
+
+/* Пульт: карты Лавки рядами по моменту, одна печать на ряд — как на планшете стола */
+body[data-ui-style="tabletop"] .controller-moment-row {
+  flex: 1 1 100%;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+body[data-ui-style="tabletop"] .controller-moment-row > .moment-icon {
+  width: 24px;
+  height: 24px;
+}
+
+body[data-ui-style="tabletop"] .controller-moment-cards {
+  min-width: 0;
 }
 
 /* Иконка на лице карты Лавки — печать в левом верхнем углу */

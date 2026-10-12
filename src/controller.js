@@ -502,6 +502,8 @@ function controllerLegendaryWeaponMarkup() {
 
 function controllerShopCardsMarkup(items = []) {
   if (!items.length) return '<span class="controller-shop-card empty-card">нет карт</span>';
+  const tabletop = document.body.dataset.uiStyle === "tabletop";
+  if (tabletop) items = controllerItemsByMoment(items);
   if (!phoneCardsAsText()) {
     return items.map((item) => controllerPhoneCardFaceMarkup(item, {
       count: item.count,
@@ -509,6 +511,50 @@ function controllerShopCardsMarkup(items = []) {
       size: "inventory",
     })).join("");
   }
+  if (tabletop) return controllerShopMomentRowsMarkup(items);
+  return controllerShopChipsMarkup(items);
+}
+
+// Порядок моментов — как в shopCardMoments (cards.config.js); неизвестный момент и карты лицом вниз — в конце
+const controllerMomentOrder = ["turn-start", "move", "battle", "shop", "reaction"];
+
+function controllerMomentRank(item) {
+  const rank = controllerMomentOrder.indexOf(item?.faceDown ? "" : item?.moment || "");
+  return rank < 0 ? controllerMomentOrder.length : rank;
+}
+
+function controllerItemsByMoment(items) {
+  return items
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => controllerMomentRank(a.item) - controllerMomentRank(b.item) || a.index - b.index)
+    .map(({ item }) => item);
+}
+
+// Настольный стиль: ряд на каждый момент, одна иконка момента на ряд
+function controllerShopMomentRowsMarkup(items) {
+  const rows = [];
+  for (const item of items) {
+    const rank = controllerMomentRank(item);
+    const last = rows[rows.length - 1];
+    if (last && last.rank === rank) last.items.push(item);
+    else rows.push({ rank, item, items: [item] });
+  }
+  return rows.map(({ item, items: rowItems }) => `
+    <div class="controller-moment-row">
+      ${controllerMomentIconMarkup(item.faceDown ? null : item)}
+      <div class="controller-moment-cards">${controllerShopChipsMarkup(rowItems)}</div>
+    </div>
+  `).join("");
+}
+
+function controllerMomentIconMarkup(item) {
+  const moment = item?.moment && item?.momentLabel ? item.moment : "";
+  if (!moment) return '<i class="moment-icon controller-shop-moment is-empty" aria-hidden="true"></i>';
+  const label = `Срабатывает: ${item.momentLabel}`;
+  return `<i class="moment-icon controller-shop-moment" data-moment="${escapeAttribute(moment)}" title="${escapeAttribute(label)}" aria-label="${escapeAttribute(label)}" role="img"></i>`;
+}
+
+function controllerShopChipsMarkup(items) {
   return items.map((item) => {
     const count = Math.max(1, Number(item.count) || 1);
     const label = item.shortTitle || item.title || "Карта";
@@ -605,12 +651,16 @@ function controllerShopCardFaceMarkup(card, { revealed }) {
   const descriptionDensityClass = controllerCardFaceDescriptionDensityClass(description);
   const titleDensityClass = controllerCardFaceTitleDensityClass(title);
   const textClass = `shop-card-text ${controllerCardFaceTextDensityClass(description, title)} ${descriptionDensityClass} ${titleDensityClass}`.trim();
+  // Иконка момента в углу лица карты видна только в настольном стиле
+  const moment = revealed && card?.moment && card?.momentLabel
+    ? `<span class="shop-card-moment moment-icon" data-moment="${escapeAttribute(card.moment)}" aria-hidden="true"></span>`
+    : "";
   return `
     <article class="shop-card-reveal ${revealed ? "is-revealed" : "is-hidden"}">
       <div class="shop-card-row">
         <span class="shop-card-preview" role="img" aria-label="${escapeAttribute(revealed ? `Лавка Джо: ${title}` : "Карта Лавка Джо")}">
           ${revealed
-            ? `<span class="${textClass}">${controllerCardFaceTextMarkup(card, "shop", { fallbackTitle: "Лавка Джо" })}</span>`
+            ? `${moment}<span class="${textClass}">${controllerCardFaceTextMarkup(card, "shop", { fallbackTitle: "Лавка Джо" })}</span>`
             : ""}
         </span>
       </div>

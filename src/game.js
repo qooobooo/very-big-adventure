@@ -3323,6 +3323,8 @@ function phoneControllersEnabled() {
 
 function phoneCardSnapshot(card, deck = "Карта", { revealed = true, count = 1, faceDown = false } = {}) {
   if (!card) return null;
+  // Момент срабатывания карты Лавки: пульт в настольном стиле раскладывает карты по нему
+  const moment = deck === "Лавка Джо" ? shopCardMoment(card) || "" : "";
   return {
     count: Math.max(1, Number(count) || 1),
     deck,
@@ -3331,6 +3333,8 @@ function phoneCardSnapshot(card, deck = "Карта", { revealed = true, count =
     frontArt: card.frontArt || "",
     id: card.id || "",
     icon: card.icon || "",
+    moment,
+    momentLabel: shopCardMoments[moment] || "",
     revealed: Boolean(revealed && !faceDown),
     shortTitle: plainText(card.shortTitle || card.title || "Карта"),
     title: plainText(card.title || card.shortTitle || "Карта"),
