@@ -3118,3 +3118,235 @@ body[data-ui-style="tabletop"] .tadam-slot.is-filled {
     gap: 12px;
   }
 }
+
+/* О14. Планшеты в один ряд (два и три игрока) получают свободную высоту колонки: треки и цифры крупнее,
+   у трёх игроков карман монет — строкой под треками, «Лавка Джо» и «Карты» — над картами, подпись без переноса.
+   Остаток высоты уходит строке ТАДАМ: она встаёт посередине между колодами и лотком, дыры над лотком нет */
+@media (min-width: 1200px) {
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) > .score-card {
+    padding: 10px 11px 10px 12px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-name {
+    margin-bottom: 7px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-name strong {
+    font-size: 1.24rem;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(3):last-child) .score-stats {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "tracks" "coins";
+    gap: 7px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-stats > .score-tracks {
+    gap: 5px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-track {
+    grid-template-columns: 19px minmax(0, 1fr) auto;
+    gap: 5px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-track-icon {
+    width: 19px;
+    height: 19px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-track-groove {
+    height: 20px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-track-groove > i.is-on::before {
+    width: 17px;
+    height: 17px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-track-groove > i::after {
+    font-size: 0.68rem;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-track:not([data-track="dice"]) .score-track-groove > i:not([data-n="0"], [data-n="5"], [data-n="10"], .is-on)::after {
+    font-size: 0.9rem;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(3):last-child) .score-stats > .score-stat-coins {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 3px 10px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-stat-coins b {
+    font-size: 1.1rem;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-shop {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 5px;
+    margin-top: 8px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-shop-head > span {
+    max-width: none;
+    white-space: nowrap;
+    font-size: 0.62rem;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-shop-view {
+    grid-column: 2;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-shop > :is(.score-moments, div:not(.score-shop-head)) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-moment-cards > small {
+    min-height: 27px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .tadam-card {
+    flex: 1 1 auto;
+    align-content: center;
+  }
+}
+
+/* Высокий экран (от 880 px): планшеты в один ряд ещё крупнее — портрет, имя, треки и отступы */
+@media (min-width: 1200px) and (min-height: 880px) {
+  body[data-ui-style="tabletop"] .side-panel {
+    gap: 12px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) {
+    padding-top: 14px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) > .score-card {
+    padding: 13px 13px 13px 14px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-player-avatar img {
+    width: 62px;
+    height: 62px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-player-name {
+    padding-top: 22px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-name {
+    margin-bottom: 10px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-name strong {
+    font-size: 1.36rem;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-stats > .score-tracks {
+    gap: 7px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-track-groove {
+    height: 22px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-track-groove > i.is-on::before {
+    width: 19px;
+    height: 19px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-track-groove > i::after {
+    font-size: 0.74rem;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-track-icon {
+    width: 21px;
+    height: 21px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-track {
+    grid-template-columns: 21px minmax(0, 1fr) auto;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-stats > .score-stat-coins {
+    min-height: 40px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-shop {
+    margin-top: 11px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:not(:has(> .score-card:nth-child(4))) .score-shop-head > span {
+    font-size: 0.68rem;
+  }
+
+  /* Четыре игрока — два ряда планшетов: треки и строка Лавки тоже крупнее, карман монет справа */
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(4)) > .score-card {
+    padding: 9px 11px 9px 12px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(4)) .score-name {
+    margin-bottom: 6px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(4)) .score-name strong {
+    font-size: 1.2rem;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(4)) .score-stats > .score-tracks {
+    gap: 4px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(4)) .score-track {
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+    gap: 5px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(4)) .score-track-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(4)) .score-track-groove {
+    height: 18px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(4)) .score-track-groove > i.is-on::before {
+    width: 16px;
+    height: 16px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(4)) .score-track-groove > i::after {
+    font-size: 0.64rem;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(4)) .score-track:not([data-track="dice"]) .score-track-groove > i:not([data-n="0"], [data-n="5"], [data-n="10"], .is-on)::after {
+    font-size: 0.86rem;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(4)) .score-shop {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 4px;
+    margin-top: 7px;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(4)) .score-shop-head > span {
+    max-width: none;
+    white-space: nowrap;
+    font-size: 0.62rem;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(4)) .score-shop-view {
+    grid-column: 2;
+  }
+
+  body[data-ui-style="tabletop"] .side-panel > .score-strip:has(> .score-card:nth-child(4)) .score-shop > :is(.score-moments, div:not(.score-shop-head)) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
