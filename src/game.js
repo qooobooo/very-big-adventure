@@ -3323,7 +3323,7 @@ function phoneControllersEnabled() {
 
 function phoneCardSnapshot(card, deck = "Карта", { revealed = true, count = 1, faceDown = false } = {}) {
   if (!card) return null;
-  // Момент срабатывания карты Лавки: пульт в настольном стиле раскладывает карты по нему
+  // Момент срабатывания карты Лавки: пульт раскладывает карты по нему
   const moment = deck === "Лавка Джо" ? shopCardMoment(card) || "" : "";
   return {
     count: Math.max(1, Number(count) || 1),
@@ -5289,8 +5289,7 @@ function shopBadgeMarkup({ count, item }) {
   return `<small class="${faceDown ? "shop-face-down" : ""}" title="${escapeHtml(title)}">${cardNameMarkup(label)}${faceDown ? " <em>↓</em>" : ""}</small>`;
 }
 
-// Настольный стиль: карты Лавки лежат на планшете рядами по моменту срабатывания, у ряда — иконка момента.
-// В классическом стиле ряды скрыты, там остаётся общий список карт
+// Карты Лавки лежат на планшете рядами по моменту срабатывания, у ряда — иконка момента (оба стиля)
 function renderShopMomentRows(player) {
   const groups = groupedShopItems(player.items || []);
   if (!groups.length) return "";
@@ -5734,7 +5733,7 @@ function shopCardMomentLabel(card) {
   return shopCardMoments[shopCardMoment(card)] || "";
 }
 
-// Иконка момента в углу лица карты Лавки. Видна только в настольном стиле
+// Иконка момента в углу лица карты Лавки
 function shopCardMomentMarkup(card) {
   const moment = shopCardMoment(card);
   const label = shopCardMoments[moment];

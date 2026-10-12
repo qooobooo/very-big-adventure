@@ -502,8 +502,7 @@ function controllerLegendaryWeaponMarkup() {
 
 function controllerShopCardsMarkup(items = []) {
   if (!items.length) return '<span class="controller-shop-card empty-card">нет карт</span>';
-  const tabletop = document.body.dataset.uiStyle === "tabletop";
-  if (tabletop) items = controllerItemsByMoment(items);
+  items = controllerItemsByMoment(items);
   if (!phoneCardsAsText()) {
     return items.map((item) => controllerPhoneCardFaceMarkup(item, {
       count: item.count,
@@ -511,8 +510,7 @@ function controllerShopCardsMarkup(items = []) {
       size: "inventory",
     })).join("");
   }
-  if (tabletop) return controllerShopMomentRowsMarkup(items);
-  return controllerShopChipsMarkup(items);
+  return controllerShopMomentRowsMarkup(items);
 }
 
 // Порядок моментов — как в shopCardMoments (cards.config.js); неизвестный момент и карты лицом вниз — в конце
@@ -530,7 +528,7 @@ function controllerItemsByMoment(items) {
     .map(({ item }) => item);
 }
 
-// Настольный стиль: ряд на каждый момент, одна иконка момента на ряд
+// Ряд на каждый момент, одна иконка момента на ряд
 function controllerShopMomentRowsMarkup(items) {
   const rows = [];
   for (const item of items) {
@@ -651,7 +649,7 @@ function controllerShopCardFaceMarkup(card, { revealed }) {
   const descriptionDensityClass = controllerCardFaceDescriptionDensityClass(description);
   const titleDensityClass = controllerCardFaceTitleDensityClass(title);
   const textClass = `shop-card-text ${controllerCardFaceTextDensityClass(description, title)} ${descriptionDensityClass} ${titleDensityClass}`.trim();
-  // Иконка момента в углу лица карты видна только в настольном стиле
+  // Иконка момента в углу лица карты
   const moment = revealed && card?.moment && card?.momentLabel
     ? `<span class="shop-card-moment moment-icon" data-moment="${escapeAttribute(card.moment)}" aria-hidden="true"></span>`
     : "";
