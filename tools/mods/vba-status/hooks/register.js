@@ -7,7 +7,7 @@
 
 let snapshot = null
 let drawnKey = ''
-// Folded to one line by default (The Village's band 0.4.0, relayed 13 Oct 2026); «▾ развернуть» shows the full card
+// Folded to one line by default (The Village's band 0.4.0, relayed 13 Oct 2026); the chevron shows the full card
 // until the session ends, a new chat starts folded.
 let expanded = false
 
@@ -257,7 +257,8 @@ export function register(on) {
             expanded = !expanded
             $.ui.invalidate('ui.render')
           },
-          children: [expanded ? '▴ свернуть' : '▾ развернуть'],
+          label: expanded ? 'Свернуть' : 'Развернуть',
+          children: [expanded ? '⌃' : '⌄'],
         })
       : null
     const folded = !expanded && toggle !== null
@@ -267,7 +268,8 @@ export function register(on) {
       const source = card(snapshot, folded)
       const height = Number(source.match(/height="(\d+)"/)[1])
       const drawn = Svg({ alt: altText(snapshot), source, isInteractive: true, width: SHOWN_W, height: Math.round((height * SHOWN_W) / W) })
-      const band = toggle ? Box({ flexDirection: folded ? 'row' : 'column', children: [drawn, toggle] }) : drawn
+      // The card keeps one width folded and unfolded, so the chevron stays put beside its top row.
+      const band = toggle ? Box({ flexDirection: 'row', alignItems: 'flex-start', gap: 1, children: [drawn, toggle] }) : drawn
       return theirs ? Box({ flexDirection: 'column', children: [band, theirs] }) : band
     }
     const lines = (folded ? [foldedRow(snapshot)] : rows(snapshot)).map((row) =>
