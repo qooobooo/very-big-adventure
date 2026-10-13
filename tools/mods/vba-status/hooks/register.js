@@ -257,7 +257,6 @@ export function register(on) {
             expanded = !expanded
             $.ui.invalidate('ui.render')
           },
-          label: expanded ? 'Свернуть' : 'Развернуть',
           children: [expanded ? '⌃' : '⌄'],
         })
       : null
