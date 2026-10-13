@@ -2092,11 +2092,14 @@ function scoreShopDecline(player, offer = []) {
   const bestCardScore = Math.max(0, ...offer.map((card) => scoreShopCard(player, card)));
   if (player.coins - cost < 5) score += 22 * personality.economy;
   else if (player.coins - cost < 10 && bestCardScore < 42) score += 12 * personality.economy;
-  if (gate?.pressure > 0.75 && !offer.some((card) => card.effect?.type === "passive-battle-bonus")) {
-    score += 16 * personality.economy;
+  // Saving up before a monster only matters when the purchase leaves the bot nearly broke: coins do not fight.
+  if (gate?.pressure > 0.75 && player.coins - cost < 5 && !offer.some((card) => card.effect?.type === "passive-battle-bonus")) {
+    score += 8 * personality.economy;
   }
   if (bestCardScore < score + 5) score += 5;
-  return score * personality.economy;
+  // Economy is already inside the terms above; a second multiplier made the thrifty bots (seats 2–3, the ones a human
+  // leaves to bots) decline almost every visit with 10–15 coins.
+  return score;
 }
 
 function chooseBotAuctionBid(player, offer = []) {

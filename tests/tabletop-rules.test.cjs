@@ -249,3 +249,29 @@ test('Лавка setting: market by default, classic puts the market into the di
   assert.equal(c.ui.shopMode.disabled, true);
   assert.equal(c.shopMarketEnabled(), true);
 });
+
+// Bug 13 Oct 2026 (the user, classic UI with bots): bots with 10–15 coins declined almost every Лавка. A human takes
+// seat 1, so bots get the thrifty personalities, and the decline score counted economy twice. The Кот case from the trace.
+function shopDeclineFixture({ gatePressure = 0.9, cardScores = { 'speed-cluster': 4, 'shop-choice-3-cost-3': 35 } } = {}) {
+  return load(['scoreShopDecline', 'botPersonality'], {
+    monsterGatePressure: () => ({ pressure: gatePressure }),
+    joeShopCardCost: () => 5,
+    finalDistance: () => 60,
+    scoreShopCard: (player, card) => cardScores[card.id] ?? 0,
+  });
+}
+
+test('a thrifty bot with 13 coins scores a good shop card above declining', () => {
+  const game = shopDeclineFixture();
+  const offer = [{ id: 'speed-cluster' }, { id: 'shop-choice-3-cost-3', effect: { type: 'shop-choice-3-cost-3' } }];
+  const kot = { id: 1, coins: 13 };
+  assert.ok(game.scoreShopDecline(kot, offer) < 35, `decline ${game.scoreShopDecline(kot, offer)}`);
+  assert.ok(game.scoreShopDecline({ id: 2, coins: 15 }, offer) < 33);
+});
+
+test('a bot left nearly broke by the purchase still prefers to keep its coins', () => {
+  const game = shopDeclineFixture();
+  const offer = [{ id: 'shop-choice-3-cost-3' }];
+  assert.ok(game.scoreShopDecline({ id: 1, coins: 7 }, offer) > 35);
+  assert.ok(game.scoreShopDecline({ id: 0, coins: 4 }, offer) > 35);
+});
