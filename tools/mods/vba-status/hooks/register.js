@@ -7,6 +7,9 @@
 
 let snapshot = null
 let drawnKey = ''
+// Folded to one line by default (The Village's band 0.4.0, relayed 13 Oct 2026); «▾ развернуть» shows the full card
+// until the session ends, a new chat starts folded.
+let expanded = false
 
 const FALLBACK = 'cd very-big-adventure-main 2>/dev/null && python3 tools/pipeline.py board --json'
 
@@ -77,6 +80,21 @@ function rows(s) {
   return out
 }
 
+// The folded line: versions and warnings, then each busy chat as «GD 12м», then how many are free.
+function foldedRow(s) {
+  const row = rows(s)[0].slice()
+  const busy = s.team.filter((c) => c.task)
+  for (const c of busy) {
+    const min = minutesSince(c.since)
+    row.push({ text: '  ' })
+    row.push({ text: ' ' + shortName(c.name) + ' ', bg: 'success', color: 'inverseText', bold: true })
+    if (min !== null) row.push({ text: ' ' + min + 'м', color: min > 60 ? 'warning' : 'subtle' })
+  }
+  const free = s.team.length - busy.length
+  if (free) row.push({ text: '  ○ ' + (busy.length ? free + ' своб.' : 'все свободны'), color: 'inactive' })
+  return row
+}
+
 // Desktop look (The Village's card, user's choice, 11 Oct 2026): one opaque SVG card, readable whatever scheme the
 // frame reports, drawn in a sandboxed frame so CSS and SMIL animate. Calm on purpose: a slow breathing halo on each
 // busy chat, a soft sheen across its time bar, a pulsing dot while a delivery runs; nothing blinks.
@@ -106,7 +124,7 @@ function pill(x, y, label, cls, extra = '') {
   return [`<rect x="${x}" y="${y}" width="${w}" height="22" rx="11" class="${cls}"/>${dot}<text x="${tx}" y="${y + 15}" class="${cls}-t">${esc(label)}</text>`, w]
 }
 
-function card(s) {
+function card(s, folded = false) {
   const busy = s.team.filter((c) => c.task)
   const free = s.team.filter((c) => !c.task)
   const parts = []
@@ -115,8 +133,8 @@ function card(s) {
     [s.base + '  ' + (s.installed || '—'), 'p-dev'],
     [s.shared + '  ' + (s.shared_version || '—'), 'p-main'],
     s.rolled_back ? ['⟲ откат', 'p-warn'] : null,
-    s.unpublished ? ['↑ ' + s.unpublished + ' не в ' + s.shared, 'p-warn'] : null,
-    s.foreign ? ['↓ ' + s.foreign + ' чужое', 'p-warn'] : null,
+    s.unpublished ? ['↑ ' + s.unpublished + (folded ? '' : ' не в ' + s.shared), 'p-warn'] : null,
+    s.foreign ? ['↓ ' + s.foreign + (folded ? '' : ' чужое'), 'p-warn'] : null,
     s.queue !== 'free' || s.app !== 'free'
       ? ['доставка', 'p-live', '<animate attributeName="opacity" values="1;.25;1" dur="2.4s" repeatCount="indefinite"/>']
       : null,
@@ -125,6 +143,29 @@ function card(s) {
     const [svg, w] = pill(x, 12, label, cls, extra)
     parts.push(svg)
     x += w + 8
+  }
+  if (folded) {
+    // One row: after the pills, a dot and short name per busy chat (minutes are in the full card), «+N» for those
+    // that do not fit, then the free count.
+    let hidden = 0
+    for (const c of busy) {
+      const label = shortName(c.name)
+      const w = Math.round(label.length * 6.9) + 28
+      if (hidden || x + w > W - 92) {
+        hidden++
+        continue
+      }
+      const late = (minutesSince(c.since) ?? 0) > 60
+      parts.push(
+        `<rect x="${x}" y="12" width="${w}" height="22" rx="11" class="p-free"/>`,
+        `<circle cx="${x + 11}" cy="23" r="3.6" fill="${hue(c.name)}"><animate attributeName="opacity" values="1;.35;1" dur="3.6s" repeatCount="indefinite"/></circle>`,
+        `<text x="${x + 19}" y="27" class="p-free-t${late ? ' late' : ''}">${esc(label)}</text>`,
+      )
+      x += w + 6
+    }
+    if (hidden) parts.push(`<text x="${x + 2}" y="27" class="muted">+${hidden}</text>`)
+    parts.push(`<text x="${W - 16}" y="27" class="muted" text-anchor="end">${busy.length ? '○ ' + free.length + ' своб.' : 'все свободны'}</text>`)
+    busy.length = 0
   }
   let y = 46
   busy.forEach((c, i) => {
@@ -156,9 +197,9 @@ function card(s) {
   })
   if (busy.length) y += 4
   const fy = y + 2
-  parts.push(`<text x="16" y="${fy + 15}" class="muted">${busy.length ? 'свободны' : 'все свободны'}</text>`)
+  if (!folded) parts.push(`<text x="16" y="${fy + 15}" class="muted">${busy.length ? 'свободны' : 'все свободны'}</text>`)
   let fx = busy.length ? 82 : 102
-  for (const c of free) {
+  for (const c of folded ? [] : free) {
     const w = Math.round(c.name.length * 6.1) + 28
     parts.push(
       `<rect x="${fx}" y="${fy}" width="${w}" height="22" rx="11" class="p-free"/>`,
@@ -167,7 +208,7 @@ function card(s) {
     )
     fx += w + 6
   }
-  const H = fy + 34
+  const H = folded ? 46 : fy + 34
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
 <style>
 :root{--fg:#1F2328;--muted:#6E7781;--card:#FFFFFF;--line:rgba(0,0,0,.08);--track:rgba(0,0,0,.07);--warn:#D4882B;--accent:#D97757;--ok:#2E9E6E}
@@ -206,17 +247,30 @@ export function register(on) {
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (!snapshot || snapshot.project !== 'vba' || !Array.isArray(snapshot.team)) return next(e)
-    const { Box, Text, Svg } = $.ui.resolve(e)
+    const { Box, Text, Svg, Button } = $.ui.resolve(e)
     const theirs = await next(e)
+    const toggle = Button
+      ? Button({
+          key: 'vba-fold',
+          plain: true,
+          onPress: () => {
+            expanded = !expanded
+            $.ui.invalidate('ui.render')
+          },
+          children: [expanded ? '▴ свернуть' : '▾ развернуть'],
+        })
+      : null
+    const folded = !expanded && toggle !== null
     if (e.surface === 'desktop' && Svg) {
       // Without a size the frame takes the default 150 px height and centres the card in empty space; draw it at the
       // scale the band showed it (about 750 px wide) with the height that keeps its proportions.
-      const source = card(snapshot)
+      const source = card(snapshot, folded)
       const height = Number(source.match(/height="(\d+)"/)[1])
       const drawn = Svg({ alt: altText(snapshot), source, isInteractive: true, width: SHOWN_W, height: Math.round((height * SHOWN_W) / W) })
-      return theirs ? Box({ flexDirection: 'column', children: [drawn, theirs] }) : drawn
+      const band = toggle ? Box({ flexDirection: folded ? 'row' : 'column', children: [drawn, toggle] }) : drawn
+      return theirs ? Box({ flexDirection: 'column', children: [band, theirs] }) : band
     }
-    const lines = rows(snapshot).map((row) =>
+    const lines = (folded ? [foldedRow(snapshot)] : rows(snapshot)).map((row) =>
       Text({
         wrap: 'truncate-end',
         children: row.map((seg) => {
@@ -229,6 +283,7 @@ export function register(on) {
         }),
       }),
     )
+    if (toggle) lines[0] = Box({ justifyContent: 'space-between', paddingRight: 5, children: [lines[0], toggle] })
     return Box({ flexDirection: 'column', children: theirs ? [...lines, theirs] : lines })
   })
 }
