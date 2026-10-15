@@ -253,11 +253,15 @@ export function register(on) {
       ? Button({
           key: 'vba-fold',
           plain: true,
+          // Dim at rest, full under the pointer: a quiet secondary control, not a chip that competes with the card.
+          dimColor: true,
           onPress: () => {
             expanded = !expanded
             $.ui.invalidate('ui.render')
           },
-          children: [expanded ? '⌃' : '⌄'],
+          // The glyph shows what a press does (The Village's 0.4.3, 15 Oct 2026). The band sits above the prompt, so the
+          // card unfolds upward: ▴ while folded, ▾ to fold it back. No `label`: a desktop draws it as the button's text.
+          children: [expanded ? '▾' : '▴'],
         })
       : null
     const folded = !expanded && toggle !== null
