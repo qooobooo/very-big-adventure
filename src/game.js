@@ -5427,19 +5427,19 @@ function playerArtifacts(player) {
   }
   if (state.artifacts.heroSwordOwnerId === player.id) {
     artifacts.push({
-      hint: "каждая 6 в бою дает +3 силы",
+      hint: `каждая 6 в бою дает +${heroSwordBonusPerSix()} силы`,
       icon: heroSwordIconSrc,
       id: "hero-sword",
-      shortTitle: "6:+3",
+      shortTitle: `6:+${heroSwordBonusPerSix()}`,
       title: "Меч Героя",
     });
   }
   if (state.artifacts.antiBadOwnerId === player.id) {
     artifacts.push({
-      hint: "обычное Плохо дает 5 монет",
+      hint: `обычное Плохо дает ${countText(antiBadCoins(), "монету", "монеты", "монет")}`,
       icon: antiBadIconSrc,
       id: "anti-bad",
-      shortTitle: "Плохо +5",
+      shortTitle: `Плохо +${antiBadCoins()}`,
       title: "Анти-Плохо",
     });
   }
@@ -5454,28 +5454,28 @@ function playerArtifacts(player) {
   }
   if (state.artifacts.speedBootsOwnerId === player.id) {
     artifacts.push({
-      hint: "+5 к шагам",
+      hint: `+${speedBootsSteps()} к шагам`,
       icon: speedBootsIconSrc,
       id: "speed-boots",
-      shortTitle: "+5 шагов",
+      shortTitle: `+${countText(speedBootsSteps(), "шаг", "шага", "шагов")}`,
       title: "Сапоги Скорости",
     });
   }
   if (state.artifacts.magicPickaxeOwnerId === player.id) {
     artifacts.push({
-      hint: "+2 к получению монет",
+      hint: `+${magicPickaxeCoinBonus()} к получению монет`,
       icon: magicPickaxeIconSrc,
       id: "magic-pickaxe",
-      shortTitle: "Монеты +2",
+      shortTitle: `Монеты +${magicPickaxeCoinBonus()}`,
       title: "Волшебная Кирка",
     });
   }
   if (state.artifacts.goldenHorseshoeOwnerId === player.id) {
     artifacts.push({
-      hint: "1 в броске движения дает 3 монеты",
+      hint: `1 в броске движения дает ${countText(goldenHorseshoeCoins(), "монету", "монеты", "монет")}`,
       icon: goldenHorseshoeIconSrc,
       id: "golden-horseshoe",
-      shortTitle: "1:+3",
+      shortTitle: `1:+${goldenHorseshoeCoins()}`,
       title: "Золотая Подкова",
     });
   }
@@ -5544,7 +5544,7 @@ function resolveGoldenHorseshoeMovementReward(player, rolls = []) {
   if (!hasGoldenHorseshoeArtifact(player)) return;
   if (!rolls.some((value) => value === 1)) return;
 
-  const amount = 3;
+  const amount = goldenHorseshoeCoins();
   const gained = addCoins(player, amount);
   const actualText = gained !== amount ? `, с бонусами ${coinAmount(gained)}` : "";
   log(`${playerName(player)} использует <strong>Золотую Подкову</strong>: в броске движения есть 1, получает ${coinAmount(amount)}${actualText}.`, {
@@ -5700,6 +5700,34 @@ function grantTravelerCompassArtifact(target, card) {
   return true;
 }
 
+// An artifact's number from its card (src/cards.config.js, edited in the cards sheet): the card in play, else the deck's
+// card, else the fallback. Before 16 Oct 2026 these numbers were literals here and a sheet edit did nothing.
+function artifactCardNumber(slot, id, field, fallback) {
+  const card = state?.artifacts?.[slot] || Object.values(cardConfig).flat().find((item) => item?.id === id);
+  const value = Number(card?.effect?.[field]);
+  return card?.effect?.[field] !== undefined && Number.isFinite(value) ? value : fallback;
+}
+
+function heroSwordBonusPerSix() {
+  return artifactCardNumber("heroSwordCard", "hero-sword", "bonusPerSix", 3);
+}
+
+function antiBadCoins() {
+  return artifactCardNumber("antiBadCard", "anti-bad", "amount", 5);
+}
+
+function speedBootsSteps() {
+  return artifactCardNumber("speedBootsCard", "speed-boots", "amount", 5);
+}
+
+function magicPickaxeCoinBonus() {
+  return artifactCardNumber("magicPickaxeCard", "magic-pickaxe", "amount", 2);
+}
+
+function goldenHorseshoeCoins() {
+  return artifactCardNumber("goldenHorseshoeCard", "golden-horseshoe", "amount", 3);
+}
+
 function hasHeroSwordArtifact(player) {
   return Boolean(player && state?.artifacts?.heroSwordOwnerId === player.id);
 }
@@ -5731,7 +5759,7 @@ function hasTravelerCompassArtifact(player) {
 function heroSwordCombatBonus(player, rolls) {
   if (!hasHeroSwordArtifact(player)) return 0;
   const sixes = (rolls || []).filter((value) => value === 6).length;
-  const bonus = sixes * 3;
+  const bonus = sixes * heroSwordBonusPerSix();
   if (bonus > 0) {
     log(`${playerName(player)} использует <strong>Меч Героя</strong>: ${sixes} шестёрок дают <strong>+${bonus}</strong> к силе.`, { toast: true });
   }
@@ -7765,8 +7793,8 @@ function shopCardsWord(count) {
 
 async function resolveAntiBadFieldReplacement(player) {
   if (!hasAntiBadArtifact(player)) return false;
-  addCoins(player, 5);
-  const message = `${playerName(player)} использует <strong>Анти-Плохо</strong>: поле <strong>Плохо</strong> дает <strong>${coinAmount(5)}</strong> вместо карты.`;
+  addCoins(player, antiBadCoins());
+  const message = `${playerName(player)} использует <strong>Анти-Плохо</strong>: поле <strong>Плохо</strong> дает <strong>${coinAmount(antiBadCoins())}</strong> вместо карты.`;
   render();
   log(message, { toast: true });
   await showActionPrompt(message, { autoFor: player });
@@ -11869,7 +11897,7 @@ async function resolveEventHeroSword(player, card, effect = {}) {
     { autoFor: player, buttonLabel: "В бой" },
   );
 
-  const result = await rollHeroSwordArtifactBattle(player, targetStrength);
+  const result = await rollHeroSwordArtifactBattle(player, Math.max(1, Number(effect.dice) || 1));
   const formulaText = combatBonusFormulaText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus);
   if (result.total >= targetStrength) {
     grantHeroSwordArtifact(player, card);
@@ -11890,8 +11918,8 @@ async function resolveEventHeroSword(player, card, effect = {}) {
   return { discard: true };
 }
 
-async function rollHeroSwordArtifactBattle(player) {
-  let rolls = rollDice(1);
+async function rollHeroSwordArtifactBattle(player, dice = 1) {
+  let rolls = rollDice(dice);
   rolls = await maybeUseDiceControl(player, rolls, { mode: "event-hero-sword", title: "Контроль кубика: Меч Героя" });
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const baseBonus = playerCombatBonus(player);
@@ -12070,6 +12098,8 @@ function resolveEventMonsterRage(amount = 1) {
 async function resolveEventGoldenMarkers(player, count = 5, amount = 10) {
   const markerCount = Math.max(1, Number(count) || 5);
   const reward = Math.max(0, Number(amount) || 10);
+  // The card's reward stays with the markers it placed (before 16 Oct 2026 collecting paid a literal 10).
+  state.goldenMarkerReward = reward;
   const placed = [];
 
   if (isBot(player)) {
@@ -12171,7 +12201,7 @@ async function collectGoldenMarker(player) {
 
   markers.splice(index, 1);
   state.goldenMarkers = markers;
-  const reward = 10;
+  const reward = Number.isFinite(Number(state.goldenMarkerReward)) ? Number(state.goldenMarkerReward) : 10;
   addCoins(player, reward);
   render();
   const message = `${playerName(player)} снимает <strong>Золотую метку</strong> с клетки ${cellLabel(player.position)} и получает <strong>${coinAmount(reward)}</strong>.`;
@@ -15880,7 +15910,11 @@ function joeShopCardCost(player = null) {
 }
 
 function joeShopOfferCount(player = null) {
-  return player && hasActiveShopEffect(player, "shop-choice-3-cost-3") ? 3 : balance("shop.offerCount", 2);
+  if (player && hasActiveShopEffect(player, "shop-choice-3-cost-3")) {
+    const amounts = activeShopEffectItems(player, "shop-choice-3-cost-3").map((card) => Number(card.effect?.amount) || 3);
+    return amounts.length ? Math.max(...amounts) : 3;
+  }
+  return balance("shop.offerCount", 2);
 }
 
 function tadamActiveLimit() {
@@ -15909,7 +15943,7 @@ function activeFieldEffect(type) {
 }
 
 function playerStepBonus(player) {
-  const artifactBonus = hasSpeedBootsArtifact(player) ? 5 : 0;
+  const artifactBonus = hasSpeedBootsArtifact(player) ? speedBootsSteps() : 0;
   return playerManualStepBonus(player) + (Number(player?.turnStepBonus) || 0) + artifactBonus + activeShopItems(player)
     .filter((item) => item.effect?.type === "passive-step-bonus")
     .reduce((sum, item) => sum + item.effect.steps, 0) + activeShopSetBonus(player, "speed-cluster", "steps");
@@ -16541,7 +16575,7 @@ function totalDiceForPlayer(player, extraDice = 0) {
 }
 
 function playerCoinBonus(player) {
-  return hasMagicPickaxeArtifact(player) ? 2 : 0;
+  return hasMagicPickaxeArtifact(player) ? magicPickaxeCoinBonus() : 0;
 }
 
 function optionalExtraDieCards(player) {

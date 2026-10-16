@@ -165,6 +165,7 @@ function marketFixture({ ids = ['a', 'b', 'c', 'd', 'e', 'f'], coins = 20, privi
     shopMarketSize: 2, joeCouponShopChoiceId: 'coupon', botShopOfferChoices: new WeakMap(),
     shuffleCards: (cards) => [...cards], deckLabel: String, isReferenceRuntimeCard: () => false,
     joeShopCardCost: () => 5, hasActiveShopEffect: () => privilege, hasJoeCouponArtifact: () => coupon,
+    activeShopEffectItems: () => (privilege ? [{ effect: { type: 'shop-choice-3-cost-3', amount: 3 } }] : []),
     weaponsSettingLocked: () => false,
     chooseRevealedShopCard: async (offer) => {
       shown.push(Array.from(offer, (card) => card.id));
@@ -276,4 +277,34 @@ test('a bot left nearly broke by the purchase still prefers to keep its coins', 
   const offer = [{ id: 'shop-choice-3-cost-3' }];
   assert.ok(game.scoreShopDecline({ id: 1, coins: 7 }, offer) > 35);
   assert.ok(game.scoreShopDecline({ id: 0, coins: 4 }, offer) > 35);
+});
+
+// PM, 16 Oct 2026: seven cards carried numbers in src/cards.config.js that the code never read, so a cards-sheet edit
+// did nothing. They read their card now; the old literals stay as the fallback.
+test('artifacts, golden markers and Привилегия Джо take their numbers from their cards', async () => {
+  const card = (id, effect) => ({ id, effect });
+  const c = load(['artifactCardNumber', 'heroSwordBonusPerSix', 'antiBadCoins', 'speedBootsSteps', 'magicPickaxeCoinBonus',
+    'goldenHorseshoeCoins', 'joeShopOfferCount', 'playerCoinBonus', 'heroSwordCombatBonus'], {
+    cardConfig: { event: [card('hero-sword', { bonusPerSix: 3 }), card('anti-bad', { amount: 5 }), card('speed-boots', { amount: 5 }),
+      card('magic-pickaxe', { amount: 2 }), card('golden-horseshoe', { amount: 3 })] },
+    state: { artifacts: {} },
+    hasActiveShopEffect: () => true, hasMagicPickaxeArtifact: () => true, hasHeroSwordArtifact: () => true,
+    activeShopEffectItems: () => [card('shop-choice-3-cost-3', { type: 'shop-choice-3-cost-3', amount: 4 })],
+    log: () => {}, playerName: (p) => p.name,
+  });
+  // No card in play yet: the deck's card.
+  assert.deepEqual([c.heroSwordBonusPerSix(), c.antiBadCoins(), c.speedBootsSteps(), c.magicPickaxeCoinBonus(), c.goldenHorseshoeCoins()], [3, 5, 5, 2, 3]);
+  // The card in play wins, as edited in the sheet.
+  Object.assign(c.state.artifacts, { heroSwordCard: card('hero-sword', { bonusPerSix: 4 }), antiBadCard: card('anti-bad', { amount: 7 }),
+    speedBootsCard: card('speed-boots', { amount: 6 }), magicPickaxeCard: card('magic-pickaxe', { amount: 1 }),
+    goldenHorseshoeCard: card('golden-horseshoe', { amount: 0 }) });
+  assert.deepEqual([c.heroSwordBonusPerSix(), c.antiBadCoins(), c.speedBootsSteps(), c.magicPickaxeCoinBonus(), c.goldenHorseshoeCoins()], [4, 7, 6, 1, 0]);
+  assert.equal(c.playerCoinBonus({}), 1);
+  assert.equal(c.heroSwordCombatBonus({ name: 'Аня' }, [6, 2, 6]), 8);
+  assert.equal(c.joeShopOfferCount({}), 4);
+  // A card without the number keeps the old one.
+  c.state.artifacts.antiBadCard = card('anti-bad', {});
+  assert.equal(c.antiBadCoins(), 5);
+  assert.match(source, /const reward = Number\.isFinite\(Number\(state\.goldenMarkerReward\)\)/);
+  assert.match(source, /rollHeroSwordArtifactBattle\(player, Math\.max\(1, Number\(effect\.dice\) \|\| 1\)\)/);
 });
