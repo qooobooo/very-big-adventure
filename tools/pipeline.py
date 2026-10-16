@@ -458,6 +458,10 @@ def follow_once():
 
 
 def cmd_follow(args):
+    # A long-lived loop keeps the code it started with; when a delivery changes this file (CARD_FILES grew with the
+    # balance sheet, 16 Oct 2026), restart on the new code. Same pid, so follow.json stays right.
+    me = Path(__file__).resolve()
+    started = me.stat().st_mtime
     while True:
         try:
             follow_once()
@@ -466,6 +470,9 @@ def cmd_follow(args):
         if args.once or listener() is None:
             return 0
         time.sleep(FOLLOW_EVERY)
+        with contextlib.suppress(OSError):
+            if me.stat().st_mtime != started:
+                os.execv(sys.executable, [sys.executable, str(me), 'follow'])
 
 
 def stop_server(pid):
