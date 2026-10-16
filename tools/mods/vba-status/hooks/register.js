@@ -8,12 +8,11 @@
 let snapshot = null
 let drawnKey = ''
 let failures = 0
-let lastSurface = ''
-// The desktop card is a sandboxed frame: any change to its markup reloads the frame, which shows as a blink (The
-// Village's fix 0.5.5, 16 Oct 2026). So the markup is built once per board state and reused; it ticks its own minutes
-// with SMIL, so it only has to be rebuilt when the board changes or the precomputed minutes run out.
-const HORIZON_MIN = 30
-let drawn = { key: '', source: '', anchor: 0 }
+// The desktop card is drawn as a plain image (The Village's fix 0.5.6, 16 Oct 2026: it blinked). A sandboxed frame
+// (`isInteractive`) is reloaded on every draw of the band — each turn start and end, each resize — and shows blank while
+// it loads; an image of the same markup stays put. The markup is also built once per board state and minute, so
+// redraws hand over the very same string.
+let drawn = { key: '', source: '' }
 // Folded to one line by default (The Village's band 0.4.0, relayed 13 Oct 2026); the chevron shows the full card
 // until the session ends, a new chat starts folded.
 let expanded = false
@@ -30,34 +29,20 @@ async function refresh($) {
     next = null
   }
   // A single failed run (a git lock mid-delivery, a busy machine) keeps the last board instead of dropping the band
-  // for 15 s; three in a row mean the board is really gone.
+  // until the next poll; three in a row mean the board is really gone.
   if (next) failures = 0
   else if (++failures < 3 && snapshot) return
   snapshot = next
-  // Redraw only when something shown changed, so the animations run on unbroken. The terminal shows plain minutes,
-  // so there a passing minute redraws too; the desktop card counts them itself and is rebuilt only past its horizon.
-  const tick = lastSurface === 'desktop' ? Math.floor((Date.now() - drawn.anchor) / (HORIZON_MIN * 60000)) : Math.floor(Date.now() / 60000)
-  const key = JSON.stringify(snapshot) + '|' + tick
+  // Redraw only when something shown changed (the board, or a minute passed), so the animations run on unbroken.
+  const key = JSON.stringify(snapshot) + Math.floor(Date.now() / 60000)
   if (key === drawnKey) return
   drawnKey = key
   $.ui.invalidate('ui.render')
 }
 
-function minutesSince(since, now = Date.now()) {
+function minutesSince(since) {
   const started = Date.parse(since)
-  return Number.isNaN(started) ? null : Math.max(0, Math.round((now - started) / 60000))
-}
-
-// Seconds from `anchor` (when the card was built) until `since` reads `min` minutes (rounded, as minutesSince does).
-function secondsUntil(since, min, anchor) {
-  return Math.max(0, (Date.parse(since) + (min - 0.5) * 60000 - anchor) / 1000).toFixed(1)
-}
-
-// Show this element only from `from` until `to` seconds after load (`to` null: for good).
-function during(from, to) {
-  const show = Number(from) > 0 ? `<set attributeName="visibility" to="visible" begin="${from}s"/>` : ''
-  const hide = to === null ? '' : `<set attributeName="visibility" to="hidden" begin="${to}s"/>`
-  return { attr: Number(from) > 0 ? ' visibility="hidden"' : '', anim: show + hide }
+  return Number.isNaN(started) ? null : Math.max(0, Math.round((Date.now() - started) / 60000))
 }
 
 // "Art / UI" -> "Art/UI": chips stay narrow.
@@ -123,7 +108,7 @@ function foldedRow(s) {
 }
 
 // Desktop look (The Village's card, user's choice, 11 Oct 2026): one opaque SVG card, readable whatever scheme the
-// frame reports, drawn in a sandboxed frame so CSS and SMIL animate. Calm on purpose: a slow breathing halo on each
+// frame reports, drawn as an image (CSS and SMIL still animate in it). Calm on purpose: a slow breathing halo on each
 // busy chat, a soft sheen across its time bar, a pulsing dot while a delivery runs; nothing blinks.
 const CHAT_HUES = { GD: '#5B8DEF', 'Art / UI': '#A77BE0' }
 const W = 640
@@ -151,7 +136,7 @@ function pill(x, y, label, cls, extra = '') {
   return [`<rect x="${x}" y="${y}" width="${w}" height="22" rx="11" class="${cls}"/>${dot}<text x="${tx}" y="${y + 15}" class="${cls}-t">${esc(label)}</text>`, w]
 }
 
-function card(s, folded = false, anchor = Date.now()) {
+function card(s, folded = false) {
   const busy = s.team.filter((c) => c.task)
   const free = s.team.filter((c) => !c.task)
   const parts = []
@@ -196,7 +181,7 @@ function card(s, folded = false, anchor = Date.now()) {
   }
   let y = 46
   busy.forEach((c, i) => {
-    const min = minutesSince(c.since, anchor)
+    const min = minutesSince(c.since)
     const color = hue(c.name)
     const cy = y + 14
     const late = min !== null && min > 60
@@ -213,24 +198,12 @@ function card(s, folded = false, anchor = Date.now()) {
       const bw = 92
       const fw = Math.round(bw * fill)
       const barColor = late ? 'var(--warn)' : color
-      // The bar grows and the minutes count on by themselves for the next HORIZON_MIN minutes (SMIL from the card's
-      // load), so the frame is not reloaded each minute.
-      const last = min + HORIZON_MIN + 5
-      const endW = Math.round(bw * Math.max(0.06, Math.min(1, last / 60)))
-      const span = secondsUntil(c.since, last, anchor)
-      const grow = endW > fw ? `<animate attributeName="width" from="${fw}" to="${endW}" dur="${span}s" fill="freeze"/>` : ''
-      // Past an hour the bar turns warning-coloured: an overlay that appears then and grows with it.
-      const warn = !late && last > 60 ? during(secondsUntil(c.since, 61, anchor), null) : null
       parts.push(
         `<rect x="${bx}" y="${cy - 3}" width="${bw}" height="6" rx="3" class="track"/>`,
-        `<rect x="${bx}" y="${cy - 3}" width="${fw}" height="6" rx="3" fill="${barColor}">${grow}</rect>`,
-        warn ? `<rect x="${bx}" y="${cy - 3}" width="${fw}" height="6" rx="3" class="warnbar"${warn.attr}>${grow}${warn.anim}</rect>` : '',
-        `<rect x="${bx}" y="${cy - 3}" width="${fw}" height="6" rx="3" fill="url(#sheen)">${grow}</rect>`,
+        `<rect x="${bx}" y="${cy - 3}" width="${fw}" height="6" rx="3" fill="${barColor}"/>`,
+        `<rect x="${bx}" y="${cy - 3}" width="${fw}" height="6" rx="3" fill="url(#sheen)"/>`,
+        `<text x="${W - 16}" y="${cy + 4.5}" class="time${late ? ' late' : ''}" text-anchor="end">${min} мин</text>`,
       )
-      for (let m = min; m <= last; m++) {
-        const shown = during(m === min ? 0 : secondsUntil(c.since, m, anchor), m === last ? null : secondsUntil(c.since, m + 1, anchor))
-        parts.push(`<text x="${W - 16}" y="${cy + 4.5}" class="time${m > 60 ? ' late' : ''}" text-anchor="end"${shown.attr}>${m} мин${shown.anim}</text>`)
-      }
     }
     y += 30
   })
@@ -262,7 +235,7 @@ text{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
 .p-free{fill:none;stroke:var(--line)} .p-free-t{fill:var(--muted);font-size:11.5px}
 .name{font-weight:650} .task{fill:var(--fg);opacity:.82}
 .muted{fill:var(--muted);font-size:11.5px}
-.track{fill:var(--track)} .warnbar{fill:var(--warn)}
+.track{fill:var(--track)}
 .time{fill:var(--muted);font-variant-numeric:tabular-nums;font-size:11.5px} .late{fill:var(--warn);font-weight:600}
 </style>
 <defs>
@@ -287,7 +260,6 @@ export function register(on) {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (!snapshot || snapshot.project !== 'vba' || !Array.isArray(snapshot.team)) return next(e)
     const { Box, Text, Svg, Button } = $.ui.resolve(e)
-    lastSurface = e.surface
     const theirs = await next(e)
     const toggle = Button
       ? Button({
@@ -308,15 +280,11 @@ export function register(on) {
     if (e.surface === 'desktop' && Svg) {
       // Without a size the frame takes the default 150 px height and centres the card in empty space; draw it at the
       // scale the band showed it (about 750 px wide) with the height that keeps its proportions.
-      // Same board, same fold, still within the horizon: hand over the very markup drawn before, so the frame stays.
-      const key = JSON.stringify(snapshot) + '|' + folded
-      if (drawn.key !== key || Date.now() - drawn.anchor > HORIZON_MIN * 60000) {
-        const anchor = Date.now()
-        drawn = { key, source: card(snapshot, folded, anchor), anchor }
-      }
+      const key = JSON.stringify(snapshot) + '|' + folded + '|' + Math.floor(Date.now() / 60000)
+      if (drawn.key !== key) drawn = { key, source: card(snapshot, folded) }
       const source = drawn.source
       const height = Number(source.match(/height="(\d+)"/)[1])
-      const drawn = Svg({ alt: altText(snapshot), source, isInteractive: true, width: SHOWN_W, height: Math.round((height * SHOWN_W) / W) })
+      const drawn = Svg({ alt: altText(snapshot), source, width: SHOWN_W, height: Math.round((height * SHOWN_W) / W) })
       // The card keeps one width folded and unfolded, so the chevron stays put beside its top row.
       const band = toggle ? Box({ flexDirection: 'row', alignItems: 'flex-start', gap: 1, children: [drawn, toggle] }) : drawn
       return theirs ? Box({ flexDirection: 'column', children: [band, theirs] }) : band
