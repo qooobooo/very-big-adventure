@@ -36,7 +36,7 @@
 ## Shared Google Sheets
 
 - `Cards Config`: `https://docs.google.com/spreadsheets/d/1dv8cOcoY9P1WZOw2UQ-prUccte2BprZMp0DFCSL0pME/edit`
-  - Tabs: one per deck (`good`, `bad`, `tadam`, `event`, `legendary`, `shop`), laid out by the sheet's own script.
+  - Tabs: one per deck (`good`, `bad`, `tadam`, `event`, `legendary`, `shop`), laid out by the sheet's own script, and `Баланс` first: the balance numbers of the board rules (`src/game.config.js` `balanceConfig`, mirror `balance-google-sheet.csv`, since 16 Oct 2026).
   - Since 12 Oct 2026 (PM task) the source is `src/cards.config.js` in `dev`; `cards-google-sheet.csv` is its mirror (`node tools/cards-sheet/cards-csv.mjs`). The sheet takes the CSV from `dev` by itself and sends the user's edits back as a commit to `dev`: `tools/cards-sheet/README.md`.
 - `Games Log`: `https://docs.google.com/spreadsheets/d/1uC1xUk52IbpHfm9tNtHT2_cmFSNQIKCkct88TsqmmV8/edit`
   - Tabs: `Games`, `Players`.

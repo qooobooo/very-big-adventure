@@ -4,6 +4,8 @@
  *
  * The source is dev: src/cards.config.js is what the game reads, cards-google-sheet.csv is its mirror, written by
  * tools/cards-sheet/cards-csv.mjs with the functions below. The sheet shows the CSV, a tab per deck.
+ * The tab «Баланс» does the same for the balance numbers of the board rules (PM task, 16 Oct 2026): src/game.config.js
+ * balanceConfig is what the game reads, balance-google-sheet.csv its mirror with the эталоны from src/game.js.
  *
  * Menu «Very Big Adventure»:
  *   «Взять из игры»     — fills the deck tabs from the CSV in dev and remembers it as the base of your changes;
@@ -24,6 +26,10 @@ var REPO = 'qooobooo/very-big-adventure';
 var BRANCH = 'dev';
 var CSV_PATH = 'cards-google-sheet.csv';
 var CONFIG_PATH = 'src/cards.config.js';
+var BALANCE_CSV_PATH = 'balance-google-sheet.csv';
+var BALANCE_CONFIG_PATH = 'src/game.config.js';
+var BALANCE_SHEET = 'Баланс';
+var BALANCE_BASE_SHEET = '_base_balance';
 var MENU = 'Very Big Adventure';
 var BASE_SHEET = '_base';
 // The commit that last changed this file, written in by `pipeline.py sheet-push`; a new one lays the tabs out again.
@@ -67,6 +73,19 @@ var SHEET_ORDER = ['id', 'title', 'shortTitle', 'count', 'description', 'artifac
   'steps', 'cost', 'dice', 'mode', 'target_deck', 'effect_extra', 'notes'];
 // Shown on every tab; the others only where a card of the deck has a value.
 var ALWAYS = { id: true, title: true, count: true, description: true, effect_type: true, notes: true };
+// The balance CSV's columns (AGENTS.md «Числа и карты») and the «Баланс» tab: only «Значение» and «Заметки» are yours.
+var BALANCE_COLUMNS = ['key', 'name', 'value', 'default', 'unit', 'min', 'max', 'notes'];
+var BALANCE_FIELDS = {
+  key: { label: 'Ключ', kind: 'fixed', width: 220, hint: 'Имя числа в коде. Новые числа и удаление — только в коде' },
+  name: { label: 'Что это', kind: 'fixed', width: 360, hint: 'Описание числа. Меняется в коде' },
+  value: { label: 'Значение', kind: 'value', width: 90, hint: 'Это число читает игра. Целое, от «Мин» до «Макс»' },
+  default: { label: 'Эталон', kind: 'fixed', width: 70, hint: 'Число в коде: на нём идут тесты и пробы. Меняется в коде' },
+  unit: { label: 'Единица', kind: 'fixed', width: 80 },
+  min: { label: 'Мин', kind: 'fixed', width: 56 },
+  max: { label: 'Макс', kind: 'fixed', width: 56 },
+  notes: { label: 'Заметки', kind: 'note', width: 280, hint: 'Для себя: в игру не идёт' }
+};
+var BALANCE_ORDER = ['name', 'value', 'default', 'unit', 'min', 'max', 'key', 'notes'];
 var EFFECT_HINT = 'Целое число. Только у карт, где оно уже есть: новое число код не прочтёт';
 
 function onOpen() {
@@ -313,6 +332,75 @@ function decksOf_(table) {
   return decks;
 }
 
+// ---------- The balance CSV and the config (pure) ----------
+
+/** The balance numbers' эталоны in src/game.js: key → number text, from every balance("key", number) call. */
+function balanceDefaults_(gameSource) {
+  var found = {}, pattern = /\bbalance\("([^"]+)",\s*(-?\d+(?:\.\d+)?)\)/g, match;
+  while ((match = pattern.exec(gameSource))) found[match[1]] = String(Number(match[2]));
+  return found;
+}
+
+/** The whole balance CSV from balanceConfig; notes come from the CSV it replaces, эталоны from src/game.js. */
+function balanceCsvFromConfig_(balanceConfig, defaults, oldText) {
+  var notes = {};
+  if (oldText) parseCsv_(oldText).rows.forEach(function (row) { notes[row.key] = row.notes || ''; });
+  var rows = balanceConfig.map(function (param) {
+    var row = { key: param.key, name: param.name, value: param.value, default: defaults[param.key], unit: param.unit,
+      min: param.min, max: param.max, notes: notes[param.key] || '' };
+    BALANCE_COLUMNS.forEach(function (name) { row[name] = row[name] === undefined || row[name] === null ? '' : String(row[name]); });
+    return row;
+  });
+  return csvText_({ header: BALANCE_COLUMNS, rows: rows });
+}
+
+/** A balance cell as the CSV writes it: numbers as digits, text trimmed. */
+function balanceCsvValue_(value) {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'number') return String(value);
+  return String(value).trim();
+}
+
+function balanceSheetValue_(field, cell) {
+  return BALANCE_FIELDS[field].kind === 'value' && cell !== '' && !isNaN(Number(cell)) ? Number(cell) : cell;
+}
+
+/** What is wrong with a balance cell (CSV text) of the row taken from the game; '' when nothing. */
+function balanceProblem_(field, value, row) {
+  var kind = BALANCE_FIELDS[field].kind, base = row[field] || '';
+  if (kind === 'fixed') return value === base ? '' : 'меняется только в коде (в игре «' + base + '»)';
+  if (kind === 'note') return '';
+  var min = Number(row.min), max = Number(row.max);
+  if (!/^-?\d+$/.test(value)) return 'нужно целое число от ' + min + ' до ' + max;
+  return Number(value) >= min && Number(value) <= max ? '' : 'нужно от ' + min + ' до ' + max;
+}
+
+/** src/game.config.js with the changed numbers on their own lines only; c: { key, field, to } in CSV text. */
+function patchGameConfig_(text, changes) {
+  var lines = text.split('\n');
+  changes.forEach(function (c) {
+    if (BALANCE_FIELDS[c.field].kind === 'note') return;
+    if (c.field !== 'value') throw new Error(c.field + ' меняется только в коде');
+    var start = '  { key: ' + JSON.stringify(c.key) + ', value: ';
+    var at = lines.map(function (line) { return line.indexOf(start); }).indexOf(0);
+    var rest = at < 0 ? null : lines[at].slice(start.length).match(/^-?\d+(?:\.\d+)?(,.*)$/);
+    if (!rest) throw new Error('В ' + BALANCE_CONFIG_PATH + ' нет строки числа ' + c.key);
+    lines[at] = start + String(Number(c.to)) + rest[1];
+  });
+  return lines.join('\n');
+}
+
+/** The balance CSV with the changed cells only. */
+function patchBalanceCsv_(text, changes) {
+  var table = parseCsv_(text);
+  changes.forEach(function (c) {
+    var row = table.rows.filter(function (r) { return r.key === c.key; })[0];
+    if (!row) throw new Error('В ' + BALANCE_CSV_PATH + ' нет числа ' + c.key);
+    row[c.field] = c.to;
+  });
+  return csvText_(table);
+}
+
 // ---------- GitHub ----------
 
 function connect() {
@@ -367,14 +455,15 @@ function decode_(content) {
   return Utilities.newBlob(Utilities.base64Decode(content.replace(/\s/g, ''))).getDataAsString('UTF-8');
 }
 
-/** The CSV in dev: { text, mark, table }. With a token through the API (fresh), without one from the public raw copy
- *  (the repository is public; that copy may lag a few minutes). mark tells one text from another. */
-function readGame_() {
+/** A CSV in dev (the cards' one by default): { text, mark, table }. With a token through the API (fresh), without one
+ *  from the public raw copy (the repository is public; that copy may lag a few minutes). mark tells one text from another. */
+function readGame_(path) {
   var text;
+  path = path || CSV_PATH;
   if (PropertiesService.getUserProperties().getProperty('GITHUB_TOKEN')) {
-    text = decode_(github_('get', '/contents/' + CSV_PATH + '?ref=' + BRANCH).content);
+    text = decode_(github_('get', '/contents/' + path + '?ref=' + BRANCH).content);
   } else {
-    var response = UrlFetchApp.fetch('https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/' + CSV_PATH, { muteHttpExceptions: true });
+    var response = UrlFetchApp.fetch('https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/' + path, { muteHttpExceptions: true });
     if (response.getResponseCode() !== 200) throw new Error('GitHub не отдал карты: ' + response.getResponseCode());
     text = response.getContentText('UTF-8');
   }
@@ -387,19 +476,19 @@ function game_(text) {
   return { text: text, mark: mark, table: parseCsv_(text) };
 }
 
-/** dev's head with both card files at it. */
+/** dev's head with the card and balance files at it. */
 function readHead_() {
   var sha = github_('get', '/git/ref/heads/' + BRANCH).object.sha;
   var at = function (path) { return decode_(github_('get', '/contents/' + path + '?ref=' + sha).content); };
-  return { sha: sha, tree: github_('get', '/git/commits/' + sha).tree.sha, csv: at(CSV_PATH), config: at(CONFIG_PATH) };
+  return { sha: sha, tree: github_('get', '/git/commits/' + sha).tree.sha, csv: at(CSV_PATH), config: at(CONFIG_PATH),
+    balanceCsv: at(BALANCE_CSV_PATH), balanceConfig: at(BALANCE_CONFIG_PATH) };
 }
 
-/** One commit on dev's head with both files; throws with code 422 when dev moved meanwhile (never forced). */
-function commit_(head, csv, config, message) {
-  var tree = github_('post', '/git/trees', { base_tree: head.tree, tree: [
-    { path: CSV_PATH, mode: '100644', type: 'blob', content: csv },
-    { path: CONFIG_PATH, mode: '100644', type: 'blob', content: config }
-  ] });
+/** One commit on dev's head with the files (path → text); throws with code 422 when dev moved meanwhile (never forced). */
+function commit_(head, files, message) {
+  var tree = github_('post', '/git/trees', { base_tree: head.tree, tree: Object.keys(files).map(function (path) {
+    return { path: path, mode: '100644', type: 'blob', content: files[path] };
+  }) });
   var commit = github_('post', '/git/commits', { message: message, tree: tree.sha, parents: [head.sha] });
   github_('patch', '/git/refs/heads/' + BRANCH, { sha: commit.sha, force: false });
 }
@@ -412,7 +501,7 @@ function takeFromGame() {
     var ui = SpreadsheetApp.getUi(), book = SpreadsheetApp.getActive();
     var base = readBase_(book);
     if (base) {
-      var pending = diff_(readSheets_(book), base);
+      var pending = diff_(readSheets_(book), base).concat(diffBalance_(readBalanceSheet_(book), readBalanceBase_(book)));
       if (pending.length) {
         var answer = ui.alert('Взять из игры', 'В таблице есть неотправленные изменения (' + pending.length + '). Они пропадут. Продолжить?', ui.ButtonSet.YES_NO);
         if (answer !== ui.Button.YES) return;
@@ -421,7 +510,8 @@ function takeFromGame() {
     var game = readGame_();
     layout_(book, game.table);
     saveBase_(book, game);
-    book.toast('Карты из игры: ' + game.table.rows.length + ' карт, колоды ' + decksOf_(game.table).join(', ') + '.', MENU, 8);
+    var balance = takeBalance_(book);
+    book.toast('Карты из игры: ' + game.table.rows.length + ' карт, колоды ' + decksOf_(game.table).join(', ') + '. Баланс: ' + balance.table.rows.length + ' чисел.', MENU, 8);
   });
 }
 
@@ -500,7 +590,7 @@ function deckSheet_(book, deck) {
 }
 
 function ours_(sheet) {
-  return sheet.getName() !== BASE_SHEET && sheet.getLastRow() > 0 && sheet.getRange(1, 1).getValue() === 'c:';
+  return sheet.getName() !== BASE_SHEET && sheet.getName() !== BALANCE_SHEET && sheet.getLastRow() > 0 && sheet.getRange(1, 1).getValue() === 'c:';
 }
 
 /** Every card cell on the deck tabs (or on one): { cells: key → { value: CSV text, sheet, row, column, deck, id,
@@ -571,7 +661,7 @@ function label_(base, cell) {
 
 /** A CSV value for a message: a moment by its name, long text cut. */
 function short_(text, field) {
-  if (field && FIELDS[field].kind === 'moment' && MOMENTS[text]) return MOMENTS[text];
+  if (field && FIELDS[field] && FIELDS[field].kind === 'moment' && MOMENTS[text]) return MOMENTS[text];
   text = String(text).replace(/\\n/g, ' ');
   return text === '' ? '(пусто)' : text.length > 60 ? text.slice(0, 57) + '…' : text;
 }
@@ -632,6 +722,7 @@ function mark_(shown, changes, problems) {
  *  back to the game's value. */
 function onEdit(e) {
   var sheet = e.range.getSheet();
+  if (oursBalance_(sheet)) { onBalanceEdit_(e); return; }
   if (!ours_(sheet)) return;
   var base = readBase_(e.source);
   if (!base) return;
@@ -649,6 +740,205 @@ function withLock_(work) {
   var lock = LockService.getDocumentLock();
   if (!lock.tryLock(30000)) { SpreadsheetApp.getUi().alert('Таблица сейчас обновляется из игры. Попробуй через минуту.'); return; }
   try { work(); } finally { lock.releaseLock(); }
+}
+
+// ---------- The balance tab ----------
+
+function oursBalance_(sheet) {
+  return sheet.getName() === BALANCE_SHEET && sheet.getLastRow() > 0 && sheet.getRange(1, 1).getValue() === 'c:';
+}
+
+/** Lays the «Баланс» tab out from the balance table, first among the tabs; values (key/field → CSV text) keeps the
+ *  sheet's own cells instead of the game's. A tab of that name made by hand is kept aside under another name. */
+function layoutBalance_(book, table, values) {
+  var sheet = book.getSheetByName(BALANCE_SHEET);
+  if (sheet && !oursBalance_(sheet)) {
+    var name = BALANCE_SHEET + ' (до синхронизации)';
+    for (var n = 2; book.getSheetByName(name); n++) name = BALANCE_SHEET + ' (до синхронизации ' + n + ')';
+    sheet.setName(name).setTabColor(COLORS.backup);
+    sheet = null;
+  }
+  if (!sheet) sheet = book.insertSheet(BALANCE_SHEET, 0);
+  sheet.clear();
+  sheet.clearNotes();
+  sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).clearDataValidations();
+  sheet.showRows(1, sheet.getMaxRows());
+  sheet.showColumns(1, sheet.getMaxColumns());
+  var fields = BALANCE_ORDER, rows = table.rows, width = fields.length + 1, height = rows.length + 2;
+  if (sheet.getMaxColumns() < width) sheet.insertColumnsAfter(sheet.getMaxColumns(), width - sheet.getMaxColumns());
+  if (sheet.getMaxRows() < height) sheet.insertRowsAfter(sheet.getMaxRows(), height - sheet.getMaxRows());
+
+  var grid = [['c:'].concat(fields), [''].concat(fields.map(function (f) { return BALANCE_FIELDS[f].label; }))];
+  var formats = [grid[0].map(function () { return '@'; }), grid[1].map(function () { return '@'; })];
+  rows.forEach(function (row) {
+    grid.push(['r:' + row.key].concat(fields.map(function (field) {
+      var key = row.key + '/' + field;
+      return balanceSheetValue_(field, values && key in values ? values[key] : row[field] || '');
+    })));
+    formats.push(['@'].concat(fields.map(function (field) { return BALANCE_FIELDS[field].kind === 'value' ? 'General' : '@'; })));
+  });
+  var range = sheet.getRange(1, 1, height, width);
+  range.setNumberFormats(formats);
+  range.setValues(grid);
+  range.setVerticalAlignment('top');
+
+  var header = sheet.getRange(2, 1, 1, width);
+  header.setBackground(COLORS.header).setFontWeight('bold').setWrap(true).setVerticalAlignment('middle');
+  header.setNotes([[''].concat(fields.map(function (field) { return BALANCE_FIELDS[field].hint || ''; }))]);
+  fields.forEach(function (field, i) {
+    var column = i + 2, kind = BALANCE_FIELDS[field].kind;
+    sheet.setColumnWidth(column, BALANCE_FIELDS[field].width);
+    if (!rows.length) return;
+    var data = sheet.getRange(3, column, rows.length, 1);
+    if (kind === 'fixed') data.setBackground(COLORS.fixed);
+    if (kind === 'value') data.setFontWeight('bold');
+    data.setWrap(field === 'name' || kind === 'note');
+  });
+  sheet.hideColumns(1);
+  sheet.hideRows(1);
+  sheet.setFrozenRows(2);
+  sheet.setFrozenColumns(2);
+}
+
+/** Every number cell of the «Баланс» tab: { cells: 'key/field' → { value: CSV text, sheet, row, column, key, field },
+ *  strays: rows without a number mark (new numbers are made in code) }. */
+function readBalanceSheet_(book) {
+  var found = { cells: {}, strays: [] }, sheet = book.getSheetByName(BALANCE_SHEET);
+  if (!sheet || !oursBalance_(sheet)) return found;
+  var values = sheet.getRange(1, 1, sheet.getLastRow(), Math.max(1, sheet.getLastColumn())).getValues(), columns = values[0];
+  values.forEach(function (line, r) {
+    var mark = String(line[0]);
+    if (mark.indexOf('r:') !== 0) {
+      if (r > 1 && line.slice(1).some(function (v) { return v !== ''; })) found.strays.push(BALANCE_SHEET + ', строка ' + (r + 1));
+      return;
+    }
+    var key = mark.slice(2);
+    for (var c = 1; c < line.length; c++) {
+      var field = columns[c];
+      if (!BALANCE_FIELDS[field]) continue;
+      found.cells[key + '/' + field] = { value: balanceCsvValue_(line[c]), sheet: sheet, row: r + 1, column: c + 1, key: key, field: field };
+    }
+  });
+  return found;
+}
+
+function saveBalanceBase_(book, game) {
+  var sheet = book.getSheetByName(BALANCE_BASE_SHEET) || book.insertSheet(BALANCE_BASE_SHEET);
+  sheet.clear();
+  var header = game.table.header;
+  var grid = [header].concat(game.table.rows.map(function (row) { return header.map(function (column) { return row[column] || ''; }); }));
+  if (sheet.getMaxColumns() < header.length) sheet.insertColumnsAfter(sheet.getMaxColumns(), header.length - sheet.getMaxColumns());
+  if (sheet.getMaxRows() < grid.length) sheet.insertRowsAfter(sheet.getMaxRows(), grid.length - sheet.getMaxRows());
+  var range = sheet.getRange(1, 1, grid.length, header.length);
+  range.setNumberFormat('@');
+  range.setValues(grid);
+  sheet.hideSheet();
+  balanceLaidOut_(game);
+}
+
+function balanceLaidOut_(game) {
+  PropertiesService.getDocumentProperties().setProperties({ BALANCE_LAID_OUT_MARK: game.mark, BALANCE_LAID_OUT_WITH: SCRIPT_VERSION });
+}
+
+/** The balance CSV last taken from the game: { table, rows: key → row }; null before the first take. */
+function readBalanceBase_(book) {
+  var sheet = book.getSheetByName(BALANCE_BASE_SHEET);
+  if (!sheet || sheet.getLastRow() < 2) return null;
+  var values = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()).getDisplayValues();
+  var header = values[0], table = { header: header, rows: [] }, rows = {};
+  values.slice(1).forEach(function (line) {
+    var row = {};
+    header.forEach(function (column, i) { row[column] = line[i]; });
+    table.rows.push(row);
+    rows[row.key] = row;
+  });
+  return { table: table, rows: rows };
+}
+
+/** Your balance changes against the base: [{ kind: 'balance', key, field, from, to, cell, label }]. */
+function diffBalance_(shown, base) {
+  var changes = [];
+  if (!base) return changes;
+  Object.keys(shown.cells).forEach(function (id) {
+    var cell = shown.cells[id], row = base.rows[cell.key];
+    if (!row || !(cell.field in row)) return;
+    var from = row[cell.field] || '';
+    if (cell.value !== from) {
+      changes.push({ kind: 'balance', key: cell.key, field: cell.field, from: from, to: cell.value, cell: cell,
+        label: BALANCE_SHEET + ' · ' + (row.name || cell.key) + ' · ' + BALANCE_FIELDS[cell.field].label });
+    }
+  });
+  return changes;
+}
+
+function balanceProblems_(shown, base) {
+  var problems = [];
+  if (!base) return problems;
+  Object.keys(shown.cells).forEach(function (id) {
+    var cell = shown.cells[id], row = base.rows[cell.key];
+    if (!row) return;
+    var text = balanceProblem_(cell.field, cell.value, row);
+    if (text) problems.push({ key: id, cell: cell, text: BALANCE_SHEET + ' · ' + (row.name || cell.key) + ' · ' + BALANCE_FIELDS[cell.field].label + ': ' + text });
+  });
+  return problems;
+}
+
+function balanceColour_(field) {
+  return BALANCE_FIELDS[field].kind === 'fixed' ? COLORS.fixed : null;
+}
+
+function markBalance_(shown, changes, problems) {
+  var keys = Object.keys(shown.cells);
+  if (!keys.length) return;
+  var colours = {};
+  keys.forEach(function (id) { colours[id] = balanceColour_(shown.cells[id].field); });
+  changes.forEach(function (c) { colours[c.key + '/' + c.field] = COLORS.changed; });
+  problems.forEach(function (p) { colours[p.key] = COLORS.bad; });
+  var sheet = shown.cells[keys[0]].sheet, range = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()), now = range.getBackgrounds();
+  keys.forEach(function (id) { var cell = shown.cells[id]; now[cell.row - 1][cell.column - 1] = colours[id]; });
+  range.setBackgrounds(now);
+}
+
+/** The «Баланс» tab after an edit: honey for your change, red for what only the code changes. */
+function onBalanceEdit_(e) {
+  var base = readBalanceBase_(e.source);
+  if (!base) return;
+  var shown = readBalanceSheet_(e.source), sheet = e.range.getSheet();
+  Object.keys(shown.cells).forEach(function (id) {
+    var cell = shown.cells[id], row = base.rows[cell.key];
+    if (!row || !(cell.field in row)) return;
+    if (cell.row < e.range.getRow() || cell.row > e.range.getLastRow() || cell.column < e.range.getColumn() || cell.column > e.range.getLastColumn()) return;
+    var changed = cell.value !== (row[cell.field] || '');
+    sheet.getRange(cell.row, cell.column).setBackground(!changed ? balanceColour_(cell.field) : BALANCE_FIELDS[cell.field].kind === 'fixed' ? COLORS.bad : COLORS.changed);
+  });
+}
+
+/** Lays «Баланс» out from the game and makes it the base of your changes. */
+function takeBalance_(book) {
+  var game = readGame_(BALANCE_CSV_PATH);
+  layoutBalance_(book, game.table);
+  saveBalanceBase_(book, game);
+  return game;
+}
+
+/** The auto update of «Баланс», as autoUpdate does the deck tabs. The first run with this script makes the tab. */
+function autoUpdateBalance_(book) {
+  var properties = PropertiesService.getDocumentProperties(), game = readGame_(BALANCE_CSV_PATH);
+  if (game.mark === properties.getProperty('BALANCE_LAID_OUT_MARK') && properties.getProperty('BALANCE_LAID_OUT_WITH') === SCRIPT_VERSION) return;
+  var base = readBalanceBase_(book), shown = readBalanceSheet_(book);
+  if (!base || !diffBalance_(shown, base).length) {
+    layoutBalance_(book, game.table);
+    saveBalanceBase_(book, game);
+    book.toast('Баланс из игры: ' + game.table.rows.length + ' чисел.', MENU, 6);
+    return;
+  }
+  var values = {};
+  Object.keys(shown.cells).forEach(function (id) { values[id] = shown.cells[id].value; });
+  layoutBalance_(book, game.table, values);
+  balanceLaidOut_(game);
+  var now = readBalanceSheet_(book);
+  markBalance_(now, diffBalance_(now, base), balanceProblems_(now, base));
+  book.toast('Новые числа баланса и оформление из игры подтянуты, твои правки на месте.', MENU, 6);
 }
 
 // ---------- Auto update ----------
@@ -686,6 +976,7 @@ function autoUpdate() {
     var base = readBase_(book);
     if (!base) return; // the first «Взять из игры» stays yours
     removeBackups_(book);
+    try { autoUpdateBalance_(book); } catch (error) { console.warn('autoUpdate balance: ' + error.message); }
     var game = readGame_();
     if (game.mark === properties.getProperty('LAID_OUT_MARK') && properties.getProperty('LAID_OUT_WITH') === SCRIPT_VERSION) return;
     var shown = readSheets_(book);
@@ -726,12 +1017,17 @@ function checkSheet() {
   var ui = SpreadsheetApp.getUi(), book = SpreadsheetApp.getActive();
   var base = readBase_(book);
   if (!base) { ui.alert('Сначала «' + MENU + ' → Взять из игры».'); return; }
-  var shown = readSheets_(book), changes = diff_(shown, base), problems = problems_(shown, base);
+  var shown = readSheets_(book), balanceBase = readBalanceBase_(book), balanceShown = readBalanceSheet_(book);
+  var balanceChanges = diffBalance_(balanceShown, balanceBase), balanceProblems = balanceProblems_(balanceShown, balanceBase);
+  var changes = diff_(shown, base), problems = problems_(shown, base);
   mark_(shown, changes, problems);
+  markBalance_(balanceShown, balanceChanges, balanceProblems);
+  problems = problems.concat(balanceProblems);
+  changes = changes.concat(balanceChanges);
   var lines = [];
   if (problems.length) lines.push('Ошибки (красные):\n' + problems.map(function (p) { return '• ' + p.text; }).join('\n'));
   lines.push(changes.length ? 'Твои изменения (медовые):\n' + changes.map(changeLine_).join('\n') : 'Твоих изменений нет.');
-  lines = lines.concat(notices_(shown, base));
+  lines = lines.concat(notices_(shown, base, balanceShown));
   try {
     var game = readGame_(), moved = [];
     game.table.rows.forEach(function (row) {
@@ -742,6 +1038,16 @@ function checkSheet() {
           moved.push('• ' + row.deck + ' · ' + row.title + ' · ' + FIELDS[field].label + ': ' + short_(was[field], field) + ' → ' + short_(row[field], field));
       });
     });
+    if (balanceBase) {
+      readGame_(BALANCE_CSV_PATH).table.rows.forEach(function (row) {
+        var was = balanceBase.rows[row.key];
+        if (!was) { moved.push('• новое число баланса · ' + row.name); return; }
+        ['name', 'value', 'default', 'min', 'max'].forEach(function (field) {
+          if ((row[field] || '') !== (was[field] || ''))
+            moved.push('• ' + BALANCE_SHEET + ' · ' + row.name + ' · ' + BALANCE_FIELDS[field].label + ': ' + short_(was[field]) + ' → ' + short_(row[field]));
+        });
+      });
+    }
     if (moved.length) lines.push('В игре после твоей загрузки поменяли:\n' + moved.join('\n'));
   } catch (error) { lines.push('Игру проверить не удалось: ' + error.message); }
   ui.alert('Проверка', lines.join('\n\n'), ui.ButtonSet.OK);
@@ -751,9 +1057,10 @@ function changeLine_(c) {
   return '• ' + c.label + ': ' + short_(c.from, c.field) + ' → ' + short_(c.to, c.field);
 }
 
-function notices_(shown, base) {
+function notices_(shown, base, balanceShown) {
   var lines = [];
-  if (shown.strays.length) lines.push('Новые строки не отправляются — новые карты добавляют в коде:\n' + shown.strays.map(function (s) { return '• ' + s; }).join('\n'));
+  var strays = shown.strays.concat(balanceShown ? balanceShown.strays : []);
+  if (strays.length) lines.push('Новые строки не отправляются — новые карты и числа добавляют в коде:\n' + strays.map(function (s) { return '• ' + s; }).join('\n'));
   var missing = missing_(shown, base);
   if (missing.length) lines.push('Строк этих карт нет в таблице, в игре они остаются:\n' + missing.map(function (s) { return '• ' + s; }).join('\n'));
   return lines;
@@ -765,51 +1072,74 @@ function sendToGame() {
     var base = readBase_(book);
     if (!base) { ui.alert('Сначала «' + MENU + ' → Взять из игры».'); return; }
     var shown = readSheets_(book), problems = problems_(shown, base), changes = diff_(shown, base);
+    var balanceBase = readBalanceBase_(book), balanceShown = readBalanceSheet_(book);
+    var balanceChanges = diffBalance_(balanceShown, balanceBase), balanceProblems = balanceProblems_(balanceShown, balanceBase);
     mark_(shown, changes, problems);
+    markBalance_(balanceShown, balanceChanges, balanceProblems);
+    problems = problems.concat(balanceProblems);
+    changes = changes.concat(balanceChanges);
     if (problems.length) {
       ui.alert('Не отправлено', 'Исправь красные ячейки:\n' + problems.map(function (p) { return '• ' + p.text; }).join('\n'), ui.ButtonSet.OK);
       return;
     }
-    if (!changes.length) { ui.alert('Нечего отправлять: карты совпадают с теми, что взяты из игры.'); return; }
-    var confirm = ui.alert('Отправить в игру', changes.map(changeLine_).concat(notices_(shown, base)).join('\n'), ui.ButtonSet.OK_CANCEL);
+    if (!changes.length) { ui.alert('Нечего отправлять: карты и баланс совпадают с теми, что взяты из игры.'); return; }
+    var confirm = ui.alert('Отправить в игру', changes.map(changeLine_).concat(notices_(shown, base, balanceShown)).join('\n'), ui.ButtonSet.OK_CANCEL);
     if (confirm !== ui.Button.OK) return;
 
     var decided = {}, sent = null;
     for (var attempt = 0; attempt < 3 && !sent; attempt++) {
-      var head = readHead_(), now = {};
+      var head = readHead_(), now = {}, numbers = {};
       parseCsv_(head.csv).rows.forEach(function (row) { now[row.deck + '/' + row.id] = row; });
-      var current = function (c) { var row = now[c.deck + '/' + c.id]; return row && c.field in row ? row[c.field] : null; };
+      parseCsv_(head.balanceCsv).rows.forEach(function (row) { numbers[row.key] = row; });
+      var current = function (c) {
+        var row = c.kind === 'balance' ? numbers[c.key] : now[c.deck + '/' + c.id];
+        return row && c.field in row ? row[c.field] : null;
+      };
       // Someone changed the same cell in the game since you took it: ask once whose value stays.
       var conflicts = changes.filter(function (c) {
         var game = current(c);
         return game !== null && game !== c.from && game !== c.to && !(c.label in decided);
       });
       if (conflicts.length) {
-        var answer = ui.alert('Эти карты в игре успели поменять',
+        var answer = ui.alert('Эти значения в игре успели поменять',
           conflicts.map(function (c) { return '• ' + c.label + ': у тебя ' + short_(c.to, c.field) + ', в игре уже ' + short_(current(c), c.field) + ' (было ' + short_(c.from, c.field) + ')'; }).join('\n') +
           '\n\nДа — оставить твои, Нет — оставить из игры.', ui.ButtonSet.YES_NO_CANCEL);
         if (answer !== ui.Button.YES && answer !== ui.Button.NO) return;
         conflicts.forEach(function (c) { decided[c.label] = answer === ui.Button.YES; });
       }
       var apply = changes.filter(function (c) { var game = current(c); return game !== null && decided[c.label] !== false && game !== c.to; });
-      if (!apply.length) { sent = { csv: head.csv, apply: [] }; break; }
-      var csv = patchCsv_(head.csv, apply), config = patchConfig_(head.config, apply);
-      var names = apply.map(function (c) { return c.id + ' ' + c.field; });
-      var message = 'Cards from the sheet: ' + names.slice(0, 6).join(', ') + (names.length > 6 ? ' and ' + (names.length - 6) + ' more' : '') +
-        '\n\n' + apply.map(function (c) { return c.deck + '/' + c.id + ' ' + c.field + ': ' + c.from + ' -> ' + c.to; }).join('\n');
+      var cards = apply.filter(function (c) { return c.kind !== 'balance'; }), numbersApply = apply.filter(function (c) { return c.kind === 'balance'; });
+      var result = { csv: head.csv, balanceCsv: head.balanceCsv, apply: apply };
+      if (!apply.length) { sent = result; break; }
+      var files = {};
+      if (cards.length) {
+        files[CSV_PATH] = result.csv = patchCsv_(head.csv, cards);
+        files[CONFIG_PATH] = patchConfig_(head.config, cards);
+      }
+      if (numbersApply.length) {
+        files[BALANCE_CSV_PATH] = result.balanceCsv = patchBalanceCsv_(head.balanceCsv, numbersApply);
+        files[BALANCE_CONFIG_PATH] = patchGameConfig_(head.balanceConfig, numbersApply);
+      }
+      var names = apply.map(function (c) { return (c.kind === 'balance' ? c.key : c.id) + ' ' + c.field; });
+      var what = !numbersApply.length ? 'Cards' : !cards.length ? 'Balance' : 'Cards and balance';
+      var message = what + ' from the sheet: ' + names.slice(0, 6).join(', ') + (names.length > 6 ? ' and ' + (names.length - 6) + ' more' : '') +
+        '\n\n' + apply.map(function (c) { return (c.kind === 'balance' ? c.key : c.deck + '/' + c.id) + ' ' + c.field + ': ' + c.from + ' -> ' + c.to; }).join('\n');
       try {
-        commit_(head, csv, config, message);
-        sent = { csv: csv, apply: apply };
+        commit_(head, files, message);
+        sent = result;
       } catch (error) {
         if (error.code !== 409 && error.code !== 422) throw error; // dev moved between reading and writing: again
       }
     }
-    if (!sent) { ui.alert('Не отправлено: карты в игре всё время меняются. Попробуй ещё раз.'); return; }
+    if (!sent) { ui.alert('Не отправлено: карты и баланс в игре всё время меняются. Попробуй ещё раз.'); return; }
     var game = game_(sent.csv);
     layout_(book, game.table);
     saveBase_(book, game);
+    var balance = game_(sent.balanceCsv);
+    layoutBalance_(book, balance.table);
+    saveBalanceBase_(book, balance);
     ui.alert('Отправлено в игру',
-      sent.apply.length ? 'Изменено: ' + sent.apply.length + '. Карты ушли в ветку dev. Игра на компьютере подтянет их за минуту, увидишь после перезагрузки страницы.'
+      sent.apply.length ? 'Изменено: ' + sent.apply.length + '. Правки ушли в ветку dev. Игра на компьютере подтянет их за минуту, увидишь после перезагрузки страницы.'
         : 'Ничего не отправлено: в игре уже эти значения. Таблица снова показывает игру.', ui.ButtonSet.OK);
   });
 }

@@ -13,7 +13,7 @@ description: Доставка готовой задачи «Очень Боль�
    - Своей папки нет — `python3 tools/pipeline.py new <имя>`.
    - Перед работой: `git fetch && git merge --ff-only origin/dev`.
 2. Всё закоммичено, `git status` чистый. В конце сообщения коммита — строка соавторства, которую требует твоя среда.
-3. Числа баланса — в `src/game.config.js`. Карты — синхронно в `src/cards.config.js` и `cards-google-sheet.csv`.
+3. Числа баланса — в `src/game.config.js` (`balanceConfig`, код читает `balance("ключ", эталон)`). Карты — в `src/cards.config.js`. Поменял их или эталон — `node tools/cards-sheet/cards-csv.mjs`, оба CSV в тот же коммит.
 4. Версию (`src/version.js`) не трогать: её ставит deliver, dev + 1.
 
 ## Проба

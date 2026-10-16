@@ -66,6 +66,7 @@
   - Правила поля, Лавки, монстров, Дракона, финала — `balanceConfig`, по строке на число: `key`, `value`, `name`, `unit`, `min`, `max`. Код читает `balance("ключ", эталон)`; эталон — второе число, на нём идут тесты и пробы.
   - Новое число: строка в `balanceConfig` + вызов `balance()` в коде, число в тексте правила — тоже из `balance()`. `tests/balance-config.test.cjs` сверяет ключи.
   - Урон монстров — `boardDoorConfigs` там же. Числа карт (события, артефакты, Лавка) — с картами в `src/cards.config.js`.
+  - `balance-google-sheet.csv` — зеркало `balanceConfig` с эталонами для вкладки «Баланс» таблицы `Cards Config`. Поменял число или эталон — `node tools/cards-sheet/cards-csv.mjs`, CSV в тот же коммит. Правки из вкладки приходят коммитом «Balance from the sheet: …» и сами попадают на :5173, как карты.
 - **Карты: источник — `src/cards.config.js` в `dev`** (задача PM, 12 октября 2026: таблица живёт сама, пользователь конфиги не набирает).
   - `cards-google-sheet.csv` — зеркало конфига. Поменял карты — `node tools/cards-sheet/cards-csv.mjs`, CSV в тот же коммит. `deliver` не пустит устаревший CSV. Руками в CSV — только `notes`.
   - **Google Таблица `Cards Config`** сама берёт CSV из `dev` раз в 5 минут. Правки пользователя в ней приходят коммитом «Cards from the sheet: …» в `dev`, сразу в оба файла. В его игру на :5173 они попадают сами за минуту: вместе с сервером работает `pipeline.py follow`. Новые и удалённые карты — только в коде. Подробно — `tools/cards-sheet/README.md`, ссылки на таблицы — [правила дизайна и карт](docs/design/RULES.md).

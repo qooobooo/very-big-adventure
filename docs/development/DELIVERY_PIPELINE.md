@@ -62,15 +62,15 @@ python3 tools/pipeline.py deliver --task dice-fix \
    - Если игра не открыта (нет соединений с :5173), скрипт перезапускает сервер сам.
    - Если открыта — не трогает и пишет в сообщении, что перезапустить после партии: `pipeline.py serve --restart`.
 8. **Таблица карт.** Если в `dev` поменялся `tools/cards-sheet/VbaCards.gs`, скрипт заливает его в Google Таблицу `Cards Config` через `clasp`. Сбой заливки доставку не останавливает. Script ID таблицы — в `.git/vba-pipeline/cards-sheet.json`, вручную — `pipeline.py sheet-push [--script-id ID]`. Подробно — `tools/cards-sheet/README.md`.
-   - Обратный путь: «Отправить в игру» в таблице — коммит в `dev` без доставки. Его в основную папку раз в минуту подтягивает `pipeline.py follow`. Он работает вместе с сервером :5173: его запускает `serve`, и останавливается он вместе с сервером. `follow` берёт только `dev`, сдвинутый в одних файлах карт, и не трогает откаченную основную папку и идущую доставку.
+   - Обратный путь: «Отправить в игру» в таблице — коммит в `dev` без доставки. Его в основную папку раз в минуту подтягивает `pipeline.py follow`. Он работает вместе с сервером :5173: его запускает `serve`, и останавливается он вместе с сервером. `follow` берёт только `dev`, сдвинутый в одних файлах карт и баланса (`CARD_FILES`), и не трогает откаченную основную папку и идущую доставку.
 
-Проверка (шаг 3) при правке `src/cards.config.js` или `cards-google-sheet.csv` ещё сверяет CSV с конфигом (`node tools/cards-sheet/cards-csv.mjs --check`).
+Проверка (шаг 3) при правке `src/cards.config.js`, `src/game.config.js`, `src/game.js` или CSV таблицы ещё сверяет `cards-google-sheet.csv` и `balance-google-sheet.csv` с кодом (`node tools/cards-sheet/cards-csv.mjs --check`).
 
 Параметры:
 
 - `--message "<заголовок>"` — обязателен, если в ветке несколько коммитов.
 - `--dry-run` — сжатие, версия, проверка и пробы, без заливки.
-- `--no-app` — только `tools/`, `docs/`, `tests/` и прочее вне игры: без версии, проверки и пробы. Игровые пути — `src/`, `assets/`, `styles/`, `index.html`, `controller.html`, `styles.css`, `server.js`, `cards-google-sheet.csv`. Если они есть в изменении, скрипт откажет.
+- `--no-app` — только `tools/`, `docs/`, `tests/` и прочее вне игры: без версии, проверки и пробы. Игровые пути — `src/`, `assets/`, `styles/`, `index.html`, `controller.html`, `styles.css`, `server.js`, `cards-google-sheet.csv`, `balance-google-sheet.csv`. Если они есть в изменении, скрипт откажет.
 - `--attempts` (по умолчанию 4), `--lock-timeout` (30 мин), `--queue-timeout` (60 мин).
 
 После доставки скрипт печатает «Доставлено…». Исполнитель **сам** отправляет его PM и владельцам задетых зон. Адреса: `python3 tools/pipeline.py chats`. Записи ведёт PM: `chats --set "<чат>" <local_…id> --zone "<зона>"`.

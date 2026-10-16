@@ -54,7 +54,7 @@ SUBJECT_VERSION_RE = re.compile(r'\s*\(\d+\.\d+\.\d+\)$')
 # What the game is made of: changes here need a version, a check and a probe. tools/, docs/, tests/ and the
 # rules go with --no-app.
 GAME_PATHS = ('src/', 'assets/', 'styles/', 'index.html', 'controller.html', 'styles.css', 'server.js',
-              'cards-google-sheet.csv')
+              'cards-google-sheet.csv', 'balance-google-sheet.csv')
 PORT = 5173  # the user's game; probes never touch it (tools/probe.py takes a port of its own)
 PUSH = ['git', '-c', 'http.postBuffer=524288000', 'push']
 SHARED = 'main'  # shared: only `publish` writes it, through a pull request
@@ -441,8 +441,8 @@ def start_follow():
 
 
 def follow_once():
-    """Fast-forward the main folder when dev moved only in the cards (a sheet edit). Anything else comes with its
-    delivery; a rolled-back main folder and a running delivery are left alone."""
+    """Fast-forward the main folder when dev moved only in the cards or the balance numbers (a sheet edit). Anything
+    else comes with its delivery; a rolled-back main folder and a running delivery are left alone."""
     if git('symbolic-ref', '--quiet', '--short', 'HEAD', cwd=MAIN, check=False) != BASE or lock_state() != 'free':
         return
     if subprocess.run(['git', 'fetch', '-q', 'origin'], cwd=MAIN, capture_output=True).returncode != 0:
@@ -629,23 +629,25 @@ def tidy_probe_output(label):
 
 
 def check(files):
-    """The build of a game without a build: node --check of every changed script (seconds). A change in the cards also
-    needs the CSV the config makes: the «Cards Config» sheet reads the CSV (tools/cards-sheet/README.md)."""
+    """The build of a game without a build: node --check of every changed script (seconds). A change in the cards or
+    the balance numbers (their эталоны are in src/game.js) also needs the CSVs the code makes: the «Cards Config» sheet
+    reads the CSVs (tools/cards-sheet/README.md)."""
     scripts = [f for f in files if f.endswith(('.js', '.mjs', '.cjs')) and (ROOT / f).exists()]
     for script in scripts:
         result = subprocess.run(['node', '--check', script], cwd=ROOT, text=True, capture_output=True)
         if result.returncode != 0:
             raise SystemExit(f'node --check {script} failed, nothing was pushed or installed:\n' + result.stderr.strip()[-2000:])
     say(f'check: node --check of {len(scripts)} script(s) passed')
-    if any(f in CARD_FILES for f in files):
+    if any(f in CARD_FILES or f == 'src/game.js' for f in files):
         result = subprocess.run(['node', CARDS_CSV_TOOL, '--check'], cwd=ROOT, text=True, capture_output=True)
         if result.returncode != 0:
-            raise SystemExit('The cards CSV is stale, nothing was pushed or installed:\n'
+            raise SystemExit('The cards or balance CSV is stale, nothing was pushed or installed:\n'
                              + (result.stderr or result.stdout).strip()[-2000:])
-        say('check: cards-google-sheet.csv matches src/cards.config.js')
+        say('check: cards-google-sheet.csv and balance-google-sheet.csv match the code')
 
 
-CARD_FILES = ('src/cards.config.js', 'cards-google-sheet.csv')
+# What the «Cards Config» sheet sends to dev: the cards (12 Oct 2026) and the balance numbers, tab «Баланс» (16 Oct 2026).
+CARD_FILES = ('src/cards.config.js', 'cards-google-sheet.csv', 'src/game.config.js', 'balance-google-sheet.csv')
 CARDS_CSV_TOOL = 'tools/cards-sheet/cards-csv.mjs'
 SHEET_SCRIPT = 'tools/cards-sheet/VbaCards.gs'
 SHEET_MANIFEST = 'tools/cards-sheet/appsscript.json'

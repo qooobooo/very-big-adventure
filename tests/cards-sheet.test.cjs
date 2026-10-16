@@ -135,3 +135,157 @@ test('an edit sent from the sheet changes only its lines, and the config and the
     fs.rmSync(folder, { recursive: true, force: true });
   }
 });
+
+// The tab «Баланс» (PM task, 16 Oct 2026): balance-google-sheet.csv mirrors src/game.config.js balanceConfig with the
+// эталоны of src/game.js, and a number sent from the sheet changes only its line in the config.
+test('balance-google-sheet.csv is exactly what src/game.config.js and src/game.js make', async () => {
+  const { balanceCsvFromConfig } = await tool();
+  assert.equal(await balanceCsvFromConfig(), read('balance-google-sheet.csv'));
+});
+
+test('every balance cell passes the sheet checks; the checks stop what the game would not take', async () => {
+  const { sheetScript } = await tool();
+  const gs = sheetScript();
+  const table = gs.parseCsv_(read('balance-google-sheet.csv'));
+  assert.deepEqual([...gs.BALANCE_ORDER].sort(), [...gs.BALANCE_COLUMNS].sort());
+  for (const row of table.rows) {
+    assert.equal(row.value, row.default, `${row.key}: the config value is its эталон`);
+    for (const field of gs.BALANCE_ORDER) {
+      assert.equal(gs.balanceCsvValue_(gs.balanceSheetValue_(field, row[field])), row[field], `${row.key} ${field}`);
+      assert.equal(gs.balanceProblem_(field, row[field], row), '', `${row.key} ${field}`);
+    }
+  }
+  const row = table.rows.find((r) => r.key === 'rest.coins');
+  assert.notEqual(gs.balanceProblem_('value', '12.5', row), '');
+  assert.notEqual(gs.balanceProblem_('value', '', row), '');
+  assert.notEqual(gs.balanceProblem_('value', '101', row), '');
+  assert.notEqual(gs.balanceProblem_('value', '-1', row), '');
+  assert.equal(gs.balanceProblem_('value', '15', row), '');
+  assert.notEqual(gs.balanceProblem_('default', '12', row), '');
+  assert.notEqual(gs.balanceProblem_('name', 'Монеты', row), '');
+  assert.equal(gs.balanceProblem_('notes', 'что угодно', row), '');
+});
+
+test('a balance number sent from the sheet changes only its line, and the config and the CSV still agree', async () => {
+  const { sheetScript, balanceCsvFromConfig, loadConfig } = await tool();
+  const gs = sheetScript();
+  const config = read('src/game.config.js');
+  const csv = read('balance-google-sheet.csv');
+  const changes = [
+    { key: 'rest.coins', field: 'value', to: '12' },
+    { key: 'dragon.prefill.p4', field: 'value', to: '4' },
+    { key: 'rest.coins', field: 'notes', to: 'проба, с запятой' },
+  ];
+  const patchedConfig = gs.patchGameConfig_(config, changes);
+  const before = config.split('\n');
+  const after = patchedConfig.split('\n');
+  assert.equal(after.length, before.length);
+  const moved = after.filter((line, i) => line !== before[i]);
+  assert.equal(moved.length, 2);
+  assert.ok(moved[0].startsWith('  { key: "rest.coins", value: 12, name: '), moved[0]);
+  assert.ok(moved[1].startsWith('  { key: "dragon.prefill.p4", value: 4, name: '), moved[1]);
+  assert.throws(() => gs.patchGameConfig_(config, [{ key: 'rest.coins', field: 'default', to: '3' }]));
+  assert.throws(() => gs.patchGameConfig_(config, [{ key: 'no.such', field: 'value', to: '3' }]));
+  const patchedCsv = gs.patchBalanceCsv_(csv, changes);
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'vba-balance-'));
+  try {
+    const file = path.join(folder, 'game.config.js');
+    fs.writeFileSync(file, patchedConfig);
+    const { balanceConfig, boardDoorConfigs } = await loadConfig(file);
+    assert.equal(balanceConfig.find((p) => p.key === 'rest.coins').value, 12);
+    assert.equal(balanceConfig.find((p) => p.key === 'dragon.prefill.p4').value, 4);
+    assert.equal(boardDoorConfigs.field2.length, 4);
+    assert.equal(await balanceCsvFromConfig(file, patchedCsv), patchedCsv);
+  } finally {
+    fs.rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+// A tiny stand-in for one Google spreadsheet: enough of SpreadsheetApp for the «Баланс» tab's own functions.
+function fakeBook() {
+  const sheets = [];
+  const properties = {};
+  const sheet = (name) => {
+    const s = { name, cells: [[]], maxRows: 1000, maxColumns: 26, hidden: false };
+    const range = (row, column, rows = 1, columns = 1) => {
+      const grid = (read) => Array.from({ length: rows }, (_, r) => Array.from({ length: columns }, (_, c) => read(row - 1 + r, column - 1 + c)));
+      const value = (r, c) => (s.cells[r] && s.cells[r][c] !== undefined ? s.cells[r][c] : '');
+      const self = new Proxy({}, { get: (_, key) => ({
+        getValues: () => grid(value),
+        getDisplayValues: () => grid((r, c) => String(value(r, c))),
+        getValue: () => value(row - 1, column - 1),
+        getBackgrounds: () => grid(() => null),
+        setValues: (values) => { values.forEach((line, r) => line.forEach((v, c) => { (s.cells[row - 1 + r] ||= [])[column - 1 + c] = v; })); return self; },
+      })[key] || (() => self) });
+      return self;
+    };
+    Object.assign(s, {
+      getName: () => s.name, setName: (n) => { s.name = n; return s; }, setTabColor: () => s,
+      getLastRow: () => s.cells.filter((line) => line && line.some((v) => v !== '' && v !== undefined)).length,
+      getLastColumn: () => Math.max(0, ...s.cells.map((line) => (line || []).length)),
+      getMaxRows: () => s.maxRows, getMaxColumns: () => s.maxColumns,
+      insertRowsAfter: (_, n) => { s.maxRows += n; }, insertColumnsAfter: (_, n) => { s.maxColumns += n; },
+      clear: () => { s.cells = [[]]; }, getRange: range, hideSheet: () => { s.hidden = true; },
+    });
+    for (const noop of ['clearNotes', 'showRows', 'showColumns', 'hideColumns', 'hideRows', 'setFrozenRows', 'setFrozenColumns', 'setColumnWidth']) s[noop] = () => s;
+    return s;
+  };
+  const book = {
+    sheets,
+    getSheetByName: (name) => sheets.find((s) => s.name === name) || null,
+    insertSheet: (name, at = sheets.length) => { const s = sheet(name); sheets.splice(at, 0, s); return s; },
+    toast: () => {},
+  };
+  const services = {
+    PropertiesService: { getDocumentProperties: () => ({ setProperties: (p) => Object.assign(properties, p), getProperty: (k) => properties[k] ?? null }) },
+  };
+  return { book, services, properties };
+}
+
+test('the «Баланс» tab: laid out, read back without changes, an edit is one honey change', async () => {
+  const { sheetScript } = await tool();
+  const gs = sheetScript();
+  const { book, services, properties } = fakeBook();
+  Object.assign(gs, services);
+  const table = gs.parseCsv_(read('balance-google-sheet.csv'));
+  gs.layoutBalance_(book, table);
+  gs.saveBalanceBase_(book, { table, mark: 'm1' });
+  assert.equal(book.sheets[0].name, 'Баланс');
+  assert.equal(properties.BALANCE_LAID_OUT_MARK, 'm1');
+  const base = gs.readBalanceBase_(book);
+  let shown = gs.readBalanceSheet_(book);
+  assert.equal(Object.keys(shown.cells).length, table.rows.length * gs.BALANCE_ORDER.length);
+  assert.deepEqual(Array.from(gs.diffBalance_(shown, base)), []);
+  assert.deepEqual(Array.from(gs.balanceProblems_(shown, base)), []);
+  const cell = shown.cells['rest.coins/value'];
+  assert.equal(book.sheets[0].cells[cell.row - 1][cell.column - 1], 10, 'a number cell holds a number');
+  book.sheets[0].cells[cell.row - 1][cell.column - 1] = 15;
+  shown = gs.readBalanceSheet_(book);
+  const changes = gs.diffBalance_(shown, base);
+  assert.deepEqual(JSON.parse(JSON.stringify(changes.map((c) => [c.kind, c.key, c.field, c.from, c.to]))), [['balance', 'rest.coins', 'value', '10', '15']]);
+  // The deck tabs never take «Баланс» for a deck.
+  assert.equal(gs.ours_(book.sheets[0]), false);
+  assert.equal(gs.oursBalance_(book.sheets[0]), true);
+});
+
+test('the first auto update with this script makes «Баланс» by itself; the next one with nothing new does nothing', async () => {
+  const { sheetScript } = await tool();
+  const gs = sheetScript();
+  const { book, services, properties } = fakeBook();
+  const csv = read('balance-google-sheet.csv');
+  const fetched = [];
+  Object.assign(gs, services, {
+    PropertiesService: { ...services.PropertiesService, getUserProperties: () => ({ getProperty: () => null }) },
+    UrlFetchApp: { fetch: (url) => { fetched.push(url); return { getResponseCode: () => 200, getContentText: () => csv }; } },
+    Utilities: { DigestAlgorithm: {}, Charset: {}, computeDigest: (_, text) => [text.length & 255, 7] },
+  });
+  gs.autoUpdateBalance_(book);
+  assert.match(fetched[0], /\/dev\/balance-google-sheet\.csv$/);
+  assert.equal(book.sheets[0].name, 'Баланс');
+  assert.equal(properties.BALANCE_LAID_OUT_WITH, 'repo');
+  const laidOut = JSON.stringify(book.sheets[0].cells);
+  book.sheets[0].cells[2][2] = 99; // an unsent edit survives a run with nothing new
+  gs.autoUpdateBalance_(book);
+  assert.equal(book.sheets[0].cells[2][2], 99);
+  assert.notEqual(JSON.stringify(book.sheets[0].cells), laidOut);
+});
