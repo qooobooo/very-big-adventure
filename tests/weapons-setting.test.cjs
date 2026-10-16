@@ -31,7 +31,7 @@ function fixture(enabled = false, count = 2) {
     state: { players, weaponsEnabled: enabled, legendaryWeapon: null, gameSettings: { weaponsEnabled: enabled }, decks: { legendary: { draw: [], discard: [] }, good: { draw: ['unchanged'], discard: [] } }, history: {}, round: 1 },
     ui: { weaponsEnabled: { checked: enabled, parentElement: {} }, playerCount: { value: String(count) }, finalBattleHud: {} },
     movementActionInProgress: false, actionPromptResolver: null, transientUiResetToken: 0,
-    logs, log: text => logs.push(text), render: () => {},
+    logs, log: text => logs.push(text), render: () => {}, balance: (_key, fallback) => fallback,
     cloneData: value => JSON.parse(JSON.stringify(value)),
     plainText: String, escapeHtml: String, cardDisplayText: card => card.title,
     phoneCardSnapshot: card => ({ id: card.id }), doomScytheIconSrc: 'scythe.png',

@@ -1,5 +1,9 @@
 import { cardConfig, shopCardMoments } from "./cards.config.js?v=20261012-0320";
-import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260703-0118";
+import { balanceConfig, boardDoorConfigs, doorConfigs } from "./game.config.js?v=20261016-1200";
+
+// Balance numbers by key from src/game.config.js (the Google Sheet tab «Баланс»). The second argument is the эталон:
+// tests and probes run on it, and the game falls back to it when the config has no such key.
+const balanceValues = new Map(balanceConfig.map((param) => [param.key, Number(param.value)]));
 
 const boardEl = document.querySelector("#board");
 const scoreStripEl = document.querySelector("#scoreStrip");
@@ -373,19 +377,23 @@ const humanRollCooldownMs = 650;
 const infoHistoryDefaultLimit = 50;
 const allOrNothingRuleText = "Брось 1 кубик и отложи столько монет, сколько выпало на кубике. Можешь забрать эти монеты себе, либо бросить кубик ещё раз и отложить ещё монеты. Бросать кубик можешь сколько угодно раз, но если выпадет одно число 2 раза подряд, верни все отложенные монеты и закончи ход";
 const chaosPortalRuleText = "Игрок бросает кубик:\n1-2: Назад к ближайшему монстру/порталу;\n3-4: Назад к ближайшей Лавке Джо;\n5: Назад к ближайшему Привалу;\n6: Вперед к ближайшему монстру/порталу.\n\nЭффект поля срабатывает, даже при движении назад";
-const dragonSegmentCount = 32;
-const dragonStrengthPerPlayer = 35;
+const dragonSegmentCount = balance("dragon.segments", 32);
+const dragonStrengthPerPlayer = balance("dragon.strengthPerPlayer", 35);
 const dragonWakeEmphasisMs = 760;
-const blackMarketStrengthCards = 1;
-const blackMarketStrengthBonus = 2;
-const blackMarketCoinsCards = 2;
-const blackMarketCoinsReward = 30;
-const blackMarketRushCards = 3;
-const blackMarketRushBonus = 10;
-const blackMarketRushSteps = 30;
-const diceFortuneDiceCount = 6;
-const diceFortuneCoinReward = 10;
-const diceFortuneBackwardStepPenalty = 10;
+const blackMarketStrengthCards = balance("blackMarket.strength.cards", 1);
+const blackMarketStrengthBonus = balance("blackMarket.strength.bonus", 2);
+const blackMarketCoinsCards = balance("blackMarket.coins.cards", 2);
+const blackMarketCoinsReward = balance("blackMarket.coins.reward", 30);
+const blackMarketRushCards = balance("blackMarket.rush.cards", 3);
+const blackMarketRushBonus = balance("blackMarket.rush.bonus", 10);
+const blackMarketRushSteps = balance("blackMarket.rush.steps", 30);
+const blackMarketStrengthText = `+${blackMarketStrengthBonus} к силе`;
+const blackMarketCoinsText = countText(blackMarketCoinsReward, "монета", "монеты", "монет");
+const blackMarketRushText = `+${blackMarketRushBonus} к силе в следующем бою с монстром и ${countText(blackMarketRushSteps, "шаг", "шага", "шагов")}`;
+const blackMarketRuleText = `${countText(blackMarketStrengthCards, "карту", "карты", "карт")} Лавка Джо на ${blackMarketStrengthText}, ${countText(blackMarketCoinsCards, "карту", "карты", "карт")} на ${blackMarketCoinsText}, ${countText(blackMarketRushCards, "карту", "карты", "карт")} на ${blackMarketRushText} вперед`;
+const diceFortuneDiceCount = balance("diceFortune.diceCount", 6);
+const diceFortuneCoinReward = balance("diceFortune.coinsPerSix", 10);
+const diceFortuneBackwardStepPenalty = balance("diceFortune.stepsBackPerOne", 10);
 const coinIconSrc = "./assets/icons/coin.png?v=20260524-0155";
 const diceIconSrc = "./assets/icons/dice.png?v=20260524-0305";
 const strengthIconSrc = "./assets/icons/strength_sword_512.png";
@@ -400,7 +408,7 @@ const magicPickaxeIconSrc = "./assets/icons/artifact_magic_pickaxe_512.png?v=202
 const goldenHorseshoeIconSrc = "./assets/icons/artifact_golden_horseshoe_512.png";
 const travelerCompassIconSrc = "./assets/icons/artifact_traveler_compass_512.png";
 const joeCouponShopChoiceId = "__joe_coupon_all__";
-const shopMarketSize = 2;
+const shopMarketSize = balance("shop.marketSize", 2);
 const finalEnemyIconSrc = "./assets/icons/final_enemy.png?v=20260525-0146";
 const doomScytheIconSrc = "./assets/icons/legendary_doom_scythe_512.png";
 const blackMarketIconSrc = "./assets/icons/black_market_ultra_simple_512.png?v=20260619-0138";
@@ -1323,7 +1331,21 @@ function selectedBotCount(playerCount = Number(ui.playerCount?.value) || 2) {
 
 function selectedStartingCoins() {
   const value = Number(ui.startingCoins?.value);
-  return value === 20 ? 20 : 10;
+  return value === 20 ? 20 : balance("setup.startingCoins", 10);
+}
+
+function balance(key, fallback) {
+  if (balanceValues.has(key) && Number.isFinite(balanceValues.get(key))) return balanceValues.get(key);
+  console.warn(`Balance: no number for "${key}" in game.config.js, using ${fallback}`);
+  return fallback;
+}
+
+// "3 карты", "1 монета", "5 шагов": the number with the Russian word form that follows it.
+function countText(amount, one, few, many) {
+  const abs = Math.abs(Number(amount) || 0);
+  if (abs % 10 === 1 && abs % 100 !== 11) return `${amount} ${one}`;
+  if ([2, 3, 4].includes(abs % 10) && ![12, 13, 14].includes(abs % 100)) return `${amount} ${few}`;
+  return `${amount} ${many}`;
 }
 
 function syncBotCountOptions() {
@@ -1426,10 +1448,10 @@ function monsterRageBonus() {
 
 function dragonInitialPrefill(playerCount) {
   const count = Math.max(1, Math.min(4, Number(playerCount) || 2));
-  if (count === 1) return 22;
-  if (count === 2) return 16;
-  if (count === 3) return 8;
-  return 0;
+  if (count === 1) return balance("dragon.prefill.p1", 22);
+  if (count === 2) return balance("dragon.prefill.p2", 16);
+  if (count === 3) return balance("dragon.prefill.p3", 8);
+  return balance("dragon.prefill.p4", 0);
 }
 
 function dragonDisabledSetting() {
@@ -1577,7 +1599,20 @@ function monsterDefeatTier(door) {
 }
 
 function monsterDefeatStrengthReward(door) {
-  return [0, 1, 2, 3, 5][monsterDefeatTier(door)] || 1;
+  return monsterDefeatStrengthByTier()[monsterDefeatTier(door) - 1] ?? 1;
+}
+
+function monsterDefeatStrengthByTier() {
+  return [
+    balance("monster.defeatStrength.tier1", 1),
+    balance("monster.defeatStrength.tier2", 2),
+    balance("monster.defeatStrength.tier3", 3),
+    balance("monster.defeatStrength.tier4", 5),
+  ];
+}
+
+function monsterWinDiceText() {
+  return `+${countText(balance("monster.winDice", 1), "кубик", "кубика", "кубиков")}`;
 }
 
 function monsterDefeatRewardText(door) {
@@ -6200,22 +6235,22 @@ function referenceFieldInfo(type) {
   const effects = {
     "all-or-nothing": allOrNothingRuleText,
     bad: "Тяни карту Плохо",
-    "big-rest": "Выбери: +10 монет, +1 к силе или +2 к шагам",
-    "black-market": "Поменяй Лавки Джо: 1 карта — +2 к силе; 2 карты — 30 монет; 3 карты — +10 к силе в следующем бою с монстром и 30 шагов вперед",
+    "big-rest": `Выбери: +${restCoinsText()}, ${restStrengthText()} или ${restStepsText()}`,
+    "black-market": `Поменяй Лавки Джо: ${countText(blackMarketStrengthCards, "карта", "карты", "карт")} — ${blackMarketStrengthText}; ${countText(blackMarketCoinsCards, "карта", "карты", "карт")} — ${blackMarketCoinsText}; ${countText(blackMarketRushCards, "карта", "карты", "карт")} — ${blackMarketRushText} вперед`,
     "chaos-portal": chaosPortalRuleText,
-    "dice-fortune": `Брось кубик 6 раз. За каждую 6 получи ${diceFortuneCoinReward} монет. За каждую 1 отойди на ${diceFortuneBackwardStepPenalty} шагов назад`,
-    enemy: "Победи, чтобы пройти дальше. При поражении получи +1/+2/+3/+5 силы и отправляйся на старт",
+    "dice-fortune": `Брось кубик ${countText(diceFortuneDiceCount, "раз", "раза", "раз")}. За каждую 6 получи ${diceFortuneCoinReward} монет. За каждую 1 отойди на ${diceFortuneBackwardStepPenalty} шагов назад`,
+    enemy: `Победи, чтобы пройти дальше. При поражении получи ${monsterDefeatStrengthByTier().map((amount) => `+${amount}`).join("/")} силы и отправляйся на старт`,
     event: "Тяни карту Событие",
     finish: "финальная битва",
     good: "Тяни карту Хорошо",
     green: referenceGreenEffectLabel(),
     "pay-double": "Удвой свои монеты",
     red: referenceRedEffectLabel(),
-    shop: `Выбери 1 из 2 карт Лавка Джо и купи за ${joeShopCardCost()} монет`,
+    shop: `Выбери 1 из ${joeShopOfferCount()} карт Лавка Джо и купи за ${joeShopCardCost()} монет`,
     start: "Начальная клетка",
-    tadam: "Возьми карту ТАДАМ! и получи 5 монет",
-    "very-bad": "Возьми 3 карты Плохо",
-    vs: "Все игроки скидывают по 10 монет и сражаются. Победитель забирает банк",
+    tadam: `Возьми карту ТАДАМ! и получи ${tadamCoinsText()}`,
+    "very-bad": `Возьми ${countText(veryBadCardCount(), "карту", "карты", "карт")} Плохо`,
+    vs: `Все игроки скидывают по ${vsAnteText()} и сражаются. Победитель забирает банк`,
   };
   return {
     effect: effects[type] || "Без эффекта",
@@ -6316,7 +6351,7 @@ async function activateReferenceTadamCard(player, card) {
   state.tadams.push(card);
   recordTadamPlayed();
   resolveTadamIncomeRewards(card);
-  if (state.tadams.length > 3) discardCardToDeck("tadam", state.tadams.shift());
+  if (state.tadams.length > tadamActiveLimit()) discardCardToDeck("tadam", state.tadams.shift());
   log(`Справочник: ${playerName(player)} активирует карту <strong>ТАДАМ!</strong>: ${cardNameMarkup(card.title)}.`, { toast: true });
   render();
 }
@@ -6343,7 +6378,7 @@ async function applyReferenceField(type) {
         await drawAndApplyCard(player, "bad", "Плохо");
       }
     } else if (type === "very-bad") {
-      for (let index = 0; index < 3; index += 1) {
+      for (let index = 0; index < veryBadCardCount(); index += 1) {
         await drawAndApplyCard(player, "bad", "Плохо");
       }
     } else if (type === "event") {
@@ -7433,7 +7468,7 @@ async function resolveLanding(player, { fieldEffects = true, forwardTriggers = n
         await drawAndApplyCard(player, "bad", "Плохо");
       }
     } else if (event === "very-bad") {
-      for (let index = 0; index < 3; index += 1) {
+      for (let index = 0; index < veryBadCardCount(); index += 1) {
         await drawAndApplyCard(player, "bad", "Плохо");
       }
     } else if (event === "event") {
@@ -7471,22 +7506,34 @@ async function resolveLanding(player, { fieldEffects = true, forwardTriggers = n
   }
 }
 
+function restCoinsText() {
+  return countText(balance("rest.coins", 10), "монета", "монеты", "монет");
+}
+
+function restStrengthText() {
+  return `+${balance("rest.strength", 1)} силе`;
+}
+
+function restStepsText() {
+  return `+${balance("rest.steps", 2)} к шагам`;
+}
+
 function bigRestChoices() {
   return [
     {
       id: "recover",
       label: "Восстановиться",
-      note: "+10 монет",
+      note: `+${restCoinsText()}`,
     },
     {
       id: "train",
       label: "Потренироваться",
-      note: "+1 силе",
+      note: restStrengthText(),
     },
     {
       id: "speed",
       label: "Ускориться",
-      note: "+2 к шагам",
+      note: restStepsText(),
     },
   ];
 }
@@ -7504,14 +7551,14 @@ async function resolveBigRest(player) {
 
   let message = "";
   if (choice === "train") {
-    addBattleBonus(player, 1);
-    message = `${playerName(player)} использует <strong>Привал</strong>: тренируется и получает <strong>+1 силе</strong>.`;
+    addBattleBonus(player, balance("rest.strength", 1));
+    message = `${playerName(player)} использует <strong>Привал</strong>: тренируется и получает <strong>${restStrengthText()}</strong>.`;
   } else if (choice === "speed") {
-    addStepBonus(player, 2);
-    message = `${playerName(player)} использует <strong>Привал</strong>: ускоряется и получает <strong>+2 к шагам</strong>.`;
+    addStepBonus(player, balance("rest.steps", 2));
+    message = `${playerName(player)} использует <strong>Привал</strong>: ускоряется и получает <strong>${restStepsText()}</strong>.`;
   } else {
-    addCoins(player, 10);
-    message = `${playerName(player)} использует <strong>Привал</strong>: восстанавливается и получает <strong>${coinAmount(10)}</strong>.`;
+    addCoins(player, balance("rest.coins", 10));
+    message = `${playerName(player)} использует <strong>Привал</strong>: восстанавливается и получает <strong>${coinAmount(balance("rest.coins", 10))}</strong>.`;
   }
 
   render();
@@ -7525,22 +7572,22 @@ function blackMarketChoices(player) {
     blackMarketChoice({
       cardCount: blackMarketStrengthCards,
       id: "strength",
-      label: "+2 к силе",
-      note: "обмен 1 Лавки Джо",
+      label: blackMarketStrengthText,
+      note: `обмен ${countText(blackMarketStrengthCards, "Лавки Джо", "Лавок Джо", "Лавок Джо")}`,
       player,
     }),
     blackMarketChoice({
       cardCount: blackMarketCoinsCards,
       id: "coins",
-      label: "30 монет",
-      note: "обмен 2 Лавок Джо",
+      label: blackMarketCoinsText,
+      note: `обмен ${countText(blackMarketCoinsCards, "Лавки Джо", "Лавок Джо", "Лавок Джо")}`,
       player,
     }),
     blackMarketChoice({
       cardCount: blackMarketRushCards,
       id: "rush",
-      label: "+10 к силе в следующем бою с монстром и 30 шагов",
-      note: "обмен 3 Лавок Джо",
+      label: blackMarketRushText,
+      note: `обмен ${countText(blackMarketRushCards, "Лавки Джо", "Лавок Джо", "Лавок Джо")}`,
       player,
     }),
   ];
@@ -7575,7 +7622,7 @@ function blackMarketSummary(player) {
   const available = blackMarketExchangeItems(player).length;
   const rage = nextMonsterBattleBonus(player);
   const activePotion = rage ? ` Активно: +${rage} к силе в следующем бою с монстром.` : "";
-  return `${playerChoiceBadge(player)}: доступно ${available} ${shopCardsWord(available)} Лавки Джо. Поменяй 1 карту Лавка Джо на +2 к силе, 2 карты на 30 монет, 3 карты на +10 к силе в следующем бою с монстром и 30 шагов вперед.${activePotion}`;
+  return `${playerChoiceBadge(player)}: доступно ${available} ${shopCardsWord(available)} Лавки Джо. Поменяй ${blackMarketRuleText}.${activePotion}`;
 }
 
 async function resolveBlackMarket(player) {
@@ -7593,7 +7640,7 @@ async function resolveBlackMarket(player) {
   });
 
   if (choice === "strength") {
-    const paid = await exchangeBlackMarketShopCards(player, blackMarketStrengthCards, "+2 к силе");
+    const paid = await exchangeBlackMarketShopCards(player, blackMarketStrengthCards, blackMarketStrengthText);
     if (!paid.length) return;
     addBattleBonus(player, blackMarketStrengthBonus);
     const message = `${playerName(player)} меняет ${blackMarketCardsText(paid)} на Черном рынке и получает <strong>+${blackMarketStrengthBonus} к силе</strong>.`;
@@ -7604,7 +7651,7 @@ async function resolveBlackMarket(player) {
   }
 
   if (choice === "coins") {
-    const paid = await exchangeBlackMarketShopCards(player, blackMarketCoinsCards, "30 монет");
+    const paid = await exchangeBlackMarketShopCards(player, blackMarketCoinsCards, blackMarketCoinsText);
     if (!paid.length) return;
     addCoins(player, blackMarketCoinsReward);
     const message = `${playerName(player)} меняет ${blackMarketCardsText(paid)} на Черном рынке и получает <strong>${coinAmount(blackMarketCoinsReward)}</strong>.`;
@@ -7615,7 +7662,7 @@ async function resolveBlackMarket(player) {
   }
 
   if (choice === "rush") {
-    const paid = await exchangeBlackMarketShopCards(player, blackMarketRushCards, "+10 к силе в следующем бою с монстром и 30 шагов вперед");
+    const paid = await exchangeBlackMarketShopCards(player, blackMarketRushCards, `${blackMarketRushText} вперед`);
     if (!paid.length) return;
     setNextMonsterBattleBonus(player, blackMarketRushBonus);
     const message = `${playerName(player)} меняет ${blackMarketCardsText(paid)} на Черном рынке. Игрок получает <strong>+${blackMarketRushBonus}</strong> к силе в следующем бою с монстром, затем идет на <strong>${blackMarketRushSteps}</strong> шагов вперед.`;
@@ -7835,7 +7882,7 @@ async function resolveEnemyBattle(player) {
       bonus,
       enemyForce: requiredStrength,
       isFinalBoss: Boolean(door.isFinalBoss),
-      outcome: door.isFinalBoss ? `${player.name} побеждает и становится боссом` : `${player.name} побеждает и получает +1 кубик`,
+      outcome: door.isFinalBoss ? `${player.name} побеждает и становится боссом` : `${player.name} побеждает и получает ${monsterWinDiceText()}`,
       playerForce: damage,
       playerId: player.id,
       rawRolls,
@@ -7864,16 +7911,16 @@ async function resolveEnemyBattle(player) {
       await resolveFinalBattle(player, true);
       return { isFinalBoss: true, resolved: true, winner: "player" };
     }
-    addDiceBonus(player, 1);
+    addDiceBonus(player, balance("monster.winDice", 1));
     const monsterHuntReward = awardMonsterHuntReward(player);
     const monsterHuntText = monsterHuntRewardText(monsterHuntReward);
     const shopVictoryText = resolveMonsterVictoryShopRewards(player);
     log(
-      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта для игрока. Награда: <strong>+1 кубик</strong>.${monsterHuntText}${shopVictoryText}`,
+      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта для игрока. Награда: <strong>${monsterWinDiceText()}</strong>.${monsterHuntText}${shopVictoryText}`,
     );
     render();
     await showActionPrompt(
-      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта. Награда: <strong>+1 кубик</strong>.${monsterHuntText}${shopVictoryText}`,
+      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта. Награда: <strong>${monsterWinDiceText()}</strong>.${monsterHuntText}${shopVictoryText}`,
       { autoFor: player },
     );
     clearEnemyBattleHud();
@@ -8386,7 +8433,7 @@ async function resolveDiceFortuneField(player) {
       { label: "2-5", effect: "без эффекта" },
     ],
     participants: [playerChoiceBadge(player)],
-    reason: "Шесть кубиков одновременно считают награды и откаты.",
+    reason: `${countText(diceFortuneDiceCount, "кубик", "кубика", "кубиков")} одновременно считают награды и откаты.`,
     result: `${playerName(player)} бросает ${diceFortuneDiceCount} кубиков удачи.`,
     title: "Удача выбирает исход",
   });
@@ -8419,7 +8466,7 @@ async function resolveDiceFortuneField(player) {
         { label: "2-5", effect: "без эффекта" },
       ],
       participants: [playerChoiceBadge(player)],
-      reason: "Шесть кубиков одновременно считают награды и откаты.",
+      reason: `${countText(diceFortuneDiceCount, "кубик", "кубика", "кубиков")} одновременно считают награды и откаты.`,
       result: `${formatRoll(rolls)} → ${resultText}.`,
       resultHighlight: true,
       title: "Результат удачи",
@@ -8562,7 +8609,7 @@ async function resolvePayDoubleField(player) {
 }
 
 async function resolveVsField(player) {
-  const ante = 10;
+  const ante = balance("field.vs.ante", 10);
   const contributions = state.players.map((participant) => {
     const amount = Math.min(ante, participant.coins);
     if (amount > 0) addCoins(participant, -amount);
@@ -8973,7 +9020,7 @@ function buildDragonFinalSummary({ initiator, results, scores, strength, teamTot
 // challenger after the first, with or without weapons (it was the bonus on every roll and +3 per challenger without weapons).
 async function resolveFinalBattle(boss, animate = true) {
   const challengers = state.players.filter((player) => player.id !== boss.id);
-  const bossOpponentBonusPerExtra = 10;
+  const bossOpponentBonusPerExtra = balance("boss.bonusPerExtraOpponent", 10);
   const bossOpponentBonus = bossOpponentBonusPerExtra * Math.max(0, challengers.length - 1);
   state.isAnimating = animate;
   state.movingPlayerId = null;
@@ -9372,7 +9419,7 @@ function finalBonusText(baseBonus, cursePenalty, total, heroSwordBonus = 0, play
 // Short tabletop count: coins plus 5 per Лавка Джо card (tabletop review, 12 Oct 2026). Damage to the boss only breaks ties.
 function finalBattleScore(player, damageToBoss) {
   const coins = player.coins;
-  const shop = activeShopItems(player).length * 5;
+  const shop = activeShopItems(player).length * balance("score.perShopCard", 5);
   return {
     coins,
     damageToBoss,
@@ -9725,8 +9772,9 @@ function isPoorestByCoins(player) {
 }
 
 async function resolveGreenField(player) {
-  addCoins(player, 3);
-  log(`${playerName(player)} получает <strong>3 монеты</strong> на зеленом поле.`, { toast: true });
+  const coins = balance("field.green.coins", 3);
+  addCoins(player, coins);
+  log(`${playerName(player)} получает <strong>${countText(coins, "монету", "монеты", "монет")}</strong> на зеленом поле.`, { toast: true });
   const extra = tadamEffectAmount("green-extra-coins");
   if (extra > 0) {
     flashTadamCardsByType("green-extra-coins");
@@ -9748,8 +9796,9 @@ async function resolveGreenField(player) {
 
 async function resolveRedField(player) {
   const extraLoss = tadamEffectAmount("red-extra-loss");
-  addCoins(player, -(3 + extraLoss), { category: "loss" });
-  log(`${playerName(player)} теряет <strong>3 монеты</strong> на красном поле.`, { toast: true });
+  const loss = balance("field.red.loss", 3);
+  addCoins(player, -(loss + extraLoss), { category: "loss" });
+  log(`${playerName(player)} теряет <strong>${countText(loss, "монету", "монеты", "монет")}</strong> на красном поле.`, { toast: true });
   if (extraLoss > 0) {
     flashTadamCardsByType("red-extra-loss");
     log(`<strong>ТАДАМ</strong>: красное поле отнимает у ${playerName(player)} дополнительно ${coinAmount(extraLoss)}.`, {
@@ -13471,12 +13520,12 @@ async function drawTadamCard(player) {
   }
   log(`${playerName(player)} тянет карту <strong>ТАДАМ!</strong>: ${cardNameMarkup(card.title)}`);
   await revealTadamCard(player, card);
-  addCoins(player, 5);
+  addCoins(player, balance("field.tadam.coins", 5));
   state.tadams.push(card);
   recordTadamPlayed();
   resolveTadamIncomeRewards(card);
-  if (state.tadams.length > 3) discardCardToDeck("tadam", state.tadams.shift());
-  log(`${playerName(player)} получает <strong>${coinAmount(5)}</strong> за открытие <strong>ТАДАМ!</strong>.`, { toast: true });
+  if (state.tadams.length > tadamActiveLimit()) discardCardToDeck("tadam", state.tadams.shift());
+  log(`${playerName(player)} получает <strong>${coinAmount(balance("field.tadam.coins", 5))}</strong> за открытие <strong>ТАДАМ!</strong>.`, { toast: true });
   log(`${playerName(player)} применяет карту <strong>ТАДАМ!</strong>: ${cardNameMarkup(card.title)}`, { toast: true });
 }
 
@@ -13649,7 +13698,7 @@ function syncShopModeControl() {
   ui.shopMode.disabled = locked;
   const hint = locked
     ? "Лавку можно переключить после завершения текущего действия или боя"
-    : "Рынок: 2 открытые карты на всю партию, купленную сразу заменяет новая. Классика: в каждой Лавке новые карты с колоды";
+    : `Рынок: ${countText(shopMarketSize, "открытая карта", "открытые карты", "открытых карт")} на всю партию, купленную сразу заменяет новая. Классика: в каждой Лавке новые карты с колоды`;
   ui.shopMode.title = hint;
   if (ui.shopMode.parentElement) ui.shopMode.parentElement.title = hint;
 }
@@ -13669,7 +13718,7 @@ function applyShopModeSetting() {
     discardCardsToDeck("shop", cards);
     log(`Лавка: классика. ${cards.length ? "Карты рынка уходят в сброс, в" : "В"} каждой Лавке снова новые карты с колоды.`);
   } else {
-    log("Лавка: рынок. 2 открытые карты лежат всю партию, купленную сразу заменяет новая.");
+    log(`Лавка: рынок. ${countText(shopMarketSize, "открытая карта лежит", "открытые карты лежат", "открытых карт лежат")} всю партию, купленную сразу заменяет новая.`);
     refillShopMarket();
   }
   render();
@@ -13857,7 +13906,7 @@ async function resolveImmediateShopStepMovement(player, steps) {
   await movePlayerSteps(player, amount);
 }
 
-async function resolveFaceDownShopBuyback(player, cost = 5) {
+async function resolveFaceDownShopBuyback(player, cost = balance("shop.buybackCost", 5)) {
   if (!faceDownShopItems(player).length) return;
   if (player.coins < cost) {
     log(
@@ -13910,7 +13959,7 @@ async function resolveFaceDownShopBuyback(player, cost = 5) {
   }
 }
 
-function buyBackFaceDownShopCardsForBot(player, cost = 5) {
+function buyBackFaceDownShopCardsForBot(player, cost = balance("shop.buybackCost", 5)) {
   let bought = 0;
   while (player.coins >= cost) {
     const entries = player.items
@@ -15206,12 +15255,12 @@ function renderTadams() {
   const visibleCards = visibleTadamCards();
   // Настольный стиль подписывает строку ТАДАМ «в игре N из 3»
   const tadamSection = tadamTableEl.closest(".tadam-card");
-  if (tadamSection) tadamSection.dataset.count = String(Math.min(3, visibleCards.length));
+  if (tadamSection) tadamSection.dataset.count = String(Math.min(tadamActiveLimit(), visibleCards.length));
   const flashKeys = new Set(state.tadamFlashKeys || []);
   const flashStartedAt = state.tadamFlashStartedAt || {};
   const now = animationClockMs();
 
-  for (let index = 0; index < 3; index += 1) {
+  for (let index = 0; index < tadamActiveLimit(); index += 1) {
     const card = visibleCards[index] || null;
     const item = document.createElement("article");
     const key = tadamCardKey(card);
@@ -15274,9 +15323,9 @@ function tileTitle(cell) {
   const namesByEvent = {
     "all-or-nothing": `Все или ничего — ${allOrNothingRuleText}`,
     bad: "Плохо",
-    "very-bad": 'Очень Плохо — возьми 3 карты "Плохо"',
-    "big-rest": "Привал — выбери: восстановиться +10 монет; потренироваться +1 силе; ускориться +2 к шагам",
-    "black-market": "Черный рынок — поменяй 1 карту Лавка Джо на +2 к силе; 2 карты на 30 монет; 3 карты на +10 к силе в следующем бою с монстром и 30 шагов вперед",
+    "very-bad": `Очень Плохо — возьми ${countText(veryBadCardCount(), "карту", "карты", "карт")} "Плохо"`,
+    "big-rest": `Привал — выбери: восстановиться +${restCoinsText()}; потренироваться ${restStrengthText()}; ускориться ${restStepsText()}`,
+    "black-market": `Черный рынок — поменяй ${blackMarketRuleText.replaceAll(", ", "; ")}`,
     "chaos-portal": `Портал хаоса — ${chaosPortalRuleText}`,
     "dice-fortune": `Кубик удачи — кинь кубик ${diceFortuneDiceCount} раз, получи ${diceFortuneCoinReward} монет за каждую 6, походи на ${diceFortuneBackwardStepPenalty} шагов назад за каждую 1`,
     enemy: "Враг — Сразись с врагом",
@@ -15286,8 +15335,8 @@ function tileTitle(cell) {
     "pay-double": "Удвой свои монеты",
     red: "Красное поле",
     shop: "Лавка Джо",
-    tadam: "ТАДАМ! — возьми карту Тадам и получи 5 монет",
-    vs: "VS — все игроки скидывают по 10 монет, затем между ними происходит битва. Игрок с наибольшей силой забирает все скинутые монеты",
+    tadam: `ТАДАМ! — возьми карту Тадам и получи ${tadamCoinsText()}`,
+    vs: `VS — все игроки скидывают по ${vsAnteText()}, затем между ними происходит битва. Игрок с наибольшей силой забирает все скинутые монеты`,
   };
   return namesByEvent[cellEvents[cell]] || "Клетка";
 }
@@ -15300,20 +15349,20 @@ function fieldEffectText(cell) {
   const texts = {
     "all-or-nothing": ["Все или ничего", allOrNothingRuleText],
     bad: ["Плохо", "Тяни карту Плохо"],
-    "very-bad": ["Очень Плохо", 'Возьми 3 карты "Плохо"'],
-    "big-rest": ["Привал", "Выбери: восстановиться +10 монет; потренироваться +1 силе; ускориться +2 к шагам"],
-    "black-market": ["Черный рынок", "Поменяй Лавки Джо: 1 = +2 к силе; 2 = 30 монет; 3 = +10 к силе в следующем бою с монстром и 30 шагов"],
+    "very-bad": ["Очень Плохо", `Возьми ${countText(veryBadCardCount(), "карту", "карты", "карт")} "Плохо"`],
+    "big-rest": ["Привал", `Выбери: восстановиться +${restCoinsText()}; потренироваться ${restStrengthText()}; ускориться ${restStepsText()}`],
+    "black-market": ["Черный рынок", `Поменяй Лавки Джо: ${blackMarketStrengthCards} = ${blackMarketStrengthText}; ${blackMarketCoinsCards} = ${blackMarketCoinsText}; ${blackMarketRushCards} = ${blackMarketRushText}`],
     "chaos-portal": ["Портал хаоса", chaosPortalRuleText],
-    "dice-fortune": ["Кубик удачи", `6 бросков: 6 = +${diceFortuneCoinReward} монет, 1 = -${diceFortuneBackwardStepPenalty} шагов`],
+    "dice-fortune": ["Кубик удачи", `${countText(diceFortuneDiceCount, "бросок", "броска", "бросков")}: 6 = +${diceFortuneCoinReward} монет, 1 = -${diceFortuneBackwardStepPenalty} шагов`],
     enemy: ["Враг", "Сразись с врагом"],
     event: ["Событие", "Тяни карту Событие"],
     good: ["Хорошо", "Тяни карту Хорошо"],
     green: ["Зеленое поле", greenEffectLabel()],
     "pay-double": ["Удвой свои монеты", "Удвой свои монеты"],
     red: ["Красное поле", redEffectLabel()],
-    shop: ["Лавка Джо", `2 карты на выбор за ${joeShopCardCost()} монет`],
-    tadam: ["ТАДАМ!", "Возьми карту Тадам и получи 5 монет"],
-    vs: ["VS", "Все скидывают по 10 монет и сражаются за банк"],
+    shop: ["Лавка Джо", `${countText(joeShopOfferCount(), "карта", "карты", "карт")} на выбор за ${joeShopCardCost()} монет`],
+    tadam: ["ТАДАМ!", `Возьми карту Тадам и получи ${tadamCoinsText()}`],
+    vs: ["VS", `Все скидывают по ${vsAnteText()} и сражаются за банк`],
   };
   const text = texts[cellEvents[cell]] || ["Обычная клетка", "Без эффекта"];
   return iconizeHtml(`<span>${text[0]}</span><strong>${text[1]}</strong>`);
@@ -15456,24 +15505,25 @@ function turnActionsText(player) {
 
 function greenEffectLabel() {
   const extra = tadamEffectAmount("green-extra-coins");
-  const base = extra > 0 ? `+${coinAmount(3 + extra)}` : `+${coinAmount(3)}`;
+  const coins = balance("field.green.coins", 3);
+  const base = extra > 0 ? `+${coinAmount(coins + extra)}` : `+${coinAmount(coins)}`;
   return fieldEffectLabel("green-field", base);
 }
 
 function referenceGreenEffectLabel() {
   const extra = tadamEffectAmount("green-extra-coins");
-  const amount = 3 + Math.max(0, extra);
+  const amount = balance("field.green.coins", 3) + Math.max(0, extra);
   return referenceFieldEffectLabel("green-field", `Получи ${coinAmount(amount)}`);
 }
 
 function redEffectLabel() {
   const extraLoss = tadamEffectAmount("red-extra-loss");
-  return fieldEffectLabel("red-field", coinAmount(-(3 + Math.max(0, extraLoss))));
+  return fieldEffectLabel("red-field", coinAmount(-(balance("field.red.loss", 3) + Math.max(0, extraLoss))));
 }
 
 function referenceRedEffectLabel() {
   const extraLoss = tadamEffectAmount("red-extra-loss");
-  const amount = 3 + Math.max(0, extraLoss);
+  const amount = balance("field.red.loss", 3) + Math.max(0, extraLoss);
   return referenceFieldEffectLabel("red-field", `Потеряй ${coinAmount(amount)}`);
 }
 
@@ -15825,12 +15875,28 @@ function joeShopCardCost(player = null) {
       .reduce((lowest, card) => Math.min(lowest, Number(card.effect?.cost) || 3), 3);
     return Math.max(0, fixedCost + modifier);
   }
-  const baseCost = 5;
+  const baseCost = balance("shop.cardCost", 5);
   return Math.max(0, baseCost + modifier);
 }
 
 function joeShopOfferCount(player = null) {
-  return player && hasActiveShopEffect(player, "shop-choice-3-cost-3") ? 3 : 2;
+  return player && hasActiveShopEffect(player, "shop-choice-3-cost-3") ? 3 : balance("shop.offerCount", 2);
+}
+
+function tadamActiveLimit() {
+  return balance("field.tadam.maxActive", 3);
+}
+
+function tadamCoinsText() {
+  return countText(balance("field.tadam.coins", 5), "монету", "монеты", "монет");
+}
+
+function veryBadCardCount() {
+  return balance("field.veryBad.cards", 3);
+}
+
+function vsAnteText() {
+  return countText(balance("field.vs.ante", 10), "монете", "монеты", "монет");
 }
 
 function portalBadDrawCount() {

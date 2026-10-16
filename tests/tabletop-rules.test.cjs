@@ -14,8 +14,10 @@ function extract(name) {
 }
 
 function load(functions, context) {
+  // Balance numbers run on their эталон, the second argument of balance("key", эталон).
+  context.balance ??= (_key, fallback) => fallback;
   vm.createContext(context);
-  vm.runInContext(functions.map(extract).join('\n'), context);
+  vm.runInContext([...new Set([...functions, 'countText'])].map(extract).join('\n'), context);
   return context;
 }
 
