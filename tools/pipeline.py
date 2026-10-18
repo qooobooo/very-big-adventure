@@ -651,6 +651,16 @@ def check(files):
             raise SystemExit('The cards or balance CSV is stale, nothing was pushed or installed:\n'
                              + (result.stderr or result.stdout).strip()[-2000:])
         say('check: cards-google-sheet.csv and balance-google-sheet.csv match the code')
+    # The whole node:test suite runs in a fraction of a second, so every delivery that touches code runs all of it, not
+    # only its own narrow probe (18 Oct 2026: 0.1.44 left 6 tests of another file red for three deliveries).
+    if scripts or any(f in CARD_FILES for f in files):
+        suite = sorted(str(p.relative_to(ROOT)) for p in (ROOT / 'tests').glob('*.test.*js'))
+        if suite:
+            result = subprocess.run(['node', '--test', *suite], cwd=ROOT, text=True, capture_output=True, timeout=180)
+            if result.returncode != 0:
+                failed = [line.strip() for line in result.stdout.splitlines() if line.lstrip().startswith('✖')][:10]
+                raise SystemExit('Tests failed, nothing was pushed or installed:\n' + '\n'.join(failed or [result.stdout.strip()[-2000:]]))
+            say(f'check: node --test of {len(suite)} file(s) passed')
 
 
 # What the «Cards Config» sheet sends to dev: the cards (12 Oct 2026) and the balance numbers, tab «Баланс» (16 Oct 2026).
