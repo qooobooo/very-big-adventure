@@ -24,7 +24,7 @@
     --gold: #e2ac45;
     --player: #8b1713;
     --cell: 13.5mm;
-    --gap: 0.9mm;
+    --gap: 0.8mm;
     --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .23 0 0 0 0 .11 0 0 0 0 .03 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   * { box-sizing: border-box; }
@@ -43,7 +43,7 @@
     height: 100%;
     border-radius: 4.2mm;
     border: 0.5mm solid var(--ink);
-    padding: 5mm 5.2mm 5mm 4.6mm;
+    padding: 5mm 4.1mm;
     display: grid;
     align-content: center;
     gap: 3.6mm;
@@ -86,7 +86,7 @@
     mix-blend-mode: screen;
   }
 
-  .track { display: grid; grid-template-columns: 15.4mm 1fr auto; align-items: center; column-gap: 2mm; }
+  .track { display: grid; grid-template-columns: 15mm 1fr auto; align-items: center; column-gap: 1.6mm; }
 
   /* Медальон трека: кремовое лицо, кольцо цвета игрока, латунная жилка, подпись под ним */
   .badge { display: grid; justify-items: center; gap: 0.5mm; margin-block: -1.6mm; }
@@ -141,25 +141,18 @@
     border: 0.75mm solid var(--player);
   }
 
-  /* Окошко «+10 за круг»: такое же гнездо под жетон 12 мм, но тёмное — сюда кладут жетон, а не маркер */
-  .lap { display: grid; justify-items: center; gap: 0.4mm; margin-block: -1.6mm; }
-  .lap .groove { padding: 1.1mm; }
+  /* Окошко «+10» за круг: такое же гнездо под жетон 12 мм, но тёмное — сюда кладут жетон, а не маркер.
+     Без «+» в клетках треков, без стрелки и подписи у окошка, окошко на одной линии с треком (правка пользователя, 18 октября 2026) */
   .lap-slot {
     width: var(--cell); height: var(--cell);
-    display: grid; place-items: center; align-content: center; gap: 0.3mm;
+    display: grid; place-items: center;
     border-radius: 2.4mm;
     border: 0.45mm dashed rgba(255, 238, 200, .85);
     background: radial-gradient(circle at 50% 40%, rgba(110, 50, 10, .35), rgba(30, 10, 0, .25));
     color: var(--cream);
     text-shadow: 0 0.25mm 0 var(--ink);
   }
-  .lap-slot b { font: 900 4mm/1 "Rubik"; }
-  .lap-slot svg { width: 4.4mm; height: 4.4mm; }
-  .lap > span {
-    font: 900 2.1mm/1 "Rubik"; letter-spacing: .03em; text-transform: uppercase;
-    color: var(--cream);
-    text-shadow: 0 0.25mm 0 var(--ink), 0 0 0.6mm rgba(30, 10, 0, .9), 0 0 1.2mm rgba(30, 10, 0, .6);
-  }
+  .lap-slot b { font: 900 4.4mm/1 "Rubik"; letter-spacing: -.02em; }
 
   /* Лист для печати: линии реза между планшетами и метки на полях */
   .cut { position: absolute; left: 0; right: 0; height: 0; border-top: 0.25mm dashed #8a7a66; }
@@ -182,14 +175,12 @@
     ["Шаги", icons + "steps_512.png", steps(0, 10, 2), true],
     ["Кубики", icons + "dice.png", steps(1, 4), false],
   ];
-  const lapArrow = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.8 3.8v4.4h-4.4"/></svg>`;
   const trackMarkup = ([label, icon, values, signed]) => `
     <div class="track">
       <div class="badge"><div class="medal"><img src="${icon}" alt=""></div><b>${label}</b></div>
       <div class="groove">${values.map((v, i) =>
-        `<span class="cell${i === 0 ? " is-start" : ""}">${signed && v > 0 ? "+" + v : v}</span>`).join("")}</div>
-      ${signed ? `<div class="lap"><div class="groove"><div class="lap-slot"><b>+10</b>${lapArrow}</div></div><span>за круг</span></div>` : "<span></span>"}
+        `<span class="cell${i === 0 ? " is-start" : ""}">${v}</span>`).join("")}</div>
+      ${signed ? `<div class="lap groove"><div class="lap-slot"><b>+10</b></div></div>` : "<span></span>"}
     </div>`;
   const boardMarkup = (player) => `
     <div class="board" style="--player: ${colors[player] || colors.dog}">
