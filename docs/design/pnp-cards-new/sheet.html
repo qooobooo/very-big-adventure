@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PnP New Cards</title>
+<!--
+  PnP только новых карт для тестеров настолки (задача пользователя через PM, 18 октября 2026):
+  «Подготовь пнп только новых карт. На этих картах убери моменты с лавок Джо».
+  Формат — как прежний PnP карт (output/pnp в хранилище): карта 63 × 88 мм, 3 × 3 на A4 вплотную, по центру листа.
+  Добавлены метки реза на полях. Иконок моментов Лавки Джо нет. Тексты — из src/cards.config.js.
+  Кадр листа 300 dpi: python3 tools/probe.py shot --out Logs/probes/pnp-cards-new --size 2480x3508
+    --path "/docs/design/pnp-cards-new/sheet.html?s=3.125", PDF — sips (см. README.md).
+-->
+<style>
+  :root { --ink: #361800; --accent: #7a2e00; --card-w: 63mm; --card-h: 88mm; }
+  * { box-sizing: border-box; }
+  @page { size: A4 portrait; margin: 0; }
+  html, body { margin: 0; background: #fff; }
+  body { zoom: var(--s, 1); color: var(--ink); font-family: Arial, "Helvetica Neue", sans-serif; }
+  @media print { body { zoom: 1; } }
+
+  .sheet { position: relative; width: 210mm; height: 297mm; overflow: hidden; }
+  .grid {
+    position: absolute; left: 10.5mm; top: 16.5mm;
+    display: grid; grid-template-columns: repeat(3, var(--card-w)); grid-auto-rows: var(--card-h);
+  }
+
+  .card { position: relative; width: var(--card-w); height: var(--card-h); background: center / 100% 100% no-repeat; }
+  .card.good { background-image: url("../../../assets/cards/good_front.png"); }
+  .card.event { background-image: url("../../../assets/cards/event_front.png"); }
+  /* Карта события с артефактом: знак «!» закрыт пергаментом из пустой середины той же карты, сверху — иконка артефакта */
+  .card.artifact::before {
+    content: ""; position: absolute; left: 9%; right: 9%; top: 1.2%; height: 36%;
+    background: url("../../../assets/cards/event_front.png") no-repeat;
+    background-size: calc(var(--card-w) * 1) calc(var(--card-h) * 1);
+    background-position: -5.67mm -44mm;
+    -webkit-mask: radial-gradient(ellipse 60% 60% at 50% 50%, #000 70%, transparent 100%);
+            mask: radial-gradient(ellipse 60% 60% at 50% 50%, #000 70%, transparent 100%);
+  }
+  .card .art { position: absolute; left: 50%; top: 5%; width: 30mm; height: 30mm; transform: translateX(-50%); object-fit: contain; }
+
+  /* Название и текст — колонкой: длинное название в две строки сдвигает текст, а не наезжает на него */
+  .card .body {
+    position: absolute; left: 6%; right: 6%; top: 42.5%; bottom: 7%;
+    display: flex; flex-direction: column; align-items: stretch; gap: 1.2mm;
+  }
+  .card h2 {
+    margin: 0; text-align: center; flex: none;
+    font: 900 5mm/1.05 "Arial Black", Arial, sans-serif;
+    text-shadow: 0 0.3mm 0.4mm rgba(255, 218, 120, .6);
+  }
+  .card .text {
+    flex: 1; padding-inline: 3%;
+    display: grid; align-content: center; gap: 1.6mm;
+    text-align: center; font: 700 3.25mm/1.2 Arial, sans-serif;
+  }
+  .card .text p { margin: 0; }
+  .card .artifact-text b { display: block; color: var(--accent); font-size: 3.4mm; }
+  .card.long .text { font-size: 2.95mm; }
+
+  /* Метки реза на полях — продолжения линий сетки */
+  .mark { position: absolute; background: #6f6152; }
+  .mark.v { width: 0.2mm; height: 8mm; }
+  .mark.h { height: 0.2mm; width: 6mm; }
+</style>
+</head>
+<body>
+<div class="sheet" id="sheet"><div class="grid" id="grid"></div></div>
+<script type="module">
+  import { cardConfig } from "../../../src/cards.config.js";
+  const params = new URLSearchParams(location.search);
+  document.documentElement.style.setProperty("--s", Number(params.get("s")) || 1);
+
+  const pick = (deck, id) => ({ deck, ...cardConfig[deck].find((card) => card.id === id) });
+  const cards = [
+    pick("good", "overtake-toll"),
+    pick("good", "overtake-toll"),
+    pick("event", "marching-horn"),
+    pick("event", "training-dummy"),
+    pick("event", "golden-horseshoe"),
+  ];
+  const tidy = (text) => text.replace(/ - /g, " — ").replace(/\s*\.\s*$/, "");
+  // Описание делится на предложения без точки в конце, как на прежних карточках PnP
+  const paragraphs = (text) => tidy(text).split(/(?<=\.)\s+/).map((line) => `<p>${line.replace(/\.$/, "")}</p>`).join("");
+  const asset = (path) => "../../../" + path.replace(/^\.\//, "").replace(/\?.*$/, "");
+
+  const cardMarkup = (card) => {
+    const artifact = card.artifact && card.icon;
+    const long = (card.description + (card.artifact_desr || "")).length > 150;
+    return `<div class="card ${card.deck}${artifact ? " artifact" : ""}${long ? " long" : ""}">
+      ${artifact ? `<img class="art" src="${asset(card.icon)}" alt="">` : ""}
+      <div class="body"><h2>${card.title}</h2>
+      <div class="text">${paragraphs(card.description)}${card.artifact_desr
+        ? `<p class="artifact-text"><b>Артефакт:</b>${tidy(card.artifact_desr)}</p>` : ""}</div></div>
+    </div>`;
+  };
+  document.getElementById("grid").innerHTML = cards.map(cardMarkup).join("");
+
+  // Метки реза: вертикальные — сверху и снизу сетки, горизонтальные — слева и справа
+  const left = 10.5, top = 16.5, w = 63, h = 88, rows = Math.ceil(cards.length / 3);
+  const marks = [];
+  for (let c = 0; c <= 3; c++) {
+    const x = left + c * w;
+    marks.push(`<i class="mark v" style="left:${x - 0.1}mm; top:${top - 10}mm"></i>`);
+    marks.push(`<i class="mark v" style="left:${x - 0.1}mm; top:${top + rows * h + 2}mm"></i>`);
+  }
+  for (let r = 0; r <= rows; r++) {
+    const y = top + r * h;
+    marks.push(`<i class="mark h" style="top:${y - 0.1}mm; left:${left - 8}mm"></i>`);
+    marks.push(`<i class="mark h" style="top:${y - 0.1}mm; left:${left + 3 * w + 2}mm"></i>`);
+  }
+  document.getElementById("sheet").insertAdjacentHTML("beforeend", marks.join(""));
+</script>
+</body>
+</html>
