@@ -6930,7 +6930,7 @@ function renderFinalBattleHud() {
     <div class="final-battle-side boss ${isBossRolling ? "is-rolling" : ""}" style="--player-color: ${boss?.color || "#ff7d5d"}">
       <span>Босс${boss ? ` - ${boss.name}` : ""}</span>
       ${legendaryWeaponStatusMarkup(bossWeapon, { compact: true })}
-      ${progress.opponentBonus ? `<span>+${progress.opponentBonus}: по ${progress.opponentBonusPerExtra} за противника после первого</span>` : ""}
+      ${progress.opponentBonus ? `<span>+${progress.opponentBonus}: по ${progress.opponentBonusPerPlayer} за противника</span>` : ""}
       ${boss ? playerBattleStrengthText(boss) : ""}
       <strong>${bossDisplayForce}</strong>
     </div>
@@ -9111,12 +9111,13 @@ function buildDragonFinalSummary({ initiator, results, scores, strength, teamTot
   };
 }
 
-// Tabletop review, 12 Oct 2026: the boss rolls once per challenger but adds its own bonus once, and gets +10 for every
-// challenger after the first, with or without weapons (it was the bonus on every roll and +3 per challenger without weapons).
+// Tabletop review, 12 Oct 2026: the boss rolls once per challenger but adds its own bonus once, with or without weapons.
+// 18 Oct 2026: the boss gets +3 for every challenger, the first included (was +10 for every challenger after the first).
+// 4 players: 3 rolls + 9.
 async function resolveFinalBattle(boss, animate = true) {
   const challengers = state.players.filter((player) => player.id !== boss.id);
-  const bossOpponentBonusPerExtra = balance("boss.bonusPerExtraOpponent", 10);
-  const bossOpponentBonus = bossOpponentBonusPerExtra * Math.max(0, challengers.length - 1);
+  const bossOpponentBonusPerPlayer = balance("boss.bonusPerOpponent", 3);
+  const bossOpponentBonus = bossOpponentBonusPerPlayer * challengers.length;
   state.isAnimating = animate;
   state.movingPlayerId = null;
   state.dice = null;
@@ -9124,7 +9125,7 @@ async function resolveFinalBattle(boss, animate = true) {
     bossBonusApplied: false,
     bossForce: 0,
     opponentBonus: bossOpponentBonus,
-    opponentBonusPerExtra: bossOpponentBonusPerExtra,
+    opponentBonusPerPlayer: bossOpponentBonusPerPlayer,
     bossId: boss.id,
     bossRollsStarted: false,
     isRolling: false,
@@ -9184,7 +9185,7 @@ async function resolveFinalBattle(boss, animate = true) {
     log(`Босс бросает кубики ${challengers.length} раза, по разу на противника. Свой бонус он прибавляет один раз.`);
   }
   if (bossOpponentBonus) {
-    log(`Босс получает <strong>+${bossOpponentBonus}</strong> к итоговой силе: по ${bossOpponentBonusPerExtra} за каждого противника после первого.`);
+    log(`Босс получает <strong>+${bossOpponentBonus}</strong> к итоговой силе: по ${bossOpponentBonusPerPlayer} за каждого противника.`);
   }
   state.finalBattleProgress.bossBonusApplied = true;
   state.finalBattleProgress.bossForce = bossOpponentBonus + bossLegendaryStrength.total;
@@ -9216,7 +9217,7 @@ async function resolveFinalBattle(boss, animate = true) {
   const bossForce = bossRollTotal + bossOpponentBonus + bossLegendaryStrength.total;
   state.finalBattleProgress.bossForce = bossForce;
   const bossForceBreakdown = [
-    bossOpponentBonus ? `${bossOpponentBonus} за противников (+${bossOpponentBonusPerExtra} за каждого после первого)` : "",
+    bossOpponentBonus ? `${bossOpponentBonus} за противников (+${bossOpponentBonusPerPlayer} за каждого)` : "",
     bossLegendaryWeapon?.card ? legendaryWeaponForceBreakdownText(bossLegendaryWeapon, bossLegendaryStrength) : "",
     bossRolled ? `${bossRolled} кубики` : "",
     bossBonus ? `${bossBonus} обычные бонусы` : "",
@@ -9243,7 +9244,7 @@ async function resolveFinalBattle(boss, animate = true) {
     bossLegendaryBonus: bossLegendaryStrength.total,
     bossLegendaryBonusByOpponent: cloneData(bossLegendaryStrength.opponents),
     bossOpponentBonus,
-    bossOpponentBonusPerExtra,
+    bossOpponentBonusPerPlayer,
     bossPlayerBattlePotionBonus,
     bossRollResults,
     bossWon,
@@ -9258,7 +9259,7 @@ async function resolveFinalBattle(boss, animate = true) {
     bossForce,
     bossRolls: bossRollResults.map((result) => result.rolls),
     opponentBonus: bossOpponentBonus,
-    opponentBonusPerExtra: bossOpponentBonusPerExtra,
+    opponentBonusPerPlayer: bossOpponentBonusPerPlayer,
     weaponsEnabled: legendaryWeaponsEnabled(),
     finalSummary,
     legendaryWeaponBonus: bossLegendaryStrength.total,
@@ -9325,7 +9326,7 @@ function buildFinalBattleSummary({
   bossLegendaryBonus = 0,
   bossLegendaryBonusByOpponent = [],
   bossOpponentBonus,
-  bossOpponentBonusPerExtra = 0,
+  bossOpponentBonusPerPlayer = 0,
   bossPlayerBattlePotionBonus = 0,
   bossRollResults,
   bossWon,
@@ -9357,7 +9358,7 @@ function buildFinalBattleSummary({
               legendaryBonus: bossLegendaryBonus,
               legendaryBonusByOpponent: cloneData(bossLegendaryBonusByOpponent),
               opponentBonus: bossOpponentBonus,
-              opponentBonusPerExtra: bossOpponentBonusPerExtra,
+              opponentBonusPerPlayer: bossOpponentBonusPerPlayer,
               legendaryWeapon: legendaryWeaponSnapshot(),
               rolled: bossRolled,
               rawRolls: bossRollResults.map((result) => result.rawRolls || result.rolls),
@@ -9370,7 +9371,7 @@ function buildFinalBattleSummary({
               legendaryBonus: 0,
               legendaryBonusByOpponent: [],
               opponentBonus: 0,
-              opponentBonusPerExtra: 0,
+              opponentBonusPerPlayer: 0,
               legendaryWeapon: challengerResult?.legendaryWeapon || null,
               rolled: challengerResult?.rolled || 0,
               rawRolls: challengerResult ? [challengerResult.rawRolls] : [],

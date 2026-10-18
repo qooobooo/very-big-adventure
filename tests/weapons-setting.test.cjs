@@ -147,15 +147,15 @@ test('live off clears ownership, conserves card/decks, preserves started setting
   assert.equal(c.state.decks.legendary.discard.length, 1);
 });
 
-// Tabletop review, 12 Oct 2026: the boss rolls once per challenger, adds its bonus (3 here) once and gets +10 for every
-// challenger after the first, in both weapon modes.
+// Tabletop review: the boss rolls once per challenger, adds its bonus (3 here) once and, since 18 Oct 2026, gets +3 for
+// every challenger, in both weapon modes.
 for (const count of [1, 2, 3, 4]) {
-  test(`final battle ${count} players: boss bonus once, +${10 * Math.max(0, count - 2)} for challengers after the first; history/phone agree`, async () => {
+  test(`final battle ${count} players: boss bonus once, +${3 * (count - 1)} for challengers; history/phone agree`, async () => {
     for (const enabled of [false, true]) {
       const c = fixture(enabled, count);
       if (enabled) c.state.legendaryWeapon = { card: gold, owner: 'player', ownerId: 0 };
       const opponents = c.state.players.slice(1);
-      const classic = 10 * Math.max(0, opponents.length - 1);
+      const classic = 3 * opponents.length;
       const legendary = enabled ? opponents.reduce((sum, p) => sum + Math.floor(p.coins / 10), 0) : 0;
       const expected = opponents.length * 4 + (opponents.length ? 3 : 0) + classic + legendary;
       const observed = [];
@@ -167,7 +167,7 @@ for (const count of [1, 2, 3, 4]) {
       const bossForce = summary.players[0].force;
       assert.equal(bossForce.total, expected);
       assert.equal(bossForce.opponentBonus, classic);
-      assert.equal(bossForce.opponentBonusPerExtra, 10);
+      assert.equal(bossForce.opponentBonusPerPlayer, 3);
       assert.equal(bossForce.bonus, opponents.length ? 3 : 0);
       assert.equal(summary.players[1]?.force.total ?? 7, 7);
       assert.equal(bossForce.legendaryBonus, legendary);
@@ -177,8 +177,8 @@ for (const count of [1, 2, 3, 4]) {
       assert.equal(observed.at(-1).progress.bossForce, expected);
       assert.equal(observed[0].progress.opponentBonus, classic);
       if (classic) {
-        assert.match(observed.at(-1).html, new RegExp(`\\+${classic}: по 10 за противника после первого`));
-        assert.match(c.finalHistoryOpponentBonusText(bossForce), /\+10 за каждого после первого/);
+        assert.match(observed.at(-1).html, new RegExp(`\\+${classic}: по 3 за противника<`));
+        assert.match(c.finalHistoryOpponentBonusText(bossForce), /\+3 каждый\)/);
       }
       const frozenSummary = JSON.stringify(summary);
       c.ui.weaponsEnabled.checked = !enabled; c.applyWeaponsSetting();

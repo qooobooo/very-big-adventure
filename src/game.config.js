@@ -54,6 +54,6 @@ export const balanceConfig = [
   { key: "dragon.prefill.p2", value: 16, name: "Дракон: заполнено делений на старте, 2 игрока", unit: "делений", min: 0, max: 100 },
   { key: "dragon.prefill.p3", value: 8, name: "Дракон: заполнено делений на старте, 3 игрока", unit: "делений", min: 0, max: 100 },
   { key: "dragon.prefill.p4", value: 0, name: "Дракон: заполнено делений на старте, 4 игрока", unit: "делений", min: 0, max: 100 },
-  { key: "boss.bonusPerExtraOpponent", value: 10, name: "Финальная битва: сила босса за каждого противника после первого", unit: "силы", min: 0, max: 100 },
+  { key: "boss.bonusPerOpponent", value: 3, name: "Финальная битва: сила босса за каждого противника", unit: "силы", min: 0, max: 100 },
   { key: "score.perShopCard", value: 5, name: "Итоговые очки: за каждую карту Лавки Джо", unit: "очков", min: 0, max: 50 },
 ];
