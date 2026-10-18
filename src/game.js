@@ -2087,7 +2087,7 @@ function scoreShopCard(player, card) {
     }
     if (player.coins <= 7) score -= 10 * personality.economy;
   } else if (effect.type === "duplicate-dice-coins") {
-    // Scored for 5 coins; the card's amount scales it (3 coins since 18 Oct 2026).
+    // Scored for 5 coins; the card's amount scales it.
     score = (totalDiceForPlayer(player) >= 2 ? 20 : 10) * personality.economy * ((Number(effect.amount) || 5) / 5);
     if (playerDiceBonus(player) >= 1) score += 4;
   } else if (effect.type === "duplicate-dice-steps") {

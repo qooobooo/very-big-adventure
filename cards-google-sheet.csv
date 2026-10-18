@@ -98,7 +98,7 @@ shop,green-fields-plus5,Зеленый бонус,Зеленое +5,green-fields
 shop,monster-strength-plus3,Боевой эликсир,+3 к силе,monster-strength-plus3,3,,5,,,,cost pay before own monster roll; amount strength for this battle,3,Во время боя с монстром можешь заплатить 5 монет и получить +3 силы на этот бой,,battle,
 shop,shop-fixed-cost-3,Скидка от Джо,Цена 3,shop-fixed-cost-3,,,3,,,,cost sets ordinary Shop base price for owner; TADAM Shop price modifiers still apply,2,Во время покупок карт Лавка Джо плати только 3 монеты,,shop,
 shop,golden-collection,Золотая коллекция,,golden-collection,1,,,,,,base +1 coin at turn start; +2 per owned artifact,2,Получи 1 монету в начале хода. Получи ещё 2 за каждый артефакт,,turn-start,artifactAmount=2
-shop,duplicate-dice-coins,Дубль на монеты,Дубль: монеты,duplicate-dice-coins,3,,,,,,amount coin reward after duplicate movement dice,2,"Если во время хода хотя бы на двух кубиках выпало одно число, получи 3 монеты",,move,
+shop,duplicate-dice-coins,Дубль на монеты,Дубль: монеты,duplicate-dice-coins,5,,,,,,amount coin reward after duplicate movement dice,2,"Если во время хода хотя бы на двух кубиках выпало одно число, получи 5 монет",,move,
 shop,tadam-income,Эхо ТАДАМ!,Тадам +3,tadam-income,3,,,,,,amount income per TADAM played,2,"Каждый раз, когда кто-то разыгрывает карту Тадам!, получи 3 монеты",,reaction,
 shop,event-income,Эхо События,Событие +3,event-income,3,,,,,,amount income per Event played,2,"Каждый раз, когда кто-то разыгрывает карту Событие, получи 3 монеты",,reaction,
 shop,monster-victory-income,Охотничья доля,,monster-victory-income,5,,,,,,amount income per other-player individual monster victory,2,"Когда другой игрок побеждает монстра, получи 5 монет",,reaction,
