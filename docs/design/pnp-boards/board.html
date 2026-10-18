@@ -155,6 +155,10 @@
   .lap-slot b { font: 900 4.4mm/1 "Rubik"; letter-spacing: -.02em; }
 
   /* Лист для печати: линии реза между планшетами и метки на полях */
+  /* На листе поля сверху и снизу 4 мм и по бокам 4,5 мм — под непечатное поле принтера; лицо планшета того же размера */
+  .sheet { padding-top: 4mm; overflow: hidden; }
+  .sheet .board { height: 72.25mm; padding: 1.4mm 4.5mm; }
+  .sheet .board-face { padding-inline: 3.6mm; }
   .cut { position: absolute; left: 0; right: 0; height: 0; border-top: 0.25mm dashed #8a7a66; }
   .cut::before, .cut::after { content: "✂"; position: absolute; top: -2.3mm; font: 400 3.4mm/1 system-ui; color: #8a7a66; }
   .cut::before { left: 0.4mm; }
@@ -189,7 +193,7 @@
 
   const root = document.getElementById("root");
   if (params.get("sheet")) {
-    const cuts = [1, 2, 3].map((i) => `<div class="cut" style="top: ${(i * 74.25).toFixed(2)}mm"></div>`).join("");
+    const cuts = [1, 2, 3].map((i) => `<div class="cut" style="top: ${(4 + i * 72.25).toFixed(2)}mm"></div>`).join("");
     root.innerHTML = `<div class="sheet">${["dog", "cat", "otter", "alpaca"].map(boardMarkup).join("")}${cuts}</div>`;
   } else {
     root.innerHTML = boardMarkup(params.get("p"));
