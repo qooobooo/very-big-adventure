@@ -49,7 +49,7 @@ function fixture(enabled = false, count = 2) {
     gameDeck: id => c.state.decks[id], isReferenceRuntimeCard: () => false,
     selectedBotCount: () => 0, dragonDisabledSetting: () => true, exactMoveControlAmount: () => 4,
     selectedFontStyle: () => 'standard', gameModeFrom: ({ playerCount }) => playerCount === 1 ? 'solo' : 'multiplayer',
-    monsterStrengthMode: () => 'standard', selectedStartingCoins: () => 10, selectedUiStyle: () => 'classic', syncBotCountOptions: () => {},
+    monsterStrengthMode: () => 'standard', selectedStartingCoins: () => 10, selectedUiStyle: () => 'classic', momentIconsEnabled: () => true, syncBotCountOptions: () => {},
     currentPlayer: () => c.state.players[0], phoneActionsForPlayer: () => [], activeBoardConfig: { id: 'field2' },
     phoneCardPreviewSnapshot: () => null, phoneDiceRollSnapshot: () => null, dragonSnapshot: () => null,
     monsterRageBonus: () => 0, phoneRoom: {}, phonePlayerSnapshot: p => ({ id: p.id }), actionPromptRollContextSnapshot: () => null,
