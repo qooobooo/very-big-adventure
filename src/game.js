@@ -9111,12 +9111,12 @@ function buildDragonFinalSummary({ initiator, results, scores, strength, teamTot
   };
 }
 
-// Tabletop review, 12 Oct 2026: the boss rolls once per challenger but adds its own bonus once, with or without weapons.
-// 18 Oct 2026: the boss gets +3 for every challenger, the first included (was +10 for every challenger after the first).
-// 4 players: 3 rolls + 9.
+// 18 Oct 2026, back to the rule before 0.1.15: the boss rolls once per challenger and adds its strength bonuses
+// (weapons included) to every roll. Without weapons it also gets +3 per challenger, with weapons it does not.
+// 4 players without weapons: 3 rolls + bonuses×3 + 9; with weapons: 3 rolls + bonuses×3 + weapon bonuses×3.
 async function resolveFinalBattle(boss, animate = true) {
   const challengers = state.players.filter((player) => player.id !== boss.id);
-  const bossOpponentBonusPerPlayer = balance("boss.bonusPerOpponent", 3);
+  const bossOpponentBonusPerPlayer = legendaryWeaponsEnabled() ? 0 : balance("boss.bonusPerOpponent", 3);
   const bossOpponentBonus = bossOpponentBonusPerPlayer * challengers.length;
   state.isAnimating = animate;
   state.movingPlayerId = null;
@@ -9182,7 +9182,7 @@ async function resolveFinalBattle(boss, animate = true) {
 
   const bossRollResults = [];
   if (challengers.length > 1) {
-    log(`Босс бросает кубики ${challengers.length} раза, по разу на противника. Свой бонус он прибавляет один раз.`);
+    log(`Босс бросает кубики ${challengers.length} раза, по разу на противника, и к каждому броску прибавляет свои бонусы.`);
   }
   if (bossOpponentBonus) {
     log(`Босс получает <strong>+${bossOpponentBonus}</strong> к итоговой силе: по ${bossOpponentBonusPerPlayer} за каждого противника.`);
@@ -9197,7 +9197,7 @@ async function resolveFinalBattle(boss, animate = true) {
         buttonLabel: "В бой",
       });
     }
-    const result = await rollFinalBattlePower(boss, animate, { label: `Босс - ${boss.name}`, withoutBaseBonus: index > 0 });
+    const result = await rollFinalBattlePower(boss, animate, { label: `Босс - ${boss.name}` });
     bossRollResults.push(result);
     state.finalBattleProgress.bossRollsStarted = true;
     state.finalBattleProgress.bossForce += result.total;
@@ -9400,16 +9400,15 @@ function buildFinalBattleSummary({
   };
 }
 
-async function rollFinalBattlePower(player, animate, { label = "", opponentLegendaryWeapon = null, withoutBaseBonus = false } = {}) {
+async function rollFinalBattlePower(player, animate, { label = "", opponentLegendaryWeapon = null } = {}) {
   setFinalBattleRoller(player, Boolean(animate));
-  return rollPlayerBattlePower(player, animate, { label, isFinalBattle: true, opponentLegendaryWeapon, withoutBaseBonus });
+  return rollPlayerBattlePower(player, animate, { label, isFinalBattle: true, opponentLegendaryWeapon });
 }
 
 async function rollPlayerBattlePower(player, animate, {
   label = "",
   isFinalBattle = false,
   opponentLegendaryWeapon = null,
-  withoutBaseBonus = false,
 } = {}) {
   const diceCount = totalDiceForPlayer(player);
   const rawRolls = rollDice(diceCount);
@@ -9419,7 +9418,7 @@ async function rollPlayerBattlePower(player, animate, {
   const weaponAdjustedRolls = [...scytheResult.adjustedRolls];
   const rolls = await maybeUseDiceControl(player, weaponAdjustedRolls, { mode: "battle", title: "Контроль кубика: бросок силы" });
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
-  const baseBonus = withoutBaseBonus ? 0 : playerCombatBonus(player);
+  const baseBonus = playerCombatBonus(player);
   const playerBattlePotionBonus = await choosePlayerBattlePotion(player, isFinalBattle ? "финальной битве" : "битве с игроком");
   const curse = consumeNextBattlePenalty(player);
   const heroSwordBonus = heroSwordCombatBonus(player, rolls);
@@ -16321,7 +16320,7 @@ function syncWeaponsSettingControl() {
   ui.weaponsEnabled.disabled = locked;
   const hint = locked
     ? "Оружие можно переключить после завершения текущего действия или боя"
-    : "Включено: у финального монстра легендарное оружие, его забирает победитель монстра";
+    : "Включено: у финального монстра легендарное оружие, его забирает победитель монстра. Выключено: босс получает +3 силы за каждого противника";
   ui.weaponsEnabled.title = hint;
   if (ui.weaponsEnabled.parentElement) ui.weaponsEnabled.parentElement.title = hint;
 }
@@ -16341,8 +16340,8 @@ function applyWeaponsSetting() {
     state.legendaryWeapon = null;
   }
   log(enabled
-    ? "Оружие включено: финальный монстр получает легендарное оружие при следующем сражении."
-    : "Оружие выключено: легендарного оружия в игре нет.");
+    ? "Оружие включено: финальный монстр получает легендарное оружие при следующем сражении. Босс не получает +3 за противников."
+    : "Оружие выключено: легендарного оружия в игре нет. Босс получает +3 силы за каждого противника в финальной битве.");
   render();
 }
 

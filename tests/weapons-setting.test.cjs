@@ -39,8 +39,8 @@ function fixture(enabled = false, count = 2) {
     finalPositionBonuses: ps => new Map(ps.map(p => [p.id, 1])),
     finalBattleScore: (p, damage, position) => ({ playerId: p.id, total: damage + position, damage, damageToBoss: damage, position, coins: 0, shop: 0, steps: 0 }),
     bestFinalScorePlayer: (_scores, ps) => ps[0], finalScoreFormulaText: () => 'score',
-    rollFinalBattlePower: async (p, _animate, { withoutBaseBonus = false } = {}) => {
-      const baseBonus = withoutBaseBonus ? 0 : 3;
+    rollFinalBattlePower: async (p) => {
+      const baseBonus = 3;
       return { player: p, rolls: [4], rawRolls: [4], weaponAdjustedRolls: [4], rolled: 4, baseBonus, bonus: baseBonus, total: 4 + baseBonus };
     },
     showActionPrompt: async () => {}, revealLegendaryWeaponCard: async () => true,
@@ -147,17 +147,17 @@ test('live off clears ownership, conserves card/decks, preserves started setting
   assert.equal(c.state.decks.legendary.discard.length, 1);
 });
 
-// Tabletop review: the boss rolls once per challenger, adds its bonus (3 here) once and, since 18 Oct 2026, gets +3 for
-// every challenger, in both weapon modes.
+// 18 Oct 2026, the rule before 0.1.15: the boss rolls once per challenger, adds its bonus (3 here) to every roll and gets
+// +3 per challenger without weapons only.
 for (const count of [1, 2, 3, 4]) {
-  test(`final battle ${count} players: boss bonus once, +${3 * (count - 1)} for challengers; history/phone agree`, async () => {
+  test(`final battle ${count} players: boss bonus on every roll, +${3 * (count - 1)} for challengers without weapons; history/phone agree`, async () => {
     for (const enabled of [false, true]) {
       const c = fixture(enabled, count);
       if (enabled) c.state.legendaryWeapon = { card: gold, owner: 'player', ownerId: 0 };
       const opponents = c.state.players.slice(1);
-      const classic = 3 * opponents.length;
+      const classic = enabled ? 0 : 3 * opponents.length;
       const legendary = enabled ? opponents.reduce((sum, p) => sum + Math.floor(p.coins / 10), 0) : 0;
-      const expected = opponents.length * 4 + (opponents.length ? 3 : 0) + classic + legendary;
+      const expected = opponents.length * 7 + classic + legendary;
       const observed = [];
       c.render = () => { if (c.state.finalBattleProgress) { c.renderFinalBattleHud(); observed.push({ progress: { ...c.state.finalBattleProgress }, html: c.ui.finalBattleHud.innerHTML }); } };
       await c.resolveFinalBattle(c.state.players[0], false);
@@ -167,8 +167,8 @@ for (const count of [1, 2, 3, 4]) {
       const bossForce = summary.players[0].force;
       assert.equal(bossForce.total, expected);
       assert.equal(bossForce.opponentBonus, classic);
-      assert.equal(bossForce.opponentBonusPerPlayer, 3);
-      assert.equal(bossForce.bonus, opponents.length ? 3 : 0);
+      assert.equal(bossForce.opponentBonusPerPlayer, enabled ? 0 : 3);
+      assert.equal(bossForce.bonus, opponents.length * 3);
       assert.equal(summary.players[1]?.force.total ?? 7, 7);
       assert.equal(bossForce.legendaryBonus, legendary);
       assert.equal(c.state.history.finalSummary, summary);
