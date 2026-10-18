@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PnP Player Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800;900&family=Ruslan+Display&display=swap" rel="stylesheet">
+<!--
+  Печатный планшет игрока PnP, стиль C «картонные жетоны» (решение пользователя, 18 октября 2026).
+  A4 альбомный, все размеры в мм: печать 100 % без полей драйвера. ?p=dog|cat|otter|alpaca — игрок, ?s=2 — масштаб кадра.
+  Кадр: python3 tools/probe.py shot --path "/docs/design/pnp-boards/board.html?p=dog&s=2" --size 2246x1588
+  Клетки треков 13,5 мм под маркеры 12 мм. Иконки моментов — pnp_moment_*.png рядом.
+-->
+<style>
+  :root {
+    --ink: #3a1d08;
+    --cream: #fbf1d9;
+    --card: #f3dfb2;
+    --card-deep: #e6c98c;
+    --line: #5a3413;
+    --player: #8b1713;
+    --player-soft: #c8473f;
+    --cell: 13.5mm;
+    --gap: 1.2mm;
+  }
+  * { box-sizing: border-box; }
+  @page { size: A4 landscape; margin: 0; }
+  html, body { margin: 0; background: #d9d3c7; }
+  body { zoom: var(--s, 1); color: var(--ink); font: 700 3.6mm/1.15 "Rubik", system-ui, sans-serif; }
+  @media print { html, body { background: none; } body { zoom: 1; } }
+
+  .sheet { width: 297mm; height: 210mm; padding: 6mm; background: #fff; }
+
+  /* Вырубной картон: светлая кайма под вырезание, тёмный контур, внутри поле цвета игрока */
+  .board {
+    position: relative;
+    width: 100%; height: 100%;
+    border-radius: 9mm;
+    background: var(--cream);
+    border: 0.7mm solid var(--line);
+    padding: 3.2mm;
+  }
+  .board-face {
+    position: relative;
+    height: 100%;
+    border-radius: 6.5mm;
+    border: 0.6mm solid var(--line);
+    box-shadow: inset 0 0 0 2.2mm var(--player), inset 0 0 0 2.8mm var(--line);
+    background:
+      radial-gradient(circle at 18% 12%, rgba(255,255,255,.55), transparent 42%),
+      linear-gradient(var(--card), var(--card-deep));
+    padding: 6.5mm 7.5mm 6.5mm;
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    gap: 4mm;
+    overflow: hidden;
+  }
+  .board-face::before { /* лёгкое зерно картона */
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .22; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .22 0 0 0 0 .08 0 0 0 1.4 -.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Шапка: жетон игрока, имя на ленте цвета игрока */
+  .head { position: relative; display: grid; grid-template-columns: 30mm 1fr; align-items: center; column-gap: 5mm; }
+  .head-text { display: grid; justify-items: start; gap: 2.2mm; }
+  .portrait { width: 30mm; height: 30mm; display: block; }
+  .ribbon {
+    justify-self: start;
+    padding: 2.2mm 9mm 2.4mm 6mm;
+    background: var(--player);
+    color: var(--cream);
+    border: 0.6mm solid var(--line);
+    border-radius: 2.5mm 9mm 9mm 2.5mm;
+    font: 400 9mm/1 "Ruslan Display", "Rubik", serif;
+    letter-spacing: .04em;
+    box-shadow: inset 0 -1.2mm 0 rgba(0,0,0,.18);
+  }
+  .head-note { font: 700 3.2mm/1.3 "Rubik", sans-serif; color: #6d4520; }
+
+  /* Треки */
+  .tracks { position: relative; display: grid; gap: 2.4mm; }
+  .track { display: grid; grid-template-columns: 27mm minmax(0, 1fr) 24mm; align-items: center; gap: 3mm; }
+  .track-label { display: grid; grid-template-columns: 10mm 1fr; align-items: center; gap: 1.4mm; font: 800 3.5mm/1 "Rubik"; text-transform: uppercase; }
+  .track-label img { width: 10mm; height: 10mm; object-fit: contain; }
+  .cells { display: flex; gap: var(--gap); }
+  .cell {
+    width: var(--cell); height: var(--cell);
+    display: grid; place-items: center;
+    border-radius: 2.6mm;
+    background: var(--cream);
+    border: 0.45mm solid var(--line);
+    font: 800 4.4mm/1 "Rubik";
+    box-shadow: inset 0 -0.8mm 0 rgba(90,52,19,.14);
+  }
+  .cell.is-minus { background: #d8cbd9; color: #4b2a55; }
+  .cell.is-start { background: #fff7e2; outline: 0.7mm solid var(--player); outline-offset: -1.6mm; }
+  .cell.is-five { background: #f7e7bf; }
+  .lap {
+    height: var(--cell); width: 24mm; padding: 0 2mm;
+    display: grid; place-items: center;
+    border: 0.45mm dashed var(--line); border-radius: 2.6mm;
+    font: 800 3.1mm/1.05 "Rubik"; text-align: center; color: #6d4520;
+    background: rgba(251,241,217,.55);
+  }
+
+  /* Низ: Лавка Джо по моментам + карман монет и артефакты */
+  .bottom { position: relative; display: grid; grid-template-columns: 1fr 62mm; gap: 4mm; min-height: 0; }
+  .panel {
+    position: relative;
+    border: 0.5mm solid var(--line);
+    border-radius: 4mm;
+    background: rgba(251,241,217,.72);
+    padding: 2.6mm 3mm 3mm;
+    min-height: 0;
+    display: grid; grid-template-rows: auto 1fr; gap: 2mm;
+  }
+  .panel h2 { margin: 0; font: 400 5mm/1 "Ruslan Display", "Rubik", serif; letter-spacing: .03em; display: flex; align-items: baseline; gap: 3mm; }
+  .panel h2 small { font: 700 2.9mm/1.2 "Rubik"; color: #6d4520; letter-spacing: 0; }
+  .moments { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2.4mm; min-height: 0; }
+  .moment {
+    display: grid; grid-template-rows: auto 1fr; justify-items: center; gap: 1.6mm;
+    border: 0.45mm dashed #8a6231; border-radius: 3mm; padding: 2mm 1.6mm;
+    background: rgba(255,250,236,.6);
+  }
+  .moment-head { display: grid; justify-items: center; gap: 1mm; }
+  .moment-head img { width: 13mm; height: 13mm; object-fit: contain; display: block; }
+  .moment-head span { font: 800 3.4mm/1 "Rubik"; text-transform: uppercase; }
+  .moment-slot { width: 100%; border-radius: 2mm; background: repeating-linear-gradient(-45deg, rgba(138,98,49,.07) 0 2mm, transparent 2mm 4mm); }
+
+  .side { display: grid; grid-template-rows: auto 1fr; gap: 3mm; min-height: 0; }
+  .coins { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5mm; justify-items: center; }
+  .coin-spot { display: grid; justify-items: center; gap: .8mm; font: 800 3.2mm/1 "Rubik"; }
+  .coin-spot i {
+    width: 12.5mm; height: 12.5mm; border-radius: 50%;
+    border: 0.45mm dashed #8a6231; display: grid; place-items: center;
+    background: rgba(255,224,130,.35); font: 900 4mm/1 "Rubik"; font-style: normal;
+  }
+  .artifacts .moment-slot { min-height: 20mm; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="board">
+    <div class="board-face">
+      <header class="head">
+        <img class="portrait" id="portrait" alt="">
+        <div class="head-text">
+          <div class="ribbon" id="name"></div>
+          <div class="head-note">Маркеры 12 мм — в клетки треков. Трек пройден по кругу — маркер на 0, жетон «+10» в окошко справа</div>
+        </div>
+      </header>
+
+      <section class="tracks" id="tracks"></section>
+
+      <section class="bottom">
+        <div class="panel">
+          <h2>Лавка Джо <small>карты кладутся в столбик своего момента, внахлёст</small></h2>
+          <div class="moments" id="moments"></div>
+        </div>
+        <div class="side">
+          <div class="panel">
+            <h2>Монеты</h2>
+            <div class="coins">
+              <div class="coin-spot"><i>1</i></div>
+              <div class="coin-spot"><i>5</i></div>
+              <div class="coin-spot"><i>10</i></div>
+              <div class="coin-spot"><i>50</i></div>
+            </div>
+          </div>
+          <div class="panel artifacts">
+            <h2>Артефакты</h2>
+            <div class="moment-slot"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+<script>
+  const players = {
+    dog: ["Пёс", "#8b1713", "#c8473f", "../pnp-counters/c_player.png"],
+    cat: ["Кот", "#4b1a78", "#7b4bb0", "../../../assets/player-tokens/cat.png"],
+    otter: ["Выдра", "#0b748b", "#3aa0b6", "../../../assets/player-tokens/otter.png"],
+    alpaca: ["Альпака", "#d56b00", "#f0953a", "../../../assets/player-tokens/alpaca.png"],
+  };
+  const params = new URLSearchParams(location.search);
+  const [name, color, soft, portrait] = players[params.get("p")] || players.dog;
+  const root = document.documentElement.style;
+  root.setProperty("--player", color);
+  root.setProperty("--player-soft", soft);
+  root.setProperty("--s", Number(params.get("s")) || 1);
+  document.getElementById("name").textContent = name;
+  document.getElementById("portrait").src = portrait;
+
+  const icons = "../../../assets/icons/";
+  const range = (from, to) => Array.from({ length: to - from + 1 }, (_, i) => from + i);
+  const tracks = [
+    ["Сила", icons + "strength_sword_512.png", range(-3, 10), true],
+    ["Шаги", icons + "steps_512.png", range(0, 10), true],
+    ["Кубики", icons + "dice.png", range(1, 6), false],
+  ];
+  document.getElementById("tracks").innerHTML = tracks.map(([label, icon, values, lap]) => `
+    <div class="track">
+      <div class="track-label"><img src="${icon}" alt="">${label}</div>
+      <div class="cells">${values.map((v) => {
+        const cls = ["cell", v < 0 ? "is-minus" : "", v === values.find((x) => x >= 0) || (v === 1 && !lap) ? "is-start" : "", v === 5 ? "is-five" : ""].join(" ");
+        return `<span class="${cls.trim()}">${v > 0 && lap ? "+" + v : v}</span>`;
+      }).join("")}</div>
+      ${lap ? '<div class="lap">+10<br>за круг</div>' : ""}
+    </div>`).join("");
+
+  const moments = [
+    ["turn_start", "Начало хода"],
+    ["move", "Ход"],
+    ["battle", "Бой"],
+    ["shop", "Лавка"],
+    ["reaction", "Реакция"],
+  ];
+  document.getElementById("moments").innerHTML = moments.map(([key, label]) => `
+    <div class="moment">
+      <div class="moment-head"><img src="./pnp_moment_${key}.png" alt=""><span>${label}</span></div>
+      <div class="moment-slot"></div>
+    </div>`).join("");
+</script>
+</body>
+</html>
