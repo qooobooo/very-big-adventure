@@ -517,7 +517,8 @@ h2 {
   align-items: end;
   display: grid;
   grid-template-columns:
-    repeat(2, minmax(54px, 0.56fr))
+    minmax(64px, 0.64fr)
+    minmax(54px, 0.56fr)
     minmax(232px, 232px)
     minmax(150px, 1.55fr);
   justify-content: stretch;
@@ -541,6 +542,12 @@ h2 {
 .season-controls select,
 .season-controls button {
   width: 100%;
+}
+
+/* Стрелку браузер рисует сам, около 20px внутри поля: с отступом 28px справа в узком поле не видно ни «2», ни «0» */
+.season-controls select {
+  padding-right: 2px;
+  padding-left: 6px;
 }
 
 .settings-toggle {
@@ -7859,7 +7866,7 @@ body[data-controller-mode="big-button"] .controller-top h1 {
   order: 2;
 }
 
-@media (min-width: 1181px) {
+@media (min-width: 1200px) {
   .side-panel:has(.phone-room-panel:not([hidden])) {
     grid-template-rows: auto minmax(min-content, 1fr);
     align-content: stretch;
@@ -9137,10 +9144,6 @@ button.event-card-preview:focus-visible {
 
 .event-card-reveal.is-revealed .event-card-preview {
   --card-art: url("./assets/cards/event_front.png?v=20260612-1800");
-}
-
-.event-card-reveal.is-revealed .event-card-preview.is-event-monster-rage {
-  --card-art: url("./assets/cards/event_monster-rage_front.png?v=20260727-0325");
 }
 
 button.event-card-preview.is-event-artifact-card::before,
@@ -12275,7 +12278,14 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
   }
 }
 
-@media (max-width: 1180px) {
+/* До 1320px колонка доски уже 686px, которых просит ряд под доской: «Бросить» уезжал за край */
+@media (min-width: 1200px) and (max-width: 1319px) {
+  .dice-panel {
+    grid-template-columns: 44px 44px minmax(140px, 0.7fr) minmax(0, 1.45fr) 128px;
+  }
+}
+
+@media (max-width: 1199px) {
   .play-area,
   .lower-grid {
     grid-template-columns: 1fr;
@@ -12286,12 +12296,28 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
     align-items: start;
   }
 
+  /* Ряд «Игроков… Новая игра» шире трети экрана: панель партии занимает две колонки */
+  .side-panel .game-settings {
+    grid-column: span 2;
+  }
+
   .score-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .telemetry-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Уже 960px и две колонки тесны: панели идут друг под другом, как на 820px */
+@media (max-width: 960px) {
+  .side-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .side-panel .game-settings {
+    grid-column: auto;
   }
 }
 
@@ -12789,12 +12815,12 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
 
   .season-controls select {
     min-height: 29px;
-    padding: 0 18px 0 7px;
+    padding: 0 2px 0 6px;
     font-size: 0.72rem;
   }
 
   .season-controls #playerCount {
-    padding-right: 12px;
+    padding-right: 2px;
     padding-left: 5px;
     font-size: 0.68rem;
   }
@@ -12815,6 +12841,20 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
     width: 32px;
     height: 32px;
     min-height: 32px;
+  }
+}
+
+/* На узком телефоне ряд не влезает: «Соло» обрезалось, «Новая игра» вылезала. Иконки — второй строкой */
+@media (max-width: 440px) {
+  .season-controls {
+    gap: 6px 4px;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 0.6fr) minmax(0, 1.4fr);
+  }
+
+  .season-controls > .header-icon-actions {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    justify-content: space-between;
   }
 }
 
@@ -13476,4 +13516,17 @@ body[data-ui-style="tabletop"] .history-save:focus-visible {
 .controller-card-preview-face .controller-card-face-stage.is-preview .event-card-text.has-card-face-icon.is-description-long,
 .controller-card-preview-face .controller-card-face-stage.is-preview .shop-card-text.has-card-face-icon.is-description-long {
   --card-face-description-size: clamp(0.5rem, 3.7cqw, 0.8rem);
+}
+
+/* Селекты «Игроков» и «Ботов» в классике: стрелка своя, с отступом 9px от правого края, как у остальных полей.
+   Браузерная стрелка в узком поле прижималась к краю; место под неё — в правом отступе, цифра не обрезается */
+body:not([data-ui-style="tabletop"]) .season-controls :is(select, #playerCount) {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 24px;
+  padding-left: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.5 6 6l4.5-4.5' fill='none' stroke='%23e8e4d8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 9px center;
+  background-size: 11px 7px;
+  background-repeat: no-repeat;
 }

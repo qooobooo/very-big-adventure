@@ -6,8 +6,10 @@
     <title>Очень Большая Бродилка — веб-прототип</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260728-0820" />
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800;900&family=Ruslan+Display&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20261018-2230" />
+    <link rel="stylesheet" href="./styles/moments.css?v=20261018-2200" />
+    <link rel="stylesheet" href="./styles/tabletop.css?v=20261013-1600" />
   </head>
   <body data-ui-style="classic" data-font-style="standard">
     <main class="app-shell">
@@ -42,6 +44,7 @@
                 </span>
               </button>
               <div id="fieldEffect" class="field-effect"></div>
+              <div id="tableHost" class="table-host"></div>
               <div id="turnActions" class="turn-actions" aria-label="Доступные действия"></div>
               <button id="rollBtn">Бросить <img class="dice-icon" src="./assets/icons/dice.png?v=20260524-0305" alt="" aria-hidden="true"></button>
             </div>
@@ -102,6 +105,13 @@
                 </button>
                 <button id="fullscreenBtn" class="secondary fullscreen-toggle header-icon-button" type="button" title="Открыть игру на весь экран" aria-label="На весь экран">
                   <img class="fullscreen-icon" src="./assets/icons/fullscreen_button.svg?v=20260621-2305" alt="" aria-hidden="true">
+                </button>
+                <button id="tableMenuBtn" class="secondary header-icon-button table-menu-toggle" type="button" title="Партия: игроки, боты, новая игра" aria-label="Партия" aria-expanded="false">
+                  <svg class="table-menu-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 9.5h16v9.25c0 .7-.55 1.25-1.25 1.25H5.25C4.55 20 4 19.45 4 18.75Z" />
+                    <path d="M3.25 6.25C3.25 5.55 3.8 5 4.5 5h15c.7 0 1.25.55 1.25 1.25V9.5H3.25Z" />
+                    <path d="M10 12.75h4" />
+                  </svg>
                 </button>
                 <span id="phoneRoomHeaderFeedback" class="phone-room-header-feedback" role="status" aria-live="polite" hidden>Комната скопирована</span>
               </div>
@@ -213,6 +223,13 @@
                 </select>
               </label>
               <label class="settings-select">
+                <span>Лавка</span>
+                <select id="shopMode">
+                  <option value="market" selected>Рынок</option>
+                  <option value="classic">Классика</option>
+                </select>
+              </label>
+              <label class="settings-select">
                 <span>Скорость ботов</span>
                 <select id="botSpeed">
                   <option value="standard" selected>Стандартно</option>
@@ -230,6 +247,10 @@
               <label class="cheat-toggle">
                 <input id="showWalkPath" type="checkbox" />
                 <span>Не показывать контур хода</span>
+              </label>
+              <label class="cheat-toggle">
+                <input id="momentIcons" type="checkbox" checked />
+                <span>Иконки на Лавке Джо</span>
               </label>
               <label class="cheat-toggle">
                 <input id="hidePlayers" type="checkbox" />
@@ -252,6 +273,7 @@
             </div>
             <div id="tadamTable" class="tadam-table"></div>
           </section>
+          <section id="tableDecks" class="table-decks" aria-label="Колоды на столе"></section>
         </aside>
       </section>
 
@@ -345,6 +367,6 @@
 
     </main>
 
-    <script type="module" src="./src/game.js?v=20260922-weapons"></script>
+    <script type="module" src="./src/game.js?v=20261018-2300"></script>
   </body>
 </html>

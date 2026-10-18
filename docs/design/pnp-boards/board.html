@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PnP Player Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&display=swap" rel="stylesheet">
+<!--
+  Печатный планшет игрока PnP, стиль C «картонные жетоны» (решение пользователя, 18 октября 2026).
+  Правки пользователя: только треки силы 0…+10, шагов 0…+10 через 2 и кубиков 1–4, окошки «+10 за круг».
+  Игроки отличаются только цветом. Фон — дерево таверны в свете свечей (tavern_wood.jpg, арт Codex CLI).
+  Размер — четверть A4: полоса 210 × 74,25 мм, книжный лист режется тремя горизонтальными линиями (правка пользователя).
+  v4 (после «слеплено в фотошопе», 18 октября 2026): клетки утоплены в вырезанные желобки, иконки — крупные медальоны,
+  один свет и одно зерно лежат поверх всего планшета, чтобы дерево, клетки и иконки были одним материалом.
+  Все размеры в мм: печать 100 % без масштабирования. Клетки 13,5 мм под маркеры 12 мм. Поля 3,5 мм по бокам — под поле принтера.
+  ?p=dog|cat|otter|alpaca — цвет игрока; ?sheet=1 — лист A4 для печати: 4 планшета и линии реза; ?s=3 — масштаб кадра.
+  Кадр планшета: python3 tools/probe.py shot --path "/docs/design/pnp-boards/board.html?p=dog&s=3" --size 2381x842
+  Кадр листа:    python3 tools/probe.py shot --path "/docs/design/pnp-boards/board.html?sheet=1&s=2" --size 1588x2246
+-->
+<style>
+  :root {
+    --ink: #3a1d08;
+    --cream: #fff6e0;
+    --gold: #e2ac45;
+    --player: #8b1713;
+    --cell: 13.5mm;
+    --gap: 0.8mm;
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .23 0 0 0 0 .11 0 0 0 0 .03 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  * { box-sizing: border-box; }
+  @page { size: A4 portrait; margin: 0; }
+  html, body { margin: 0; background: #fff; }
+  body { zoom: var(--s, 1); color: var(--ink); font: 800 4mm/1.1 "Rubik", system-ui, sans-serif; }
+  @media print { body { zoom: 1; } }
+
+  .sheet { width: 210mm; height: 297mm; position: relative; }
+
+  /* Полоса планшета — четверть A4. Рамка: тёмный контур, цвет игрока, тонкая латунная жилка */
+  .board { position: relative; width: 210mm; height: 74.25mm; padding: 2.4mm 3.5mm; }
+  .board-face {
+    position: relative;
+    isolation: isolate;
+    height: 100%;
+    border-radius: 4.2mm;
+    border: 0.5mm solid var(--ink);
+    padding: 5mm 4.1mm;
+    display: grid;
+    align-content: center;
+    gap: 3.6mm;
+    overflow: hidden;
+  }
+  /* Дерево спокойнее фотографии: мягче контраст, теплее тон */
+  .board-face::before {
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    background: url("./tavern_wood.jpg") center / cover;
+    filter: contrast(.8) saturate(1.05) brightness(1.12);
+  }
+  /* Один свет и одно зерно поверх всего — дерево, клетки и медальоны выглядят одним материалом */
+  .board-face::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+    border-radius: inherit;
+    background:
+      radial-gradient(ellipse 60% 85% at 38% 30%, rgba(255, 214, 140, .22), transparent 70%),
+      radial-gradient(ellipse 120% 140% at 50% 50%, transparent 55%, rgba(40, 14, 0, .34));
+    mix-blend-mode: multiply;
+  }
+  .board-face > .grain {
+    position: absolute; inset: 0; pointer-events: none; z-index: 5;
+    background: var(--grain) 0 0 / 40mm 40mm;
+    mix-blend-mode: multiply; opacity: .22;
+  }
+  /* Рамка поверх дерева: тёмный контур, цвет игрока, латунная жилка */
+  .board-face > .frame {
+    position: absolute; inset: 0; pointer-events: none; z-index: 7;
+    border-radius: inherit;
+    box-shadow:
+      inset 0 0 0 2.1mm var(--player),
+      inset 0 0 0 2.5mm var(--gold),
+      inset 0 0 0 2.9mm var(--ink),
+      inset 0 0.6mm 0 2.9mm rgba(30, 10, 0, .5),
+      inset 0 0 1.6mm 3mm rgba(30, 10, 0, .35);
+  }
+  .board-face > .shine {
+    position: absolute; inset: 0; pointer-events: none; z-index: 6;
+    background: radial-gradient(ellipse 55% 75% at 36% 28%, rgba(255, 226, 170, .16), transparent 70%);
+    mix-blend-mode: screen;
+  }
+
+  .track { display: grid; grid-template-columns: 15mm 1fr auto; align-items: center; column-gap: 1.6mm; }
+
+  /* Медальон трека: кремовое лицо, кольцо цвета игрока, латунная жилка, подпись под ним */
+  .badge { display: grid; justify-items: center; gap: 0.5mm; margin-block: -1.6mm; }
+  .medal {
+    width: 14.6mm; height: 14.6mm; border-radius: 50%;
+    display: grid; place-items: center;
+    background: radial-gradient(circle at 40% 32%, #fffdf6, #f4e1b4 72%, #e6c98e);
+    border: 1mm solid var(--player);
+    box-shadow:
+      0 0 0 0.45mm var(--ink),
+      inset 0 0 0 0.35mm var(--gold),
+      inset 0 0 0 0.75mm var(--ink),
+      inset 0 -0.8mm 1mm rgba(120, 70, 20, .25),
+      0 0.8mm 1mm rgba(20, 6, 0, .55);
+  }
+  .medal img { width: 11.6mm; height: 11.6mm; object-fit: contain; filter: drop-shadow(0 0.35mm 0.2mm rgba(40, 16, 0, .45)); }
+  .badge b {
+    font: 900 2.3mm/1 "Rubik"; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--cream);
+    text-shadow: 0 0.25mm 0 var(--ink), 0 0 0.6mm rgba(30, 10, 0, .9), 0 0 1.2mm rgba(30, 10, 0, .6);
+  }
+
+  /* Желобок, вырезанный в дереве: клетки лежат в нём, а не на дереве */
+  .groove {
+    justify-self: start;
+    display: flex; gap: var(--gap);
+    padding: 1.1mm;
+    border-radius: 3.4mm;
+    background: linear-gradient(rgba(34, 12, 0, .62), rgba(52, 22, 4, .42));
+    box-shadow:
+      inset 0 0.8mm 1.2mm rgba(15, 4, 0, .75),
+      inset 0 -0.3mm 0 rgba(255, 215, 150, .18),
+      0 0.35mm 0 rgba(255, 220, 160, .28);
+  }
+  .cell {
+    position: relative;
+    width: var(--cell); height: var(--cell);
+    display: grid; place-items: center;
+    border-radius: 2.4mm;
+    background: linear-gradient(170deg, #fffaf0 0%, #f7e8c6 55%, #ecd6a5 100%);
+    border: 0.4mm solid var(--ink);
+    box-shadow:
+      inset 0 0.5mm 0 rgba(255, 255, 255, .85),
+      inset 0 -0.8mm 0 rgba(150, 95, 35, .28),
+      0 0.4mm 0.5mm rgba(10, 2, 0, .5);
+    font: 900 4.6mm/1 "Rubik";
+    letter-spacing: -.02em;
+  }
+  .cell.is-start::before {
+    content: ""; position: absolute; inset: 0.9mm;
+    border-radius: 1.6mm;
+    border: 0.75mm solid var(--player);
+  }
+
+  /* Окошко «+10» за круг: такое же гнездо под жетон 12 мм, но тёмное — сюда кладут жетон, а не маркер.
+     Без «+» в клетках треков, без стрелки и подписи у окошка, окошко на одной линии с треком (правка пользователя, 18 октября 2026) */
+  .lap-slot {
+    width: var(--cell); height: var(--cell);
+    display: grid; place-items: center;
+    border-radius: 2.4mm;
+    border: 0.45mm dashed rgba(255, 238, 200, .85);
+    background: radial-gradient(circle at 50% 40%, rgba(110, 50, 10, .35), rgba(30, 10, 0, .25));
+    color: var(--cream);
+    text-shadow: 0 0.25mm 0 var(--ink);
+  }
+  .lap-slot b { font: 900 4.4mm/1 "Rubik"; letter-spacing: -.02em; }
+
+  /* Лист для печати: линии реза между планшетами и метки на полях */
+  /* На листе поля сверху и снизу 4 мм и по бокам 4,5 мм — под непечатное поле принтера; лицо планшета того же размера */
+  .sheet { padding-top: 4mm; overflow: hidden; }
+  .sheet .board { height: 72.25mm; padding: 1.4mm 4.5mm; }
+  .sheet .board-face { padding-inline: 3.6mm; }
+  .cut { position: absolute; left: 0; right: 0; height: 0; border-top: 0.25mm dashed #8a7a66; }
+  .cut::before, .cut::after { content: "✂"; position: absolute; top: -2.3mm; font: 400 3.4mm/1 system-ui; color: #8a7a66; }
+  .cut::before { left: 0.4mm; }
+  .cut::after { right: 0.4mm; transform: scaleX(-1); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const colors = { dog: "#8b1713", cat: "#4b1a78", otter: "#0b748b", alpaca: "#d56b00" };
+  const params = new URLSearchParams(location.search);
+  document.documentElement.style.setProperty("--s", Number(params.get("s")) || 1);
+
+  const icons = "../../../assets/icons/";
+  const steps = (from, to, by = 1) => Array.from({ length: Math.floor((to - from) / by) + 1 }, (_, i) => from + i * by);
+  const tracks = [
+    ["Сила", icons + "strength_sword_512.png", steps(0, 10), true],
+    ["Шаги", icons + "steps_512.png", steps(0, 10, 2), true],
+    ["Кубики", icons + "dice.png", steps(1, 4), false],
+  ];
+  const trackMarkup = ([label, icon, values, signed]) => `
+    <div class="track">
+      <div class="badge"><div class="medal"><img src="${icon}" alt=""></div><b>${label}</b></div>
+      <div class="groove">${values.map((v, i) =>
+        `<span class="cell${i === 0 ? " is-start" : ""}">${v}</span>`).join("")}</div>
+      ${signed ? `<div class="lap groove"><div class="lap-slot"><b>+10</b></div></div>` : "<span></span>"}
+    </div>`;
+  const boardMarkup = (player) => `
+    <div class="board" style="--player: ${colors[player] || colors.dog}">
+      <div class="board-face">${tracks.map(trackMarkup).join("")}<i class="grain"></i><i class="shine"></i><i class="frame"></i></div>
+    </div>`;
+
+  const root = document.getElementById("root");
+  if (params.get("sheet")) {
+    const cuts = [1, 2, 3].map((i) => `<div class="cut" style="top: ${(4 + i * 72.25).toFixed(2)}mm"></div>`).join("");
+    root.innerHTML = `<div class="sheet">${["dog", "cat", "otter", "alpaca"].map(boardMarkup).join("")}${cuts}</div>`;
+  } else {
+    root.innerHTML = boardMarkup(params.get("p"));
+  }
+</script>
+</body>
+</html>

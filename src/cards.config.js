@@ -1,3 +1,12 @@
+// When a Лавка Джо card triggers; the card face shows it as an icon and the player board stacks cards by it.
+export const shopCardMoments = {
+  "turn-start": "Начало хода",
+  move: "Ход",
+  battle: "Бой",
+  shop: "Лавка",
+  reaction: "Реакция",
+};
+
 export const cardConfig = {
   good: [
     {
@@ -132,6 +141,13 @@ export const cardConfig = {
       title: "Разворот",
       description: "Оставь эту карту себе. Когда двигаешься назад, можешь сбросить эту карту и вместо этого передвинуться на столько же шагов вперед",
       effect: { type: "backward-reversal" },
+    },
+    {
+      id: "overtake-toll",
+      count: 2,
+      title: "Застава",
+      description: "Чтобы тебя обогнать, игрок должен заплатить тебе 10 монет, в противном случае он останавливается на твоей клетке. Если игрок заплатил - сбрось эту карту",
+      effect: { type: "overtake-toll", cost: 10 },
     },
     {
       id: "coin-tribute",
@@ -606,16 +622,6 @@ export const cardConfig = {
       effect: { type: "event-joe-coupon", cost: 10 },
     },
     {
-      id: "speed-boots",
-      count: 1,
-      title: "Сапоги Скорости",
-      description: "Все игроки бросают 1 кубик и прибавляют бонусы шагов. Победитель получает артефакт Сапоги Скорости",
-      artifact_desr: "Сапоги Скорости дают +5 к шагам",
-      artifact: true,
-      icon: "./assets/icons/artifact_speed_boots_512.png",
-      effect: { type: "event-speed-boots", amount: 5 },
-    },
-    {
       id: "magic-pickaxe",
       count: 1,
       title: "Волшебная Кирка",
@@ -630,7 +636,7 @@ export const cardConfig = {
       count: 1,
       title: "Золотая Подкова",
       description: "Все игроки бросают свои кубики. Игрок с наименьшим результатом получает артефакт Золотая Подкова",
-      artifact_desr: "Если в броске движения выпала хотя бы одна 1, получи 3 монеты",
+      artifact_desr: "Во время броска хода получи 3 монеты за каждую выпавшую 1",
       artifact: true,
       icon: "./assets/icons/artifact_golden_horseshoe_512.png",
       effect: { type: "event-golden-horseshoe", amount: 3 },
@@ -643,6 +649,26 @@ export const cardConfig = {
       artifact: true,
       icon: "./assets/icons/artifact_traveler_compass_512.png",
       effect: { type: "event-traveler-compass", cost: 3, dice: 1, steps: 1 },
+    },
+    {
+      id: "marching-horn",
+      count: 1,
+      title: "Походный горн",
+      description: "Игрок с наименьшим бонусом шагов получает артефакт Походный горн. При ничьей эти игроки бросают кубик",
+      artifact_desr: "В начале хода можешь заплатить 10 монет и получить +2 к шагам",
+      artifact: true,
+      icon: "./assets/icons/artifact_marching_horn_512.png",
+      effect: { type: "event-marching-horn", steps: 2, cost: 10 },
+    },
+    {
+      id: "training-dummy",
+      count: 1,
+      title: "Тренировочный манекен",
+      description: "Игрок с наименьшим бонусом силы получает артефакт Тренировочный манекен. При ничьей эти игроки бросают кубик",
+      artifact_desr: "В начале хода можешь заплатить 10 монет и получить +1 к силе",
+      artifact: true,
+      icon: "./assets/icons/artifact_training_dummy_512.png",
+      effect: { type: "event-training-dummy", amount: 1, cost: 10 },
     },
     {
       id: "event-joe-game",
@@ -686,6 +712,7 @@ export const cardConfig = {
       title: "Тренировочный меч",
       shortTitle: "+1 к силе",
       description: "+1 к силе",
+      moment: "battle",
       effect: { type: "passive-battle-bonus", amount: 1 },
     },
     {
@@ -694,6 +721,7 @@ export const cardConfig = {
       title: "Быстрые сапоги",
       shortTitle: "+2 к шагам",
       description: "+2 к шагам",
+      moment: "move",
       effect: { type: "passive-step-bonus", steps: 2 },
     },
     {
@@ -701,6 +729,7 @@ export const cardConfig = {
       count: 5,
       title: "Скопление силы",
       description: 'Дает +1 к силе за каждую другую карту "Скопление силы"',
+      moment: "battle",
       effect: { type: "strength-cluster", amount: 1 },
     },
     {
@@ -708,6 +737,7 @@ export const cardConfig = {
       count: 5,
       title: "Скопление скорости",
       description: 'Дает +2 к шагам за каждую другую карту "Скопление скорости"',
+      moment: "move",
       effect: { type: "speed-cluster", steps: 2 },
     },
     {
@@ -716,6 +746,7 @@ export const cardConfig = {
       title: "Зеленый бонус",
       shortTitle: "Зеленое +5",
       description: "Зеленые поля дают ещё +5 монет",
+      moment: "move",
       effect: { type: "green-fields-plus5", amount: 5 },
     },
     {
@@ -724,6 +755,7 @@ export const cardConfig = {
       title: "Боевой эликсир",
       shortTitle: "+3 к силе",
       description: "Во время боя с монстром можешь заплатить 5 монет и получить +3 силы на этот бой",
+      moment: "battle",
       effect: { type: "monster-strength-plus3", amount: 3, cost: 5 },
     },
     {
@@ -732,6 +764,7 @@ export const cardConfig = {
       title: "Скидка от Джо",
       shortTitle: "Цена 3",
       description: "Во время покупок карт Лавка Джо плати только 3 монеты",
+      moment: "shop",
       effect: { type: "shop-fixed-cost-3", cost: 3 },
     },
     {
@@ -739,6 +772,7 @@ export const cardConfig = {
       count: 2,
       title: "Золотая коллекция",
       description: "Получи 1 монету в начале хода. Получи ещё 2 за каждый артефакт",
+      moment: "turn-start",
       effect: { type: "golden-collection", amount: 1, artifactAmount: 2 },
     },
     {
@@ -747,15 +781,8 @@ export const cardConfig = {
       title: "Дубль на монеты",
       shortTitle: "Дубль: монеты",
       description: "Если во время хода хотя бы на двух кубиках выпало одно число, получи 5 монет",
+      moment: "move",
       effect: { type: "duplicate-dice-coins", amount: 5 },
-    },
-    {
-      id: "duplicate-dice-steps",
-      count: 2,
-      title: "Дубль на шаги",
-      shortTitle: "Дубль: шаги",
-      description: "Если во время хода хотя бы на двух кубиках выпало одно число, сделай 5 шагов вперед",
-      effect: { type: "duplicate-dice-steps", steps: 5 },
     },
     {
       id: "tadam-income",
@@ -763,6 +790,7 @@ export const cardConfig = {
       title: "Эхо ТАДАМ!",
       shortTitle: "Тадам +3",
       description: "Каждый раз, когда кто-то разыгрывает карту Тадам!, получи 3 монеты",
+      moment: "reaction",
       effect: { type: "tadam-income", amount: 3 },
     },
     {
@@ -771,20 +799,15 @@ export const cardConfig = {
       title: "Эхо События",
       shortTitle: "Событие +3",
       description: "Каждый раз, когда кто-то разыгрывает карту Событие, получи 3 монеты",
+      moment: "reaction",
       effect: { type: "event-income", amount: 3 },
-    },
-    {
-      id: "others-loss-income",
-      count: 2,
-      title: "Чужая расплата",
-      description: "Когда кто-то другой теряет монеты, не совершая покупку, получи 3 монет",
-      effect: { type: "others-loss-income", amount: 3 },
     },
     {
       id: "monster-victory-income",
       count: 2,
       title: "Охотничья доля",
       description: "Когда другой игрок побеждает монстра, получи 5 монет",
+      moment: "reaction",
       effect: { type: "monster-victory-income", amount: 5 },
     },
     {
@@ -793,6 +816,7 @@ export const cardConfig = {
       title: "Развитие силы",
       shortTitle: "Победа: +1 сила",
       description: "При победе над монстром, получи +1 к силе",
+      moment: "battle",
       effect: { type: "monster-victory-strength", amount: 1 },
     },
     {
@@ -801,6 +825,7 @@ export const cardConfig = {
       title: "Развитие скорости",
       shortTitle: "Победа: +2 шага",
       description: "При победе над монстром, получи +2 к шагам",
+      moment: "battle",
       effect: { type: "monster-victory-steps", steps: 2 },
     },
     {
@@ -809,23 +834,8 @@ export const cardConfig = {
       title: "Привилегия Джо",
       shortTitle: "Выбор из 3",
       description: "Во время покупок карт Лавка Джо выбирай из 3 карт",
+      moment: "shop",
       effect: { type: "shop-choice-3-cost-3", amount: 3 },
-    },
-    {
-      id: "turn-strength-buy",
-      count: 2,
-      title: "Платная тренировка",
-      shortTitle: "10 монет: +1 сила",
-      description: "Раз в ход можешь заплатить 10 монет и получить +1 к силе",
-      effect: { type: "turn-strength-buy", amount: 1, cost: 10 },
-    },
-    {
-      id: "turn-steps-buy",
-      count: 2,
-      title: "Платный марш",
-      shortTitle: "10 монет: +2 шага",
-      description: "Раз в ход можешь заплатить 10 монет и получить +2 к шагам",
-      effect: { type: "turn-steps-buy", steps: 2, cost: 10 },
     },
     {
       id: "start-strength",
@@ -833,6 +843,7 @@ export const cardConfig = {
       title: "Домашний старт",
       shortTitle: "Старт: +1 сила",
       description: "Каждый раз возвращаясь на поле Старт получи +1 к силе",
+      moment: "move",
       effect: { type: "start-strength", amount: 1 },
     },
   ],

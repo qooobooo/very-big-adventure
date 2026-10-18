@@ -1,14 +1,23 @@
-import { cardConfig } from "./cards.config.js?v=20260728-0800";
-import { boardDoorConfigs, doorConfigs } from "./game.config.js?v=20260703-0118";
+import { cardConfig, shopCardMoments } from "./cards.config.js?v=20261012-0320";
+import { balanceConfig, boardDoorConfigs, doorConfigs } from "./game.config.js?v=20261016-1200";
+
+// Balance numbers by key from src/game.config.js (the Google Sheet tab «Баланс»). The second argument is the эталон:
+// tests and probes run on it, and the game falls back to it when the config has no such key.
+const balanceValues = new Map(balanceConfig.map((param) => [param.key, Number(param.value)]));
 
 const boardEl = document.querySelector("#board");
 const scoreStripEl = document.querySelector("#scoreStrip");
 const gameLogEl = document.querySelector("#gameLog");
 const gameHistoryEl = document.querySelector("#gameHistory");
 const tadamTableEl = document.querySelector("#tadamTable");
+// «Настольный»: карта ТАДАМ, которую «взяли в руки» касанием (на сенсорном экране нет наведения)
+let tadamHeldKey = null;
 const appShellEl = document.querySelector(".app-shell");
 const playAreaEl = document.querySelector(".play-area");
 const sidePanelEl = document.querySelector(".side-panel");
+const boardHeaderEl = document.querySelector(".board-header");
+const boardPanelEl = document.querySelector(".board-panel");
+const dicePanelEl = document.querySelector(".dice-panel");
 const wideLayoutQuery = window.matchMedia("(min-width: 1200px)");
 const phoneLayoutQuery = window.matchMedia("(max-width: 680px) and (hover: none) and (pointer: coarse)");
 const savedGamesStorageKey = "very-big-adventure.saved-games";
@@ -28,6 +37,8 @@ const autoPlaytestSheetTarget = {
 };
 const defaultUiStyle = "classic";
 const uiStyleValues = new Set(["tabletop", "classic"]);
+const uiStyleStorageKey = "vba-ui-style";
+const momentIconsStorageKey = "vba-moment-icons";
 const defaultFontStyle = "standard";
 const fontStyleValues = new Set(["standard", "adventure"]);
 const defaultPhoneRoomMode = "full";
@@ -47,6 +58,7 @@ const ui = {
   createPhoneRoomBtn: document.querySelector("#createPhoneRoomBtn"),
   disableDragon: document.querySelector("#disableDragon"),
   weaponsEnabled: document.querySelector("#weaponsEnabled"),
+  shopMode: document.querySelector("#shopMode"),
   diceCount: document.querySelector("#diceCount"),
   diceValue: document.querySelector("#diceValue"),
   eventToast: document.querySelector("#eventToast"),
@@ -104,10 +116,14 @@ const ui = {
   saveHistoryBtn: document.querySelector("#saveHistoryBtn"),
   settingsPanel: document.querySelector("#settingsPanel"),
   settingsToggle: document.querySelector("#settingsToggle"),
+  tableMenuBtn: document.querySelector("#tableMenuBtn"),
+  tableDecks: document.querySelector("#tableDecks"),
+  tableHost: document.querySelector("#tableHost"),
   showWalkPath: document.querySelector("#showWalkPath"),
   startingCoins: document.querySelector("#startingCoins"),
   turnActions: document.querySelector("#turnActions"),
   uiStyle: document.querySelector("#uiStyle"),
+  momentIcons: document.querySelector("#momentIcons"),
   winnerPopup: document.querySelector("#winnerPopup"),
 };
 
@@ -363,19 +379,23 @@ const humanRollCooldownMs = 650;
 const infoHistoryDefaultLimit = 50;
 const allOrNothingRuleText = "Брось 1 кубик и отложи столько монет, сколько выпало на кубике. Можешь забрать эти монеты себе, либо бросить кубик ещё раз и отложить ещё монеты. Бросать кубик можешь сколько угодно раз, но если выпадет одно число 2 раза подряд, верни все отложенные монеты и закончи ход";
 const chaosPortalRuleText = "Игрок бросает кубик:\n1-2: Назад к ближайшему монстру/порталу;\n3-4: Назад к ближайшей Лавке Джо;\n5: Назад к ближайшему Привалу;\n6: Вперед к ближайшему монстру/порталу.\n\nЭффект поля срабатывает, даже при движении назад";
-const dragonSegmentCount = 32;
-const dragonStrengthPerPlayer = 35;
+const dragonSegmentCount = balance("dragon.segments", 32);
+const dragonStrengthPerPlayer = balance("dragon.strengthPerPlayer", 35);
 const dragonWakeEmphasisMs = 760;
-const blackMarketStrengthCards = 1;
-const blackMarketStrengthBonus = 2;
-const blackMarketCoinsCards = 2;
-const blackMarketCoinsReward = 30;
-const blackMarketRushCards = 3;
-const blackMarketRushBonus = 10;
-const blackMarketRushSteps = 30;
-const diceFortuneDiceCount = 6;
-const diceFortuneCoinReward = 10;
-const diceFortuneBackwardStepPenalty = 10;
+const blackMarketStrengthCards = balance("blackMarket.strength.cards", 1);
+const blackMarketStrengthBonus = balance("blackMarket.strength.bonus", 2);
+const blackMarketCoinsCards = balance("blackMarket.coins.cards", 2);
+const blackMarketCoinsReward = balance("blackMarket.coins.reward", 30);
+const blackMarketRushCards = balance("blackMarket.rush.cards", 3);
+const blackMarketRushBonus = balance("blackMarket.rush.bonus", 10);
+const blackMarketRushSteps = balance("blackMarket.rush.steps", 30);
+const blackMarketStrengthText = `+${blackMarketStrengthBonus} к силе`;
+const blackMarketCoinsText = countText(blackMarketCoinsReward, "монета", "монеты", "монет");
+const blackMarketRushText = `+${blackMarketRushBonus} к силе в следующем бою с монстром и ${countText(blackMarketRushSteps, "шаг", "шага", "шагов")}`;
+const blackMarketRuleText = `${countText(blackMarketStrengthCards, "карту", "карты", "карт")} Лавка Джо на ${blackMarketStrengthText}, ${countText(blackMarketCoinsCards, "карту", "карты", "карт")} на ${blackMarketCoinsText}, ${countText(blackMarketRushCards, "карту", "карты", "карт")} на ${blackMarketRushText} вперед`;
+const diceFortuneDiceCount = balance("diceFortune.diceCount", 6);
+const diceFortuneCoinReward = balance("diceFortune.coinsPerSix", 10);
+const diceFortuneBackwardStepPenalty = balance("diceFortune.stepsBackPerOne", 10);
 const coinIconSrc = "./assets/icons/coin.png?v=20260524-0155";
 const diceIconSrc = "./assets/icons/dice.png?v=20260524-0305";
 const strengthIconSrc = "./assets/icons/strength_sword_512.png";
@@ -390,6 +410,7 @@ const magicPickaxeIconSrc = "./assets/icons/artifact_magic_pickaxe_512.png?v=202
 const goldenHorseshoeIconSrc = "./assets/icons/artifact_golden_horseshoe_512.png";
 const travelerCompassIconSrc = "./assets/icons/artifact_traveler_compass_512.png";
 const joeCouponShopChoiceId = "__joe_coupon_all__";
+const shopMarketSize = balance("shop.marketSize", 2);
 const finalEnemyIconSrc = "./assets/icons/final_enemy.png?v=20260525-0146";
 const doomScytheIconSrc = "./assets/icons/legendary_doom_scythe_512.png";
 const blackMarketIconSrc = "./assets/icons/black_market_ultra_simple_512.png?v=20260619-0138";
@@ -421,7 +442,10 @@ const tileIcons = {
   start: '<img class="tile-icon-image tile-icon-start" src="./assets/icons/start_512.png" alt="Старт">',
 };
 
+restoreUiStyle();
 applyUiStyle();
+restoreMomentIcons();
+applyMomentIcons();
 applyFontStyle();
 applyBoardConfig(ui.boardSelect?.value || "field2");
 
@@ -560,6 +584,65 @@ function applyUiStyle() {
   syncWideScoreStripPlacement();
 }
 
+function restoreUiStyle() {
+  try {
+    const saved = window.localStorage.getItem(uiStyleStorageKey);
+    if (ui.uiStyle && uiStyleValues.has(saved)) ui.uiStyle.value = saved;
+  } catch {
+    // Storage may be blocked; the default style still works.
+  }
+}
+
+function saveUiStyle() {
+  try {
+    window.localStorage.setItem(uiStyleStorageKey, selectedUiStyle());
+  } catch {
+    // Storage may be blocked; the choice lasts until reload.
+  }
+}
+
+// Иконки моментов Лавки Джо: выключены — пропадают с лица карты, планшета, рынка и пульта, ряды карт остаются
+function momentIconsEnabled() {
+  return ui.momentIcons ? ui.momentIcons.checked : true;
+}
+
+function applyMomentIcons() {
+  if (document.body) document.body.dataset.momentIcons = momentIconsEnabled() ? "on" : "off";
+}
+
+function restoreMomentIcons() {
+  try {
+    const saved = window.localStorage.getItem(momentIconsStorageKey);
+    if (ui.momentIcons && (saved === "on" || saved === "off")) ui.momentIcons.checked = saved === "on";
+  } catch {
+    // Storage may be blocked; icons stay on.
+  }
+}
+
+function saveMomentIcons() {
+  try {
+    window.localStorage.setItem(momentIconsStorageKey, momentIconsEnabled() ? "on" : "off");
+  } catch {
+    // Storage may be blocked; the choice lasts until reload.
+  }
+}
+
+function tableMenuSection() {
+  return ui.tableMenuBtn?.closest(".game-settings") || null;
+}
+
+function tableMenuOpen() {
+  return Boolean(tableMenuSection()?.classList.contains("is-table-menu-open"));
+}
+
+function setTableMenuOpen(open) {
+  const section = tableMenuSection();
+  if (!section) return;
+  section.classList.toggle("is-table-menu-open", open);
+  ui.tableMenuBtn.setAttribute("aria-expanded", String(open));
+  ui.tableMenuBtn.classList.toggle("active", open);
+}
+
 function applyFontStyle() {
   if (document.body) document.body.dataset.fontStyle = selectedFontStyle();
 }
@@ -658,6 +741,8 @@ function newGame() {
     gameMode: isSoloGame(gameSettings) ? "solo" : "multiplayer",
     gameSettings,
     weaponsEnabled: gameSettings.weaponsEnabled,
+    shopMode: gameSettings.shopMode,
+    shopMarket: [],
     botTurnPlayerId: null,
     isAnimating: false,
     landingCell: null,
@@ -712,10 +797,15 @@ function newGame() {
       magicPickaxeOwnerId: null,
       goldenHorseshoeCard: null,
       goldenHorseshoeOwnerId: null,
+      marchingHornCard: null,
+      marchingHornOwnerId: null,
       speedBootsCard: null,
       speedBootsOwnerId: null,
+      trainingDummyCard: null,
+      trainingDummyOwnerId: null,
       travelerCompassCard: null,
       travelerCompassOwnerId: null,
+      turnBuyUsedAt: {},
     },
     turns: 0,
     unityBattleProgress: null,
@@ -726,6 +816,7 @@ function newGame() {
   syncDragonHistory();
   state.players.forEach(recordOwnedDice);
   log("<strong>Игра началась!</strong>");
+  refillShopMarket();
   resolveRandomFirstPlayerStart();
 
   boardEl.dataset.ready = "false";
@@ -939,6 +1030,7 @@ function collectGameSettings() {
     diceCount: Number(ui.diceCount?.value) || 1,
     disableDragon: dragonDisabledSetting(),
     weaponsEnabled: weaponsEnabledSetting(),
+    shopMode: shopModeSetting(),
     exactMoveAmount: exactMoveControlAmount(),
     fontStyle: selectedFontStyle(),
     gameMode: gameModeFrom({ playerCount }),
@@ -1082,7 +1174,7 @@ async function rollAndMove({ animate = true } = {}) {
     await resolveStartTurnTadamEffects(player);
     applyTurnStartArtifacts(player);
     resolveGoldenCollectionStart(player);
-    await resolveTurnShopBuys(player);
+    await resolveTurnArtifactBuys(player);
     setAutoPlaytestPhase("movement:extra-die-choice", { player });
     const extraDice = await chooseExtraDie(player, animate);
     state.isAnimating = animate;
@@ -1116,6 +1208,7 @@ async function rollAndMove({ animate = true } = {}) {
     for (let step = 0; step < totalSteps && player.position !== finishCell; step += 1) {
       setAutoPlaytestPhase("movement:step", { player, step: step + 1, totalSteps, cell: player.position });
       const currentPosition = player.position;
+      if (step > 0 && !(await resolveOvertakeTolls(player, currentPosition, totalSteps - step))) break;
       const nextPosition = await chooseNextPosition(player, currentPosition, totalSteps - step, animate);
       if (!nextPosition) {
         shouldResolveLanding = false;
@@ -1274,7 +1367,21 @@ function selectedBotCount(playerCount = Number(ui.playerCount?.value) || 2) {
 
 function selectedStartingCoins() {
   const value = Number(ui.startingCoins?.value);
-  return value === 20 ? 20 : 10;
+  return value === 20 ? 20 : balance("setup.startingCoins", 10);
+}
+
+function balance(key, fallback) {
+  if (balanceValues.has(key) && Number.isFinite(balanceValues.get(key))) return balanceValues.get(key);
+  console.warn(`Balance: no number for "${key}" in game.config.js, using ${fallback}`);
+  return fallback;
+}
+
+// "3 карты", "1 монета", "5 шагов": the number with the Russian word form that follows it.
+function countText(amount, one, few, many) {
+  const abs = Math.abs(Number(amount) || 0);
+  if (abs % 10 === 1 && abs % 100 !== 11) return `${amount} ${one}`;
+  if ([2, 3, 4].includes(abs % 10) && ![12, 13, 14].includes(abs % 100)) return `${amount} ${few}`;
+  return `${amount} ${many}`;
 }
 
 function syncBotCountOptions() {
@@ -1377,10 +1484,10 @@ function monsterRageBonus() {
 
 function dragonInitialPrefill(playerCount) {
   const count = Math.max(1, Math.min(4, Number(playerCount) || 2));
-  if (count === 1) return 22;
-  if (count === 2) return 16;
-  if (count === 3) return 8;
-  return 0;
+  if (count === 1) return balance("dragon.prefill.p1", 22);
+  if (count === 2) return balance("dragon.prefill.p2", 16);
+  if (count === 3) return balance("dragon.prefill.p3", 8);
+  return balance("dragon.prefill.p4", 0);
 }
 
 function dragonDisabledSetting() {
@@ -1528,7 +1635,20 @@ function monsterDefeatTier(door) {
 }
 
 function monsterDefeatStrengthReward(door) {
-  return [0, 1, 2, 3, 5][monsterDefeatTier(door)] || 1;
+  return monsterDefeatStrengthByTier()[monsterDefeatTier(door) - 1] ?? 1;
+}
+
+function monsterDefeatStrengthByTier() {
+  return [
+    balance("monster.defeatStrength.tier1", 1),
+    balance("monster.defeatStrength.tier2", 2),
+    balance("monster.defeatStrength.tier3", 3),
+    balance("monster.defeatStrength.tier4", 5),
+  ];
+}
+
+function monsterWinDiceText() {
+  return `+${countText(balance("monster.winDice", 1), "кубик", "кубика", "кубиков")}`;
 }
 
 function monsterDefeatRewardText(door) {
@@ -1598,7 +1718,7 @@ function shopDuplicatePenalty(player, card) {
   if (effectType === "passive-step-bonus") return [0, 8, 28, 50, 72][Math.min(copies, 4)] || 72;
   if (effectType === "passive-battle-bonus") return [0, 4, 9, 16, 24][Math.min(copies, 4)] || 24;
   if (effectType === "green-fields-plus5") return [0, 6, 16, 30, 46][Math.min(copies, 4)] || 46;
-  if (["monster-strength-plus3", "turn-strength-buy", "turn-steps-buy"].includes(effectType)) {
+  if (effectType === "monster-strength-plus3") {
     return [0, 5, 14, 26, 40][Math.min(copies, 4)] || 40;
   }
   if (["shop-choice-3-cost-3", "shop-fixed-cost-3", "golden-collection", "start-strength"].includes(effectType)) {
@@ -1967,7 +2087,8 @@ function scoreShopCard(player, card) {
     }
     if (player.coins <= 7) score -= 10 * personality.economy;
   } else if (effect.type === "duplicate-dice-coins") {
-    score = (totalDiceForPlayer(player) >= 2 ? 20 : 10) * personality.economy;
+    // Scored for 5 coins; the card's amount scales it.
+    score = (totalDiceForPlayer(player) >= 2 ? 20 : 10) * personality.economy * ((Number(effect.amount) || 5) / 5);
     if (playerDiceBonus(player) >= 1) score += 4;
   } else if (effect.type === "duplicate-dice-steps") {
     score = (totalDiceForPlayer(player) >= 2 ? 22 : 11) * personality.progress;
@@ -2008,18 +2129,6 @@ function scoreShopCard(player, card) {
     const artifactCount = playerArtifacts(player).length;
     score = (phase === "early" ? 26 : phase === "mid" ? 20 : 12) * personality.economy;
     score += Math.min(18, artifactCount * 6) * personality.economy;
-  } else if (effect.type === "turn-strength-buy") {
-    score = 18 * personality.battle;
-    if (gate) {
-      const afterChance = estimateWinChance(gate.dice, gate.bonus + (effect.amount || 1), gate.target);
-      score += winChanceDeltaScore(gate.chance, afterChance, gate.weight) * 0.55 * personality.battle;
-    }
-    if (player.coins >= 15) score += 6;
-  } else if (effect.type === "turn-steps-buy") {
-    const leader = leadingPlayer();
-    const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
-    score = (16 + Math.min(12, Math.max(0, lag * 0.22))) * personality.progress;
-    if (player.coins >= 15) score += 6;
   } else if (effect.type === "start-strength") {
     score = (phase === "early" ? 20 : 12) * personality.battle;
     if (gate?.hardGate) score += 6 * personality.battle;
@@ -2043,11 +2152,14 @@ function scoreShopDecline(player, offer = []) {
   const bestCardScore = Math.max(0, ...offer.map((card) => scoreShopCard(player, card)));
   if (player.coins - cost < 5) score += 22 * personality.economy;
   else if (player.coins - cost < 10 && bestCardScore < 42) score += 12 * personality.economy;
-  if (gate?.pressure > 0.75 && !offer.some((card) => card.effect?.type === "passive-battle-bonus")) {
-    score += 16 * personality.economy;
+  // Saving up before a monster only matters when the purchase leaves the bot nearly broke: coins do not fight.
+  if (gate?.pressure > 0.75 && player.coins - cost < 5 && !offer.some((card) => card.effect?.type === "passive-battle-bonus")) {
+    score += 8 * personality.economy;
   }
   if (bestCardScore < score + 5) score += 5;
-  return score * personality.economy;
+  // Economy is already inside the terms above; a second multiplier made the thrifty bots (seats 2–3, the ones a human
+  // leaves to bots) decline almost every visit with 10–15 coins.
+  return score;
 }
 
 function chooseBotAuctionBid(player, offer = []) {
@@ -2443,6 +2555,7 @@ function runBotAction() {
 
 function render() {
   syncWeaponsSettingControl();
+  syncShopModeControl();
   renderBoard();
   renderScores();
   renderModifierPlayerStatus();
@@ -2454,6 +2567,7 @@ function render() {
   renderHistory();
   renderWinnerPopup();
   renderTadams();
+  renderTableDecks();
   renderPhoneRoomPanel();
   schedulePhoneSnapshot();
   scheduleBotAction();
@@ -3021,8 +3135,11 @@ function renderTokens() {
     ];
     const [offsetX, offsetY] = offsets[stackIndex] || [0, 0];
 
+    const previousCell = token.dataset.cell;
+    token.dataset.cell = player.position;
     token.style.left = `${((col + 0.5) / boardCols) * 100}%`;
     token.style.top = `${((row + 0.5) / boardRows) * 100}%`;
+    if (previousCell && previousCell !== player.position) hopTableToken(token, previousCell, player.position);
     token.style.setProperty("--player-color", player.color);
     token.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
     token.title = player.name;
@@ -3052,6 +3169,28 @@ function highlightedPlayerId() {
   return state.activePlayer;
 }
 
+// Планшет «Настольного»: стопка монет растёт ступенями, кубики — полоской из четырёх
+// Настольный стиль: монеты в кармане планшета — стопки жетонов 10, 5 и 1, точная сумма числом под ними.
+// Стопка выше 6 жетонов не растёт. В классическом стиле жетоны скрыты
+const scoreCoinTokenValues = [10, 5, 1];
+const scoreCoinStackLimit = 6;
+
+function scoreCoinTokensMarkup(coins) {
+  let rest = Math.max(0, Math.floor(Number(coins) || 0));
+  const stacks = scoreCoinTokenValues.map((value) => {
+    const count = Math.floor(rest / value);
+    rest -= count * value;
+    const tokens = Array.from({ length: Math.min(count, scoreCoinStackLimit) }, (_, index) => `<i style="--i: ${index}"></i>`).join("");
+    return `<span class="score-coin-stack${count ? "" : " is-empty"}" data-coin="${value}">${tokens}</span>`;
+  });
+  return `<span class="score-coin-tokens" aria-hidden="true">${stacks.join("")}</span>`;
+}
+
+function scoreDicePips(count) {
+  const pips = [1, 2, 3, 4].map((index) => `<i class="${index <= count ? "is-on" : ""}"></i>`).join("");
+  return `<i class="score-dice-pips" aria-hidden="true">${pips}</i>`;
+}
+
 function renderScores() {
   scoreStripEl.innerHTML = "";
   for (const player of state.players) {
@@ -3063,6 +3202,7 @@ function renderScores() {
     const pendingGoodStatus = pendingGoodStatusText(player, true);
     const eventStatus = eventStatusText(player, true);
     const stepBonus = playerStepBonus(player);
+    const diceCount = totalDiceForPlayer(player);
     const card = document.createElement("article");
     card.className = `score-card ${player.id === highlightedPlayerId() ? "active" : ""}`;
     card.style.setProperty("--player-color", player.color);
@@ -3085,16 +3225,22 @@ function renderScores() {
       </div>
       <span class="score-cell-ribbon">${iconizeHtml(tileTitle(player.position))}</span>
       <div class="score-stats">
-        <span title="Сила">${strengthAmount(battleBonus >= 0 ? `+${battleBonus}` : battleBonus)}</span>
-        <span title="Шаги">${stepsAmount(stepBonus >= 0 ? `+${stepBonus}` : stepBonus)}</span>
-        <span title="Монеты">${coinAmount(player.coins)}</span>
-        <span title="Кубики">${diceAmount(totalDiceForPlayer(player))}</span>
+        <span class="score-stat-strength" title="Сила">${strengthAmount(battleBonus >= 0 ? `+${battleBonus}` : battleBonus)}</span>
+        <span class="score-stat-steps" title="Шаги">${stepsAmount(stepBonus >= 0 ? `+${stepBonus}` : stepBonus)}</span>
+        <span class="score-stat-coins" title="Монеты">${scoreCoinTokensMarkup(player.coins)}${coinAmount(player.coins)}</span>
+        <span class="score-stat-dice ${diceCount > 4 ? "is-many" : ""}" title="Кубики">${diceAmount(diceCount)}${scoreDicePips(diceCount)}</span>
+        <span class="score-tracks">
+          ${scoreTrackMarkup("strength", "Сила", battleBonus, { from: 0, to: 10, signed: true })}
+          ${scoreTrackMarkup("steps", "Шаги", stepBonus, { from: 0, to: 10, signed: true })}
+          ${scoreTrackMarkup("dice", "Кубики", diceCount, { from: 1, to: 6 })}
+        </span>
       </div>
       <div class="score-shop">
         <div class="score-shop-head">
           <span>Лавка Джо</span>
           <button class="score-shop-view" type="button" data-player-shop-id="${player.id}" aria-label="Показать карты Лавка Джо игрока ${escapeHtml(player.name)}" title="Показать карты Лавка Джо">Карты</button>
         </div>
+        <div class="score-moments">${renderShopMomentRows(player)}</div>
         <div>${renderShopBadges(player)}</div>
       </div>
     `;
@@ -3174,7 +3320,9 @@ function artifactSourceCard(artifact) {
     "hero-sword": "heroSwordCard",
     "joe-coupon": "joeCouponCard",
     "magic-pickaxe": "magicPickaxeCard",
+    "marching-horn": "marchingHornCard",
     "speed-boots": "speedBootsCard",
+    "training-dummy": "trainingDummyCard",
     "traveler-compass": "travelerCompassCard",
   };
   const mappedCard = state.artifacts[keysById[artifact.id]];
@@ -3260,6 +3408,8 @@ function phoneControllersEnabled() {
 
 function phoneCardSnapshot(card, deck = "Карта", { revealed = true, count = 1, faceDown = false } = {}) {
   if (!card) return null;
+  // Момент срабатывания карты Лавки: пульт раскладывает карты по нему
+  const moment = deck === "Лавка Джо" ? shopCardMoment(card) || "" : "";
   return {
     count: Math.max(1, Number(count) || 1),
     deck,
@@ -3268,6 +3418,8 @@ function phoneCardSnapshot(card, deck = "Карта", { revealed = true, count =
     frontArt: card.frontArt || "",
     id: card.id || "",
     icon: card.icon || "",
+    moment,
+    momentLabel: shopCardMoments[moment] || "",
     revealed: Boolean(revealed && !faceDown),
     shortTitle: plainText(card.shortTitle || card.title || "Карта"),
     title: plainText(card.title || card.shortTitle || "Карта"),
@@ -3330,6 +3482,8 @@ function phoneGameSnapshot() {
     finished: Boolean(state.finished),
     legendaryWeapon: legendaryWeaponSnapshot(),
     weaponsEnabled: legendaryWeaponsEnabled(),
+    shopMode: shopMarketEnabled() ? "market" : "classic",
+    shopMarket: shopMarketEnabled() ? (state.shopMarket || []).map((card) => phoneCardSnapshot(card, "Лавка Джо")) : [],
     finalBattle: state.finalBattle?.finalSummary || null,
     finalBattleProgress: state.finalBattleProgress ? cloneData(state.finalBattleProgress) : null,
     players: state.players.map(phonePlayerSnapshot),
@@ -3337,6 +3491,8 @@ function phoneGameSnapshot() {
     round: state.round,
     shakeEnabled: phoneRoom.shakeEnabled,
     turnLabel: actionPromptResolver ? actionPromptButtonLabel : ui.rollBtn?.textContent?.trim() || "Бросить",
+    uiStyle: selectedUiStyle(),
+    momentIcons: momentIconsEnabled(),
     updatedAt: Date.now(),
   };
 }
@@ -4663,9 +4819,7 @@ function renderFinalHistoryPlayer(player) {
         <div><dt>Очки</dt><dd>${hasScore ? score.total : "—"}</dd></div>
         <div><dt>Монеты</dt><dd>${hasScore ? score.coins : "—"}</dd></div>
         <div><dt>Лавки</dt><dd>${hasScore ? score.shop : "—"}</dd></div>
-        <div><dt>Урон</dt><dd>${hasScore ? score.damage : "—"}</dd></div>
-        <div><dt>Шаги</dt><dd>${hasScore ? finalScorePointsText(score.steps) : "—"}</dd></div>
-        <div><dt>Позиция</dt><dd>${hasScore ? score.position : "—"}</dd></div>
+        <div><dt>Урон</dt><dd>${hasScore ? score.damageToBoss ?? "—" : "—"}</dd></div>
         <div><dt>Сила</dt><dd>${forceText}</dd></div>
       </dl>
       <p class="history-final-score-text">${scoreFormula}</p>
@@ -4678,15 +4832,11 @@ function finalScoreFormulaText(score = {}, { damageLabel = "урон боссу"
   const total = score.total ?? 0;
   const coins = score.coins ?? 0;
   const shop = score.shop ?? 0;
-  const damage = score.damage ?? 0;
-  const steps = score.steps ?? 0;
-  const position = score.position ?? 0;
-  return `${total} = ${coins} монеты + ${shop} Лавка Джо + ${damage} ${damageLabel} + ${steps} за шаги + ${position} позиция`;
-}
-
-function finalScorePointsText(points = 0) {
-  const value = Number(points) || 0;
-  return `${value > 0 ? "+" : ""}${value} очков`;
+  // Games saved before the short count also scored damage, steps and position.
+  if (score.damage === undefined && score.steps === undefined && score.position === undefined) {
+    return `${total} = ${coins} монеты + ${shop} Лавка Джо`;
+  }
+  return `${total} = ${coins} монеты + ${shop} Лавка Джо + ${score.damage ?? 0} ${damageLabel} + ${score.steps ?? 0} за шаги + ${score.position ?? 0} позиция`;
 }
 
 function finalHistorySummaryForSnapshot() {
@@ -4754,6 +4904,8 @@ function finalHistoryLegendaryWeaponText(force = {}) {
 
 function finalHistoryOpponentBonusText(force = {}) {
   if (!force.opponentBonus) return "";
+  const perExtra = Number(force.opponentBonusPerExtra) || 0;
+  if (perExtra > 0) return `противники ${force.opponentBonus} (+${perExtra} за каждого после первого)`;
   const perPlayer = Number(force.opponentBonusPerPlayer) || 0;
   return perPlayer > 0 ? `противники ${force.opponentBonus} (+${perPlayer} каждый)` : `противники ${force.opponentBonus}`;
 }
@@ -5213,16 +5365,69 @@ function isPhoneLayout() {
 }
 
 function renderShopBadges(player) {
-  if (player.items.length === 0) return '<small>нет карт</small>';
-  return groupedShopItems(player.items)
-    .map(({ count, item }) => {
-      const label = count > 1 ? `${shortShopTitle(item)} x${count}` : shortShopTitle(item);
-      const faceDown = isShopItemFaceDown(item);
-      const status = faceDown ? " лицом вниз" : "";
-      const title = count > 1 ? `${item.title} x${count}${status}` : `${item.title}${status}`;
-      return `<small class="${faceDown ? "shop-face-down" : ""}" title="${escapeHtml(title)}">${cardNameMarkup(label)}${faceDown ? " <em>↓</em>" : ""}</small>`;
-    })
+  if (player.items.length === 0) return '<small class="score-shop-empty">нет карт</small>';
+  return groupedShopItems(player.items).map(shopBadgeMarkup).join("");
+}
+
+function shopBadgeMarkup({ count, item }) {
+  const label = count > 1 ? `${shortShopTitle(item)} x${count}` : shortShopTitle(item);
+  const faceDown = isShopItemFaceDown(item);
+  const status = faceDown ? " лицом вниз" : "";
+  const title = count > 1 ? `${item.title} x${count}${status}` : `${item.title}${status}`;
+  return `<small class="${faceDown ? "shop-face-down" : ""}" title="${escapeHtml(title)}">${cardNameMarkup(label)}${faceDown ? " <em>↓</em>" : ""}</small>`;
+}
+
+// Карты Лавки лежат на планшете рядами по моменту срабатывания, у ряда — иконка момента (оба стиля)
+function renderShopMomentRows(player) {
+  const groups = groupedShopItems(player.items || []);
+  if (!groups.length) return "";
+  const moments = Object.keys(shopCardMoments);
+  const rows = moments.map((moment) => [moment, groups.filter(({ item }) => shopCardMoment(item) === moment)]);
+  rows.push(["other", groups.filter(({ item }) => !moments.includes(shopCardMoment(item)))]);
+  return rows
+    .filter(([, rowGroups]) => rowGroups.length)
+    .map(([moment, rowGroups]) => `
+      <div class="score-moment-row">
+        ${shopMomentIconMarkup(moment)}
+        <span class="score-moment-cards">${rowGroups.map(shopBadgeMarkup).join("")}</span>
+      </div>
+    `)
     .join("");
+}
+
+function shopMomentIconMarkup(moment) {
+  const label = shopCardMoments[moment];
+  if (!label) return '<i class="moment-icon is-empty" aria-hidden="true"></i>';
+  return `<i class="moment-icon" data-moment="${moment}" title="Срабатывает: ${label}" aria-label="${label}" role="img"></i>`;
+}
+
+// Трек на планшете: ряд делений и маркер цвета игрока. Больше конца трека — маркер идёт по кругу, круги — бирка «+10»
+function scoreTrackMarkup(kind, label, value, { from = 0, to = 10, signed = false } = {}) {
+  const number = Number(value) || 0;
+  const span = to - from;
+  let extra = 0;
+  let position = clamp(number, from, to);
+  if (number > to) {
+    extra = from === 0 ? Math.floor((number - 1) / span) * span : number - to;
+    position = from === 0 ? number - extra : to;
+  }
+  const text = signed && number >= 0 ? `+${number}` : `${number}`;
+  const slots = [];
+  for (let n = from; n <= to; n += 1) {
+    slots.push(`<i data-n="${n}"${n === position ? ' class="is-on"' : ""}></i>`);
+  }
+  const tag = number < from
+    ? `<b class="score-track-tag is-negative">${number}</b>`
+    : extra
+      ? `<b class="score-track-tag">+${extra}</b>`
+      : "";
+  return `
+    <span class="score-track" data-track="${kind}" title="${label} ${text}" aria-label="${label} ${text}" role="img">
+      <i class="score-track-icon" aria-hidden="true"></i>
+      <span class="score-track-groove" style="--slots: ${slots.length}" aria-hidden="true">${slots.join("")}</span>
+      ${tag}
+    </span>
+  `;
 }
 
 function playerArtifactBadges(player) {
@@ -5250,19 +5455,19 @@ function playerArtifacts(player) {
   }
   if (state.artifacts.heroSwordOwnerId === player.id) {
     artifacts.push({
-      hint: "каждая 6 в бою дает +3 силы",
+      hint: `каждая 6 в бою дает +${heroSwordBonusPerSix()} силы`,
       icon: heroSwordIconSrc,
       id: "hero-sword",
-      shortTitle: "6:+3",
+      shortTitle: `6:+${heroSwordBonusPerSix()}`,
       title: "Меч Героя",
     });
   }
   if (state.artifacts.antiBadOwnerId === player.id) {
     artifacts.push({
-      hint: "обычное Плохо дает 5 монет",
+      hint: `обычное Плохо дает ${countText(antiBadCoins(), "монету", "монеты", "монет")}`,
       icon: antiBadIconSrc,
       id: "anti-bad",
-      shortTitle: "Плохо +5",
+      shortTitle: `Плохо +${antiBadCoins()}`,
       title: "Анти-Плохо",
     });
   }
@@ -5277,29 +5482,38 @@ function playerArtifacts(player) {
   }
   if (state.artifacts.speedBootsOwnerId === player.id) {
     artifacts.push({
-      hint: "+5 к шагам",
+      hint: `+${speedBootsSteps()} к шагам`,
       icon: speedBootsIconSrc,
       id: "speed-boots",
-      shortTitle: "+5 шагов",
+      shortTitle: `+${countText(speedBootsSteps(), "шаг", "шага", "шагов")}`,
       title: "Сапоги Скорости",
     });
   }
   if (state.artifacts.magicPickaxeOwnerId === player.id) {
     artifacts.push({
-      hint: "+2 к получению монет",
+      hint: `+${magicPickaxeCoinBonus()} к получению монет`,
       icon: magicPickaxeIconSrc,
       id: "magic-pickaxe",
-      shortTitle: "Монеты +2",
+      shortTitle: `Монеты +${magicPickaxeCoinBonus()}`,
       title: "Волшебная Кирка",
     });
   }
   if (state.artifacts.goldenHorseshoeOwnerId === player.id) {
     artifacts.push({
-      hint: "1 в броске движения дает 3 монеты",
+      hint: `Каждая 1 в броске хода дает ${countText(goldenHorseshoeCoins(), "монету", "монеты", "монет")}`,
       icon: goldenHorseshoeIconSrc,
       id: "golden-horseshoe",
-      shortTitle: "1:+3",
+      shortTitle: `1:+${goldenHorseshoeCoins()}`,
       title: "Золотая Подкова",
+    });
+  }
+  for (const buy of turnArtifactBuys(player)) {
+    artifacts.push({
+      hint: `в начале хода: ${coinAmount(buy.cost)} за ${buy.label}`,
+      icon: buy.icon,
+      id: buy.id,
+      shortTitle: `${buy.cost} монет: ${buy.chip}`,
+      title: buy.title,
     });
   }
   if (state.artifacts.travelerCompassOwnerId === player.id) {
@@ -5363,14 +5577,18 @@ function resolveGoldenCollectionStart(player) {
   }
 }
 
+// Золотая Подкова: монеты с карты за каждую 1 в броске хода (пользователь, 18 Oct 2026; было — один раз, если есть 1).
 function resolveGoldenHorseshoeMovementReward(player, rolls = []) {
   if (!hasGoldenHorseshoeArtifact(player)) return;
-  if (!rolls.some((value) => value === 1)) return;
+  const ones = rolls.filter((value) => value === 1).length;
+  if (!ones) return;
 
-  const amount = 3;
+  const amount = goldenHorseshoeCoins() * ones;
+  if (!amount) return;
   const gained = addCoins(player, amount);
   const actualText = gained !== amount ? `, с бонусами ${coinAmount(gained)}` : "";
-  log(`${playerName(player)} использует <strong>Золотую Подкову</strong>: в броске движения есть 1, получает ${coinAmount(amount)}${actualText}.`, {
+  const onesText = countText(ones, "единица", "единицы", "единиц");
+  log(`${playerName(player)} использует <strong>Золотую Подкову</strong>: в броске хода ${onesText}, получает ${coinAmount(amount)}${actualText}.`, {
     toast: true,
   });
 }
@@ -5514,6 +5732,24 @@ function grantGoldenHorseshoeArtifact(target, card) {
   return true;
 }
 
+function grantMarchingHornArtifact(target, card) {
+  if (!target || !state?.artifacts) return false;
+  state.artifacts.marchingHornOwnerId = target.id;
+  state.artifacts.marchingHornCard = card || state.artifacts.marchingHornCard || null;
+  log(`${playerName(target)} получает артефакт <strong>Походный горн</strong>.`, { toast: true });
+  render();
+  return true;
+}
+
+function grantTrainingDummyArtifact(target, card) {
+  if (!target || !state?.artifacts) return false;
+  state.artifacts.trainingDummyOwnerId = target.id;
+  state.artifacts.trainingDummyCard = card || state.artifacts.trainingDummyCard || null;
+  log(`${playerName(target)} получает артефакт <strong>Тренировочный манекен</strong>.`, { toast: true });
+  render();
+  return true;
+}
+
 function grantTravelerCompassArtifact(target, card) {
   if (!target || !state?.artifacts) return false;
   state.artifacts.travelerCompassOwnerId = target.id;
@@ -5521,6 +5757,34 @@ function grantTravelerCompassArtifact(target, card) {
   log(`${playerName(target)} получает артефакт <strong>Компас Странника</strong>.`, { toast: true });
   render();
   return true;
+}
+
+// An artifact's number from its card (src/cards.config.js, edited in the cards sheet): the card in play, else the deck's
+// card, else the fallback. Before 16 Oct 2026 these numbers were literals here and a sheet edit did nothing.
+function artifactCardNumber(slot, id, field, fallback) {
+  const card = state?.artifacts?.[slot] || Object.values(cardConfig).flat().find((item) => item?.id === id);
+  const value = Number(card?.effect?.[field]);
+  return card?.effect?.[field] !== undefined && Number.isFinite(value) ? value : fallback;
+}
+
+function heroSwordBonusPerSix() {
+  return artifactCardNumber("heroSwordCard", "hero-sword", "bonusPerSix", 3);
+}
+
+function antiBadCoins() {
+  return artifactCardNumber("antiBadCard", "anti-bad", "amount", 5);
+}
+
+function speedBootsSteps() {
+  return artifactCardNumber("speedBootsCard", "speed-boots", "amount", 5);
+}
+
+function magicPickaxeCoinBonus() {
+  return artifactCardNumber("magicPickaxeCard", "magic-pickaxe", "amount", 2);
+}
+
+function goldenHorseshoeCoins() {
+  return artifactCardNumber("goldenHorseshoeCard", "golden-horseshoe", "amount", 3);
 }
 
 function hasHeroSwordArtifact(player) {
@@ -5547,6 +5811,14 @@ function hasGoldenHorseshoeArtifact(player) {
   return Boolean(player && state?.artifacts?.goldenHorseshoeOwnerId === player.id);
 }
 
+function hasMarchingHornArtifact(player) {
+  return Boolean(player && state?.artifacts?.marchingHornOwnerId === player.id);
+}
+
+function hasTrainingDummyArtifact(player) {
+  return Boolean(player && state?.artifacts?.trainingDummyOwnerId === player.id);
+}
+
 function hasTravelerCompassArtifact(player) {
   return Boolean(player && state?.artifacts?.travelerCompassOwnerId === player.id);
 }
@@ -5554,7 +5826,7 @@ function hasTravelerCompassArtifact(player) {
 function heroSwordCombatBonus(player, rolls) {
   if (!hasHeroSwordArtifact(player)) return 0;
   const sixes = (rolls || []).filter((value) => value === 6).length;
-  const bonus = sixes * 3;
+  const bonus = sixes * heroSwordBonusPerSix();
   if (bonus > 0) {
     log(`${playerName(player)} использует <strong>Меч Героя</strong>: ${sixes} шестёрок дают <strong>+${bonus}</strong> к силе.`, { toast: true });
   }
@@ -5605,6 +5877,22 @@ function activeShopSetBonus(player, cardId, field) {
   if (cards.length < 2) return 0;
   const otherCopies = cards.length - 1;
   return cards.reduce((sum, item) => sum + otherCopies * (Number(item.effect?.[field]) || 0), 0);
+}
+
+// Saved games may hold shop cards from before the moment field, so fall back to the config by id.
+function shopCardMoment(card) {
+  return card?.moment || cardConfig.shop.find((item) => item.id === card?.id)?.moment || null;
+}
+
+function shopCardMomentLabel(card) {
+  return shopCardMoments[shopCardMoment(card)] || "";
+}
+
+// Иконка момента в углу лица карты Лавки
+function shopCardMomentMarkup(card) {
+  const moment = shopCardMoment(card);
+  const label = shopCardMoments[moment];
+  return label ? `<span class="shop-card-moment moment-icon" data-moment="${moment}" title="Срабатывает: ${label}" aria-hidden="true"></span>` : "";
 }
 
 function faceDownShopItems(player) {
@@ -5680,6 +5968,7 @@ function renderTurn() {
           Boolean(state.pendingShop) ||
           Boolean(state.pendingShopClaim))));
   renderInfoHistoryCurrentActionEntry();
+  renderTableHost(player);
 }
 
 function openInfoHistoryPopup() {
@@ -5837,10 +6126,24 @@ function plainTextFromHtml(html) {
   return wrapper.textContent.replace(/\s+/g, " ").trim();
 }
 
+// Настольный стиль: трек ярости монстров виден всю партию, сила монстра — база плюс маркер ярости.
+// Деления 0–8, больше восьми — маркер идёт по кругу с биркой «+8». В классическом стиле — плашка при ярости
+const monsterRageTrackEnd = 8;
+
 function renderMonsterRageIndicator() {
   if (!ui.monsterRageIndicator) return;
   const rage = monsterRageBonus();
-  ui.monsterRageIndicator.hidden = rage <= 0;
+  const tabletop = document.body.dataset.uiStyle === "tabletop";
+  ui.monsterRageIndicator.hidden = rage <= 0 && !tabletop;
+  ui.monsterRageIndicator.classList.toggle("is-rage-track", tabletop);
+  ui.monsterRageIndicator.classList.toggle("is-raging", rage > 0);
+  if (tabletop) {
+    ui.monsterRageIndicator.innerHTML = `
+      <span class="rage-track-label">Ярость монстров <b>+${rage}</b></span>
+      ${scoreTrackMarkup("rage", "Ярость монстров", rage, { from: 0, to: monsterRageTrackEnd, signed: true })}
+    `;
+    return;
+  }
   ui.monsterRageIndicator.textContent = rage > 0 ? `Ярость монстров +${rage}` : "";
 }
 
@@ -6027,22 +6330,22 @@ function referenceFieldInfo(type) {
   const effects = {
     "all-or-nothing": allOrNothingRuleText,
     bad: "Тяни карту Плохо",
-    "big-rest": "Выбери: +10 монет, +1 к силе или +2 к шагам",
-    "black-market": "Поменяй Лавки Джо: 1 карта — +2 к силе; 2 карты — 30 монет; 3 карты — +10 к силе в следующем бою с монстром и 30 шагов вперед",
+    "big-rest": `Выбери: +${restCoinsText()}, ${restStrengthText()} или ${restStepsText()}`,
+    "black-market": `Поменяй Лавки Джо: ${countText(blackMarketStrengthCards, "карта", "карты", "карт")} — ${blackMarketStrengthText}; ${countText(blackMarketCoinsCards, "карта", "карты", "карт")} — ${blackMarketCoinsText}; ${countText(blackMarketRushCards, "карта", "карты", "карт")} — ${blackMarketRushText} вперед`,
     "chaos-portal": chaosPortalRuleText,
-    "dice-fortune": `Брось кубик 6 раз. За каждую 6 получи ${diceFortuneCoinReward} монет. За каждую 1 отойди на ${diceFortuneBackwardStepPenalty} шагов назад`,
-    enemy: "Победи, чтобы пройти дальше. При поражении получи +1/+2/+3/+5 силы и отправляйся на старт",
+    "dice-fortune": `Брось кубик ${countText(diceFortuneDiceCount, "раз", "раза", "раз")}. За каждую 6 получи ${diceFortuneCoinReward} монет. За каждую 1 отойди на ${diceFortuneBackwardStepPenalty} шагов назад`,
+    enemy: `Победи, чтобы пройти дальше. При поражении получи ${monsterDefeatStrengthByTier().map((amount) => `+${amount}`).join("/")} силы и отправляйся на старт`,
     event: "Тяни карту Событие",
     finish: "финальная битва",
     good: "Тяни карту Хорошо",
     green: referenceGreenEffectLabel(),
     "pay-double": "Удвой свои монеты",
     red: referenceRedEffectLabel(),
-    shop: `Выбери 1 из 2 карт Лавка Джо и купи за ${joeShopCardCost()} монет`,
+    shop: `Выбери 1 из ${joeShopOfferCount()} карт Лавка Джо и купи за ${joeShopCardCost()} монет`,
     start: "Начальная клетка",
-    tadam: "Возьми карту ТАДАМ! и получи 5 монет",
-    "very-bad": "Возьми 3 карты Плохо",
-    vs: "Все игроки скидывают по 10 монет и сражаются. Победитель забирает банк",
+    tadam: `Возьми карту ТАДАМ! и получи ${tadamCoinsText()}`,
+    "very-bad": `Возьми ${countText(veryBadCardCount(), "карту", "карты", "карт")} Плохо`,
+    vs: `Все игроки скидывают по ${vsAnteText()} и сражаются. Победитель забирает банк`,
   };
   return {
     effect: effects[type] || "Без эффекта",
@@ -6143,7 +6446,7 @@ async function activateReferenceTadamCard(player, card) {
   state.tadams.push(card);
   recordTadamPlayed();
   resolveTadamIncomeRewards(card);
-  if (state.tadams.length > 3) discardCardToDeck("tadam", state.tadams.shift());
+  if (state.tadams.length > tadamActiveLimit()) discardCardToDeck("tadam", state.tadams.shift());
   log(`Справочник: ${playerName(player)} активирует карту <strong>ТАДАМ!</strong>: ${cardNameMarkup(card.title)}.`, { toast: true });
   render();
 }
@@ -6170,7 +6473,7 @@ async function applyReferenceField(type) {
         await drawAndApplyCard(player, "bad", "Плохо");
       }
     } else if (type === "very-bad") {
-      for (let index = 0; index < 3; index += 1) {
+      for (let index = 0; index < veryBadCardCount(); index += 1) {
         await drawAndApplyCard(player, "bad", "Плохо");
       }
     } else if (type === "event") {
@@ -6627,7 +6930,7 @@ function renderFinalBattleHud() {
     <div class="final-battle-side boss ${isBossRolling ? "is-rolling" : ""}" style="--player-color: ${boss?.color || "#ff7d5d"}">
       <span>Босс${boss ? ` - ${boss.name}` : ""}</span>
       ${legendaryWeaponStatusMarkup(bossWeapon, { compact: true })}
-      ${progress.opponentBonus ? `<span>+${progress.opponentBonus}: по ${progress.opponentBonusPerPlayer} за противника</span>` : ""}
+      ${progress.opponentBonus ? `<span>+${progress.opponentBonus}: по ${progress.opponentBonusPerExtra} за противника после первого</span>` : ""}
       ${boss ? playerBattleStrengthText(boss) : ""}
       <strong>${bossDisplayForce}</strong>
     </div>
@@ -7260,7 +7563,7 @@ async function resolveLanding(player, { fieldEffects = true, forwardTriggers = n
         await drawAndApplyCard(player, "bad", "Плохо");
       }
     } else if (event === "very-bad") {
-      for (let index = 0; index < 3; index += 1) {
+      for (let index = 0; index < veryBadCardCount(); index += 1) {
         await drawAndApplyCard(player, "bad", "Плохо");
       }
     } else if (event === "event") {
@@ -7298,22 +7601,34 @@ async function resolveLanding(player, { fieldEffects = true, forwardTriggers = n
   }
 }
 
+function restCoinsText() {
+  return countText(balance("rest.coins", 10), "монета", "монеты", "монет");
+}
+
+function restStrengthText() {
+  return `+${balance("rest.strength", 1)} силе`;
+}
+
+function restStepsText() {
+  return `+${balance("rest.steps", 2)} к шагам`;
+}
+
 function bigRestChoices() {
   return [
     {
       id: "recover",
       label: "Восстановиться",
-      note: "+10 монет",
+      note: `+${restCoinsText()}`,
     },
     {
       id: "train",
       label: "Потренироваться",
-      note: "+1 силе",
+      note: restStrengthText(),
     },
     {
       id: "speed",
       label: "Ускориться",
-      note: "+2 к шагам",
+      note: restStepsText(),
     },
   ];
 }
@@ -7331,14 +7646,14 @@ async function resolveBigRest(player) {
 
   let message = "";
   if (choice === "train") {
-    addBattleBonus(player, 1);
-    message = `${playerName(player)} использует <strong>Привал</strong>: тренируется и получает <strong>+1 силе</strong>.`;
+    addBattleBonus(player, balance("rest.strength", 1));
+    message = `${playerName(player)} использует <strong>Привал</strong>: тренируется и получает <strong>${restStrengthText()}</strong>.`;
   } else if (choice === "speed") {
-    addStepBonus(player, 2);
-    message = `${playerName(player)} использует <strong>Привал</strong>: ускоряется и получает <strong>+2 к шагам</strong>.`;
+    addStepBonus(player, balance("rest.steps", 2));
+    message = `${playerName(player)} использует <strong>Привал</strong>: ускоряется и получает <strong>${restStepsText()}</strong>.`;
   } else {
-    addCoins(player, 10);
-    message = `${playerName(player)} использует <strong>Привал</strong>: восстанавливается и получает <strong>${coinAmount(10)}</strong>.`;
+    addCoins(player, balance("rest.coins", 10));
+    message = `${playerName(player)} использует <strong>Привал</strong>: восстанавливается и получает <strong>${coinAmount(balance("rest.coins", 10))}</strong>.`;
   }
 
   render();
@@ -7352,22 +7667,22 @@ function blackMarketChoices(player) {
     blackMarketChoice({
       cardCount: blackMarketStrengthCards,
       id: "strength",
-      label: "+2 к силе",
-      note: "обмен 1 Лавки Джо",
+      label: blackMarketStrengthText,
+      note: `обмен ${countText(blackMarketStrengthCards, "Лавки Джо", "Лавок Джо", "Лавок Джо")}`,
       player,
     }),
     blackMarketChoice({
       cardCount: blackMarketCoinsCards,
       id: "coins",
-      label: "30 монет",
-      note: "обмен 2 Лавок Джо",
+      label: blackMarketCoinsText,
+      note: `обмен ${countText(blackMarketCoinsCards, "Лавки Джо", "Лавок Джо", "Лавок Джо")}`,
       player,
     }),
     blackMarketChoice({
       cardCount: blackMarketRushCards,
       id: "rush",
-      label: "+10 к силе в следующем бою с монстром и 30 шагов",
-      note: "обмен 3 Лавок Джо",
+      label: blackMarketRushText,
+      note: `обмен ${countText(blackMarketRushCards, "Лавки Джо", "Лавок Джо", "Лавок Джо")}`,
       player,
     }),
   ];
@@ -7402,7 +7717,7 @@ function blackMarketSummary(player) {
   const available = blackMarketExchangeItems(player).length;
   const rage = nextMonsterBattleBonus(player);
   const activePotion = rage ? ` Активно: +${rage} к силе в следующем бою с монстром.` : "";
-  return `${playerChoiceBadge(player)}: доступно ${available} ${shopCardsWord(available)} Лавки Джо. Поменяй 1 карту Лавка Джо на +2 к силе, 2 карты на 30 монет, 3 карты на +10 к силе в следующем бою с монстром и 30 шагов вперед.${activePotion}`;
+  return `${playerChoiceBadge(player)}: доступно ${available} ${shopCardsWord(available)} Лавки Джо. Поменяй ${blackMarketRuleText}.${activePotion}`;
 }
 
 async function resolveBlackMarket(player) {
@@ -7420,7 +7735,7 @@ async function resolveBlackMarket(player) {
   });
 
   if (choice === "strength") {
-    const paid = await exchangeBlackMarketShopCards(player, blackMarketStrengthCards, "+2 к силе");
+    const paid = await exchangeBlackMarketShopCards(player, blackMarketStrengthCards, blackMarketStrengthText);
     if (!paid.length) return;
     addBattleBonus(player, blackMarketStrengthBonus);
     const message = `${playerName(player)} меняет ${blackMarketCardsText(paid)} на Черном рынке и получает <strong>+${blackMarketStrengthBonus} к силе</strong>.`;
@@ -7431,7 +7746,7 @@ async function resolveBlackMarket(player) {
   }
 
   if (choice === "coins") {
-    const paid = await exchangeBlackMarketShopCards(player, blackMarketCoinsCards, "30 монет");
+    const paid = await exchangeBlackMarketShopCards(player, blackMarketCoinsCards, blackMarketCoinsText);
     if (!paid.length) return;
     addCoins(player, blackMarketCoinsReward);
     const message = `${playerName(player)} меняет ${blackMarketCardsText(paid)} на Черном рынке и получает <strong>${coinAmount(blackMarketCoinsReward)}</strong>.`;
@@ -7442,7 +7757,7 @@ async function resolveBlackMarket(player) {
   }
 
   if (choice === "rush") {
-    const paid = await exchangeBlackMarketShopCards(player, blackMarketRushCards, "+10 к силе в следующем бою с монстром и 30 шагов вперед");
+    const paid = await exchangeBlackMarketShopCards(player, blackMarketRushCards, `${blackMarketRushText} вперед`);
     if (!paid.length) return;
     setNextMonsterBattleBonus(player, blackMarketRushBonus);
     const message = `${playerName(player)} меняет ${blackMarketCardsText(paid)} на Черном рынке. Игрок получает <strong>+${blackMarketRushBonus}</strong> к силе в следующем бою с монстром, затем идет на <strong>${blackMarketRushSteps}</strong> шагов вперед.`;
@@ -7545,8 +7860,8 @@ function shopCardsWord(count) {
 
 async function resolveAntiBadFieldReplacement(player) {
   if (!hasAntiBadArtifact(player)) return false;
-  addCoins(player, 5);
-  const message = `${playerName(player)} использует <strong>Анти-Плохо</strong>: поле <strong>Плохо</strong> дает <strong>${coinAmount(5)}</strong> вместо карты.`;
+  addCoins(player, antiBadCoins());
+  const message = `${playerName(player)} использует <strong>Анти-Плохо</strong>: поле <strong>Плохо</strong> дает <strong>${coinAmount(antiBadCoins())}</strong> вместо карты.`;
   render();
   log(message, { toast: true });
   await showActionPrompt(message, { autoFor: player });
@@ -7662,7 +7977,7 @@ async function resolveEnemyBattle(player) {
       bonus,
       enemyForce: requiredStrength,
       isFinalBoss: Boolean(door.isFinalBoss),
-      outcome: door.isFinalBoss ? `${player.name} побеждает и становится боссом` : `${player.name} побеждает и получает +1 кубик`,
+      outcome: door.isFinalBoss ? `${player.name} побеждает и становится боссом` : `${player.name} побеждает и получает ${monsterWinDiceText()}`,
       playerForce: damage,
       playerId: player.id,
       rawRolls,
@@ -7691,16 +8006,16 @@ async function resolveEnemyBattle(player) {
       await resolveFinalBattle(player, true);
       return { isFinalBoss: true, resolved: true, winner: "player" };
     }
-    addDiceBonus(player, 1);
+    addDiceBonus(player, balance("monster.winDice", 1));
     const monsterHuntReward = awardMonsterHuntReward(player);
     const monsterHuntText = monsterHuntRewardText(monsterHuntReward);
     const shopVictoryText = resolveMonsterVictoryShopRewards(player);
     log(
-      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта для игрока. Награда: <strong>+1 кубик</strong>.${monsterHuntText}${shopVictoryText}`,
+      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта для игрока. Награда: <strong>${monsterWinDiceText()}</strong>.${monsterHuntText}${shopVictoryText}`,
     );
     render();
     await showActionPrompt(
-      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта. Награда: <strong>+1 кубик</strong>.${monsterHuntText}${shopVictoryText}`,
+      `${playerName(player)} побеждает врага: ${formatRoll(rolls)}${bonusText}. ${door.label} открыта. Награда: <strong>${monsterWinDiceText()}</strong>.${monsterHuntText}${shopVictoryText}`,
       { autoFor: player },
     );
     clearEnemyBattleHud();
@@ -7888,7 +8203,7 @@ async function resolveShopMonsterStrengthBoosts(player, contextLabel, { targetSt
       ? chooseBotMonsterStrengthBoost(player, cost, amount, targetStrength)
       : await chooseShopMonsterStrengthBoost(player, card, cost, amount, contextLabel);
     if (!shouldPay || player.coins < cost) continue;
-    addCoins(player, -cost);
+    addCoins(player, -cost, { category: "purchase" });
     bonus += amount;
     log(`${playerName(player)} платит <strong>${coinAmount(cost)}</strong> по <strong>Лавке Джо</strong>: <strong>+${amount}</strong> силы в ${contextLabel}.`, {
       toast: true,
@@ -8213,7 +8528,7 @@ async function resolveDiceFortuneField(player) {
       { label: "2-5", effect: "без эффекта" },
     ],
     participants: [playerChoiceBadge(player)],
-    reason: "Шесть кубиков одновременно считают награды и откаты.",
+    reason: `${countText(diceFortuneDiceCount, "кубик", "кубика", "кубиков")} одновременно считают награды и откаты.`,
     result: `${playerName(player)} бросает ${diceFortuneDiceCount} кубиков удачи.`,
     title: "Удача выбирает исход",
   });
@@ -8246,7 +8561,7 @@ async function resolveDiceFortuneField(player) {
         { label: "2-5", effect: "без эффекта" },
       ],
       participants: [playerChoiceBadge(player)],
-      reason: "Шесть кубиков одновременно считают награды и откаты.",
+      reason: `${countText(diceFortuneDiceCount, "кубик", "кубика", "кубиков")} одновременно считают награды и откаты.`,
       result: `${formatRoll(rolls)} → ${resultText}.`,
       resultHighlight: true,
       title: "Результат удачи",
@@ -8389,7 +8704,7 @@ async function resolvePayDoubleField(player) {
 }
 
 async function resolveVsField(player) {
-  const ante = 10;
+  const ante = balance("field.vs.ante", 10);
   const contributions = state.players.map((participant) => {
     const amount = Math.min(ante, participant.coins);
     if (amount > 0) addCoins(participant, -amount);
@@ -8619,11 +8934,10 @@ async function resolveDragonBattle(initiator, { resetToken = transientUiResetTok
   if (resetToken !== transientUiResetToken || state?.dragon !== dragon) return;
   const teamTotal = results.reduce((sum, result) => sum + result.total, 0);
   const teamWon = teamTotal >= strength.total;
-  const positionBonuses = finalPositionBonuses(state.players);
   const scores = teamWon
     ? state.players.map((player) => {
         const contribution = results.find((result) => result.player.id === player.id)?.total || 0;
-        return finalBattleScore(player, contribution, positionBonuses.get(player.id) || 1);
+        return finalBattleScore(player, contribution);
       })
     : [];
   let winner = null;
@@ -8782,11 +9096,8 @@ function buildDragonFinalSummary({ initiator, results, scores, strength, teamTot
         role: "player",
         score: score ? {
           coins: score.coins,
-          damage: score.damage,
           damageToBoss: score.damageToBoss,
-          position: score.position,
           shop: score.shop,
-          steps: score.steps,
           total: score.total,
         } : null,
         scoreFormula: score ? finalScoreFormulaText(score, { damageLabel: "урон Дракону" }) : "",
@@ -8800,10 +9111,12 @@ function buildDragonFinalSummary({ initiator, results, scores, strength, teamTot
   };
 }
 
+// Tabletop review, 12 Oct 2026: the boss rolls once per challenger but adds its own bonus once, and gets +10 for every
+// challenger after the first, with or without weapons (it was the bonus on every roll and +3 per challenger without weapons).
 async function resolveFinalBattle(boss, animate = true) {
   const challengers = state.players.filter((player) => player.id !== boss.id);
-  const bossOpponentBonusPerPlayer = legendaryWeaponsEnabled() ? 0 : 3;
-  const bossOpponentBonus = bossOpponentBonusPerPlayer * challengers.length;
+  const bossOpponentBonusPerExtra = balance("boss.bonusPerExtraOpponent", 10);
+  const bossOpponentBonus = bossOpponentBonusPerExtra * Math.max(0, challengers.length - 1);
   state.isAnimating = animate;
   state.movingPlayerId = null;
   state.dice = null;
@@ -8811,7 +9124,7 @@ async function resolveFinalBattle(boss, animate = true) {
     bossBonusApplied: false,
     bossForce: 0,
     opponentBonus: bossOpponentBonus,
-    opponentBonusPerPlayer: bossOpponentBonusPerPlayer,
+    opponentBonusPerExtra: bossOpponentBonusPerExtra,
     bossId: boss.id,
     bossRollsStarted: false,
     isRolling: false,
@@ -8867,8 +9180,11 @@ async function resolveFinalBattle(boss, animate = true) {
   log(`Итоговая сила игроков: <strong>${playersForce}</strong>.`);
 
   const bossRollResults = [];
+  if (challengers.length > 1) {
+    log(`Босс бросает кубики ${challengers.length} раза, по разу на противника. Свой бонус он прибавляет один раз.`);
+  }
   if (bossOpponentBonus) {
-    log(`Босс получает <strong>+${bossOpponentBonus}</strong> к итоговой силе: по ${bossOpponentBonusPerPlayer} за каждого из ${challengers.length} противников.`);
+    log(`Босс получает <strong>+${bossOpponentBonus}</strong> к итоговой силе: по ${bossOpponentBonusPerExtra} за каждого противника после первого.`);
   }
   state.finalBattleProgress.bossBonusApplied = true;
   state.finalBattleProgress.bossForce = bossOpponentBonus + bossLegendaryStrength.total;
@@ -8880,7 +9196,7 @@ async function resolveFinalBattle(boss, animate = true) {
         buttonLabel: "В бой",
       });
     }
-    const result = await rollFinalBattlePower(boss, animate, { label: `Босс - ${boss.name}` });
+    const result = await rollFinalBattlePower(boss, animate, { label: `Босс - ${boss.name}`, withoutBaseBonus: index > 0 });
     bossRollResults.push(result);
     state.finalBattleProgress.bossRollsStarted = true;
     state.finalBattleProgress.bossForce += result.total;
@@ -8900,7 +9216,7 @@ async function resolveFinalBattle(boss, animate = true) {
   const bossForce = bossRollTotal + bossOpponentBonus + bossLegendaryStrength.total;
   state.finalBattleProgress.bossForce = bossForce;
   const bossForceBreakdown = [
-    bossOpponentBonus ? `${bossOpponentBonus} за противников (+${bossOpponentBonusPerPlayer} каждый)` : "",
+    bossOpponentBonus ? `${bossOpponentBonus} за противников (+${bossOpponentBonusPerExtra} за каждого после первого)` : "",
     bossLegendaryWeapon?.card ? legendaryWeaponForceBreakdownText(bossLegendaryWeapon, bossLegendaryStrength) : "",
     bossRolled ? `${bossRolled} кубики` : "",
     bossBonus ? `${bossBonus} обычные бонусы` : "",
@@ -8913,10 +9229,9 @@ async function resolveFinalBattle(boss, animate = true) {
   );
 
   const bossWon = bossForce >= playersForce;
-  const positionBonuses = finalPositionBonuses(state.players);
   const scores = state.players.map((player) => {
     const damage = challengerResults.find((result) => result.player.id === player.id)?.total || 0;
-    return finalBattleScore(player, damage, positionBonuses.get(player.id) || 1);
+    return finalBattleScore(player, damage);
   });
   const winner = bossWon ? boss : bestFinalScorePlayer(scores, challengers);
   const finalSummary = buildFinalBattleSummary({
@@ -8928,7 +9243,7 @@ async function resolveFinalBattle(boss, animate = true) {
     bossLegendaryBonus: bossLegendaryStrength.total,
     bossLegendaryBonusByOpponent: cloneData(bossLegendaryStrength.opponents),
     bossOpponentBonus,
-    bossOpponentBonusPerPlayer,
+    bossOpponentBonusPerExtra,
     bossPlayerBattlePotionBonus,
     bossRollResults,
     bossWon,
@@ -8943,7 +9258,7 @@ async function resolveFinalBattle(boss, animate = true) {
     bossForce,
     bossRolls: bossRollResults.map((result) => result.rolls),
     opponentBonus: bossOpponentBonus,
-    opponentBonusPerPlayer: bossOpponentBonusPerPlayer,
+    opponentBonusPerExtra: bossOpponentBonusPerExtra,
     weaponsEnabled: legendaryWeaponsEnabled(),
     finalSummary,
     legendaryWeaponBonus: bossLegendaryStrength.total,
@@ -9010,7 +9325,7 @@ function buildFinalBattleSummary({
   bossLegendaryBonus = 0,
   bossLegendaryBonusByOpponent = [],
   bossOpponentBonus,
-  bossOpponentBonusPerPlayer = 0,
+  bossOpponentBonusPerExtra = 0,
   bossPlayerBattlePotionBonus = 0,
   bossRollResults,
   bossWon,
@@ -9042,7 +9357,7 @@ function buildFinalBattleSummary({
               legendaryBonus: bossLegendaryBonus,
               legendaryBonusByOpponent: cloneData(bossLegendaryBonusByOpponent),
               opponentBonus: bossOpponentBonus,
-              opponentBonusPerPlayer: bossOpponentBonusPerPlayer,
+              opponentBonusPerExtra: bossOpponentBonusPerExtra,
               legendaryWeapon: legendaryWeaponSnapshot(),
               rolled: bossRolled,
               rawRolls: bossRollResults.map((result) => result.rawRolls || result.rolls),
@@ -9055,7 +9370,7 @@ function buildFinalBattleSummary({
               legendaryBonus: 0,
               legendaryBonusByOpponent: [],
               opponentBonus: 0,
-              opponentBonusPerPlayer: 0,
+              opponentBonusPerExtra: 0,
               legendaryWeapon: challengerResult?.legendaryWeapon || null,
               rolled: challengerResult?.rolled || 0,
               rawRolls: challengerResult ? [challengerResult.rawRolls] : [],
@@ -9069,11 +9384,8 @@ function buildFinalBattleSummary({
         role: isBoss ? "boss" : "player",
         score: {
           coins: score.coins,
-          damage: score.damage,
           damageToBoss: score.damageToBoss,
-          position: score.position,
           shop: score.shop,
-          steps: score.steps,
           total: score.total,
         },
         scoreFormula: finalScoreFormulaText(score),
@@ -9087,12 +9399,17 @@ function buildFinalBattleSummary({
   };
 }
 
-async function rollFinalBattlePower(player, animate, { label = "", opponentLegendaryWeapon = null } = {}) {
+async function rollFinalBattlePower(player, animate, { label = "", opponentLegendaryWeapon = null, withoutBaseBonus = false } = {}) {
   setFinalBattleRoller(player, Boolean(animate));
-  return rollPlayerBattlePower(player, animate, { label, isFinalBattle: true, opponentLegendaryWeapon });
+  return rollPlayerBattlePower(player, animate, { label, isFinalBattle: true, opponentLegendaryWeapon, withoutBaseBonus });
 }
 
-async function rollPlayerBattlePower(player, animate, { label = "", isFinalBattle = false, opponentLegendaryWeapon = null } = {}) {
+async function rollPlayerBattlePower(player, animate, {
+  label = "",
+  isFinalBattle = false,
+  opponentLegendaryWeapon = null,
+  withoutBaseBonus = false,
+} = {}) {
   const diceCount = totalDiceForPlayer(player);
   const rawRolls = rollDice(diceCount);
   const scytheResult = opponentLegendaryWeapon
@@ -9101,7 +9418,7 @@ async function rollPlayerBattlePower(player, animate, { label = "", isFinalBattl
   const weaponAdjustedRolls = [...scytheResult.adjustedRolls];
   const rolls = await maybeUseDiceControl(player, weaponAdjustedRolls, { mode: "battle", title: "Контроль кубика: бросок силы" });
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
-  const baseBonus = playerCombatBonus(player);
+  const baseBonus = withoutBaseBonus ? 0 : playerCombatBonus(player);
   const playerBattlePotionBonus = await choosePlayerBattlePotion(player, isFinalBattle ? "финальной битве" : "битве с игроком");
   const curse = consumeNextBattlePenalty(player);
   const heroSwordBonus = heroSwordCombatBonus(player, rolls);
@@ -9194,20 +9511,16 @@ function finalBonusText(baseBonus, cursePenalty, total, heroSwordBonus = 0, play
   return combatBonusFormulaText(baseBonus, cursePenalty, total, heroSwordBonus, playerBattlePotionBonus);
 }
 
-function finalBattleScore(player, damageToBoss, position = 1) {
+// Short tabletop count: coins plus 5 per Лавка Джо card (tabletop review, 12 Oct 2026). Damage to the boss only breaks ties.
+function finalBattleScore(player, damageToBoss) {
   const coins = player.coins;
-  const shop = activeShopItems(player).length * 5;
-  const damage = damageToBoss * 2;
-  const steps = Number(playerStepBonus(player)) || 0;
+  const shop = activeShopItems(player).length * balance("score.perShopCard", 5);
   return {
     coins,
-    damage,
     damageToBoss,
     playerId: player.id,
-    position,
     shop,
-    steps,
-    total: coins + shop + damage + steps + position,
+    total: coins + shop,
   };
 }
 
@@ -9215,34 +9528,8 @@ function bestFinalScorePlayer(scores, candidates) {
   const candidateIds = new Set(candidates.map((player) => player.id));
   const winnerScore = scores
     .filter((score) => candidateIds.has(score.playerId))
-    .sort((a, b) => b.total - a.total || b.position - a.position || b.coins - a.coins || b.shop - a.shop)[0];
+    .sort((a, b) => b.total - a.total || b.damageToBoss - a.damageToBoss || b.coins - a.coins || b.shop - a.shop)[0];
   return state.players.find((player) => player.id === winnerScore?.playerId) || candidates[0] || state.players[0];
-}
-
-function finalPositionBonuses(players) {
-  const rankedGroups = [...players]
-    .map((player) => ({
-      distance: finalDistance(player),
-      player,
-    }))
-    .sort((a, b) => a.distance - b.distance || a.player.id - b.player.id)
-    .reduce((groups, item) => {
-      const group = groups[groups.length - 1];
-      if (group && group.distance === item.distance) {
-        group.players.push(item.player);
-      } else {
-        groups.push({ distance: item.distance, players: [item.player] });
-      }
-      return groups;
-    }, []);
-
-  const bonusesByRank = [6, 3, 1];
-  const result = new Map();
-  rankedGroups.forEach((group, index) => {
-    const bonus = bonusesByRank[index] || 1;
-    group.players.forEach((player) => result.set(player.id, bonus));
-  });
-  return result;
 }
 
 function finalDistance(player) {
@@ -9297,36 +9584,37 @@ function resolveLastStepPlus(player, wasLast) {
   showDiceFloat(player, steps);
 }
 
-async function resolveTurnShopBuys(player) {
-  await resolveTurnShopBuy(player, "turn-strength-buy", {
-    add: (target, amount) => addBattleBonus(target, amount),
-    label: "+1 к силе",
-    logLabel: "силу",
-    usedKey: "_turnStrengthBuyUsedAt",
-  });
-  await resolveTurnShopBuy(player, "turn-steps-buy", {
-    add: (target, amount) => addStepBonus(target, amount),
-    label: "+2 к шагам",
-    logLabel: "шаги",
-    usedKey: "_turnStepsBuyUsedAt",
-  });
+// Походный горн и Тренировочный манекен — артефакты из Событий (пользователь, 18 Oct 2026; были картами Лавки
+// «Платный марш» и «Платная тренировка»): в начале хода владелец может заплатить и получить шаги или силу. Цена и
+// прибавка — с карты.
+function turnArtifactBuys(player, { unusedOnly = false } = {}) {
+  const buys = [];
+  if (hasTrainingDummyArtifact(player)) {
+    const effect = artifactSourceCard({ id: "training-dummy" })?.effect || cardConfig.event.find((card) => card.id === "training-dummy")?.effect || {};
+    const amount = Math.max(1, Number(effect.amount) || 1);
+    buys.push({ add: addBattleBonus, amount, chip: `+${amount} сила`, cost: Math.max(0, Number(effect.cost ?? 10)), icon: "./assets/icons/artifact_training_dummy_512.png",
+      id: "training-dummy", label: battleForceText(amount), title: "Тренировочный манекен", type: "turn-strength-buy" });
+  }
+  if (hasMarchingHornArtifact(player)) {
+    const effect = artifactSourceCard({ id: "marching-horn" })?.effect || cardConfig.event.find((card) => card.id === "marching-horn")?.effect || {};
+    const amount = Math.max(1, Number(effect.steps) || 2);
+    buys.push({ add: addStepBonus, amount, chip: `+${countText(amount, "шаг", "шага", "шагов")}`, cost: Math.max(0, Number(effect.cost ?? 10)),
+      icon: "./assets/icons/artifact_marching_horn_512.png", id: "marching-horn", label: stepBonusText(amount), title: "Походный горн", type: "turn-steps-buy" });
+  }
+  return unusedOnly ? buys.filter((buy) => state.artifacts.turnBuyUsedAt?.[buy.id] !== state.turns) : buys;
 }
 
-async function resolveTurnShopBuy(player, type, config) {
-  const cards = activeShopEffectItems(player, type)
-    .filter((card) => card[config.usedKey] !== state.turns);
-  for (const card of cards) {
-    const cost = Math.max(0, Number(card.effect?.cost) || 10);
-    const amount = Math.max(1, Number(card.effect?.amount ?? card.effect?.steps) || 1);
-    if (player.coins < cost) continue;
+async function resolveTurnArtifactBuys(player) {
+  for (const buy of turnArtifactBuys(player, { unusedOnly: true })) {
+    if (player.coins < buy.cost) continue;
     const shouldPay = isBot(player)
-      ? chooseBotTurnShopBuy(player, type, cost)
-      : await chooseTurnShopBuy(player, card, cost, config.label);
-    card[config.usedKey] = state.turns;
-    if (!shouldPay || player.coins < cost) continue;
-    addCoins(player, -cost);
-    config.add(player, amount);
-    log(`${playerName(player)} платит <strong>${coinAmount(cost)}</strong> в <strong>Лавке Джо</strong> и получает <strong>${config.label}</strong>.`, {
+      ? chooseBotTurnShopBuy(player, buy.type, buy.cost)
+      : await chooseTurnArtifactBuy(player, buy);
+    (state.artifacts.turnBuyUsedAt ||= {})[buy.id] = state.turns;
+    if (!shouldPay || player.coins < buy.cost) continue;
+    addCoins(player, -buy.cost, { category: "purchase" });
+    buy.add(player, buy.amount);
+    log(`${playerName(player)} платит <strong>${coinAmount(buy.cost)}</strong> за артефакт <strong>${buy.title}</strong> и получает <strong>${buy.label}</strong>.`, {
       toast: true,
     });
     render();
@@ -9343,27 +9631,27 @@ function chooseBotTurnShopBuy(player, type, cost) {
   return lag > 10 || finalDistance(player) <= 32 || player.coins >= 22;
 }
 
-async function chooseTurnShopBuy(player, card, cost, label) {
+async function chooseTurnArtifactBuy(player, buy) {
   const choice = await chooseCardAction({
     choices: [
       {
         id: "pay",
         label: "Заплатить",
-        note: `${coinAmount(cost)} - ${label}`,
+        note: `${coinAmount(buy.cost)} - ${buy.label}`,
         score: 18,
       },
       {
         id: "skip",
         label: "Не сейчас",
-        note: "раз в ход",
+        note: "в начале хода",
         score: 6,
       },
     ],
-    kicker: "Лавка Джо",
+    kicker: "Артефакт",
     kind: "turn-shop-buy",
     playerId: player.id,
-    summary: `${playerChoiceBadge(player)} может заплатить ${coinAmount(cost)} и получить ${label}.`,
-    title: cardNameMarkup(card.title),
+    summary: `${playerChoiceBadge(player)} может заплатить ${coinAmount(buy.cost)} и получить ${buy.label}.`,
+    title: cardNameMarkup(buy.title),
   });
   return choice === "pay";
 }
@@ -9378,7 +9666,7 @@ async function resolvePreRollShopStepBoosts(player, animate) {
     const useBoost = await chooseSinglePreRollShopStepBoost(player, card, index, cards.length);
     if (!useBoost || player.coins < cost) continue;
     const steps = Math.max(1, Number(effect.steps) || 5);
-    addCoins(player, -cost);
+    addCoins(player, -cost, { category: "purchase" });
     player.turnStepBonus = (Number(player.turnStepBonus) || 0) + steps;
     showDiceFloat(player, steps);
     log(`${playerName(player)} платит <strong>${coinAmount(cost)}</strong> по <strong>Лавке Джо</strong>: <strong>+${steps}</strong> шагов на этот ход.`, {
@@ -9416,7 +9704,7 @@ async function resolveMoveDieRerolls(player, rolls, animate) {
     const dieIndex = Number(choice);
     if (!Number.isInteger(dieIndex) || dieIndex < 0 || dieIndex >= currentRolls.length || player.coins < cost) continue;
 
-    addCoins(player, -cost);
+    addCoins(player, -cost, { category: "purchase" });
     card._moveDieRerollUsedAt = state.turns;
     const oldValue = currentRolls[dieIndex];
     const newValue = d6();
@@ -9580,8 +9868,9 @@ function isPoorestByCoins(player) {
 }
 
 async function resolveGreenField(player) {
-  addCoins(player, 3);
-  log(`${playerName(player)} получает <strong>3 монеты</strong> на зеленом поле.`, { toast: true });
+  const coins = balance("field.green.coins", 3);
+  addCoins(player, coins);
+  log(`${playerName(player)} получает <strong>${countText(coins, "монету", "монеты", "монет")}</strong> на зеленом поле.`, { toast: true });
   const extra = tadamEffectAmount("green-extra-coins");
   if (extra > 0) {
     flashTadamCardsByType("green-extra-coins");
@@ -9603,8 +9892,9 @@ async function resolveGreenField(player) {
 
 async function resolveRedField(player) {
   const extraLoss = tadamEffectAmount("red-extra-loss");
-  addCoins(player, -(3 + extraLoss), { category: "loss" });
-  log(`${playerName(player)} теряет <strong>3 монеты</strong> на красном поле.`, { toast: true });
+  const loss = balance("field.red.loss", 3);
+  addCoins(player, -(loss + extraLoss), { category: "loss" });
+  log(`${playerName(player)} теряет <strong>${countText(loss, "монету", "монеты", "монет")}</strong> на красном поле.`, { toast: true });
   if (extraLoss > 0) {
     flashTadamCardsByType("red-extra-loss");
     log(`<strong>ТАДАМ</strong>: красное поле отнимает у ${playerName(player)} дополнительно ${coinAmount(extraLoss)}.`, {
@@ -10106,9 +10396,8 @@ function eventCardMarkup(card, { revealed }) {
   const icon = !isArtifact && card.icon ? `<img class="event-card-artifact-icon" src="${card.icon}" alt="" aria-hidden="true">` : "";
   const iconClass = icon ? "has-card-face-icon" : "";
   const artifactClass = isArtifact ? `is-event-artifact-card is-artifact-${card.id}` : "";
-  const specialFaceClass = card.id === "monster-rage" ? "is-event-monster-rage" : "";
   const textClass = `event-card-text ${eventCardTextDensityClass(textForDensity, title)} ${cardFaceDescriptionDensityClass(textForDensity)} ${cardFaceTitleDensityClass(title)} ${iconClass} ${artifactClass}`.trim();
-  const previewClass = `event-card-preview ${revealed && isArtifact ? "is-event-artifact-card" : ""} ${specialFaceClass}`.trim();
+  const previewClass = `event-card-preview ${revealed && isArtifact ? "is-event-artifact-card" : ""}`.trim();
   const artifactArtStyle = revealed && isArtifact && card.icon
     ? ` style="--event-artifact-art: url('${escapeHtml(card.icon)}')"`
     : "";
@@ -10273,6 +10562,7 @@ function chooseShopCardFromFace(offer, player = null, { cost = 5 } = {}) {
         ? joeCouponShopChoiceId
         : offer.find((item) => item.id === cardId) || null;
       if (selectedButton) markSelectedShopCard(selectedButton);
+      // Fast autoplay skips the highlight: it counts every waiting frame as an action and aborts the game at the limit.
       window.setTimeout(() => {
         actionPromptResolver = null;
         actionPromptButtonLabel = "Далее";
@@ -10282,7 +10572,7 @@ function chooseShopCardFromFace(offer, player = null, { cost = 5 } = {}) {
         hideEventToast({ quick: true });
         render();
         resolve(card);
-      }, selectedButton ? 260 : 0);
+      }, selectedButton && !fastModeActive() ? 260 : 0);
     };
     unsubscribeReset = onTransientReset(resetToken, () => {
       if (completed) return;
@@ -10295,7 +10585,8 @@ function chooseShopCardFromFace(offer, player = null, { cost = 5 } = {}) {
       resolve(null);
     });
 
-    actionPromptResolver = () => finish(null);
+    // A bot's generic auto-resolve must not beat its own pick and decline the shop in fast mode.
+    actionPromptResolver = isBot(player) ? () => finishBotShopCardChoice(player, offer, finish) : () => finish(null);
     actionPromptChoiceResolver = (cardId) => finish(cardId === "decline" ? null : cardId);
     ui.eventToast.querySelectorAll("[data-shop-card-id]").forEach((button) => {
       button.addEventListener("click", () => finish(button.dataset.shopCardId, { selectedButton: button }));
@@ -10360,6 +10651,7 @@ function chooseRevealedShopCard(offer, player = null, { cost = 5 } = {}) {
         ? joeCouponShopChoiceId
         : offer.find((item) => item.id === cardId) || null;
       if (selectedButton) markSelectedShopCard(selectedButton);
+      // Fast autoplay skips the highlight: it counts every waiting frame as an action and aborts the game at the limit.
       window.setTimeout(() => {
         actionPromptResolver = null;
         actionPromptButtonLabel = "Далее";
@@ -10369,7 +10661,7 @@ function chooseRevealedShopCard(offer, player = null, { cost = 5 } = {}) {
         hideEventToast({ quick: true });
         render();
         resolve(card);
-      }, selectedButton ? 260 : 0);
+      }, selectedButton && !fastModeActive() ? 260 : 0);
     };
     unsubscribeReset = onTransientReset(resetToken, () => {
       if (completed) return;
@@ -10382,7 +10674,8 @@ function chooseRevealedShopCard(offer, player = null, { cost = 5 } = {}) {
       resolve(null);
     });
 
-    actionPromptResolver = () => finish(null);
+    // A bot's generic auto-resolve must not beat its own pick and decline the shop in fast mode.
+    actionPromptResolver = isBot(player) ? () => finishBotShopCardChoice(player, offer, finish) : () => finish(null);
     actionPromptChoiceResolver = (cardId) => finish(cardId === "decline" ? null : cardId);
     ui.eventToast.querySelectorAll("[data-shop-card-id]").forEach((button) => {
       button.addEventListener("click", () => finish(button.dataset.shopCardId, { selectedButton: button }));
@@ -10451,6 +10744,7 @@ function shopCardsMarkup(cards, { revealed, selectable = false, selectionId = nu
       return `
         <button class="shop-card-preview" type="button" ${selectable ? `data-shop-card-id="${escapeHtml(selectionId ? selectionId(card, index) : card.id)}"` : ""} aria-label="${revealed ? "Выбрать карту Лавка Джо" : "Открыть карту Лавка Джо"}">
           ${cardText}
+          ${revealed ? shopCardMomentMarkup(card) : ""}
         </button>
       `;
     })
@@ -10590,6 +10884,10 @@ async function applyCardEffect(player, effect, source = {}) {
     return resolveEventGoldenHorseshoe(player, source.card, effect);
   } else if (effect.type === "event-traveler-compass") {
     return resolveEventTravelerCompass(player, source.card, effect);
+  } else if (effect.type === "event-marching-horn") {
+    return resolveEventMarchingHorn(player, source.card, effect);
+  } else if (effect.type === "event-training-dummy") {
+    return resolveEventTrainingDummy(player, source.card, effect);
   } else if (effect.type === "event-joe-game") {
     await resolveJoeNumberGame(player, { sourceLabel: "Игра Джо" });
   } else if (effect.type === "event-joe-auction") {
@@ -11670,7 +11968,7 @@ async function resolveEventHeroSword(player, card, effect = {}) {
     { autoFor: player, buttonLabel: "В бой" },
   );
 
-  const result = await rollHeroSwordArtifactBattle(player, targetStrength);
+  const result = await rollHeroSwordArtifactBattle(player, Math.max(1, Number(effect.dice) || 1));
   const formulaText = combatBonusFormulaText(result.baseBonus, result.cursePenalty, result.total, result.heroSwordBonus);
   if (result.total >= targetStrength) {
     grantHeroSwordArtifact(player, card);
@@ -11691,8 +11989,8 @@ async function resolveEventHeroSword(player, card, effect = {}) {
   return { discard: true };
 }
 
-async function rollHeroSwordArtifactBattle(player) {
-  let rolls = rollDice(1);
+async function rollHeroSwordArtifactBattle(player, dice = 1) {
+  let rolls = rollDice(dice);
   rolls = await maybeUseDiceControl(player, rolls, { mode: "event-hero-sword", title: "Контроль кубика: Меч Героя" });
   const rolled = rolls.reduce((sum, value) => sum + value, 0);
   const baseBonus = playerCombatBonus(player);
@@ -11871,6 +12169,8 @@ function resolveEventMonsterRage(amount = 1) {
 async function resolveEventGoldenMarkers(player, count = 5, amount = 10) {
   const markerCount = Math.max(1, Number(count) || 5);
   const reward = Math.max(0, Number(amount) || 10);
+  // The card's reward stays with the markers it placed (before 16 Oct 2026 collecting paid a literal 10).
+  state.goldenMarkerReward = reward;
   const placed = [];
 
   if (isBot(player)) {
@@ -11972,7 +12272,7 @@ async function collectGoldenMarker(player) {
 
   markers.splice(index, 1);
   state.goldenMarkers = markers;
-  const reward = 10;
+  const reward = Number.isFinite(Number(state.goldenMarkerReward)) ? Number(state.goldenMarkerReward) : 10;
   addCoins(player, reward);
   render();
   const message = `${playerName(player)} снимает <strong>Золотую метку</strong> с клетки ${cellLabel(player.position)} и получает <strong>${coinAmount(reward)}</strong>.`;
@@ -12115,7 +12415,7 @@ async function resolveEventGoldenHorseshoe(player, card, effect = {}) {
     criterion: "Свои кубики движения. Самый низкий результат получает артефакт",
     grant: grantGoldenHorseshoeArtifact,
     mode: "event-golden-horseshoe",
-    resultText: `Артефакт дает ${coinAmount(amount)}, если в броске движения выпала 1`,
+    resultText: `Артефакт дает ${coinAmount(amount)} за каждую 1 в броске хода`,
   });
   if (!winner) return { discard: true };
   return { discard: false };
@@ -12138,8 +12438,8 @@ async function resolveEventTravelerCompass(player, card, effect = {}) {
   return { discard: false };
 }
 
-async function resolveStepContestArtifact({ activePlayer, artifactTitle, bonusFor = playerStepBonus, card, criterion, grant, mode, resultText }) {
-  let contenders = [...state.players];
+async function resolveStepContestArtifact({ activePlayer, artifactTitle, bonusFor = playerStepBonus, card, criterion, grant, mode, players = state.players, resultText }) {
+  let contenders = [...players];
   let round = 1;
   let winner = contenders[0] || activePlayer;
 
@@ -12222,6 +12522,63 @@ async function rollStepContestPower(player, { artifactTitle, bonusFor, contender
     },
   });
   return { bonus, player, rolled, rolls, total };
+}
+
+async function resolveEventMarchingHorn(player, card, effect = {}) {
+  const winner = await resolveLowestBonusArtifact({
+    activePlayer: player,
+    artifactTitle: "Походный горн",
+    bonusFor: playerStepBonus,
+    bonusLabel: "бонус шагов",
+    card,
+    grant: grantMarchingHornArtifact,
+    mode: "event-marching-horn",
+    resultText: `В начале хода можно заплатить ${coinAmount(Math.max(0, Number(effect.cost ?? 10)))} и получить ${stepBonusText(Math.max(1, Number(effect.steps) || 2))}`,
+  });
+  return { discard: !winner };
+}
+
+async function resolveEventTrainingDummy(player, card, effect = {}) {
+  const winner = await resolveLowestBonusArtifact({
+    activePlayer: player,
+    artifactTitle: "Тренировочный манекен",
+    bonusFor: playerBattleBonus,
+    bonusLabel: "бонус силы",
+    card,
+    grant: grantTrainingDummyArtifact,
+    mode: "event-training-dummy",
+    resultText: `В начале хода можно заплатить ${coinAmount(Math.max(0, Number(effect.cost ?? 10)))} и получить ${battleForceText(Math.max(1, Number(effect.amount) || 1))}`,
+  });
+  return { discard: !winner };
+}
+
+// Артефакт отстающему: его получает игрок с наименьшим бонусом, ничью решает бросок 1 кубика между ними.
+async function resolveLowestBonusArtifact({ activePlayer, artifactTitle, bonusFor, bonusLabel, card, grant, mode, resultText }) {
+  const lowest = Math.min(...state.players.map(bonusFor));
+  const tied = state.players.filter((player) => bonusFor(player) === lowest);
+  if (tied.length > 1) {
+    const message = `<strong>${artifactTitle}</strong>: наименьший ${bonusLabel} (${lowest}) у игроков ${tied.map(playerName).join(", ")}, они бросают кубик.`;
+    log(message, { toast: true });
+    await showActionPrompt(message, { autoFor: activePlayer });
+    return resolveStepContestArtifact({
+      activePlayer,
+      artifactTitle,
+      bonusFor: () => 0,
+      card,
+      criterion: "1 кубик. Лучший результат получает артефакт",
+      grant,
+      mode,
+      players: tied,
+      resultText,
+    });
+  }
+  const winner = tied[0];
+  if (!winner) return null;
+  grant(winner, card);
+  const message = `<strong>${artifactTitle}</strong>: наименьший ${bonusLabel} (${lowest}) у ${playerName(winner)}, артефакт переходит этому игроку. ${resultText}.`;
+  log(message, { toast: true });
+  await showActionPrompt(message, { autoFor: winner });
+  return winner;
 }
 
 async function resolveMovementDiceLowContestArtifact({ activePlayer, artifactTitle, card, criterion, grant, mode, resultText }) {
@@ -12750,6 +13107,7 @@ const pendingGoodEffectTypes = new Set([
   "player-battle-potion",
   "dice-control",
   "backward-reversal",
+  "overtake-toll",
 ]);
 
 function isPendingGoodEffect(type) {
@@ -12765,6 +13123,7 @@ function pendingGoodCardLabel(card) {
   const labels = {
     "backward-reversal": "Разворот",
     "dice-control": "Кубик",
+    "overtake-toll": "Застава",
     "feed-monster-plus3": "Еда +3",
     "field-shield": "Щит поля",
     "player-battle-potion": "Дуэль +3",
@@ -12947,6 +13306,63 @@ async function chooseUseFieldShield(player, event) {
     title: "Защитный знак",
   });
   return choice === "use";
+}
+
+// Застава (Хорошо, пользователь, 18 Oct 2026). Обгон — обычный шаг вперед с клетки владельца, на которую игрок пришел
+// в этом же движении: стартовая клетка, прыжки, телепорты и шаги назад не в счет. Каждый владелец на пути — отдельно;
+// две Заставы у одного владельца — одна плата, сбрасывается одна карта. Нет монет или отказ — игрок стоит на этой клетке.
+async function resolveOvertakeTolls(player, cell, remaining) {
+  const owners = state.players.filter((owner) => owner.id !== player.id && owner.position === cell && pendingGoodCardsOfType(owner, "overtake-toll").length);
+  for (const owner of owners) {
+    const card = pendingGoodCardsOfType(owner, "overtake-toll")[0];
+    const cost = Math.max(0, Number(card.effect?.cost ?? 10));
+    const canPay = player.coins >= cost;
+    const pay = canPay && (isBot(player)
+      ? shouldBotPayOvertakeToll(player, cost, remaining)
+      : await chooseOvertakeToll(player, owner, cost, remaining));
+    if (!pay) {
+      const reason = canPay ? "не платит" : `не может заплатить ${coinAmount(cost)}`;
+      log(`${playerName(player)} ${reason} за ${cardNameStrong("Заставу")} ${playerName(owner)} и останавливается на этой клетке.`, { toast: true });
+      render();
+      return false;
+    }
+    applyCoinDelta(player, -cost, { category: "purchase" });
+    addCoins(owner, cost, { skipReceiveBonus: true });
+    consumePendingGoodCard(owner, "overtake-toll");
+    log(`${playerName(player)} платит ${playerName(owner)} <strong>${coinAmount(cost)}</strong> за ${cardNameStrong("Заставу")} и идет дальше. Карта сброшена.`, { toast: true });
+    render();
+  }
+  return true;
+}
+
+function shouldBotPayOvertakeToll(player, cost, remaining) {
+  const coinsAfter = player.coins - cost;
+  return (remaining >= 3 && coinsAfter >= 5) || coinsAfter >= 20;
+}
+
+async function chooseOvertakeToll(player, owner, cost, remaining) {
+  const choice = await chooseCardAction({
+    choices: [
+      {
+        id: "pay",
+        label: "Заплатить",
+        note: `${coinAmount(cost)} ${playerName(owner)}, еще ${countText(remaining, "шаг", "шага", "шагов")}`,
+        score: shouldBotPayOvertakeToll(player, cost, remaining) ? 18 : 4,
+      },
+      {
+        id: "stop",
+        label: "Остановиться",
+        note: cellTitleWithLabel(player.position),
+        score: shouldBotPayOvertakeToll(player, cost, remaining) ? 4 : 18,
+      },
+    ],
+    kicker: "Хорошо",
+    kind: "overtake-toll",
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} догоняет ${playerChoiceBadge(owner)}. Чтобы обогнать, нужно заплатить ${coinAmount(cost)}, иначе ход заканчивается на этой клетке.`,
+    title: "Застава",
+  });
+  return choice === "pay";
 }
 
 async function resolveBackwardReversal(player, steps) {
@@ -13321,12 +13737,12 @@ async function drawTadamCard(player) {
   }
   log(`${playerName(player)} тянет карту <strong>ТАДАМ!</strong>: ${cardNameMarkup(card.title)}`);
   await revealTadamCard(player, card);
-  addCoins(player, 5);
+  addCoins(player, balance("field.tadam.coins", 5));
   state.tadams.push(card);
   recordTadamPlayed();
   resolveTadamIncomeRewards(card);
-  if (state.tadams.length > 3) discardCardToDeck("tadam", state.tadams.shift());
-  log(`${playerName(player)} получает <strong>${coinAmount(5)}</strong> за открытие <strong>ТАДАМ!</strong>.`, { toast: true });
+  if (state.tadams.length > tadamActiveLimit()) discardCardToDeck("tadam", state.tadams.shift());
+  log(`${playerName(player)} получает <strong>${coinAmount(balance("field.tadam.coins", 5))}</strong> за открытие <strong>ТАДАМ!</strong>.`, { toast: true });
   log(`${playerName(player)} применяет карту <strong>ТАДАМ!</strong>: ${cardNameMarkup(card.title)}`, { toast: true });
 }
 
@@ -13354,6 +13770,7 @@ function resolveEventIncomeRewards(card) {
 
 async function resolveShop(player) {
   await resolveFaceDownShopBuyback(player);
+  if (shopMarketEnabled()) return resolveShopMarket(player);
 
   let boughtCount = 0;
   let immediateStepBonus = 0;
@@ -13412,6 +13829,116 @@ async function resolveShop(player) {
   }
 
   return immediateStepBonus;
+}
+
+// Tabletop review, 12 Oct 2026 (the user's pick): one open market of 2 cards for the whole game instead of fresh cards
+// at every Лавка. Привилегия Джо draws a third card at the visit; unbought, it goes to the discard. A bought market card
+// is replaced from the deck at once, the others stay until someone buys them.
+async function resolveShopMarket(player) {
+  const market = refillShopMarket();
+  if (!market.length) {
+    log("<strong>Лавка Джо</strong>: на рынке нет карт.", { toast: true });
+    return 0;
+  }
+  const cost = joeShopCardCost(player);
+  if (player.coins < cost && !canUseJoeCouponInShop(player, market)) {
+    log(`На рынке Лавки Джо: ${market.map((card) => cardNameMarkup(card.title)).join(" / ")}. У ${playerName(player)} не хватает монет.`, {
+      toast: true,
+    });
+    return 0;
+  }
+
+  const drawCount = Math.max(0, joeShopOfferCount(player) - shopMarketSize);
+  const drawn = drawCount
+    ? drawCardsFromDeck("shop", drawCount, { uniqueIds: true, excludeIds: market.map((card) => card.id) })
+    : [];
+  if (drawn.length) {
+    log(`<strong>Привилегия Джо</strong>: ${playerName(player)} тянет с колоды ${drawn.map((card) => cardNameStrong(card.title)).join(" / ")}.`);
+  }
+  const offer = [...market, ...drawn];
+  const bought = await chooseRevealedShopCard(offer, player, { cost });
+  botShopOfferChoices.delete(offer);
+
+  if (bought === joeCouponShopChoiceId && canUseJoeCouponInShop(player, offer)) {
+    state.shopMarket = [];
+    const immediateStepBonus = await takeJoeCouponShopOffer(player, offer);
+    refillShopMarket();
+    render();
+    return immediateStepBonus;
+  }
+  if (!bought || bought === joeCouponShopChoiceId) {
+    discardCardsToDeck("shop", drawn);
+    log(`${playerName(player)} отказывается от карт Лавки Джо.${drawn.length ? " Вытянутая карта уходит в сброс." : ""}`, { toast: true });
+    return 0;
+  }
+
+  addCoins(player, -cost, { category: "purchase" });
+  player.items.push(ownedShopItem(bought));
+  recordShopCards(player);
+  log(`${playerName(player)} покупает в Лавке Джо за ${coinAmount(cost)}: <strong>${bought.title}</strong>`, { toast: true });
+  const marketIndex = state.shopMarket.indexOf(bought);
+  if (marketIndex >= 0) {
+    state.shopMarket.splice(marketIndex, 1);
+    refillShopMarket();
+  }
+  discardCardsToDeck("shop", drawn.filter((card) => card !== bought));
+  render();
+  return bought.effect?.type === "passive-step-bonus" ? Math.max(0, Number(bought.effect.steps) || 0) : 0;
+}
+
+function shopMarketEnabled() {
+  return state?.shopMode === "market";
+}
+
+// Tops the open market up to 2 cards with distinct ids (the shop prompt picks by id) and says what was laid out.
+function refillShopMarket() {
+  if (!state) return [];
+  if (!Array.isArray(state.shopMarket)) state.shopMarket = [];
+  if (!shopMarketEnabled()) return state.shopMarket;
+  const missing = shopMarketSize - state.shopMarket.length;
+  if (missing <= 0) return state.shopMarket;
+  const added = drawCardsFromDeck("shop", missing, { uniqueIds: true, excludeIds: state.shopMarket.map((card) => card.id) });
+  if (added.length) {
+    state.shopMarket.push(...added);
+    log(`На рынок Лавки Джо выложена ${added.length === 1 ? "карта" : "карты"}: ${added.map((card) => cardNameStrong(card.title)).join(" / ")}.`);
+  }
+  return state.shopMarket;
+}
+
+function shopModeSetting() {
+  return ui.shopMode?.value === "classic" ? "classic" : "market";
+}
+
+function syncShopModeControl() {
+  if (!ui.shopMode) return;
+  const locked = weaponsSettingLocked();
+  ui.shopMode.disabled = locked;
+  const hint = locked
+    ? "Лавку можно переключить после завершения текущего действия или боя"
+    : `Рынок: ${countText(shopMarketSize, "открытая карта", "открытые карты", "открытых карт")} на всю партию, купленную сразу заменяет новая. Классика: в каждой Лавке новые карты с колоды`;
+  ui.shopMode.title = hint;
+  if (ui.shopMode.parentElement) ui.shopMode.parentElement.title = hint;
+}
+
+function applyShopModeSetting() {
+  if (!state || !ui.shopMode) return;
+  if (weaponsSettingLocked()) {
+    ui.shopMode.value = shopMarketEnabled() ? "market" : "classic";
+    syncShopModeControl();
+    return;
+  }
+  const mode = shopModeSetting();
+  if ((mode === "market") === shopMarketEnabled()) return;
+  state.shopMode = mode;
+  if (mode === "classic") {
+    const cards = (state.shopMarket || []).splice(0);
+    discardCardsToDeck("shop", cards);
+    log(`Лавка: классика. ${cards.length ? "Карты рынка уходят в сброс, в" : "В"} каждой Лавке снова новые карты с колоды.`);
+  } else {
+    log(`Лавка: рынок. ${countText(shopMarketSize, "открытая карта лежит", "открытые карты лежат", "открытых карт лежат")} всю партию, купленную сразу заменяет новая.`);
+    refillShopMarket();
+  }
+  render();
 }
 
 function canUseJoeCouponInShop(player, offer) {
@@ -13596,7 +14123,7 @@ async function resolveImmediateShopStepMovement(player, steps) {
   await movePlayerSteps(player, amount);
 }
 
-async function resolveFaceDownShopBuyback(player, cost = 5) {
+async function resolveFaceDownShopBuyback(player, cost = balance("shop.buybackCost", 5)) {
   if (!faceDownShopItems(player).length) return;
   if (player.coins < cost) {
     log(
@@ -13649,7 +14176,7 @@ async function resolveFaceDownShopBuyback(player, cost = 5) {
   }
 }
 
-function buyBackFaceDownShopCardsForBot(player, cost = 5) {
+function buyBackFaceDownShopCardsForBot(player, cost = balance("shop.buybackCost", 5)) {
   let bought = 0;
   while (player.coins >= cost) {
     const entries = player.items
@@ -14299,6 +14826,7 @@ async function movePlayerSteps(player, steps, { resolveBackwardLanding = false }
   if (steps > 0) {
     for (let step = 0; step < steps && player.position !== finishCell; step += 1) {
       const currentPosition = player.position;
+      if (step > 0 && !(await resolveOvertakeTolls(player, currentPosition, steps - step))) break;
       const nextPosition = getNextOptions(player.position)[0]?.cell;
       if (!nextPosition) {
         shouldResolveLanding = false;
@@ -14359,6 +14887,7 @@ function applyCoinDelta(player, amount, { category = "system" } = {}) {
   const delta = player.coins - before;
   recordCoinDelta(player, delta);
   if (delta !== 0) showCoinFloat(player, delta);
+  // Purchases do not feed Чужая расплата; paying for your own card's effect is one too (tabletop review, 12 Oct 2026).
   if (delta < 0 && category !== "purchase") notifyOtherPlayerCoinLoss(player);
   return delta;
 }
@@ -14752,14 +15281,204 @@ async function resolveLandSteal(player) {
   }
 }
 
+// «Настольный»: ведущий одной фразой говорит, чей ход и чего ждёт игра; под фразой — клетка игрока
+const tableHostPromptPhrases = {
+  "Бросить кубик": "бросай кубик",
+  "В бой": "в бой!",
+  "Открыть": "открывай карту",
+  "Применить": "применяй карту",
+};
+let tableHostPlayerId = null;
+
+function tableHostPhrase(player) {
+  const nameOf = (pending) => (pending?.playerId != null ? playerById(pending.playerId) : null)?.name || player?.name || "Игрок";
+  const name = player?.name || "Игрок";
+  const bot = isBot(player);
+  if (state.finished) {
+    const winner = findWinner();
+    return winner ? `Партия окончена. Победа — ${winner.name}!` : "Партия окончена";
+  }
+  if (state.finalBattleProgress) return "Финальная битва!";
+  if (state.dragonBattleProgress) return "Все против Дракона!";
+  if (state.unityBattleProgress) return "Сплочение: все против монстра";
+  if (state.vsBattleProgress) return "VS: все бьются за банк";
+  if (state.enemyBattleProgress) return `${name} сражается с врагом`;
+  if (actionPromptResolver) {
+    if (bot) return `${name} ходит`;
+    const phrase = tableHostPromptPhrases[actionPromptButtonLabel];
+    return phrase ? `${name}, ${phrase}` : `${name}, жми «${actionPromptButtonLabel}»`;
+  }
+  if (ui.diceValue?.classList.contains("rolling")) return `${name} бросает кубик`;
+  const preRoll = state.pendingPreRoll || state.pendingDiceControl;
+  if (preRoll) return isBotPlayerId(preRoll.playerId) ? `${nameOf(preRoll)} думает перед броском` : `${nameOf(preRoll)}, реши до броска`;
+  const postRoll = state.pendingMoveDieReroll || state.pendingMoveOneFarther;
+  if (postRoll) return isBotPlayerId(postRoll.playerId) ? `${nameOf(postRoll)} думает над броском` : `${nameOf(postRoll)}, реши, как идти`;
+  const shop = state.pendingShop || state.pendingShopClaim;
+  if (shop) return `${nameOf(shop)} у Лавки Джо`;
+  if (state.pendingCardChoice) return `${nameOf(state.pendingCardChoice)}: ${state.pendingCardChoice.title || "выбор карты"}`;
+  if (state.pendingChoice) {
+    const portal = state.pendingChoice.kind === "portal" || state.pendingChoice.kind === "chaos-portal";
+    return `${nameOf(state.pendingChoice)} выбирает ${portal ? "портал" : "путь"}`;
+  }
+  if (state.isAnimating) return `${name} идёт`;
+  return bot ? `${name} бросает кубик` : `${name}, брось кубик`;
+}
+
+// Кто сейчас действует: владелец отложенного выбора, иначе игрок, чей ход
+function tableHostActor(player) {
+  const pending = [
+    state.pendingPreRoll,
+    state.pendingDiceControl,
+    state.pendingMoveDieReroll,
+    state.pendingMoveOneFarther,
+    state.pendingShop,
+    state.pendingShopClaim,
+    state.pendingCardChoice,
+    state.pendingChoice,
+  ].find((item) => item?.playerId != null);
+  return (pending && playerById(pending.playerId)) || player;
+}
+
+function renderTableHost(player) {
+  const container = ui.tableHost;
+  if (!container || !state?.players || !player || selectedUiStyle() !== "tabletop") return;
+  if (!container.firstElementChild) {
+    container.innerHTML = '<b class="table-host-line"></b><span class="table-host-cell"></span>';
+  }
+  container.style.setProperty("--player-color", tableHostActor(player).color);
+  const phrase = tableHostPhrase(player);
+  container.querySelector(".table-host-line").textContent = phrase;
+  container.querySelector(".table-host-cell").innerHTML = ui.fieldEffect?.innerHTML || "";
+  container.title = `${phrase}. ${ui.fieldEffect?.textContent.trim() || ""}`.trim();
+  if (tableHostPlayerId !== player.id) {
+    tableHostPlayerId = player.id;
+    container.classList.remove("is-new-turn");
+    void container.offsetWidth;
+    container.classList.add("is-new-turn");
+  }
+}
+
+// Грань кубика для лотка «Настольного»: 1–6 рисуются точками, «-» — пустая грань, суммы остаются числом
+function syncDiceFace() {
+  const value = ui.diceValue?.textContent.trim();
+  if (ui.diceValue) ui.diceValue.dataset.face = /^[1-6]$/.test(value) ? value : value === "-" || !value ? "0" : "";
+}
+
+if (ui.diceValue) {
+  new MutationObserver(syncDiceFace).observe(ui.diceValue, { childList: true, characterData: true, subtree: true });
+  syncDiceFace();
+}
+
+// «Настольный»: колоды стопками рубашек с числом карт, клик открывает справочник колоды
+const tableDeckList = [
+  { id: "good", title: "Хорошо", back: "./assets/cards/good_back.png" },
+  { id: "bad", title: "Плохо", back: "./assets/cards/bad_back.png" },
+  { id: "tadam", title: "ТАДАМ", back: "./assets/cards/tadam_back.png" },
+  { id: "shop", title: "Лавка", back: "./assets/cards/shop_back.png" },
+  { id: "event", title: "События", back: "./assets/cards/event_back.png" },
+  { id: "legendary", title: "Оружие", back: "./assets/cards/legendary_back.png" },
+];
+const tableDeckCounts = new Map();
+
+function tableDeckDepth(count) {
+  if (count <= 0) return 0;
+  if (count <= 5) return 1;
+  if (count <= 15) return 2;
+  return 3;
+}
+
+function renderTableDecks() {
+  const container = ui.tableDecks;
+  if (!container || !state?.decks || selectedUiStyle() !== "tabletop") return;
+  for (const deck of tableDeckList) {
+    const pile = state.decks[deck.id];
+    const drawCount = pile?.draw?.length || 0;
+    const discardCount = pile?.discard?.length || 0;
+    let button = container.querySelector(`[data-table-deck="${deck.id}"]`);
+    if (!button) {
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "table-deck";
+      button.dataset.tableDeck = deck.id;
+      button.innerHTML = `
+        <span class="table-deck-pile"><img src="${deck.back}" alt="" aria-hidden="true"></span>
+        <b class="table-deck-count"></b>
+        <span class="table-deck-label">${deck.title}</span>
+      `;
+      container.append(button);
+    }
+    button.hidden = drawCount + discardCount === 0;
+    button.dataset.depth = String(tableDeckDepth(drawCount));
+    button.querySelector(".table-deck-count").textContent = String(drawCount);
+    const label = `${referenceDeckTitles[deck.id] || deck.title}: в колоде ${drawCount}, в сбросе ${discardCount}. Показать карты колоды`;
+    button.title = label;
+    button.setAttribute("aria-label", label);
+    const previous = tableDeckCounts.get(deck.id);
+    tableDeckCounts.set(deck.id, drawCount);
+    if (previous !== undefined && drawCount < previous) {
+      button.classList.remove("is-drawn");
+      void button.offsetWidth;
+      button.classList.add("is-drawn");
+    }
+  }
+  renderTableMarket(container);
+}
+
+// Открытый рынок Лавки: лоток с картами рынка лицом вверх сразу за колодой Лавки. Новая карта ложится с переворотом
+let tableMarketKey = "";
+
+function renderTableMarket(container) {
+  let tray = container.querySelector(".table-market");
+  if (!tray) {
+    tray = document.createElement("div");
+    tray.className = "table-market";
+    container.querySelector('[data-table-deck="shop"]')?.after(tray);
+    if (!tray.isConnected) container.append(tray);
+  }
+  const cards = shopMarketEnabled() ? (state.shopMarket || []) : [];
+  tray.hidden = !shopMarketEnabled();
+  const key = cards.map((card) => card._copyId || card.id).join("|");
+  if (key === tableMarketKey && tray.childElementCount) return;
+  const previous = new Set(tableMarketKey.split("|"));
+  tableMarketKey = key;
+  const slots = Array.from({ length: shopMarketSize }, (_, index) => cards[index] || null);
+  tray.setAttribute("aria-label", cards.length ? `Рынок Лавки: ${cards.map((card) => plainText(card.title)).join(", ")}` : "Рынок Лавки пуст");
+  tray.innerHTML = `
+    <span class="table-market-cards">${slots.map((card) => card ? tableMarketCardMarkup(card, !previous.has(card._copyId || card.id)) : '<span class="table-market-card is-empty"></span>').join("")}</span>
+    <span class="table-market-label">Рынок</span>
+  `;
+}
+
+function tableMarketCardMarkup(card, fresh) {
+  const title = plainText(card.title || card.shortTitle || "Карта");
+  const hint = `${title}: ${plainText(cardDisplayText(card))}`;
+  return `
+    <span class="table-market-card${fresh && tableMotionAllowed() ? " is-new" : ""}" title="${escapeHtml(hint)}">
+      ${shopCardMomentMarkup(card)}
+      <b>${escapeHtml(plainText(card.shortTitle || card.title || "Карта"))}</b>
+    </span>
+  `;
+}
+
+function openReferenceDeck(deckId) {
+  if (!referenceDeckTitles[deckId]) return;
+  referencePanelOpen = true;
+  visibleReferenceSections.add(deckId);
+  renderReferencePanel();
+  ui.referenceOutput?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function renderTadams() {
   tadamTableEl.innerHTML = "";
   const visibleCards = visibleTadamCards();
+  // Настольный стиль подписывает строку ТАДАМ «в игре N из 3»
+  const tadamSection = tadamTableEl.closest(".tadam-card");
+  if (tadamSection) tadamSection.dataset.count = String(Math.min(tadamActiveLimit(), visibleCards.length));
   const flashKeys = new Set(state.tadamFlashKeys || []);
   const flashStartedAt = state.tadamFlashStartedAt || {};
   const now = animationClockMs();
 
-  for (let index = 0; index < 3; index += 1) {
+  for (let index = 0; index < tadamActiveLimit(); index += 1) {
     const card = visibleCards[index] || null;
     const item = document.createElement("article");
     const key = tadamCardKey(card);
@@ -14776,9 +15495,32 @@ function renderTadams() {
         title: card.title || "ТАДАМ",
       })
       : `<span class="tadam-slot-empty">${index + 1}</span>`;
+    if (card && key) item.dataset.tadamKey = key;
     tadamTableEl.append(item);
   }
+  syncTadamHeld();
 }
+
+// Касание карты ТАДАМ в «Настольном» увеличивает её, как наведение мышью; второе касание или касание мимо — кладёт обратно
+function syncTadamHeld() {
+  tadamTableEl?.querySelectorAll(".tadam-slot").forEach((slot) => {
+    slot.classList.toggle("is-held", Boolean(tadamHeldKey) && slot.dataset.tadamKey === tadamHeldKey);
+  });
+}
+
+tadamTableEl?.addEventListener("click", (event) => {
+  if (selectedUiStyle() !== "tabletop") return;
+  const slot = event.target instanceof Element ? event.target.closest(".tadam-slot.is-filled") : null;
+  const key = slot?.dataset.tadamKey || null;
+  tadamHeldKey = key && key !== tadamHeldKey ? key : null;
+  syncTadamHeld();
+});
+
+document.addEventListener("click", (event) => {
+  if (!tadamHeldKey || (event.target instanceof Element && event.target.closest("#tadamTable"))) return;
+  tadamHeldKey = null;
+  syncTadamHeld();
+});
 
 function visibleTadamCards() {
   return state.tadams.slice(-3).reverse();
@@ -14799,9 +15541,9 @@ function tileTitle(cell) {
   const namesByEvent = {
     "all-or-nothing": `Все или ничего — ${allOrNothingRuleText}`,
     bad: "Плохо",
-    "very-bad": 'Очень Плохо — возьми 3 карты "Плохо"',
-    "big-rest": "Привал — выбери: восстановиться +10 монет; потренироваться +1 силе; ускориться +2 к шагам",
-    "black-market": "Черный рынок — поменяй 1 карту Лавка Джо на +2 к силе; 2 карты на 30 монет; 3 карты на +10 к силе в следующем бою с монстром и 30 шагов вперед",
+    "very-bad": `Очень Плохо — возьми ${countText(veryBadCardCount(), "карту", "карты", "карт")} "Плохо"`,
+    "big-rest": `Привал — выбери: восстановиться +${restCoinsText()}; потренироваться ${restStrengthText()}; ускориться ${restStepsText()}`,
+    "black-market": `Черный рынок — поменяй ${blackMarketRuleText.replaceAll(", ", "; ")}`,
     "chaos-portal": `Портал хаоса — ${chaosPortalRuleText}`,
     "dice-fortune": `Кубик удачи — кинь кубик ${diceFortuneDiceCount} раз, получи ${diceFortuneCoinReward} монет за каждую 6, походи на ${diceFortuneBackwardStepPenalty} шагов назад за каждую 1`,
     enemy: "Враг — Сразись с врагом",
@@ -14811,8 +15553,8 @@ function tileTitle(cell) {
     "pay-double": "Удвой свои монеты",
     red: "Красное поле",
     shop: "Лавка Джо",
-    tadam: "ТАДАМ! — возьми карту Тадам и получи 5 монет",
-    vs: "VS — все игроки скидывают по 10 монет, затем между ними происходит битва. Игрок с наибольшей силой забирает все скинутые монеты",
+    tadam: `ТАДАМ! — возьми карту Тадам и получи ${tadamCoinsText()}`,
+    vs: `VS — все игроки скидывают по ${vsAnteText()}, затем между ними происходит битва. Игрок с наибольшей силой забирает все скинутые монеты`,
   };
   return namesByEvent[cellEvents[cell]] || "Клетка";
 }
@@ -14825,20 +15567,20 @@ function fieldEffectText(cell) {
   const texts = {
     "all-or-nothing": ["Все или ничего", allOrNothingRuleText],
     bad: ["Плохо", "Тяни карту Плохо"],
-    "very-bad": ["Очень Плохо", 'Возьми 3 карты "Плохо"'],
-    "big-rest": ["Привал", "Выбери: восстановиться +10 монет; потренироваться +1 силе; ускориться +2 к шагам"],
-    "black-market": ["Черный рынок", "Поменяй Лавки Джо: 1 = +2 к силе; 2 = 30 монет; 3 = +10 к силе в следующем бою с монстром и 30 шагов"],
+    "very-bad": ["Очень Плохо", `Возьми ${countText(veryBadCardCount(), "карту", "карты", "карт")} "Плохо"`],
+    "big-rest": ["Привал", `Выбери: восстановиться +${restCoinsText()}; потренироваться ${restStrengthText()}; ускориться ${restStepsText()}`],
+    "black-market": ["Черный рынок", `Поменяй Лавки Джо: ${blackMarketStrengthCards} = ${blackMarketStrengthText}; ${blackMarketCoinsCards} = ${blackMarketCoinsText}; ${blackMarketRushCards} = ${blackMarketRushText}`],
     "chaos-portal": ["Портал хаоса", chaosPortalRuleText],
-    "dice-fortune": ["Кубик удачи", `6 бросков: 6 = +${diceFortuneCoinReward} монет, 1 = -${diceFortuneBackwardStepPenalty} шагов`],
+    "dice-fortune": ["Кубик удачи", `${countText(diceFortuneDiceCount, "бросок", "броска", "бросков")}: 6 = +${diceFortuneCoinReward} монет, 1 = -${diceFortuneBackwardStepPenalty} шагов`],
     enemy: ["Враг", "Сразись с врагом"],
     event: ["Событие", "Тяни карту Событие"],
     good: ["Хорошо", "Тяни карту Хорошо"],
     green: ["Зеленое поле", greenEffectLabel()],
     "pay-double": ["Удвой свои монеты", "Удвой свои монеты"],
     red: ["Красное поле", redEffectLabel()],
-    shop: ["Лавка Джо", `2 карты на выбор за ${joeShopCardCost()} монет`],
-    tadam: ["ТАДАМ!", "Возьми карту Тадам и получи 5 монет"],
-    vs: ["VS", "Все скидывают по 10 монет и сражаются за банк"],
+    shop: ["Лавка Джо", `${countText(joeShopOfferCount(), "карта", "карты", "карт")} на выбор за ${joeShopCardCost()} монет`],
+    tadam: ["ТАДАМ!", `Возьми карту Тадам и получи ${tadamCoinsText()}`],
+    vs: ["VS", `Все скидывают по ${vsAnteText()} и сражаются за банк`],
   };
   const text = texts[cellEvents[cell]] || ["Обычная клетка", "Без эффекта"];
   return iconizeHtml(`<span>${text[0]}</span><strong>${text[1]}</strong>`);
@@ -14958,19 +15700,12 @@ function turnActionsText(player) {
       </span>
     `);
   }
-  for (const [type, label] of [["turn-strength-buy", "+1 сила"], ["turn-steps-buy", "+2 шаги"]]) {
-    const cards = activeShopEffectItems(player, type).filter((card) => (
-      card[type === "turn-strength-buy" ? "_turnStrengthBuyUsedAt" : "_turnStepsBuyUsedAt"] !== state.turns
-    ));
-    if (!cards.length) continue;
-    const cost = cards[0].effect?.cost ?? 10;
-    const canPay = player.coins >= cost;
-    const countText = cards.length > 1 ? `<em class="action-chip-count">x${cards.length}</em>` : "";
+  for (const buy of turnArtifactBuys(player, { unusedOnly: true })) {
+    const canPay = player.coins >= buy.cost;
     actions.push(`
       <span class="action-chip extra-die-action-chip ${canPay ? "" : "disabled"}">
-        <span class="action-chip-cost">${coinAmount(cost)}</span>
-        <span>${label}</span>
-        ${countText}
+        <span class="action-chip-cost">${coinAmount(buy.cost)}</span>
+        <span>${buy.chip}</span>
       </span>
     `);
   }
@@ -14981,24 +15716,25 @@ function turnActionsText(player) {
 
 function greenEffectLabel() {
   const extra = tadamEffectAmount("green-extra-coins");
-  const base = extra > 0 ? `+${coinAmount(3 + extra)}` : `+${coinAmount(3)}`;
+  const coins = balance("field.green.coins", 3);
+  const base = extra > 0 ? `+${coinAmount(coins + extra)}` : `+${coinAmount(coins)}`;
   return fieldEffectLabel("green-field", base);
 }
 
 function referenceGreenEffectLabel() {
   const extra = tadamEffectAmount("green-extra-coins");
-  const amount = 3 + Math.max(0, extra);
+  const amount = balance("field.green.coins", 3) + Math.max(0, extra);
   return referenceFieldEffectLabel("green-field", `Получи ${coinAmount(amount)}`);
 }
 
 function redEffectLabel() {
   const extraLoss = tadamEffectAmount("red-extra-loss");
-  return fieldEffectLabel("red-field", coinAmount(-(3 + Math.max(0, extraLoss))));
+  return fieldEffectLabel("red-field", coinAmount(-(balance("field.red.loss", 3) + Math.max(0, extraLoss))));
 }
 
 function referenceRedEffectLabel() {
   const extraLoss = tadamEffectAmount("red-extra-loss");
-  const amount = 3 + Math.max(0, extraLoss);
+  const amount = balance("field.red.loss", 3) + Math.max(0, extraLoss);
   return referenceFieldEffectLabel("red-field", `Потеряй ${coinAmount(amount)}`);
 }
 
@@ -15350,12 +16086,32 @@ function joeShopCardCost(player = null) {
       .reduce((lowest, card) => Math.min(lowest, Number(card.effect?.cost) || 3), 3);
     return Math.max(0, fixedCost + modifier);
   }
-  const baseCost = 5;
+  const baseCost = balance("shop.cardCost", 5);
   return Math.max(0, baseCost + modifier);
 }
 
 function joeShopOfferCount(player = null) {
-  return player && hasActiveShopEffect(player, "shop-choice-3-cost-3") ? 3 : 2;
+  if (player && hasActiveShopEffect(player, "shop-choice-3-cost-3")) {
+    const amounts = activeShopEffectItems(player, "shop-choice-3-cost-3").map((card) => Number(card.effect?.amount) || 3);
+    return amounts.length ? Math.max(...amounts) : 3;
+  }
+  return balance("shop.offerCount", 2);
+}
+
+function tadamActiveLimit() {
+  return balance("field.tadam.maxActive", 3);
+}
+
+function tadamCoinsText() {
+  return countText(balance("field.tadam.coins", 5), "монету", "монеты", "монет");
+}
+
+function veryBadCardCount() {
+  return balance("field.veryBad.cards", 3);
+}
+
+function vsAnteText() {
+  return countText(balance("field.vs.ante", 10), "монете", "монеты", "монет");
 }
 
 function portalBadDrawCount() {
@@ -15368,7 +16124,7 @@ function activeFieldEffect(type) {
 }
 
 function playerStepBonus(player) {
-  const artifactBonus = hasSpeedBootsArtifact(player) ? 5 : 0;
+  const artifactBonus = hasSpeedBootsArtifact(player) ? speedBootsSteps() : 0;
   return playerManualStepBonus(player) + (Number(player?.turnStepBonus) || 0) + artifactBonus + activeShopItems(player)
     .filter((item) => item.effect?.type === "passive-step-bonus")
     .reduce((sum, item) => sum + item.effect.steps, 0) + activeShopSetBonus(player, "speed-cluster", "steps");
@@ -15564,7 +16320,7 @@ function syncWeaponsSettingControl() {
   ui.weaponsEnabled.disabled = locked;
   const hint = locked
     ? "Оружие можно переключить после завершения текущего действия или боя"
-    : "Включено: легендарное оружие. Выключено: босс получает +3 силы за каждого противника";
+    : "Включено: у финального монстра легендарное оружие, его забирает победитель монстра";
   ui.weaponsEnabled.title = hint;
   if (ui.weaponsEnabled.parentElement) ui.weaponsEnabled.parentElement.title = hint;
 }
@@ -15584,8 +16340,8 @@ function applyWeaponsSetting() {
     state.legendaryWeapon = null;
   }
   log(enabled
-    ? "Оружие включено: финальный монстр получает легендарное оружие при следующем сражении. Босс не получает +3 за противников."
-    : "Оружие выключено: босс получает +3 силы за каждого противника в финальной битве.");
+    ? "Оружие включено: финальный монстр получает легендарное оружие при следующем сражении."
+    : "Оружие выключено: легендарного оружия в игре нет.");
   render();
 }
 
@@ -16000,7 +16756,7 @@ function totalDiceForPlayer(player, extraDice = 0) {
 }
 
 function playerCoinBonus(player) {
-  return hasMagicPickaxeArtifact(player) ? 2 : 0;
+  return hasMagicPickaxeArtifact(player) ? magicPickaxeCoinBonus() : 0;
 }
 
 function optionalExtraDieCards(player) {
@@ -16031,7 +16787,7 @@ async function chooseExtraDie(player, animate) {
     const useExtraDie = await chooseSingleExtraDie(player, card, index, cards.length);
     if (!useExtraDie) break;
 
-    addCoins(player, -effect.cost);
+    addCoins(player, -effect.cost, { category: "purchase" });
     totalDice += effect.dice;
     log(`${playerName(player)} платит <strong>${effect.cost} монеты</strong> за дополнительный кубик.`);
   }
@@ -16123,12 +16879,12 @@ function drawCardFromDeck(deckId) {
   return deck.draw.pop() || null;
 }
 
-function drawCardsFromDeck(deckId, count, { uniqueIds = false } = {}) {
+function drawCardsFromDeck(deckId, count, { uniqueIds = false, excludeIds = [] } = {}) {
   const deck = gameDeck(deckId);
   const available = deck.draw.length + deck.discard.length;
   const picked = [];
   const held = [];
-  const pickedIds = new Set();
+  const pickedIds = new Set(uniqueIds ? excludeIds : []);
   let attempts = 0;
 
   while (picked.length < count && attempts < available) {
@@ -16173,6 +16929,8 @@ function isPersistentEventArtifact(card) {
   const magicPickaxeCopyId = state?.artifacts?.magicPickaxeCard?._copyId || state?.artifacts?.magicPickaxeCard?.id;
   const goldenHorseshoeCopyId = state?.artifacts?.goldenHorseshoeCard?._copyId || state?.artifacts?.goldenHorseshoeCard?.id;
   const travelerCompassCopyId = state?.artifacts?.travelerCompassCard?._copyId || state?.artifacts?.travelerCompassCard?.id;
+  const marchingHornCopyId = state?.artifacts?.marchingHornCard?._copyId || state?.artifacts?.marchingHornCard?.id;
+  const trainingDummyCopyId = state?.artifacts?.trainingDummyCard?._copyId || state?.artifacts?.trainingDummyCard?.id;
   return Boolean(
     (type === "event-hero-sword" && copyId && copyId === heroSwordCopyId) ||
     (type === "event-anti-bad" && copyId && copyId === antiBadCopyId) ||
@@ -16180,7 +16938,9 @@ function isPersistentEventArtifact(card) {
     (type === "event-speed-boots" && copyId && copyId === speedBootsCopyId) ||
     (type === "event-magic-pickaxe" && copyId && copyId === magicPickaxeCopyId) ||
     (type === "event-golden-horseshoe" && copyId && copyId === goldenHorseshoeCopyId) ||
-    (type === "event-traveler-compass" && copyId && copyId === travelerCompassCopyId)
+    (type === "event-traveler-compass" && copyId && copyId === travelerCompassCopyId) ||
+    (type === "event-marching-horn" && copyId && copyId === marchingHornCopyId) ||
+    (type === "event-training-dummy" && copyId && copyId === trainingDummyCopyId)
   );
 }
 
@@ -16450,6 +17210,117 @@ function showCoinFloat(player, amount) {
   float.innerHTML = `${sign}${coinAmount(Math.abs(amount))}`;
   token.append(float);
   window.setTimeout(() => float.remove(), 1200);
+  flyTableCoins(player, amount, token);
+}
+
+// Настольный стиль: мелочи двигаются как предметы на столе. В классическом и в быстрой автоигре ничего не происходит
+function tableMotionAllowed() {
+  return document.body.dataset.uiStyle === "tabletop"
+    && !fastModeActive()
+    && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+}
+
+const tableHopTimers = new WeakMap();
+
+// Фишка прыгает дугой на каждую клетку; дальний перенос (портал, возврат) — прыжок выше и дольше
+function hopTableToken(token, fromCell, toCell) {
+  if (!tableMotionAllowed()) return;
+  const [fromCol, fromRow] = parseCell(fromCell);
+  const [toCol, toRow] = parseCell(toCell);
+  const far = Math.abs(toCol - fromCol) + Math.abs(toRow - fromRow) > 1;
+  const duration = far ? 440 : 240;
+  token.style.setProperty("--table-hop-ms", `${duration}ms`);
+  token.style.setProperty("--table-hop-height", far ? "28px" : "13px");
+  token.classList.remove("is-table-hop");
+  void token.offsetWidth;
+  token.classList.add("is-table-hop");
+  window.clearTimeout(tableHopTimers.get(token));
+  tableHopTimers.set(token, window.setTimeout(() => token.classList.remove("is-table-hop"), duration + 40));
+}
+
+function tableCoinStack(player) {
+  const index = state.players.indexOf(player);
+  return scoreStripEl.children[index]?.querySelector(".score-stat-coins") || null;
+}
+
+function tableRectOnScreen(rect) {
+  return rect.width > 0
+    && rect.bottom > 0
+    && rect.right > 0
+    && rect.top < window.innerHeight
+    && rect.left < window.innerWidth;
+}
+
+// Монеты летят дугой с фишки на стопку планшета; при потере — слетают со стопки и падают
+function flyTableCoins(player, amount, token) {
+  if (!tableMotionAllowed() || !Element.prototype.animate) return;
+  const stack = tableCoinStack(player);
+  if (!stack) return;
+  const tokenRect = token.getBoundingClientRect();
+  const stackRect = stack.getBoundingClientRect();
+  if (!tableRectOnScreen(tokenRect) || !tableRectOnScreen(stackRect)) return;
+
+  const pawn = { x: tokenRect.left + tokenRect.width / 2, y: tokenRect.top + tokenRect.height / 2 };
+  const pile = { x: stackRect.left + 11, y: stackRect.top + stackRect.height / 2 };
+  const count = clamp(Math.round(Math.abs(amount) / 10), 1, 6);
+  const gain = amount > 0;
+  let landed = 0;
+
+  for (let index = 0; index < count; index += 1) {
+    const coin = document.createElement("img");
+    coin.className = "table-coin-flight";
+    coin.src = coinIconSrc;
+    coin.alt = "";
+    coin.setAttribute("aria-hidden", "true");
+    document.body.append(coin);
+
+    const spread = (index - (count - 1) / 2) * 6;
+    const keyframes = gain
+      ? tableCoinArcFrames({ x: pawn.x + spread, y: pawn.y - 14 }, pile)
+      : tableCoinDropFrames({ x: pile.x + spread, y: pile.y });
+    const flight = coin.animate(keyframes, {
+      duration: gain ? 680 : 560,
+      delay: 140 + index * 85,
+      easing: gain ? "cubic-bezier(0.45, 0.05, 0.4, 1)" : "cubic-bezier(0.3, 0, 0.7, 1)",
+      fill: "both",
+    });
+    flight.onfinish = () => {
+      coin.remove();
+      landed += 1;
+      if (!gain || landed !== count) return;
+      const current = tableCoinStack(player);
+      if (!current) return;
+      current.classList.remove("is-coin-landed");
+      void current.offsetWidth;
+      current.classList.add("is-coin-landed");
+    };
+    flight.oncancel = () => coin.remove();
+  }
+}
+
+function tableCoinArcFrames(from, to) {
+  const lift = Math.min(150, 60 + Math.hypot(to.x - from.x, to.y - from.y) * 0.2);
+  const control = { x: (from.x + to.x) / 2, y: Math.min(from.y, to.y) - lift };
+  const frames = [];
+  for (let step = 0; step <= 12; step += 1) {
+    const t = step / 12;
+    const x = (1 - t) ** 2 * from.x + 2 * (1 - t) * t * control.x + t ** 2 * to.x;
+    const y = (1 - t) ** 2 * from.y + 2 * (1 - t) * t * control.y + t ** 2 * to.y;
+    const scale = 0.8 + Math.sin(Math.PI * t) * 0.45 - t * 0.1;
+    frames.push({
+      transform: `translate(${x}px, ${y}px) rotate(${t * 540}deg) scale(${scale})`,
+      opacity: step === 0 ? 0 : 1,
+    });
+  }
+  return frames;
+}
+
+function tableCoinDropFrames(from) {
+  return [
+    { transform: `translate(${from.x}px, ${from.y}px) scale(1)`, opacity: 1 },
+    { transform: `translate(${from.x + 6}px, ${from.y - 18}px) rotate(120deg) scale(1.05)`, opacity: 1, offset: 0.35 },
+    { transform: `translate(${from.x + 12}px, ${from.y + 34}px) rotate(300deg) scale(0.8)`, opacity: 0 },
+  ];
 }
 
 function showDiceFloat(player, amount) {
@@ -16670,7 +17541,7 @@ function syncRollEventPromptViewport() {
   if (!ui.eventToast) return;
 
   const isRollEventPrompt = ui.eventToast.classList.contains("roll-event-prompt");
-  const needsViewportOffset = isRollEventPrompt && window.matchMedia("(max-width: 1180px)").matches;
+  const needsViewportOffset = isRollEventPrompt && window.matchMedia("(max-width: 1199px)").matches;
   if (!needsViewportOffset) {
     ui.eventToast.style.removeProperty("top");
     return;
@@ -16939,6 +17810,7 @@ function snapshotAutoPlaytestControls() {
     botSpeed: ui.botSpeed?.value || "standard",
     disableDragon: dragonDisabledSetting(),
     weaponsEnabled: weaponsEnabledSetting(),
+    shopMode: shopModeSetting(),
     hidePlayers: ui.hidePlayers ? ui.hidePlayers.checked : false,
     playerCount: ui.playerCount?.value || "2",
     randomFirstPlayer: ui.randomFirstPlayer ? ui.randomFirstPlayer.checked : false,
@@ -16959,6 +17831,7 @@ function restoreAutoPlaytestControls(snapshot) {
       : Boolean(snapshot.disableDragon);
   }
   if (ui.weaponsEnabled) ui.weaponsEnabled.checked = Boolean(snapshot.weaponsEnabled);
+  if (ui.shopMode) ui.shopMode.value = snapshot.shopMode === "classic" ? "classic" : "market";
   if (ui.hidePlayers) ui.hidePlayers.checked = snapshot.hidePlayers;
   if (ui.randomFirstPlayer) ui.randomFirstPlayer.checked = snapshot.randomFirstPlayer;
   if (ui.showWalkPath) ui.showWalkPath.checked = snapshot.showWalkPath;
@@ -17200,8 +18073,23 @@ function shouldIgnoreEnterShortcut(event) {
   return target instanceof Element && Boolean(target.closest("input, select, textarea"));
 }
 
+// «Настольный» на широком экране: лента ведущего — вверху правой колонки, лоток кубика — внизу.
+// Доска под собой ничего не держит и получает всю высоту; в «Классическом» и на узком всё на месте
+
+function syncTabletopTrayPlacement() {
+  if (!boardHeaderEl || !boardPanelEl || !dicePanelEl || !sidePanelEl || !ui.tableHost) return;
+  if (wideLayoutQuery.matches && document.body?.dataset.uiStyle === "tabletop") {
+    if (ui.tableHost.parentElement !== sidePanelEl) sidePanelEl.prepend(ui.tableHost);
+    if (boardHeaderEl.parentElement !== sidePanelEl) sidePanelEl.append(boardHeaderEl);
+    return;
+  }
+  if (ui.tableHost.parentElement !== dicePanelEl) dicePanelEl.insertBefore(ui.tableHost, ui.turnActions || null);
+  if (boardHeaderEl.parentElement !== boardPanelEl) boardPanelEl.append(boardHeaderEl);
+}
+
 function syncWideScoreStripPlacement() {
   if (!scoreStripEl || !sidePanelEl || !appShellEl || !playAreaEl) return;
+  syncTabletopTrayPlacement();
   const rageIndicator = ui.monsterRageIndicator;
   const tadamSection = sidePanelEl.querySelector(".tadam-card");
 
@@ -17220,6 +18108,13 @@ function syncWideScoreStripPlacement() {
 }
 
 ui.newGameBtn.addEventListener("click", newGame);
+ui.newGameBtn.addEventListener("click", () => setTableMenuOpen(false));
+ui.tableMenuBtn?.addEventListener("click", () => setTableMenuOpen(!tableMenuOpen()));
+document.addEventListener("click", (event) => {
+  if (!tableMenuOpen()) return;
+  if (event.target instanceof Element && event.target.closest(".game-settings")) return;
+  setTableMenuOpen(false);
+});
 ui.boardSelect?.addEventListener("change", newGame);
 ui.monsterStrengthMode?.addEventListener("change", () => {
   renderBoard();
@@ -17227,6 +18122,11 @@ ui.monsterStrengthMode?.addEventListener("change", () => {
 });
 ui.uiStyle?.addEventListener("change", () => {
   applyUiStyle();
+  saveUiStyle();
+  renderTableDecks();
+  if (state) renderTableHost(currentPlayer());
+  if (state) renderMonsterRageIndicator();
+  schedulePhoneSnapshot();
 });
 ui.fontStyle?.addEventListener("change", () => {
   applyFontStyle();
@@ -17284,6 +18184,13 @@ boardEl?.addEventListener("keydown", (event) => {
   resolveMoveOneFartherBoardKeyTarget(event);
   resolveGoldenMarkerSelectionBoardKeyTarget(event);
   resolveCardChoicePreviewBoardKeyTarget(event);
+});
+ui.tableDecks?.addEventListener("click", (event) => {
+  const button = event.target instanceof Element ? event.target.closest("[data-table-deck]") : null;
+  if (button) openReferenceDeck(button.dataset.tableDeck);
+});
+ui.tableDecks?.addEventListener("animationend", (event) => {
+  if (event.target instanceof Element) event.target.closest(".table-deck")?.classList.remove("is-drawn");
 });
 ui.referenceHeaderBtn?.addEventListener("click", () => {
   toggleReferencePanel();
@@ -17379,10 +18286,16 @@ ui.phoneRoomCardsText?.addEventListener("change", () => {
   renderPhoneRoomPanel();
   schedulePhoneSnapshot();
 });
+ui.momentIcons?.addEventListener("change", () => {
+  applyMomentIcons();
+  saveMomentIcons();
+  schedulePhoneSnapshot();
+});
 ui.hidePlayers?.addEventListener("change", () => {
   renderTokens();
 });
 ui.weaponsEnabled?.addEventListener("change", applyWeaponsSetting);
+ui.shopMode?.addEventListener("change", applyShopModeSetting);
 ui.disableDragon?.addEventListener("change", () => {
   if (!state?.dragon) return;
   state.dragon.disabled = Boolean(ui.disableDragon.checked);
@@ -17449,6 +18362,11 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && playerShopPopupOpen()) {
     event.preventDefault();
     closePlayerShopPopup();
+    return;
+  }
+  if (event.key === "Escape" && tableMenuOpen()) {
+    setTableMenuOpen(false);
+    ui.tableMenuBtn?.focus({ preventScroll: true });
     return;
   }
   if (event.key === "Enter" && playerShopPopupOpen()) {
