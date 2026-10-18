@@ -785,15 +785,6 @@ export const cardConfig = {
       effect: { type: "duplicate-dice-coins", amount: 5 },
     },
     {
-      id: "duplicate-dice-steps",
-      count: 2,
-      title: "Дубль на шаги",
-      shortTitle: "Дубль: шаги",
-      description: "Если во время хода хотя бы на двух кубиках выпало одно число, сделай 5 шагов вперед",
-      moment: "move",
-      effect: { type: "duplicate-dice-steps", steps: 5 },
-    },
-    {
       id: "tadam-income",
       count: 2,
       title: "Эхо ТАДАМ!",

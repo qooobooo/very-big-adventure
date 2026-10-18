@@ -93,9 +93,9 @@ test('every Лавка Джо card has one known trigger moment, in the config a
   for (const cells of rows) if (cells[0] !== 'shop') assert.equal(cells[moment], '', cells[1]);
   const sheet = new Map(rows.filter((cells) => cells[0] === 'shop').map((cells) => [cells[1], cells[moment]]));
   // Чужая расплата left the shop on the user's word (12 Oct 2026), to come back as an artifact.
-  // Платная тренировка and Платный марш left too (18 Oct 2026): they are event artifacts now.
-  assert.equal(cardConfig.shop.length, 17);
-  for (const id of ['others-loss-income', 'turn-strength-buy', 'turn-steps-buy']) assert.ok(!cardConfig.shop.some((card) => card.id === id), id);
+  // Платная тренировка and Платный марш left too (18 Oct 2026): they are event artifacts now. Дубль на шаги left the same day.
+  assert.equal(cardConfig.shop.length, 16);
+  for (const id of ['others-loss-income', 'turn-strength-buy', 'turn-steps-buy', 'duplicate-dice-steps']) assert.ok(!cardConfig.shop.some((card) => card.id === id), id);
   for (const card of cardConfig.shop) {
     assert.ok(shopCardMoments[card.moment], card.id);
     assert.equal(sheet.get(card.id), card.moment, card.id);
