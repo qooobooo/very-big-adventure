@@ -622,16 +622,6 @@ export const cardConfig = {
       effect: { type: "event-joe-coupon", cost: 10 },
     },
     {
-      id: "speed-boots",
-      count: 1,
-      title: "Сапоги Скорости",
-      description: "Все игроки бросают 1 кубик и прибавляют бонусы шагов. Победитель получает артефакт Сапоги Скорости",
-      artifact_desr: "Сапоги Скорости дают +5 к шагам",
-      artifact: true,
-      icon: "./assets/icons/artifact_speed_boots_512.png",
-      effect: { type: "event-speed-boots", amount: 5 },
-    },
-    {
       id: "magic-pickaxe",
       count: 1,
       title: "Волшебная Кирка",
