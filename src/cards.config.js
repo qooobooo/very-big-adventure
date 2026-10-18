@@ -780,9 +780,9 @@ export const cardConfig = {
       count: 2,
       title: "Дубль на монеты",
       shortTitle: "Дубль: монеты",
-      description: "Если во время хода хотя бы на двух кубиках выпало одно число, получи 5 монет",
+      description: "Если во время хода хотя бы на двух кубиках выпало одно число, получи 3 монеты",
       moment: "move",
-      effect: { type: "duplicate-dice-coins", amount: 5 },
+      effect: { type: "duplicate-dice-coins", amount: 3 },
     },
     {
       id: "tadam-income",
