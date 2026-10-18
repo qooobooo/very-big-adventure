@@ -258,11 +258,14 @@ test('open market: no money means no draw; the market never shows one card twice
   assert.equal(rich.player.coins, 10);
 });
 
-test('Лавка setting: market by default, classic puts the market into the discard, back to market lays out 2 cards', () => {
+test('Лавка setting: classic by default, classic puts the market into the discard, back to market lays out 2 cards', () => {
   const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
-  assert.match(html, /<select id="shopMode">\s*<option value="market" selected>Рынок<\/option>\s*<option value="classic">Классика<\/option>/);
+  assert.match(html, /<select id="shopMode">\s*<option value="market">Рынок<\/option>\s*<option value="classic" selected>Классика<\/option>/);
   assert.match(source, /shopMode: gameSettings\.shopMode,\s*shopMarket: \[\],/);
   const { c, where } = marketFixture();
+  for (const value of ['', undefined, 'classic']) { c.ui.shopMode.value = value; assert.equal(c.shopModeSetting(), 'classic'); }
+  c.ui.shopMode.value = 'market';
+  assert.equal(c.shopModeSetting(), 'market');
   c.refillShopMarket();
   c.ui.shopMode.value = 'classic';
   c.applyShopModeSetting();

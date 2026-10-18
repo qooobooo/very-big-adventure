@@ -13905,8 +13905,9 @@ function refillShopMarket() {
   return state.shopMarket;
 }
 
+// 19 Oct 2026: classic is the default again (2 cards from the top of the deck in every shop); the market stays as an option.
 function shopModeSetting() {
-  return ui.shopMode?.value === "classic" ? "classic" : "market";
+  return ui.shopMode?.value === "market" ? "market" : "classic";
 }
 
 function syncShopModeControl() {
@@ -17831,7 +17832,7 @@ function restoreAutoPlaytestControls(snapshot) {
       : Boolean(snapshot.disableDragon);
   }
   if (ui.weaponsEnabled) ui.weaponsEnabled.checked = Boolean(snapshot.weaponsEnabled);
-  if (ui.shopMode) ui.shopMode.value = snapshot.shopMode === "classic" ? "classic" : "market";
+  if (ui.shopMode) ui.shopMode.value = snapshot.shopMode === "market" ? "market" : "classic";
   if (ui.hidePlayers) ui.hidePlayers.checked = snapshot.hidePlayers;
   if (ui.randomFirstPlayer) ui.randomFirstPlayer.checked = snapshot.randomFirstPlayer;
   if (ui.showWalkPath) ui.showWalkPath.checked = snapshot.showWalkPath;
