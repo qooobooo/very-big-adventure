@@ -298,6 +298,8 @@ function render() {
   document.body.dataset.controllerMode = mode;
   // Стиль большого экрана: «Настольный» перекрашивает пульт в дерево и латунь
   document.body.dataset.uiStyle = snapshot?.uiStyle === "tabletop" ? "tabletop" : "classic";
+  // Настройка большого экрана «Иконки на Лавке Джо»
+  document.body.dataset.momentIcons = snapshot?.momentIcons === false ? "off" : "on";
 
   if (!room) {
     setControllerState("join");

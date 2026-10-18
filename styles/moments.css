@@ -106,3 +106,12 @@
   height: auto;
   aspect-ratio: 1;
 }
+
+/* Настройка «Иконки на Лавке Джо» выключена: иконок нет нигде, ряды по моменту остаются — карты на всю ширину ряда */
+body[data-moment-icons="off"] .moment-icon {
+  display: none;
+}
+
+body[data-moment-icons="off"] :is(.score-moment-row, .controller-moment-row) > * {
+  grid-column: 1 / -1;
+}

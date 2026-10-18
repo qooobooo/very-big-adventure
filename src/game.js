@@ -38,6 +38,7 @@ const autoPlaytestSheetTarget = {
 const defaultUiStyle = "classic";
 const uiStyleValues = new Set(["tabletop", "classic"]);
 const uiStyleStorageKey = "vba-ui-style";
+const momentIconsStorageKey = "vba-moment-icons";
 const defaultFontStyle = "standard";
 const fontStyleValues = new Set(["standard", "adventure"]);
 const defaultPhoneRoomMode = "full";
@@ -122,6 +123,7 @@ const ui = {
   startingCoins: document.querySelector("#startingCoins"),
   turnActions: document.querySelector("#turnActions"),
   uiStyle: document.querySelector("#uiStyle"),
+  momentIcons: document.querySelector("#momentIcons"),
   winnerPopup: document.querySelector("#winnerPopup"),
 };
 
@@ -442,6 +444,8 @@ const tileIcons = {
 
 restoreUiStyle();
 applyUiStyle();
+restoreMomentIcons();
+applyMomentIcons();
 applyFontStyle();
 applyBoardConfig(ui.boardSelect?.value || "field2");
 
@@ -592,6 +596,32 @@ function restoreUiStyle() {
 function saveUiStyle() {
   try {
     window.localStorage.setItem(uiStyleStorageKey, selectedUiStyle());
+  } catch {
+    // Storage may be blocked; the choice lasts until reload.
+  }
+}
+
+// Иконки моментов Лавки Джо: выключены — пропадают с лица карты, планшета, рынка и пульта, ряды карт остаются
+function momentIconsEnabled() {
+  return ui.momentIcons ? ui.momentIcons.checked : true;
+}
+
+function applyMomentIcons() {
+  if (document.body) document.body.dataset.momentIcons = momentIconsEnabled() ? "on" : "off";
+}
+
+function restoreMomentIcons() {
+  try {
+    const saved = window.localStorage.getItem(momentIconsStorageKey);
+    if (ui.momentIcons && (saved === "on" || saved === "off")) ui.momentIcons.checked = saved === "on";
+  } catch {
+    // Storage may be blocked; icons stay on.
+  }
+}
+
+function saveMomentIcons() {
+  try {
+    window.localStorage.setItem(momentIconsStorageKey, momentIconsEnabled() ? "on" : "off");
   } catch {
     // Storage may be blocked; the choice lasts until reload.
   }
@@ -3465,6 +3495,7 @@ function phoneGameSnapshot() {
     shakeEnabled: phoneRoom.shakeEnabled,
     turnLabel: actionPromptResolver ? actionPromptButtonLabel : ui.rollBtn?.textContent?.trim() || "Бросить",
     uiStyle: selectedUiStyle(),
+    momentIcons: momentIconsEnabled(),
     updatedAt: Date.now(),
   };
 }
@@ -18103,6 +18134,11 @@ ui.phoneRoomDice?.addEventListener("change", () => {
 ui.phoneRoomCardsText?.addEventListener("change", () => {
   phoneRoom.cardsAsText = phoneRoomCardsAsText();
   renderPhoneRoomPanel();
+  schedulePhoneSnapshot();
+});
+ui.momentIcons?.addEventListener("change", () => {
+  applyMomentIcons();
+  saveMomentIcons();
   schedulePhoneSnapshot();
 });
 ui.hidePlayers?.addEventListener("change", () => {
