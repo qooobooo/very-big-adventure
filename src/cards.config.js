@@ -667,7 +667,7 @@ export const cardConfig = {
       description: "Игрок с наименьшим бонусом шагов получает артефакт Походный горн. При ничьей эти игроки бросают кубик",
       artifact_desr: "В начале хода можешь заплатить 10 монет и получить +2 к шагам",
       artifact: true,
-      icon: "./assets/icons/steps_512.png",
+      icon: "./assets/icons/artifact_marching_horn_512.png",
       effect: { type: "event-marching-horn", steps: 2, cost: 10 },
     },
     {
@@ -677,7 +677,7 @@ export const cardConfig = {
       description: "Игрок с наименьшим бонусом силы получает артефакт Тренировочный манекен. При ничьей эти игроки бросают кубик",
       artifact_desr: "В начале хода можешь заплатить 10 монет и получить +1 к силе",
       artifact: true,
-      icon: "./assets/icons/strength_sword_512.png",
+      icon: "./assets/icons/artifact_training_dummy_512.png",
       effect: { type: "event-training-dummy", amount: 1, cost: 10 },
     },
     {

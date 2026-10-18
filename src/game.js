@@ -9591,14 +9591,14 @@ function turnArtifactBuys(player, { unusedOnly = false } = {}) {
   if (hasTrainingDummyArtifact(player)) {
     const effect = artifactSourceCard({ id: "training-dummy" })?.effect || cardConfig.event.find((card) => card.id === "training-dummy")?.effect || {};
     const amount = Math.max(1, Number(effect.amount) || 1);
-    buys.push({ add: addBattleBonus, amount, chip: `+${amount} сила`, cost: Math.max(0, Number(effect.cost ?? 10)), icon: "./assets/icons/strength_sword_512.png",
+    buys.push({ add: addBattleBonus, amount, chip: `+${amount} сила`, cost: Math.max(0, Number(effect.cost ?? 10)), icon: "./assets/icons/artifact_training_dummy_512.png",
       id: "training-dummy", label: battleForceText(amount), title: "Тренировочный манекен", type: "turn-strength-buy" });
   }
   if (hasMarchingHornArtifact(player)) {
     const effect = artifactSourceCard({ id: "marching-horn" })?.effect || cardConfig.event.find((card) => card.id === "marching-horn")?.effect || {};
     const amount = Math.max(1, Number(effect.steps) || 2);
     buys.push({ add: addStepBonus, amount, chip: `+${countText(amount, "шаг", "шага", "шагов")}`, cost: Math.max(0, Number(effect.cost ?? 10)),
-      icon: "./assets/icons/steps_512.png", id: "marching-horn", label: stepBonusText(amount), title: "Походный горн", type: "turn-steps-buy" });
+      icon: "./assets/icons/artifact_marching_horn_512.png", id: "marching-horn", label: stepBonusText(amount), title: "Походный горн", type: "turn-steps-buy" });
   }
   return unusedOnly ? buys.filter((buy) => state.artifacts.turnBuyUsedAt?.[buy.id] !== state.turns) : buys;
 }
