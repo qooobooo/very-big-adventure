@@ -1208,6 +1208,7 @@ async function rollAndMove({ animate = true } = {}) {
     for (let step = 0; step < totalSteps && player.position !== finishCell; step += 1) {
       setAutoPlaytestPhase("movement:step", { player, step: step + 1, totalSteps, cell: player.position });
       const currentPosition = player.position;
+      if (step > 0 && !(await resolveOvertakeTolls(player, currentPosition, totalSteps - step))) break;
       const nextPosition = await chooseNextPosition(player, currentPosition, totalSteps - step, animate);
       if (!nextPosition) {
         shouldResolveLanding = false;
@@ -13105,6 +13106,7 @@ const pendingGoodEffectTypes = new Set([
   "player-battle-potion",
   "dice-control",
   "backward-reversal",
+  "overtake-toll",
 ]);
 
 function isPendingGoodEffect(type) {
@@ -13120,6 +13122,7 @@ function pendingGoodCardLabel(card) {
   const labels = {
     "backward-reversal": "Разворот",
     "dice-control": "Кубик",
+    "overtake-toll": "Застава",
     "feed-monster-plus3": "Еда +3",
     "field-shield": "Щит поля",
     "player-battle-potion": "Дуэль +3",
@@ -13302,6 +13305,63 @@ async function chooseUseFieldShield(player, event) {
     title: "Защитный знак",
   });
   return choice === "use";
+}
+
+// Застава (Хорошо, пользователь, 18 Oct 2026). Обгон — обычный шаг вперед с клетки владельца, на которую игрок пришел
+// в этом же движении: стартовая клетка, прыжки, телепорты и шаги назад не в счет. Каждый владелец на пути — отдельно;
+// две Заставы у одного владельца — одна плата, сбрасывается одна карта. Нет монет или отказ — игрок стоит на этой клетке.
+async function resolveOvertakeTolls(player, cell, remaining) {
+  const owners = state.players.filter((owner) => owner.id !== player.id && owner.position === cell && pendingGoodCardsOfType(owner, "overtake-toll").length);
+  for (const owner of owners) {
+    const card = pendingGoodCardsOfType(owner, "overtake-toll")[0];
+    const cost = Math.max(0, Number(card.effect?.cost ?? 10));
+    const canPay = player.coins >= cost;
+    const pay = canPay && (isBot(player)
+      ? shouldBotPayOvertakeToll(player, cost, remaining)
+      : await chooseOvertakeToll(player, owner, cost, remaining));
+    if (!pay) {
+      const reason = canPay ? "не платит" : `не может заплатить ${coinAmount(cost)}`;
+      log(`${playerName(player)} ${reason} за ${cardNameStrong("Заставу")} ${playerName(owner)} и останавливается на этой клетке.`, { toast: true });
+      render();
+      return false;
+    }
+    applyCoinDelta(player, -cost, { category: "purchase" });
+    addCoins(owner, cost, { skipReceiveBonus: true });
+    consumePendingGoodCard(owner, "overtake-toll");
+    log(`${playerName(player)} платит ${playerName(owner)} <strong>${coinAmount(cost)}</strong> за ${cardNameStrong("Заставу")} и идет дальше. Карта сброшена.`, { toast: true });
+    render();
+  }
+  return true;
+}
+
+function shouldBotPayOvertakeToll(player, cost, remaining) {
+  const coinsAfter = player.coins - cost;
+  return (remaining >= 3 && coinsAfter >= 5) || coinsAfter >= 20;
+}
+
+async function chooseOvertakeToll(player, owner, cost, remaining) {
+  const choice = await chooseCardAction({
+    choices: [
+      {
+        id: "pay",
+        label: "Заплатить",
+        note: `${coinAmount(cost)} ${playerName(owner)}, еще ${countText(remaining, "шаг", "шага", "шагов")}`,
+        score: shouldBotPayOvertakeToll(player, cost, remaining) ? 18 : 4,
+      },
+      {
+        id: "stop",
+        label: "Остановиться",
+        note: cellTitleWithLabel(player.position),
+        score: shouldBotPayOvertakeToll(player, cost, remaining) ? 4 : 18,
+      },
+    ],
+    kicker: "Хорошо",
+    kind: "overtake-toll",
+    playerId: player.id,
+    summary: `${playerChoiceBadge(player)} догоняет ${playerChoiceBadge(owner)}. Чтобы обогнать, нужно заплатить ${coinAmount(cost)}, иначе ход заканчивается на этой клетке.`,
+    title: "Застава",
+  });
+  return choice === "pay";
 }
 
 async function resolveBackwardReversal(player, steps) {
@@ -14765,6 +14825,7 @@ async function movePlayerSteps(player, steps, { resolveBackwardLanding = false }
   if (steps > 0) {
     for (let step = 0; step < steps && player.position !== finishCell; step += 1) {
       const currentPosition = player.position;
+      if (step > 0 && !(await resolveOvertakeTolls(player, currentPosition, steps - step))) break;
       const nextPosition = getNextOptions(player.position)[0]?.cell;
       if (!nextPosition) {
         shouldResolveLanding = false;

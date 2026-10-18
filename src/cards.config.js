@@ -143,6 +143,13 @@ export const cardConfig = {
       effect: { type: "backward-reversal" },
     },
     {
+      id: "overtake-toll",
+      count: 2,
+      title: "Застава",
+      description: "Чтобы тебя обогнать, игрок должен заплатить тебе 10 монет, в противном случае он останавливается на твоей клетке. Если игрок заплатил - сбрось эту карту",
+      effect: { type: "overtake-toll", cost: 10 },
+    },
+    {
       id: "coin-tribute",
       count: 2,
       title: "Сбор монет",

@@ -351,3 +351,29 @@ test('Золотая Подкова pays for each 1 in the movement roll', () =>
   c.resolveGoldenHorseshoeMovementReward(player, [1, 3, 1]);
   assert.deepEqual(gains, [3, 6]);
 });
+
+// User, 18 Oct 2026: Застава — to pass its owner a player pays 10 coins and the card is discarded, or stops on that cell.
+test('Застава: a payer passes and the card is discarded, a player without the coins stops', async () => {
+  const discarded = [];
+  const toll = () => ({ id: 'overtake-toll', effect: { type: 'overtake-toll', cost: 10 } });
+  const owner = { id: 0, name: 'Аня', position: 'c5', coins: 0, pendingGoodCards: [toll(), toll()] };
+  const c = load(['resolveOvertakeTolls', 'shouldBotPayOvertakeToll', 'pendingGoodCards', 'pendingGoodCardsOfType', 'consumePendingGoodCard'], {
+    state: { players: [owner] },
+    applyCoinDelta: (player, amount) => { player.coins += amount; return amount },
+    addCoins: (player, amount) => { player.coins += amount; return amount },
+    discardCardToDeck: (deck, card) => discarded.push(deck + ':' + card.id),
+    isBot: () => true, log() {}, render() {}, playerName: (player) => player.name, coinAmount: String, cardNameStrong: String,
+  });
+  const rich = { id: 1, name: 'Боб', position: 'c5', coins: 30 };
+  c.state.players.push(rich);
+  assert.equal(await c.resolveOvertakeTolls(rich, 'c5', 4), true);
+  assert.deepEqual([rich.coins, owner.coins, owner.pendingGoodCards.length], [20, 10, 1]);
+  assert.deepEqual(discarded, ['good:overtake-toll']);
+  const poor = { id: 2, name: 'Вера', position: 'c5', coins: 9 };
+  c.state.players.push(poor);
+  assert.equal(await c.resolveOvertakeTolls(poor, 'c5', 4), false);
+  assert.deepEqual([poor.coins, owner.coins, owner.pendingGoodCards.length], [9, 10, 1]);
+  // Another cell, or the owner himself, owes nothing.
+  assert.equal(await c.resolveOvertakeTolls(poor, 'c6', 4), true);
+  assert.equal(await c.resolveOvertakeTolls(owner, 'c5', 4), true);
+});
