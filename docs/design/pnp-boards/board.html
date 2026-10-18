@@ -9,9 +9,11 @@
   Печатный планшет игрока PnP, стиль C «картонные жетоны» (решение пользователя, 18 октября 2026).
   Правки пользователя: только треки силы 0…+10, шагов 0…+10 через 2 и кубиков 1–4, окошки «+10 за круг».
   Игроки отличаются только цветом рамки. Фон — дерево таверны в свете свечей (tavern_wood.jpg, арт Codex CLI).
-  Все размеры в мм: печать 100 %. Клетки 13,5 мм под маркеры 12 мм.
-  ?p=dog|cat|otter|alpaca — цвет игрока, ?s=3 — масштаб кадра.
-  Кадр одного планшета: python3 tools/probe.py shot --path "/docs/design/pnp-boards/board.html?p=dog&s=3" --size 2778x816
+  Размер — четверть A4: полоса 210 × 74,25 мм, книжный лист режется тремя горизонтальными линиями (правка пользователя).
+  Все размеры в мм: печать 100 % без масштабирования. Клетки 13,5 мм под маркеры 12 мм. Поля 3,5 мм по бокам — под поле принтера.
+  ?p=dog|cat|otter|alpaca — цвет игрока; ?sheet=1 — лист A4 для печати: 4 планшета и линии реза; ?s=3 — масштаб кадра.
+  Кадр планшета: python3 tools/probe.py shot --path "/docs/design/pnp-boards/board.html?p=dog&s=3" --size 2381x842
+  Кадр листа:    python3 tools/probe.py shot --path "/docs/design/pnp-boards/board.html?sheet=1&s=2" --size 1588x2246
 -->
 <style>
   :root {
@@ -20,81 +22,78 @@
     --line: #3a1d08;
     --player: #8b1713;
     --cell: 13.5mm;
-    --gap: 1.3mm;
+    --gap: 0.9mm;
   }
   * { box-sizing: border-box; }
-  @page { size: A4 landscape; margin: 0; }
+  @page { size: A4 portrait; margin: 0; }
   html, body { margin: 0; background: #fff; }
   body { zoom: var(--s, 1); color: var(--ink); font: 800 4mm/1.1 "Rubik", system-ui, sans-serif; }
   @media print { body { zoom: 1; } }
 
-  /* Вырубной картон: светлая кайма под вырезание, тёмный контур, кольцо цвета игрока, внутри дерево таверны */
-  .board {
-    width: 245mm;
-    height: 72mm;
-    border-radius: 7mm;
-    background: var(--cream);
-    border: 0.6mm solid var(--line);
-    padding: 2.6mm;
-  }
+  .sheet { width: 210mm; height: 297mm; position: relative; }
+
+  /* Полоса планшета — четверть A4. Внутри поле с кольцом цвета игрока и деревом таверны */
+  .board { position: relative; width: 210mm; height: 74.25mm; padding: 2.6mm 3.5mm; }
   .board-face {
     position: relative;
     height: 100%;
-    border-radius: 5mm;
-    border: 0.6mm solid var(--line);
-    box-shadow: inset 0 0 0 2.2mm var(--player), inset 0 0 0 2.8mm var(--line);
+    border-radius: 4mm;
+    border: 0.5mm solid var(--line);
+    box-shadow: inset 0 0 0 2mm var(--player), inset 0 0 0 2.5mm var(--line);
     background:
       radial-gradient(ellipse 70% 90% at 50% 45%, rgba(255, 196, 110, 0.18), transparent 70%),
       url("./tavern_wood.jpg") center / cover;
-    padding: 6.2mm 7mm;
+    padding: 4.5mm 4.6mm;
     display: grid;
     align-content: center;
-    gap: 2.6mm;
+    gap: 3.2mm;
     overflow: hidden;
   }
 
-  .track { display: grid; grid-template-columns: 30mm minmax(0, 1fr) 24mm; align-items: center; gap: 3mm; }
+  .track { display: grid; grid-template-columns: 13mm minmax(0, 1fr) 15mm; align-items: center; gap: 1.8mm; }
   .track-label {
-    display: grid; grid-template-columns: 11mm 1fr; align-items: center; gap: 1.6mm;
+    display: grid; justify-items: center; gap: 0.6mm;
     color: var(--cream);
-    font: 900 3.9mm/1 "Rubik";
+    font: 900 2.35mm/1 "Rubik";
     text-transform: uppercase;
-    letter-spacing: .03em;
-    text-shadow: 0 0.35mm 0 var(--line), 0 0 0.9mm rgba(30, 12, 2, .9);
+    text-shadow: 0 0.3mm 0 var(--line), 0 0 0.7mm rgba(30, 12, 2, .9);
   }
-  .track-label img { width: 11mm; height: 11mm; object-fit: contain; filter: drop-shadow(0 0.5mm 0.4mm rgba(20, 8, 0, .6)); }
+  .track-label img { width: 9.5mm; height: 9.5mm; object-fit: contain; filter: drop-shadow(0 0.5mm 0.4mm rgba(20, 8, 0, .6)); }
   .cells { display: flex; gap: var(--gap); }
   .cell {
+    flex: 0 0 auto;
     width: var(--cell); height: var(--cell);
     display: grid; place-items: center;
-    border-radius: 2.6mm;
+    border-radius: 2.4mm;
     background: linear-gradient(#fff8e6, #f3e2b9);
-    border: 0.45mm solid var(--line);
-    font: 900 4.6mm/1 "Rubik";
-    box-shadow: inset 0 -0.8mm 0 rgba(90, 52, 19, .16), 0 0.5mm 0.6mm rgba(20, 8, 0, .45);
+    border: 0.4mm solid var(--line);
+    font: 900 4.4mm/1 "Rubik";
+    box-shadow: inset 0 -0.7mm 0 rgba(90, 52, 19, .16), 0 0.5mm 0.6mm rgba(20, 8, 0, .45);
   }
-  .cell.is-start { outline: 0.8mm solid var(--player); outline-offset: -1.7mm; }
+  .cell.is-start { outline: 0.7mm solid var(--player); outline-offset: -1.6mm; }
   .lap {
-    height: var(--cell); width: 24mm;
+    height: var(--cell); width: 15mm;
     display: grid; place-items: center;
-    border: 0.5mm dashed var(--cream); border-radius: 2.6mm;
+    border: 0.45mm dashed var(--cream); border-radius: 2.4mm;
     background: rgba(40, 18, 4, .35);
     color: var(--cream);
-    font: 900 3.2mm/1.05 "Rubik"; text-align: center;
+    font: 900 2.6mm/1.05 "Rubik"; text-align: center;
     text-shadow: 0 0.3mm 0 var(--line);
   }
+
+  /* Лист для печати: линии реза между планшетами и метки на полях */
+  .cut { position: absolute; left: 0; right: 0; height: 0; border-top: 0.25mm dashed #8a7a66; }
+  .cut::before, .cut::after { content: "✂"; position: absolute; top: -2.3mm; font: 400 3.4mm/1 system-ui; color: #8a7a66; }
+  .cut::before { left: 0.4mm; }
+  .cut::after { right: 0.4mm; transform: scaleX(-1); }
 </style>
 </head>
 <body>
-<div class="board">
-  <div class="board-face" id="tracks"></div>
-</div>
+<div id="root"></div>
 <script>
   const colors = { dog: "#8b1713", cat: "#4b1a78", otter: "#0b748b", alpaca: "#d56b00" };
   const params = new URLSearchParams(location.search);
-  const root = document.documentElement.style;
-  root.setProperty("--player", colors[params.get("p")] || colors.dog);
-  root.setProperty("--s", Number(params.get("s")) || 1);
+  document.documentElement.style.setProperty("--s", Number(params.get("s")) || 1);
 
   const icons = "../../../assets/icons/";
   const steps = (from, to, by = 1) => Array.from({ length: Math.floor((to - from) / by) + 1 }, (_, i) => from + i * by);
@@ -103,13 +102,25 @@
     ["Шаги", icons + "steps_512.png", steps(0, 10, 2), true],
     ["Кубики", icons + "dice.png", steps(1, 4), false],
   ];
-  document.getElementById("tracks").innerHTML = tracks.map(([label, icon, values, signed]) => `
+  const trackMarkup = ([label, icon, values, signed]) => `
     <div class="track">
       <div class="track-label"><img src="${icon}" alt="">${label}</div>
       <div class="cells">${values.map((v, i) =>
         `<span class="cell${i === 0 ? " is-start" : ""}">${signed && v > 0 ? "+" + v : v}</span>`).join("")}</div>
       ${signed ? '<div class="lap">+10<br>за круг</div>' : "<span></span>"}
-    </div>`).join("");
+    </div>`;
+  const boardMarkup = (player) => `
+    <div class="board" style="--player: ${colors[player] || colors.dog}">
+      <div class="board-face">${tracks.map(trackMarkup).join("")}</div>
+    </div>`;
+
+  const root = document.getElementById("root");
+  if (params.get("sheet")) {
+    const cuts = [1, 2, 3].map((i) => `<div class="cut" style="top: ${(i * 74.25).toFixed(2)}mm"></div>`).join("");
+    root.innerHTML = `<div class="sheet">${["dog", "cat", "otter", "alpaca"].map(boardMarkup).join("")}${cuts}</div>`;
+  } else {
+    root.innerHTML = boardMarkup(params.get("p"));
+  }
 </script>
 </body>
 </html>
