@@ -5472,7 +5472,7 @@ function playerArtifacts(player) {
   }
   if (state.artifacts.goldenHorseshoeOwnerId === player.id) {
     artifacts.push({
-      hint: `1 в броске движения дает ${countText(goldenHorseshoeCoins(), "монету", "монеты", "монет")}`,
+      hint: `Каждая 1 в броске хода дает ${countText(goldenHorseshoeCoins(), "монету", "монеты", "монет")}`,
       icon: goldenHorseshoeIconSrc,
       id: "golden-horseshoe",
       shortTitle: `1:+${goldenHorseshoeCoins()}`,
@@ -5540,14 +5540,18 @@ function resolveGoldenCollectionStart(player) {
   }
 }
 
+// Золотая Подкова: монеты с карты за каждую 1 в броске хода (пользователь, 18 Oct 2026; было — один раз, если есть 1).
 function resolveGoldenHorseshoeMovementReward(player, rolls = []) {
   if (!hasGoldenHorseshoeArtifact(player)) return;
-  if (!rolls.some((value) => value === 1)) return;
+  const ones = rolls.filter((value) => value === 1).length;
+  if (!ones) return;
 
-  const amount = goldenHorseshoeCoins();
+  const amount = goldenHorseshoeCoins() * ones;
+  if (!amount) return;
   const gained = addCoins(player, amount);
   const actualText = gained !== amount ? `, с бонусами ${coinAmount(gained)}` : "";
-  log(`${playerName(player)} использует <strong>Золотую Подкову</strong>: в броске движения есть 1, получает ${coinAmount(amount)}${actualText}.`, {
+  const onesText = countText(ones, "единица", "единицы", "единиц");
+  log(`${playerName(player)} использует <strong>Золотую Подкову</strong>: в броске хода ${onesText}, получает ${coinAmount(amount)}${actualText}.`, {
     toast: true,
   });
 }

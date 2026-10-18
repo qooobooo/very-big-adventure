@@ -639,7 +639,7 @@ export const cardConfig = {
       count: 1,
       title: "Золотая Подкова",
       description: "Все игроки бросают свои кубики. Игрок с наименьшим результатом получает артефакт Золотая Подкова",
-      artifact_desr: "Если в броске движения выпала хотя бы одна 1, получи 3 монеты",
+      artifact_desr: "Во время броска хода получи 3 монеты за каждую выпавшую 1",
       artifact: true,
       icon: "./assets/icons/artifact_golden_horseshoe_512.png",
       effect: { type: "event-golden-horseshoe", amount: 3 },

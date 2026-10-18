@@ -308,3 +308,20 @@ test('artifacts, golden markers and Привилегия Джо take their numbe
   assert.match(source, /const reward = Number\.isFinite\(Number\(state\.goldenMarkerReward\)\)/);
   assert.match(source, /rollHeroSwordArtifactBattle\(player, Math\.max\(1, Number\(effect\.dice\) \|\| 1\)\)/);
 });
+
+// User, 18 Oct 2026: Золотая Подкова pays its amount for each 1 in the movement roll, not once per roll.
+test('Золотая Подкова pays for each 1 in the movement roll', () => {
+  const gains = [];
+  const c = load(['resolveGoldenHorseshoeMovementReward', 'goldenHorseshoeCoins', 'artifactCardNumber'], {
+    cardConfig: { event: [{ id: 'golden-horseshoe', effect: { amount: 3 } }] },
+    state: { artifacts: {} },
+    hasGoldenHorseshoeArtifact: () => true,
+    addCoins: (_player, amount) => { gains.push(amount); return amount },
+    coinAmount: (amount) => `${amount}`, log: () => {}, playerName: (p) => p.name,
+  });
+  const player = { name: 'Аня' };
+  c.resolveGoldenHorseshoeMovementReward(player, [2, 5, 6]);
+  c.resolveGoldenHorseshoeMovementReward(player, [1, 4]);
+  c.resolveGoldenHorseshoeMovementReward(player, [1, 3, 1]);
+  assert.deepEqual(gains, [3, 6]);
+});
