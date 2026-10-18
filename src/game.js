@@ -797,10 +797,15 @@ function newGame() {
       magicPickaxeOwnerId: null,
       goldenHorseshoeCard: null,
       goldenHorseshoeOwnerId: null,
+      marchingHornCard: null,
+      marchingHornOwnerId: null,
       speedBootsCard: null,
       speedBootsOwnerId: null,
+      trainingDummyCard: null,
+      trainingDummyOwnerId: null,
       travelerCompassCard: null,
       travelerCompassOwnerId: null,
+      turnBuyUsedAt: {},
     },
     turns: 0,
     unityBattleProgress: null,
@@ -1169,7 +1174,7 @@ async function rollAndMove({ animate = true } = {}) {
     await resolveStartTurnTadamEffects(player);
     applyTurnStartArtifacts(player);
     resolveGoldenCollectionStart(player);
-    await resolveTurnShopBuys(player);
+    await resolveTurnArtifactBuys(player);
     setAutoPlaytestPhase("movement:extra-die-choice", { player });
     const extraDice = await chooseExtraDie(player, animate);
     state.isAnimating = animate;
@@ -1712,7 +1717,7 @@ function shopDuplicatePenalty(player, card) {
   if (effectType === "passive-step-bonus") return [0, 8, 28, 50, 72][Math.min(copies, 4)] || 72;
   if (effectType === "passive-battle-bonus") return [0, 4, 9, 16, 24][Math.min(copies, 4)] || 24;
   if (effectType === "green-fields-plus5") return [0, 6, 16, 30, 46][Math.min(copies, 4)] || 46;
-  if (["monster-strength-plus3", "turn-strength-buy", "turn-steps-buy"].includes(effectType)) {
+  if (effectType === "monster-strength-plus3") {
     return [0, 5, 14, 26, 40][Math.min(copies, 4)] || 40;
   }
   if (["shop-choice-3-cost-3", "shop-fixed-cost-3", "golden-collection", "start-strength"].includes(effectType)) {
@@ -2122,18 +2127,6 @@ function scoreShopCard(player, card) {
     const artifactCount = playerArtifacts(player).length;
     score = (phase === "early" ? 26 : phase === "mid" ? 20 : 12) * personality.economy;
     score += Math.min(18, artifactCount * 6) * personality.economy;
-  } else if (effect.type === "turn-strength-buy") {
-    score = 18 * personality.battle;
-    if (gate) {
-      const afterChance = estimateWinChance(gate.dice, gate.bonus + (effect.amount || 1), gate.target);
-      score += winChanceDeltaScore(gate.chance, afterChance, gate.weight) * 0.55 * personality.battle;
-    }
-    if (player.coins >= 15) score += 6;
-  } else if (effect.type === "turn-steps-buy") {
-    const leader = leadingPlayer();
-    const lag = leader && leader.id !== player.id ? routeProgress(leader) - routeProgress(player) : 0;
-    score = (16 + Math.min(12, Math.max(0, lag * 0.22))) * personality.progress;
-    if (player.coins >= 15) score += 6;
   } else if (effect.type === "start-strength") {
     score = (phase === "early" ? 20 : 12) * personality.battle;
     if (gate?.hardGate) score += 6 * personality.battle;
@@ -3325,7 +3318,9 @@ function artifactSourceCard(artifact) {
     "hero-sword": "heroSwordCard",
     "joe-coupon": "joeCouponCard",
     "magic-pickaxe": "magicPickaxeCard",
+    "marching-horn": "marchingHornCard",
     "speed-boots": "speedBootsCard",
+    "training-dummy": "trainingDummyCard",
     "traveler-compass": "travelerCompassCard",
   };
   const mappedCard = state.artifacts[keysById[artifact.id]];
@@ -5510,6 +5505,15 @@ function playerArtifacts(player) {
       title: "Золотая Подкова",
     });
   }
+  for (const buy of turnArtifactBuys(player)) {
+    artifacts.push({
+      hint: `в начале хода: ${coinAmount(buy.cost)} за ${buy.label}`,
+      icon: buy.icon,
+      id: buy.id,
+      shortTitle: `${buy.cost} монет: ${buy.chip}`,
+      title: buy.title,
+    });
+  }
   if (state.artifacts.travelerCompassOwnerId === player.id) {
     artifacts.push({
       hint: "после броска движения: 3 монеты за +1 шаг",
@@ -5726,6 +5730,24 @@ function grantGoldenHorseshoeArtifact(target, card) {
   return true;
 }
 
+function grantMarchingHornArtifact(target, card) {
+  if (!target || !state?.artifacts) return false;
+  state.artifacts.marchingHornOwnerId = target.id;
+  state.artifacts.marchingHornCard = card || state.artifacts.marchingHornCard || null;
+  log(`${playerName(target)} получает артефакт <strong>Походный горн</strong>.`, { toast: true });
+  render();
+  return true;
+}
+
+function grantTrainingDummyArtifact(target, card) {
+  if (!target || !state?.artifacts) return false;
+  state.artifacts.trainingDummyOwnerId = target.id;
+  state.artifacts.trainingDummyCard = card || state.artifacts.trainingDummyCard || null;
+  log(`${playerName(target)} получает артефакт <strong>Тренировочный манекен</strong>.`, { toast: true });
+  render();
+  return true;
+}
+
 function grantTravelerCompassArtifact(target, card) {
   if (!target || !state?.artifacts) return false;
   state.artifacts.travelerCompassOwnerId = target.id;
@@ -5785,6 +5807,14 @@ function hasMagicPickaxeArtifact(player) {
 
 function hasGoldenHorseshoeArtifact(player) {
   return Boolean(player && state?.artifacts?.goldenHorseshoeOwnerId === player.id);
+}
+
+function hasMarchingHornArtifact(player) {
+  return Boolean(player && state?.artifacts?.marchingHornOwnerId === player.id);
+}
+
+function hasTrainingDummyArtifact(player) {
+  return Boolean(player && state?.artifacts?.trainingDummyOwnerId === player.id);
 }
 
 function hasTravelerCompassArtifact(player) {
@@ -9552,36 +9582,37 @@ function resolveLastStepPlus(player, wasLast) {
   showDiceFloat(player, steps);
 }
 
-async function resolveTurnShopBuys(player) {
-  await resolveTurnShopBuy(player, "turn-strength-buy", {
-    add: (target, amount) => addBattleBonus(target, amount),
-    label: "+1 к силе",
-    logLabel: "силу",
-    usedKey: "_turnStrengthBuyUsedAt",
-  });
-  await resolveTurnShopBuy(player, "turn-steps-buy", {
-    add: (target, amount) => addStepBonus(target, amount),
-    label: "+2 к шагам",
-    logLabel: "шаги",
-    usedKey: "_turnStepsBuyUsedAt",
-  });
+// Походный горн и Тренировочный манекен — артефакты из Событий (пользователь, 18 Oct 2026; были картами Лавки
+// «Платный марш» и «Платная тренировка»): в начале хода владелец может заплатить и получить шаги или силу. Цена и
+// прибавка — с карты.
+function turnArtifactBuys(player, { unusedOnly = false } = {}) {
+  const buys = [];
+  if (hasTrainingDummyArtifact(player)) {
+    const effect = artifactSourceCard({ id: "training-dummy" })?.effect || cardConfig.event.find((card) => card.id === "training-dummy")?.effect || {};
+    const amount = Math.max(1, Number(effect.amount) || 1);
+    buys.push({ add: addBattleBonus, amount, chip: `+${amount} сила`, cost: Math.max(0, Number(effect.cost ?? 10)), icon: "./assets/icons/strength_sword_512.png",
+      id: "training-dummy", label: battleForceText(amount), title: "Тренировочный манекен", type: "turn-strength-buy" });
+  }
+  if (hasMarchingHornArtifact(player)) {
+    const effect = artifactSourceCard({ id: "marching-horn" })?.effect || cardConfig.event.find((card) => card.id === "marching-horn")?.effect || {};
+    const amount = Math.max(1, Number(effect.steps) || 2);
+    buys.push({ add: addStepBonus, amount, chip: `+${countText(amount, "шаг", "шага", "шагов")}`, cost: Math.max(0, Number(effect.cost ?? 10)),
+      icon: "./assets/icons/steps_512.png", id: "marching-horn", label: stepBonusText(amount), title: "Походный горн", type: "turn-steps-buy" });
+  }
+  return unusedOnly ? buys.filter((buy) => state.artifacts.turnBuyUsedAt?.[buy.id] !== state.turns) : buys;
 }
 
-async function resolveTurnShopBuy(player, type, config) {
-  const cards = activeShopEffectItems(player, type)
-    .filter((card) => card[config.usedKey] !== state.turns);
-  for (const card of cards) {
-    const cost = Math.max(0, Number(card.effect?.cost) || 10);
-    const amount = Math.max(1, Number(card.effect?.amount ?? card.effect?.steps) || 1);
-    if (player.coins < cost) continue;
+async function resolveTurnArtifactBuys(player) {
+  for (const buy of turnArtifactBuys(player, { unusedOnly: true })) {
+    if (player.coins < buy.cost) continue;
     const shouldPay = isBot(player)
-      ? chooseBotTurnShopBuy(player, type, cost)
-      : await chooseTurnShopBuy(player, card, cost, config.label);
-    card[config.usedKey] = state.turns;
-    if (!shouldPay || player.coins < cost) continue;
-    addCoins(player, -cost, { category: "purchase" });
-    config.add(player, amount);
-    log(`${playerName(player)} платит <strong>${coinAmount(cost)}</strong> в <strong>Лавке Джо</strong> и получает <strong>${config.label}</strong>.`, {
+      ? chooseBotTurnShopBuy(player, buy.type, buy.cost)
+      : await chooseTurnArtifactBuy(player, buy);
+    (state.artifacts.turnBuyUsedAt ||= {})[buy.id] = state.turns;
+    if (!shouldPay || player.coins < buy.cost) continue;
+    addCoins(player, -buy.cost, { category: "purchase" });
+    buy.add(player, buy.amount);
+    log(`${playerName(player)} платит <strong>${coinAmount(buy.cost)}</strong> за артефакт <strong>${buy.title}</strong> и получает <strong>${buy.label}</strong>.`, {
       toast: true,
     });
     render();
@@ -9598,27 +9629,27 @@ function chooseBotTurnShopBuy(player, type, cost) {
   return lag > 10 || finalDistance(player) <= 32 || player.coins >= 22;
 }
 
-async function chooseTurnShopBuy(player, card, cost, label) {
+async function chooseTurnArtifactBuy(player, buy) {
   const choice = await chooseCardAction({
     choices: [
       {
         id: "pay",
         label: "Заплатить",
-        note: `${coinAmount(cost)} - ${label}`,
+        note: `${coinAmount(buy.cost)} - ${buy.label}`,
         score: 18,
       },
       {
         id: "skip",
         label: "Не сейчас",
-        note: "раз в ход",
+        note: "в начале хода",
         score: 6,
       },
     ],
-    kicker: "Лавка Джо",
+    kicker: "Артефакт",
     kind: "turn-shop-buy",
     playerId: player.id,
-    summary: `${playerChoiceBadge(player)} может заплатить ${coinAmount(cost)} и получить ${label}.`,
-    title: cardNameMarkup(card.title),
+    summary: `${playerChoiceBadge(player)} может заплатить ${coinAmount(buy.cost)} и получить ${buy.label}.`,
+    title: cardNameMarkup(buy.title),
   });
   return choice === "pay";
 }
@@ -10852,6 +10883,10 @@ async function applyCardEffect(player, effect, source = {}) {
     return resolveEventGoldenHorseshoe(player, source.card, effect);
   } else if (effect.type === "event-traveler-compass") {
     return resolveEventTravelerCompass(player, source.card, effect);
+  } else if (effect.type === "event-marching-horn") {
+    return resolveEventMarchingHorn(player, source.card, effect);
+  } else if (effect.type === "event-training-dummy") {
+    return resolveEventTrainingDummy(player, source.card, effect);
   } else if (effect.type === "event-joe-game") {
     await resolveJoeNumberGame(player, { sourceLabel: "Игра Джо" });
   } else if (effect.type === "event-joe-auction") {
@@ -12379,7 +12414,7 @@ async function resolveEventGoldenHorseshoe(player, card, effect = {}) {
     criterion: "Свои кубики движения. Самый низкий результат получает артефакт",
     grant: grantGoldenHorseshoeArtifact,
     mode: "event-golden-horseshoe",
-    resultText: `Артефакт дает ${coinAmount(amount)}, если в броске движения выпала 1`,
+    resultText: `Артефакт дает ${coinAmount(amount)} за каждую 1 в броске хода`,
   });
   if (!winner) return { discard: true };
   return { discard: false };
@@ -12402,8 +12437,8 @@ async function resolveEventTravelerCompass(player, card, effect = {}) {
   return { discard: false };
 }
 
-async function resolveStepContestArtifact({ activePlayer, artifactTitle, bonusFor = playerStepBonus, card, criterion, grant, mode, resultText }) {
-  let contenders = [...state.players];
+async function resolveStepContestArtifact({ activePlayer, artifactTitle, bonusFor = playerStepBonus, card, criterion, grant, mode, players = state.players, resultText }) {
+  let contenders = [...players];
   let round = 1;
   let winner = contenders[0] || activePlayer;
 
@@ -12486,6 +12521,63 @@ async function rollStepContestPower(player, { artifactTitle, bonusFor, contender
     },
   });
   return { bonus, player, rolled, rolls, total };
+}
+
+async function resolveEventMarchingHorn(player, card, effect = {}) {
+  const winner = await resolveLowestBonusArtifact({
+    activePlayer: player,
+    artifactTitle: "Походный горн",
+    bonusFor: playerStepBonus,
+    bonusLabel: "бонус шагов",
+    card,
+    grant: grantMarchingHornArtifact,
+    mode: "event-marching-horn",
+    resultText: `В начале хода можно заплатить ${coinAmount(Math.max(0, Number(effect.cost ?? 10)))} и получить ${stepBonusText(Math.max(1, Number(effect.steps) || 2))}`,
+  });
+  return { discard: !winner };
+}
+
+async function resolveEventTrainingDummy(player, card, effect = {}) {
+  const winner = await resolveLowestBonusArtifact({
+    activePlayer: player,
+    artifactTitle: "Тренировочный манекен",
+    bonusFor: playerBattleBonus,
+    bonusLabel: "бонус силы",
+    card,
+    grant: grantTrainingDummyArtifact,
+    mode: "event-training-dummy",
+    resultText: `В начале хода можно заплатить ${coinAmount(Math.max(0, Number(effect.cost ?? 10)))} и получить ${battleForceText(Math.max(1, Number(effect.amount) || 1))}`,
+  });
+  return { discard: !winner };
+}
+
+// Артефакт отстающему: его получает игрок с наименьшим бонусом, ничью решает бросок 1 кубика между ними.
+async function resolveLowestBonusArtifact({ activePlayer, artifactTitle, bonusFor, bonusLabel, card, grant, mode, resultText }) {
+  const lowest = Math.min(...state.players.map(bonusFor));
+  const tied = state.players.filter((player) => bonusFor(player) === lowest);
+  if (tied.length > 1) {
+    const message = `<strong>${artifactTitle}</strong>: наименьший ${bonusLabel} (${lowest}) у игроков ${tied.map(playerName).join(", ")}, они бросают кубик.`;
+    log(message, { toast: true });
+    await showActionPrompt(message, { autoFor: activePlayer });
+    return resolveStepContestArtifact({
+      activePlayer,
+      artifactTitle,
+      bonusFor: () => 0,
+      card,
+      criterion: "1 кубик. Лучший результат получает артефакт",
+      grant,
+      mode,
+      players: tied,
+      resultText,
+    });
+  }
+  const winner = tied[0];
+  if (!winner) return null;
+  grant(winner, card);
+  const message = `<strong>${artifactTitle}</strong>: наименьший ${bonusLabel} (${lowest}) у ${playerName(winner)}, артефакт переходит этому игроку. ${resultText}.`;
+  log(message, { toast: true });
+  await showActionPrompt(message, { autoFor: winner });
+  return winner;
 }
 
 async function resolveMovementDiceLowContestArtifact({ activePlayer, artifactTitle, card, criterion, grant, mode, resultText }) {
@@ -15547,19 +15639,12 @@ function turnActionsText(player) {
       </span>
     `);
   }
-  for (const [type, label] of [["turn-strength-buy", "+1 сила"], ["turn-steps-buy", "+2 шаги"]]) {
-    const cards = activeShopEffectItems(player, type).filter((card) => (
-      card[type === "turn-strength-buy" ? "_turnStrengthBuyUsedAt" : "_turnStepsBuyUsedAt"] !== state.turns
-    ));
-    if (!cards.length) continue;
-    const cost = cards[0].effect?.cost ?? 10;
-    const canPay = player.coins >= cost;
-    const countText = cards.length > 1 ? `<em class="action-chip-count">x${cards.length}</em>` : "";
+  for (const buy of turnArtifactBuys(player, { unusedOnly: true })) {
+    const canPay = player.coins >= buy.cost;
     actions.push(`
       <span class="action-chip extra-die-action-chip ${canPay ? "" : "disabled"}">
-        <span class="action-chip-cost">${coinAmount(cost)}</span>
-        <span>${label}</span>
-        ${countText}
+        <span class="action-chip-cost">${coinAmount(buy.cost)}</span>
+        <span>${buy.chip}</span>
       </span>
     `);
   }
@@ -16783,6 +16868,8 @@ function isPersistentEventArtifact(card) {
   const magicPickaxeCopyId = state?.artifacts?.magicPickaxeCard?._copyId || state?.artifacts?.magicPickaxeCard?.id;
   const goldenHorseshoeCopyId = state?.artifacts?.goldenHorseshoeCard?._copyId || state?.artifacts?.goldenHorseshoeCard?.id;
   const travelerCompassCopyId = state?.artifacts?.travelerCompassCard?._copyId || state?.artifacts?.travelerCompassCard?.id;
+  const marchingHornCopyId = state?.artifacts?.marchingHornCard?._copyId || state?.artifacts?.marchingHornCard?.id;
+  const trainingDummyCopyId = state?.artifacts?.trainingDummyCard?._copyId || state?.artifacts?.trainingDummyCard?.id;
   return Boolean(
     (type === "event-hero-sword" && copyId && copyId === heroSwordCopyId) ||
     (type === "event-anti-bad" && copyId && copyId === antiBadCopyId) ||
@@ -16790,7 +16877,9 @@ function isPersistentEventArtifact(card) {
     (type === "event-speed-boots" && copyId && copyId === speedBootsCopyId) ||
     (type === "event-magic-pickaxe" && copyId && copyId === magicPickaxeCopyId) ||
     (type === "event-golden-horseshoe" && copyId && copyId === goldenHorseshoeCopyId) ||
-    (type === "event-traveler-compass" && copyId && copyId === travelerCompassCopyId)
+    (type === "event-traveler-compass" && copyId && copyId === travelerCompassCopyId) ||
+    (type === "event-marching-horn" && copyId && copyId === marchingHornCopyId) ||
+    (type === "event-training-dummy" && copyId && copyId === trainingDummyCopyId)
   );
 }
 

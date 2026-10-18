@@ -93,8 +93,9 @@ test('every Лавка Джо card has one known trigger moment, in the config a
   for (const cells of rows) if (cells[0] !== 'shop') assert.equal(cells[moment], '', cells[1]);
   const sheet = new Map(rows.filter((cells) => cells[0] === 'shop').map((cells) => [cells[1], cells[moment]]));
   // Чужая расплата left the shop on the user's word (12 Oct 2026), to come back as an artifact.
-  assert.equal(cardConfig.shop.length, 19);
-  assert.ok(!cardConfig.shop.some((card) => card.id === 'others-loss-income'));
+  // Платная тренировка and Платный марш left too (18 Oct 2026): they are event artifacts now.
+  assert.equal(cardConfig.shop.length, 17);
+  for (const id of ['others-loss-income', 'turn-strength-buy', 'turn-steps-buy']) assert.ok(!cardConfig.shop.some((card) => card.id === id), id);
   for (const card of cardConfig.shop) {
     assert.ok(shopCardMoments[card.moment], card.id);
     assert.equal(sheet.get(card.id), card.moment, card.id);
@@ -104,30 +105,55 @@ test('every Лавка Джо card has one known trigger moment, in the config a
   assert.equal(c.shopCardMoment(null), null);
 });
 
-test('paying for your own card is a purchase: Чужая расплата answers other coin losses only', async () => {
+test('paying for your own artifact is a purchase: Чужая расплата answers other coin losses only', async () => {
   const losses = [];
-  const c = load(['applyCoinDelta', 'addCoins', 'resolveTurnShopBuy', 'resolveShopMonsterStrengthBoosts'], {
-    state: { turns: 1 }, playerCoinBonus: () => 0, consumePendingBadCard: () => null, recordCoinDelta() {}, showCoinFloat() {},
+  const c = load(['applyCoinDelta', 'addCoins', 'turnArtifactBuys', 'resolveTurnArtifactBuys', 'resolveShopMonsterStrengthBoosts'], {
+    state: { turns: 1, artifacts: { turnBuyUsedAt: {} } }, playerCoinBonus: () => 0, consumePendingBadCard: () => null, recordCoinDelta() {}, showCoinFloat() {},
     notifyOtherPlayerCoinLoss: (player) => losses.push(player.id),
     activeShopEffectItems: (player, type) => player.items.filter((item) => item.effect.type === type),
+    hasTrainingDummyArtifact: () => true, hasMarchingHornArtifact: () => true, artifactSourceCard: () => null,
+    cardConfig: { event: [{ id: 'training-dummy', effect: { amount: 1, cost: 10 } }, { id: 'marching-horn', effect: { steps: 2, cost: 10 } }] },
+    addBattleBonus: (player, amount) => { player.strength = (player.strength || 0) + amount },
+    addStepBonus: (player, amount) => { player.steps = (player.steps || 0) + amount },
+    battleForceText: String, stepBonusText: String,
     isBot: (player) => player.bot, chooseBotTurnShopBuy: () => true, chooseBotMonsterStrengthBoost: () => true,
     log() {}, render() {}, playerName: (player) => player.name, coinAmount: String,
   });
   const bot = { id: 1, name: 'Бот', bot: true, coins: 40, items: [
-    { title: 'Платная тренировка', effect: { type: 'turn-strength-buy', amount: 1, cost: 10 } },
-    { title: 'Платный марш', effect: { type: 'turn-steps-buy', steps: 2, cost: 10 } },
     { title: 'Боевой эликсир', effect: { type: 'monster-strength-plus3', amount: 3, cost: 5 } },
   ] };
-  const gained = [];
-  for (const type of ['turn-strength-buy', 'turn-steps-buy']) {
-    await c.resolveTurnShopBuy(bot, type, { add: (player, amount) => gained.push(amount), label: '', usedKey: '_usedAt' });
-  }
+  await c.resolveTurnArtifactBuys(bot);
+  // Once per turn: a second call in the same turn buys nothing.
+  await c.resolveTurnArtifactBuys(bot);
   assert.equal(await c.resolveShopMonsterStrengthBoosts(bot, 'битве'), 3);
-  assert.deepEqual(gained, [1, 2]);
+  assert.deepEqual([bot.strength, bot.steps], [1, 2]);
   assert.equal(bot.coins, 15);
   assert.deepEqual(losses, []);
   c.addCoins(bot, -4);
   assert.deepEqual(losses, [1]);
+  // The artifacts stay on the player's board after the purchase.
+  assert.equal(c.turnArtifactBuys(bot).length, 2);
+  assert.equal(c.turnArtifactBuys(bot, { unusedOnly: true }).length, 0);
+});
+
+// User, 18 Oct 2026: Походный горн and Тренировочный манекен go to the player with the lowest bonus; a tie rolls 1 die.
+test('the lagging player gets Походный горн, a tie goes to a roll among the tied', async () => {
+  const granted = [];
+  const contests = [];
+  const players = [{ id: 0, name: 'Аня', steps: 3 }, { id: 1, name: 'Боб', steps: 1 }, { id: 2, name: 'Вера', steps: 4 }];
+  const c = load(['resolveLowestBonusArtifact'], {
+    state: { players },
+    playerName: (player) => player.name, log() {}, showActionPrompt: async () => {},
+    resolveStepContestArtifact: async (options) => { contests.push(options.players.map((player) => player.id)); return options.players[0] },
+  });
+  const options = { activePlayer: players[0], artifactTitle: 'Походный горн', bonusFor: (player) => player.steps, bonusLabel: 'бонус шагов',
+    card: {}, grant: (player) => granted.push(player.id), mode: 'event-marching-horn', resultText: '' };
+  assert.equal((await c.resolveLowestBonusArtifact(options)).id, 1);
+  assert.deepEqual(granted, [1]);
+  players[1].steps = 3;
+  await c.resolveLowestBonusArtifact(options);
+  assert.deepEqual(JSON.parse(JSON.stringify(contests)), [[0, 1]]);
+  assert.deepEqual(granted, [1]);
 });
 
 test('the final count is short: coins plus 5 per shop card, damage to the boss breaks a tie', () => {
