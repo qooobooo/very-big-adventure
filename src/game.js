@@ -10394,9 +10394,8 @@ function eventCardMarkup(card, { revealed }) {
   const icon = !isArtifact && card.icon ? `<img class="event-card-artifact-icon" src="${card.icon}" alt="" aria-hidden="true">` : "";
   const iconClass = icon ? "has-card-face-icon" : "";
   const artifactClass = isArtifact ? `is-event-artifact-card is-artifact-${card.id}` : "";
-  const specialFaceClass = card.id === "monster-rage" ? "is-event-monster-rage" : "";
   const textClass = `event-card-text ${eventCardTextDensityClass(textForDensity, title)} ${cardFaceDescriptionDensityClass(textForDensity)} ${cardFaceTitleDensityClass(title)} ${iconClass} ${artifactClass}`.trim();
-  const previewClass = `event-card-preview ${revealed && isArtifact ? "is-event-artifact-card" : ""} ${specialFaceClass}`.trim();
+  const previewClass = `event-card-preview ${revealed && isArtifact ? "is-event-artifact-card" : ""}`.trim();
   const artifactArtStyle = revealed && isArtifact && card.icon
     ? ` style="--event-artifact-art: url('${escapeHtml(card.icon)}')"`
     : "";

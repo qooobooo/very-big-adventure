@@ -9146,10 +9146,6 @@ button.event-card-preview:focus-visible {
   --card-art: url("./assets/cards/event_front.png?v=20260612-1800");
 }
 
-.event-card-reveal.is-revealed .event-card-preview.is-event-monster-rage {
-  --card-art: url("./assets/cards/event_monster-rage_front.png?v=20260727-0325");
-}
-
 button.event-card-preview.is-event-artifact-card::before,
 button.event-card-preview.is-event-artifact-card::after {
   content: "";
