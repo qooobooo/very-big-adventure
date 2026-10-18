@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PnP Counters</title>
+<!--
+  Лист концепта счётчиков PnP: ?c=a|b|c. Картинки — рядом, <c>_coin10.png, <c>_track.png, <c>_rage.png, <c>_player.png.
+  Верхний ряд — в натуральную величину (CSS-мм: на печати 100 % размер совпадает), нижний — крупно, в 4 раза.
+  Кадр листа снимается так: python3 tools/probe.py shot --path "/docs/design/pnp-counters/sheet.html?c=a" --size 1600x1000
+-->
+<style>
+  :root { --ink: #3a1d08; --paper: #f4e6c4; --line: #c9a970; --muted: #7a5a33; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 500 16px/1.35 "Rubik", system-ui, sans-serif; }
+  .sheet { padding: 28px 36px; }
+  h1 { margin: 0 0 4px; font-size: 30px; letter-spacing: .02em; }
+  .idea { margin: 0 0 18px; color: var(--muted); max-width: 1100px; }
+  h2 { margin: 18px 0 10px; font-size: 15px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  .row { display: flex; align-items: flex-end; gap: 44px; flex-wrap: wrap; }
+  figure { margin: 0; display: grid; justify-items: center; gap: 6px; }
+  figure img { display: block; object-fit: contain; }
+  figcaption { font-size: 14px; text-align: center; }
+  figcaption b { display: block; }
+  .real img { width: var(--mm); height: var(--mm); }
+  .big img { width: calc(var(--mm) * 4); height: calc(var(--mm) * 4); }
+  .big figcaption { font-size: 15px; }
+</style>
+</head>
+<body>
+<main class="sheet">
+  <h1 id="title"></h1>
+  <p class="idea" id="idea"></p>
+  <h2>В натуральную величину — печать 100 %</h2>
+  <div class="row real" id="real"></div>
+  <h2>Крупно, ×4</h2>
+  <div class="row big" id="big"></div>
+</main>
+<script>
+  const concepts = {
+    a: ["Концепт A — латунные медальоны", "Как новые иконки моментов Лавки: чеканная латунь, эмаль цвета игрока, тёмный контур. Круглые жетоны, единый набор с экраном игры."],
+    b: ["Концепт B — дерево и тиснение", "Как деревянные фишки настольной игры: тёплое дерево, выжженные и подкрашенные знаки, немного золота."],
+    c: ["Концепт C — картонные жетоны", "Как классические вырубные жетоны: плоская яркая рисовка, светлая кайма под вырезание, скруглённые квадраты и круги."],
+  };
+  const items = [
+    ["coin10", "Монета 10", 25],
+    ["track", "Маркер трека", 12],
+    ["rage", "Маркер ярости", 16],
+    ["player", "Жетон игрока", 30],
+  ];
+  const c = new URLSearchParams(location.search).get("c") || "a";
+  const [title, idea] = concepts[c] || concepts.a;
+  document.getElementById("title").textContent = title;
+  document.getElementById("idea").textContent = idea;
+  const figure = ([key, label, mm]) => `
+    <figure style="--mm:${mm}mm"><img src="./${c}_${key}.png" alt="${label}">
+      <figcaption><b>${label}</b>${mm} мм</figcaption></figure>`;
+  document.getElementById("real").innerHTML = items.map(figure).join("");
+  document.getElementById("big").innerHTML = items.map(figure).join("");
+</script>
+</body>
+</html>
