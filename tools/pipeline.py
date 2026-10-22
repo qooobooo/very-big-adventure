@@ -88,6 +88,7 @@ CHATS = STATE / 'chats.json'  # chat name -> send_message id and zone, for deliv
 BOARD = STATE / 'board.json'  # chat name -> the task it is on, kept by PM (`board`), shown by the status mod
 DONE = STATE / 'done.jsonl'  # finished board tasks (chat, task, since, done, effort), shown by the status mod
 DONE_SHOWN = 50  # newest finished tasks per chat in `board --json`
+CHAT_COLORS = {'GD': '#5B8DEF', 'Art / UI': '#A77BE0'}  # the chats' hues in the status bands
 INSTALLED = STATE / 'installed.json'  # what the main folder runs: version, commit, the previous one
 SERVER = STATE / 'server.json'  # the :5173 server started by `serve`
 FOLLOW = STATE / 'follow.json'  # its companion `follow`: card edits sent from the sheet reach the main folder
@@ -880,14 +881,20 @@ def cmd_board(args):
     installed = (read_json(INSTALLED) or {}).get('version') or version_at(git('rev-parse', 'HEAD', cwd=MAIN))
     detached = not git('symbolic-ref', '--quiet', 'HEAD', cwd=MAIN, check=False)
     # 'project' and 'team' (not 'chats'): The Village's own status mod, installed on this Mac too, reads the same
-    # command in any folder; this shape keeps each band to its own project.
-    print(json.dumps({'project': 'vba', 'base': BASE, 'shared': SHARED, 'installed': installed, 'rolled_back': detached,
+    # command in any folder; this shape keeps each band to its own project. 'format' is the shared studio-status
+    # band's (PM Diceborne, 23 Oct 2026); 'project' stays 'vba' for vba-status and The Village's band, 'title' labels it.
+    queue, app = lock_state('queue'), lock_state()
+    remote = bool(git('remote', 'get-url', 'origin', cwd=MAIN, check=False))
+    team = [dict(name=name, **board.get(name, {}), effort=last_effort(name), **({'color': CHAT_COLORS[name]} if name in CHAT_COLORS else {}))
+            for name in names]
+    print(json.dumps({'format': 'studio-board/1', 'project': 'vba', 'title': 'Очень Большая Бродилка',
+                      'base': BASE, 'shared': SHARED, 'installed': installed or '', 'rolled_back': detached,
                       'shared_version': tag('origin/' + SHARED),
                       'unpublished': int(unpublished) if unpublished.isdigit() else None,
                       'foreign': int(foreign) if foreign.isdigit() else None,
-                      'queue': lock_state('queue'), 'app': lock_state(), 'server': bool(listener()),
-                      'team': [dict(name=name, **board.get(name, {})) for name in names],
-                      'done': done_tasks()}, ensure_ascii=False))
+                      'delivering': queue != 'free' or app != 'free', 'remote': remote,
+                      'queue': queue, 'app': app, 'server': bool(listener()),
+                      'team': team, 'done': done_tasks()}, ensure_ascii=False))
     return 0
 
 
