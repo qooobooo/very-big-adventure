@@ -86,6 +86,8 @@ STATE = COMMON / 'vba-pipeline'
 STATE.mkdir(exist_ok=True)
 CHATS = STATE / 'chats.json'  # chat name -> send_message id and zone, for delivery notes (`chats`)
 BOARD = STATE / 'board.json'  # chat name -> the task it is on, kept by PM (`board`), shown by the status mod
+DONE = STATE / 'done.jsonl'  # finished board tasks (chat, task, since, done, effort), shown by the status mod
+DONE_SHOWN = 50  # newest finished tasks per chat in `board --json`
 INSTALLED = STATE / 'installed.json'  # what the main folder runs: version, commit, the previous one
 SERVER = STATE / 'server.json'  # the :5173 server started by `serve`
 FOLLOW = STATE / 'follow.json'  # its companion `follow`: card edits sent from the sheet reach the main folder
@@ -850,10 +852,21 @@ def cmd_board(args):
     """Who works on what (PM sets and frees it) and the shared state, for tools/mods/vba-status."""
     board = read_json(BOARD, {})
     if args.set or args.free:
+        if not DONE.exists():
+            backfill_done(board)
         if args.set:
-            board[args.set[0]] = {'task': args.set[1], 'since': now().isoformat(timespec='minutes')}
+            name, task = args.set
+            old = board.get(name)
+            if old and old.get('task') == task:
+                pass  # the same task set again keeps its start
+            else:
+                if old:
+                    finish_task(name, old)
+                board[name] = {'task': task, 'since': now().isoformat(timespec='minutes')}
         for name in args.free or []:
-            board.pop(name, None)
+            old = board.pop(name, None)
+            if old:
+                finish_task(name, old)
         write_json(BOARD, board)
     table = read_json(CHATS, {})
     names = [name for name in table if name != 'PM'] + [name for name in board if name not in table]
@@ -873,8 +886,89 @@ def cmd_board(args):
                       'unpublished': int(unpublished) if unpublished.isdigit() else None,
                       'foreign': int(foreign) if foreign.isdigit() else None,
                       'queue': lock_state('queue'), 'app': lock_state(), 'server': bool(listener()),
-                      'team': [dict(name=name, **board.get(name, {})) for name in names]}, ensure_ascii=False))
+                      'team': [dict(name=name, **board.get(name, {})) for name in names],
+                      'done': done_tasks()}, ensure_ascii=False))
     return 0
+
+
+def last_effort(chat):
+    level = ''
+    for row in jsonl_rows('effort.jsonl'):
+        if row.get('chat') == chat:
+            level = row.get('level', '')
+    return level
+
+
+def finish_task(chat, row):
+    if 'ждёт' in row.get('task', ''):
+        return  # a placeholder («…, ждёт старта») was waiting, not done
+    with DONE.open('a', encoding='utf-8') as log:
+        log.write(json.dumps({'chat': chat, 'task': row.get('task', ''), 'since': row.get('since', ''),
+                              'done': now().isoformat(timespec='minutes'), 'effort': last_effort(chat)},
+                             ensure_ascii=False) + '\n')
+
+
+def jsonl_rows(name):
+    try:
+        return [json.loads(line) for line in (STATE / name).read_text(encoding='utf-8').splitlines() if line.strip()]
+    except (OSError, ValueError):
+        return []
+
+
+def done_tasks():
+    """The newest DONE_SHOWN finished tasks of each chat, newest first, with minutes taken."""
+    per_chat = {}
+    for row in sorted(jsonl_rows(DONE.name), key=lambda r: r.get('done', ''), reverse=True):
+        if 'ждёт' in row.get('task', ''):
+            continue
+        kept = per_chat.setdefault(row.get('chat', ''), [])
+        if len(kept) < DONE_SHOWN:
+            kept.append(row)
+    out = []
+    for kept in per_chat.values():
+        for row in kept:
+            with contextlib.suppress(ValueError, KeyError):
+                start = datetime.datetime.fromisoformat(row['since'])
+                end = datetime.datetime.fromisoformat(row['done'])
+                row = dict(row, min=max(0, round((end - start).total_seconds() / 60)))
+            out.append(row)
+    return sorted(out, key=lambda r: r.get('done', ''), reverse=True)
+
+
+def backfill_done(board):
+    """First use: rebuild finished tasks from effort.jsonl (each assignment; a «закрыт»/«closed» row only ends the
+    one before) and deliveries.jsonl (when the chat's branches last delivered before its next assignment)."""
+    prefix = {'GD': 'work/gd', 'Art / UI': 'work/art-ui'}
+    shipped = {}
+    for row in jsonl_rows('deliveries.jsonl'):
+        chat = next((c for c, p in prefix.items() if row.get('branch', '').startswith(p)), None)
+        if chat and row.get('installed'):
+            shipped.setdefault(chat, []).append(row['installed'][:16])
+    assigned = {}
+    for row in jsonl_rows('effort.jsonl'):
+        runs = assigned.setdefault(row['chat'], [])
+        closing = re.search(r'закрыт|closed', row.get('why', ''))
+        task = None if closing else row['task']
+        if not runs or runs[-1]['task'] != task:
+            runs.append({'task': task, 'since': row['time'][:16], 'effort': row.get('level', '')})
+    out = []
+    for chat, runs in assigned.items():
+        for i, run in enumerate(runs):
+            if run['task'] is None:
+                continue
+            nxt = runs[i + 1]['since'] if i + 1 < len(runs) else None
+            if nxt is None and board.get(chat, {}).get('task') == run['task']:
+                continue  # still on it
+            # A task ends at its chat's last delivery before the next assignment, within a day of the start.
+            day = (datetime.datetime.fromisoformat(run['since']) + datetime.timedelta(days=1)).isoformat(timespec='minutes')
+            ends = [t for t in shipped.get(chat, []) if run['since'] <= t <= day and (nxt is None or t < nxt)]
+            done = max(ends) if ends else (nxt if nxt and nxt <= day else None)
+            if done:
+                out.append({'chat': chat, 'task': run['task'], 'since': run['since'], 'done': done,
+                            'effort': run['effort']})
+    with DONE.open('w', encoding='utf-8') as log:
+        for row in sorted(out, key=lambda r: r['done']):
+            log.write(json.dumps(row, ensure_ascii=False) + '\n')
 
 
 def cmd_chats(args):
