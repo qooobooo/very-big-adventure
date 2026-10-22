@@ -130,30 +130,18 @@ python3 tools/probe.py autoplay --players 2,3,4 --games 20 --out Logs/probes/{ru
 
 ## Полоска статуса
 
-Решение пользователя, 11 октября 2026: над полем ввода чатов Claude видна полоска статуса — мод `tools/mods/vba-status` (marketplace `vba`).
+Над полем ввода чатов Claude видна полоска статуса. С 23 октября 2026 её рисует **общий мод студии `studio-status`** — один на все проекты (решение пользователя, переключил PM Diceborne).
 
-- Строки:
-  - версия `dev` в основной папке и последняя метка `main`;
-  - сколько доставок не опубликовано и сколько чужих коммитов ждут `merge-main`;
-  - идёт ли доставка, работает ли сервер :5173;
-  - занятые чаты с задачей и минутами, свободные чаты.
-- Вкладки над карточкой (просьба пользователя через PM Diceborne, 23 октября 2026): «Текущие», «Выполненные», «Все» и по одной на чат. Выполненная задача — чат, задача, когда закрыта, сколько шла (полоска: час — полная). До 50 на чат, по 12 на страницу, стрелки ◀ ▶.
-- Данные — `python3 tools/pipeline.py board --json` из папки чата, раз в 15 с. Вне проекта полоска пустая.
+- **Где мод:** `/Users/qooobooo/Game Dev/studio-mods`, формат доски — в его README. Подключён из папки через `CLAUDE_CODE_PLUGIN_DIRS`: правка там сразу у всех чатов.
+- **Вид полоски меняем только в studio-mods:** поднять `version`, закоммитить там. Наш старый мод `tools/mods/vba-status` выключен в `~/.claude/settings.json` и больше не правится.
+- **Наша часть — доска:** `python3 tools/pipeline.py board --json` печатает JSON в формате `studio-board/1`. Его держим, поля не убираем:
+  - `format`, `project: "vba"` (по нему доски различает мод The Village), `title` — подпись полоски;
+  - `base`/`installed`, `shared`/`shared_version`, `unpublished`, `foreign`, `delivering`, `remote`;
+  - `team` — чаты по порядку, у занятого `task` и `since`, у всех `effort` и `color`;
+  - `done` — выполненные задачи, новые первыми, до 50 на чат, `min` — сколько минут шла.
+- Сессию в папке «Very Big Adventure» мод находит сам: ищет `*-main/tools/pipeline.py`.
 - Доску ведёт PM. Отдал задачу — `board --set "<чат>" "<задача, 2–5 слов>"`, принял доставку — `board --free "<чат>"`.
-  `--free` и смена задачи пишут выполненную в `done.jsonl`; задача с «ждёт» не считается. Первый вызов восстанавливает историю из `effort.jsonl` и `deliveries.jsonl`.
-- Установка на машину, один раз, по «да» пользователя:
-
-  ```sh
-  claude plugin marketplace add "<основная папка>/tools/mods"
-  claude plugin install vba-status@vba
-  ```
-
-- Claude кэширует мод по `version` из `plugin.json`. После правки:
-  1. поднять `version`;
-  2. доставить;
-  3. `claude plugin marketplace update vba` и `claude plugin update vba-status@vba`.
-
-  Новый вид появится в новом чате.
+  `--free` и смена задачи пишут выполненную в `done.jsonl`; задача с «ждёт» не считается. Первый вызов восстановил историю из `effort.jsonl` и `deliveries.jsonl`.
 
 ## Где что хранится
 
