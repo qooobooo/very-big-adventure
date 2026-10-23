@@ -885,7 +885,10 @@ def cmd_board(args):
     # band's (PM Diceborne, 23 Oct 2026); 'project' stays 'vba' for vba-status and The Village's band, 'title' labels it.
     queue, app = lock_state('queue'), lock_state()
     remote = bool(git('remote', 'get-url', 'origin', cwd=MAIN, check=False))
-    team = [dict(name=name, **board.get(name, {}), effort=last_effort(name), **({'color': CHAT_COLORS[name]} if name in CHAT_COLORS else {}))
+    # 'session': the chat's app session id, so studio-status's chat tab opens that chat (2.4.0, 23 Oct 2026).
+    team = [dict(name=name, **board.get(name, {}), effort=last_effort(name),
+                 **({'color': CHAT_COLORS[name]} if name in CHAT_COLORS else {}),
+                 **({'session': table[name]['id']} if table.get(name, {}).get('id') else {}))
             for name in names]
     print(json.dumps({'format': 'studio-board/1', 'project': 'vba', 'title': 'Очень Большая Бродилка',
                       'base': BASE, 'shared': SHARED, 'installed': installed or '', 'rolled_back': detached,
