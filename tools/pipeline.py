@@ -601,7 +601,11 @@ def cmd_new(args):
     if path.exists():
         raise SystemExit(str(path) + ' already exists')
     git('fetch', '-q', 'origin')
-    git('worktree', 'add', '-q', '-b', branch, str(path), 'origin/' + BASE)
+    if git('rev-parse', '--verify', '--quiet', 'refs/heads/' + branch, check=False):
+        # The folder went to tools/cleanup_disk.py (idle and clean); its branch stayed: bring it back on that branch.
+        git('worktree', 'add', '-q', str(path), branch)
+    else:
+        git('worktree', 'add', '-q', '-b', branch, str(path), 'origin/' + BASE)
     git('branch', '-q', '--unset-upstream', branch, cwd=path, check=False)
     say(f'worktree ready: {path} [{branch}] from ' + git('log', '-1', '--format=%h %s', 'origin/' + BASE))
     return 0
@@ -821,6 +825,7 @@ def cmd_deliver(args):
                 timing['lock_hold_s'] += time.time() - lock.acquired
             note = server_note(files) if synced else ''
             work = work_summary(started)
+            clean_disk()
             record = {'version': version, 'commit': commit, 'branch': branch, 'task': task, 'worktree': str(ROOT),
                       'app': app, 'started': datetime.datetime.fromtimestamp(started).isoformat(timespec='seconds'),
                       'installed': now().isoformat(timespec='seconds'), 'attempts': attempt,
@@ -847,6 +852,28 @@ def cmd_deliver(args):
                   + (' ' + work['text'] if work.get('text') else ''), flush=True)
             return 0
     raise SystemExit(f'origin/{BASE} kept moving; gave up after {args.attempts} attempts')
+
+
+def clean_disk():
+    """Disk upkeep (The Village's rules, relayed 23 Oct 2026; user's yes here the same day): tools/cleanup_disk.py
+    removes idle clean chat folders and week-old probe runs, at most once in six hours so deliveries stay quick."""
+    mark = STATE / 'disk-cleanup.json'
+    try:
+        if now().timestamp() - json.loads(mark.read_text(encoding='utf-8'))['at'] < 6 * 3600:
+            return
+    except (OSError, ValueError, KeyError):
+        pass
+    try:
+        out = subprocess.run([sys.executable, str(ROOT / 'tools/cleanup_disk.py'), '--apply'], cwd=ROOT,
+                             capture_output=True, text=True, timeout=600).stdout
+        done = json.loads(out)
+        mark.write_text(json.dumps({'at': now().timestamp(), 'freed_mb': done['freed_mb'],
+                                    'disk_free_gb': done['disk_free_gb']}) + '\n', encoding='utf-8')
+        if done['candidate_count']:
+            say(f"disk: removed {done['candidate_count']} idle folders/old probe runs, {done['freed_mb']} MB; "
+                f"{done['disk_free_gb']} GB free")
+    except (subprocess.TimeoutExpired, ValueError, KeyError) as exc:
+        say(f'disk cleanup skipped ({exc}); PM: python3 tools/cleanup_disk.py')
 
 
 def cmd_board(args):
