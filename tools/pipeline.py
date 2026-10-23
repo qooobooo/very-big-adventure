@@ -88,7 +88,7 @@ CHATS = STATE / 'chats.json'  # chat name -> send_message id and zone, for deliv
 BOARD = STATE / 'board.json'  # chat name -> the task it is on, kept by PM (`board`), shown by the status mod
 DONE = STATE / 'done.jsonl'  # finished board tasks (chat, task, since, done, effort), shown by the status mod
 DONE_SHOWN = 50  # newest finished tasks per chat in `board --json`
-CHAT_COLORS = {'GD': '#5B8DEF', 'Art / UI': '#A77BE0'}  # the chats' hues in the status bands
+CHAT_COLORS = {'GD': '#5B8DEF', 'Art': '#A77BE0'}  # the chats' hues in the status bands
 INSTALLED = STATE / 'installed.json'  # what the main folder runs: version, commit, the previous one
 SERVER = STATE / 'server.json'  # the :5173 server started by `serve`
 FOLLOW = STATE / 'follow.json'  # its companion `follow`: card edits sent from the sheet reach the main folder
@@ -945,7 +945,7 @@ def done_tasks():
 def backfill_done(board):
     """First use: rebuild finished tasks from effort.jsonl (each assignment; a «закрыт»/«closed» row only ends the
     one before) and deliveries.jsonl (when the chat's branches last delivered before its next assignment)."""
-    prefix = {'GD': 'work/gd', 'Art / UI': 'work/art-ui'}
+    prefix = {'GD': 'work/gd', 'Art': 'work/art-ui'}
     shipped = {}
     for row in jsonl_rows('deliveries.jsonl'):
         chat = next((c for c, p in prefix.items() if row.get('branch', '').startswith(p)), None)
